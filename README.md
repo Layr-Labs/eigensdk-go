@@ -6,7 +6,7 @@
 🚧 Under active development. EIGENSDK-GO is rapidly being upgraded, features are being added, interfaces will have breaking changes 🚧
 </b><p>
 
-**Use in production at your own risk.**
+**Do not use it in Production, testnet only.**
 
 ## EigenSDK
 This SDK provides a set of primitive Go modules for developing AVSs used in EigenLayer
@@ -35,3 +35,6 @@ git submodule update --init
 ```
 
 Follow the [contribution guidelines](CONTRIBUTING.md) to contribute to eigensdk-go
+
+## Security Bugs
+Please report security vulnerabilities to security@eigenlabs.org

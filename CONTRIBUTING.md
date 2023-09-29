@@ -48,3 +48,6 @@ Branch names must follow `kebab-case` pattern. Follow the pattern `feature/<name
 ## Commit Naming
 
 Commits must follow the `<type>(<scope>): <subject>` pattern, as stated in the [Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/)
+
+## Security Bugs
+Please report security vulnerabilities to security@eigenlabs.org
