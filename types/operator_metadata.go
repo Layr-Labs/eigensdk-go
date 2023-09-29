@@ -1,0 +1,102 @@
+package types
+
+import (
+	"errors"
+	"fmt"
+	"net/url"
+	"path/filepath"
+	"regexp"
+	"strings"
+)
+
+type OperatorMetadata struct {
+	Name              string `yaml:"name"                json:"name"`
+	Website           string `yaml:"website"             json:"website"`
+	Description       string `yaml:"description"         json:"description"`
+	Logo              string `yaml:"logo"                json:"logo"`
+	TwitterProfileUrl string `yaml:"twitter_profile_url" json:"twitter_profile_url"`
+}
+
+func (om *OperatorMetadata) Validate() error {
+	if len(om.Name) == 0 {
+		return errors.New("name is required")
+	}
+
+	if len(om.Description) == 0 {
+		return errors.New("description is required")
+	}
+
+	if len(om.Logo) == 0 {
+		return errors.New("logo is required")
+	}
+
+	if !isImageURL(om.Logo) {
+		return errors.New("logo must be a valid image url")
+	}
+
+	if len(om.Website) != 0 {
+		err := checkIfUrlIsValid(om.Website)
+		if err != nil {
+			fmt.Println("error validating website url")
+			return err
+		}
+	}
+
+	if len(om.TwitterProfileUrl) != 0 {
+		err := checkIfUrlIsValid(om.TwitterProfileUrl)
+		if err != nil {
+			fmt.Println("error validating twitter profile url")
+			return err
+		}
+	}
+
+	return nil
+}
+
+func checkIfUrlIsValid(rawUrl string) error {
+	// Regular expression to validate URLs
+	urlPattern := regexp.MustCompile(`^(https?|ftp)://[^\s/$.?#].[^\s]*$`)
+
+	// Check if the URL matches the regular expression
+	if !urlPattern.MatchString(rawUrl) {
+		return errors.New("invalid url")
+	}
+
+	parsedURL, err := url.Parse(rawUrl)
+	if err != nil {
+		return err
+	}
+
+	// Check if the URL is valid
+	if parsedURL.Scheme != "" && parsedURL.Host != "" {
+		return nil
+	} else {
+		return errors.New("invalid url")
+	}
+}
+
+func isImageURL(urlString string) bool {
+	// Parse the URL
+	parsedURL, err := url.Parse(urlString)
+	if err != nil {
+		return false
+	}
+
+	// Extract the path component from the URL
+	path := parsedURL.Path
+
+	// Get the file extension
+	extension := filepath.Ext(path)
+
+	// List of common image file extensions
+	imageExtensions := []string{".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp"}
+
+	// Check if the extension is in the list of image extensions
+	for _, imgExt := range imageExtensions {
+		if strings.EqualFold(extension, imgExt) {
+			return true
+		}
+	}
+
+	return false
+}

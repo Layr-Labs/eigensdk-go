@@ -1,0 +1,9 @@
+# IDE related
+.idea/
+
+# Tests
+coverage.html
+coverage.out
+
+# Misc
+**/.DS_Store
