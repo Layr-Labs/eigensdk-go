@@ -37,4 +37,4 @@ git submodule update --init
 Follow the [contribution guidelines](CONTRIBUTING.md) to contribute to eigensdk-go
 
 ## Security Bugs
-Please report security vulnerabilities to security@eigenlabs.org
+Please report security vulnerabilities to security@eigenlabs.org. Do NOT report security bugs via Github Issues.
