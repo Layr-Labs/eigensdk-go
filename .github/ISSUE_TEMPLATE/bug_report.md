@@ -9,6 +9,7 @@ assignees: ''
 
 **Describe the bug**
 <!-- A clear and concise description of what the bug is. -->
+<!-- Please report security vulnerabilities to security@eigenlabs.org. Do NOT report security bugs via Github Issues. -->
 
 **To Reproduce**
 <!-- Steps to reproduce the behavior: -->
