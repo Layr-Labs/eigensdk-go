@@ -91,6 +91,7 @@ func (w *ELChainWriter) UpdateOperatorDetails(
 	w.logger.Infof("updating operator details of operator %s to EigenLayer", operator.Address)
 	opDetails := contractDelegationManager.IDelegationManagerOperatorDetails{
 		EarningsReceiver:         gethcommon.HexToAddress(operator.EarningsReceiverAddress),
+		DelegationApprover:       gethcommon.HexToAddress(operator.DelegationApproverAddress),
 		StakerOptOutWindowBlocks: operator.StakerOptOutWindowBlocks,
 	}
 
