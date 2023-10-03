@@ -19,13 +19,13 @@ import (
 )
 
 type Config struct {
-	ecdsaPrivateKeyString         string `yaml:"ecdsa_private_key_string"`
-	ethHttpUrl                    string `yaml:"eth_http_url"`
-	ethWsUrl                      string `yaml:"eth_ws_url"`
-	blsRegistryCoordinatorAddr    string `yaml:"bls_registry_coordinator_address"`
-	blsOperatorStateRetrieverAddr string `yaml:"bls_operator_state_retriever_address"`
-	avsName                       string `yaml:"avs_name"`
-	ipPortAddress                 string `yaml:"ip_port_address"`
+	EcdsaPrivateKeyString         string `yaml:"ecdsa_private_key_string"`
+	EthHttpUrl                    string `yaml:"eth_http_url"`
+	EthWsUrl                      string `yaml:"eth_ws_url"`
+	BlsRegistryCoordinatorAddr    string `yaml:"bls_registry_coordinator_address"`
+	BlsOperatorStateRetrieverAddr string `yaml:"bls_operator_state_retriever_address"`
+	AvsName                       string `yaml:"avs_name"`
+	IpPortAddress                 string `yaml:"ip_port_address"`
 }
 
 type Clients struct {
@@ -44,16 +44,16 @@ func BuildClients(config Config, logger logging.Logger) (*Clients, error) {
 
 	// Create the metrics server
 	reg := prometheus.NewRegistry()
-	eigenMetrics := metrics.NewEigenMetrics(config.avsName, config.ipPortAddress, reg, logger)
+	eigenMetrics := metrics.NewEigenMetrics(config.AvsName, config.IpPortAddress, reg, logger)
 
 	// creating two types of Eth clients: HTTP and WS
-	ethHttpClient, err := eth.NewClient(config.ethHttpUrl)
+	ethHttpClient, err := eth.NewClient(config.EthHttpUrl)
 	if err != nil {
 		logger.Error("Failed to create Eth Http client", "err", err)
 		return nil, err
 	}
 
-	ethWsClient, err := eth.NewClient(config.ethWsUrl)
+	ethWsClient, err := eth.NewClient(config.EthWsUrl)
 	if err != nil {
 		logger.Error("Failed to create Eth WS client", "err", err)
 		return nil, err
@@ -113,7 +113,7 @@ func (config *Config) buildElContractsChainClient(
 	ethHttpClient eth.EthClient,
 	ethWsClient eth.EthClient,
 ) (clients.ELContractsClient, error) {
-	blsRegistryCoordinatorAddr := gethcommon.HexToAddress(config.blsRegistryCoordinatorAddr)
+	blsRegistryCoordinatorAddr := gethcommon.HexToAddress(config.BlsRegistryCoordinatorAddr)
 	contractBLSRegistryCoordWithIndices, err := blsregcoord.NewContractBLSRegistryCoordinatorWithIndices(
 		blsRegistryCoordinatorAddr,
 		ethHttpClient,
@@ -184,7 +184,7 @@ func (config *Config) buildElClients(
 	}
 
 	// get the Writer for the EL contracts
-	ecdsaPrivateKey, err := crypto.HexToECDSA(config.ecdsaPrivateKeyString)
+	ecdsaPrivateKey, err := crypto.HexToECDSA(config.EcdsaPrivateKeyString)
 	if err != nil {
 		logger.Errorf("Cannot parse ecdsa private key", "err", err)
 		return nil, nil, nil, err
@@ -221,7 +221,7 @@ func (config *Config) buildAvsRegistryContractsChainClient(
 	logger logging.Logger,
 	ethHttpClient eth.EthClient,
 ) (clients.AVSRegistryContractsClient, error) {
-	blsRegistryCoordinatorAddr := gethcommon.HexToAddress(config.blsRegistryCoordinatorAddr)
+	blsRegistryCoordinatorAddr := gethcommon.HexToAddress(config.BlsRegistryCoordinatorAddr)
 	contractBLSRegistryCoordWithIndices, err := blsregcoord.NewContractBLSRegistryCoordinatorWithIndices(
 		blsRegistryCoordinatorAddr,
 		ethHttpClient,
@@ -245,7 +245,7 @@ func (config *Config) buildAvsRegistryContractsChainClient(
 
 	avsregistryContractsChainClient, err := clients.NewAVSContractsChainClient(
 		blsRegistryCoordinatorAddr,
-		gethcommon.HexToAddress(config.blsOperatorStateRetrieverAddr),
+		gethcommon.HexToAddress(config.BlsOperatorStateRetrieverAddr),
 		stakeregistryAddr,
 		blsPubkeyRegistryAddr,
 		ethHttpClient,
@@ -274,7 +274,7 @@ func (config *Config) buildAvsClients(
 		return nil, nil, err
 	}
 
-	ecdsaPrivateKey, err := crypto.HexToECDSA(config.ecdsaPrivateKeyString)
+	ecdsaPrivateKey, err := crypto.HexToECDSA(config.EcdsaPrivateKeyString)
 	if err != nil {
 		logger.Errorf("Cannot parse ecdsa private key", "err", err)
 		return nil, nil, err
