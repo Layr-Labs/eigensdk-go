@@ -7,7 +7,8 @@ import (
 	clients "github.com/Layr-Labs/eigensdk-go/chainio/clients"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	elcontracts "github.com/Layr-Labs/eigensdk-go/chainio/elcontracts"
-	blsRegistryCoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSRegistryCoordinatorWithIndices"
+	blspubkeyreg "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPubkeyRegistry"
+	blsregcoord "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSRegistryCoordinatorWithIndices"
 	logging "github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/metrics"
 	"github.com/Layr-Labs/eigensdk-go/signer"
@@ -18,13 +19,13 @@ import (
 )
 
 type Config struct {
-	ecdsaPrivateKeyString      string `yaml:"ecdsa_private_key_string"`
-	ethHttpUrl                 string `yaml:"eth_http_url"`
-	ethWsUrl                   string `yaml:"eth_ws_url"`
-	blsRegistryCoordinatorAddr string `yaml:"bls_registry_coordinator_address"`
-	blsPubKeyCompendiumAddr    string `yaml:"bls_pubkey_compendium_address"`
-	avsName                    string `yaml:"avs_name"`
-	ipPortAddress              string `yaml:"ip_port_address"`
+	ecdsaPrivateKeyString         string `yaml:"ecdsa_private_key_string"`
+	ethHttpUrl                    string `yaml:"eth_http_url"`
+	ethWsUrl                      string `yaml:"eth_ws_url"`
+	blsRegistryCoordinatorAddr    string `yaml:"bls_registry_coordinator_address"`
+	blsOperatorStateRetrieverAddr string `yaml:"bls_operator_state_retriever_address"`
+	avsName                       string `yaml:"avs_name"`
+	ipPortAddress                 string `yaml:"ip_port_address"`
 }
 
 type Clients struct {
@@ -113,13 +114,25 @@ func (config *Config) buildElContractsChainClient(
 	ethWsClient eth.EthClient,
 ) (clients.ELContractsClient, error) {
 	blsRegistryCoordinatorAddr := gethcommon.HexToAddress(config.blsRegistryCoordinatorAddr)
-	contractBLSRegistryCoordWithIndices, err := blsRegistryCoordinator.NewContractBLSRegistryCoordinatorWithIndices(
+	contractBLSRegistryCoordWithIndices, err := blsregcoord.NewContractBLSRegistryCoordinatorWithIndices(
 		blsRegistryCoordinatorAddr,
 		ethHttpClient,
 	)
 	if err != nil {
-		logger.Error("Failed to fetch BLSRegistryCoordinatorWithIndices contract", "err", err)
-		return nil, err
+		logger.Fatal("Failed to fetch BLSRegistryCoordinatorWithIndices contract", "err", err)
+	}
+
+	blsPubkeyRegistryAddr, err := contractBLSRegistryCoordWithIndices.BlsPubkeyRegistry(&bind.CallOpts{})
+	if err != nil {
+		logger.Fatal("Failed to fetch BlsPubkeyRegistry contract", "err", err)
+	}
+	contractBlsPubkeyRegistry, err := blspubkeyreg.NewContractBLSPubkeyRegistry(blsPubkeyRegistryAddr, ethHttpClient)
+	if err != nil {
+		logger.Fatal("Failed to construct BlsPubkeyRegistry contract", "err", err)
+	}
+	blsPubKeyCompendiumAddr, err := contractBlsPubkeyRegistry.PubkeyCompendium(&bind.CallOpts{})
+	if err != nil {
+		logger.Fatal("Failed to fetch PubkeyCompendium contract", "err", err)
 	}
 
 	slasherAddr, err := contractBLSRegistryCoordWithIndices.Slasher(&bind.CallOpts{})
@@ -127,8 +140,6 @@ func (config *Config) buildElContractsChainClient(
 		logger.Error("Failed to fetch Slasher contract", "err", err)
 		return nil, err
 	}
-
-	blsPubKeyCompendiumAddr := gethcommon.HexToAddress(config.blsPubKeyCompendiumAddr)
 	elContractsChainClient, err := clients.NewELContractsChainClient(
 		slasherAddr,
 		blsPubKeyCompendiumAddr,
@@ -211,18 +222,12 @@ func (config *Config) buildAvsRegistryContractsChainClient(
 	ethHttpClient eth.EthClient,
 ) (clients.AVSRegistryContractsClient, error) {
 	blsRegistryCoordinatorAddr := gethcommon.HexToAddress(config.blsRegistryCoordinatorAddr)
-	contractBLSRegistryCoordWithIndices, err := blsRegistryCoordinator.NewContractBLSRegistryCoordinatorWithIndices(
+	contractBLSRegistryCoordWithIndices, err := blsregcoord.NewContractBLSRegistryCoordinatorWithIndices(
 		blsRegistryCoordinatorAddr,
 		ethHttpClient,
 	)
 	if err != nil {
 		logger.Error("Failed to fetch BLSRegistryCoordinatorWithIndices contract", "err", err)
-		return nil, err
-	}
-
-	blsOperatorStateRetrieverAddr, err := contractBLSRegistryCoordWithIndices.BlsPubkeyRegistry(&bind.CallOpts{})
-	if err != nil {
-		logger.Error("Failed to fetch BLSOperatorStateRetriever contract", "err", err)
 		return nil, err
 	}
 
@@ -240,7 +245,7 @@ func (config *Config) buildAvsRegistryContractsChainClient(
 
 	avsregistryContractsChainClient, err := clients.NewAVSContractsChainClient(
 		blsRegistryCoordinatorAddr,
-		blsOperatorStateRetrieverAddr,
+		gethcommon.HexToAddress(config.blsOperatorStateRetrieverAddr),
 		stakeregistryAddr,
 		blsPubkeyRegistryAddr,
 		ethHttpClient,
