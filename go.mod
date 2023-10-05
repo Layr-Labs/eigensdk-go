@@ -3,7 +3,7 @@ module github.com/Layr-Labs/eigensdk-go
 go 1.21
 
 require (
-	github.com/consensys/gnark-crypto v0.11.2
+	github.com/consensys/gnark-crypto v0.12.0
 	github.com/ethereum/go-ethereum v1.12.2
 	github.com/prometheus/client_golang v1.17.0
 	github.com/stretchr/testify v1.8.4
