@@ -25,7 +25,7 @@ type Config struct {
 	BlsRegistryCoordinatorAddr    string `yaml:"bls_registry_coordinator_address"`
 	BlsOperatorStateRetrieverAddr string `yaml:"bls_operator_state_retriever_address"`
 	AvsName                       string `yaml:"avs_name"`
-	IpPortAddress                 string `yaml:"ip_port_address"`
+	PromMetricsIpPortAddress      string `yaml:"prometheus_metrics_ip_port_address"`
 }
 
 type Clients struct {
@@ -44,7 +44,7 @@ func BuildClients(config Config, logger logging.Logger) (*Clients, error) {
 
 	// Create the metrics server
 	reg := prometheus.NewRegistry()
-	eigenMetrics := metrics.NewEigenMetrics(config.AvsName, config.IpPortAddress, reg, logger)
+	eigenMetrics := metrics.NewEigenMetrics(config.AvsName, config.PromMetricsIpPortAddress, reg, logger)
 
 	// creating two types of Eth clients: HTTP and WS
 	ethHttpClient, err := eth.NewClient(config.EthHttpUrl)
