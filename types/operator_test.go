@@ -9,11 +9,11 @@ import (
 
 func TestOperatorValidate(t *testing.T) {
 	metadata := OperatorMetadata{
-		Name:              "test",
-		Description:       "test",
-		Logo:              "https://test.com/test.png",
-		TwitterProfileUrl: "https://twitter.com/test",
-		Website:           "https://test.com",
+		Name:        "test",
+		Description: "test",
+		Logo:        "https://test.com/test.png",
+		Twitter:     "https://twitter.com/test",
+		Website:     "https://test.com",
 	}
 
 	var tests = []struct {
