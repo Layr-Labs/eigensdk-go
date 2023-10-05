@@ -83,6 +83,7 @@ type StakeAmount = *big.Int
 // It is currently the hash of the operator's G1 pubkey (in the bls pubkey registry)
 type OperatorId = [32]byte
 type QuorumNum = uint8
+type QuorumThresholdPercentage = uint32
 type BlockNumber = uint32
 
 // AvsOperator represents the operator state in AVS registries
@@ -107,4 +108,11 @@ func BitmapToQuorumIds(bitmap *big.Int) []QuorumNum {
 		}
 	}
 	return quorumIds
+}
+
+type QuorumAvsState struct {
+	QuorumNumber QuorumNum
+	TotalStake   StakeAmount
+	AggPubkeyG1  *bls.G1Point
+	BlockNumber  BlockNumber
 }
