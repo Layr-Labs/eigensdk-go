@@ -3,8 +3,10 @@ package bls
 import (
 	"crypto/rand"
 	"encoding/json"
+	"fmt"
 	"math/big"
 	"os"
+	"path/filepath"
 
 	bn254utils "github.com/Layr-Labs/eigensdk-go/crypto/bn254"
 
@@ -196,6 +198,11 @@ func (k *KeyPair) SaveToFile(path string, password string) error {
 		return err
 	}
 
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		fmt.Println("Error creating directories:", err)
+		return err
+	}
 	err = os.WriteFile(path, data, 0644)
 	if err != nil {
 		return err
