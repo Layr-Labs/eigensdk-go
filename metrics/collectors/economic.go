@@ -3,10 +3,12 @@ package collectors
 
 import (
 	"context"
-	"math/big"
+	"strconv"
 
+	"github.com/Layr-Labs/eigensdk-go/chainio/avsregistry"
 	"github.com/Layr-Labs/eigensdk-go/chainio/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -21,11 +23,13 @@ import (
 // so that they are exported on the same port
 type EconomicCollector struct {
 	// TODO(samlaf): we use a chain as the backend for now, but should eventually move to a subgraph
-	elReader elcontracts.ELReader
-	logger   logging.Logger
+	elReader          elcontracts.ELReader
+	avsRegistryReader avsregistry.AvsRegistryReader
+	logger            logging.Logger
 	// params to query the metrics for
-	operatorAddr  common.Address
-	strategyAddrs []common.Address
+	operatorAddr common.Address
+	operatorId   types.OperatorId
+	quorumNames  map[types.QuorumNum]string
 	// metrics
 	// TODO(samlaf): I feel like eigenlayer-core metrics like slashingStatus and delegatedShares, which are not avs specific,
 	// should not be here, and should instead be collected by some eigenlayer-cli daemon or something, since
@@ -33,11 +37,6 @@ type EconomicCollector struct {
 
 	// slashingStatus is 1 when the operator has been slashed, and 0 otherwise
 	slashingStatus *prometheus.Desc
-	// delegatedShares is the total shares delegated to the operator in each strategy
-	// strategies are currently token specific, and we have one for cbETH, rETH, and stETH,
-	// but they will eventually be more generic and could support multiple tokens
-	// right now, 1 token deposit = 1 share
-	delegatedShares *prometheus.Desc
 	// registeredStake is the current stake of the operator in the avs registry contract's view
 	// stake is a weighted linear combination of strategyManager shares in different strategies
 	// stakes are updated by calling updateStakes() on the StakeRegistry contract, which pulls the
@@ -49,17 +48,33 @@ type EconomicCollector struct {
 	// then the operator's registeredStake will remain 600 until updateStakes() is called, at which point it will
 	// drop to the correct value of 300.
 	registeredStake *prometheus.Desc
+	
+	// TODO(samlaf): Removing this as not part of avs node spec anymore.
+	// delegatedShares is the total shares delegated to the operator in each strategy
+	// strategies are currently token specific, and we have one for cbETH, rETH, and stETH,
+	// but they will eventually be more generic and could support multiple tokens
+	// right now, 1 token deposit = 1 share
+	// delegatedShares *prometheus.Desc
 }
 
+var _ prometheus.Collector = (*EconomicCollector)(nil)
+
 func NewEconomicCollector(
-	elReader elcontracts.ELReader, avsName string, logger logging.Logger,
-	operatorAddr common.Address, strategyAddrs []common.Address,
+	elReader elcontracts.ELReader, avsRegistryReader avsregistry.AvsRegistryReader,
+	avsName string, logger logging.Logger,
+	operatorAddr common.Address, quorumNames map[types.QuorumNum]string,
 ) *EconomicCollector {
+	operatorId, err := avsRegistryReader.GetOperatorId(context.Background(), operatorAddr)
+	if err != nil {
+		logger.Error("Failed to get operator id", "err", err)
+	}
 	return &EconomicCollector{
-		elReader:      elReader,
-		logger:        logger,
-		operatorAddr:  operatorAddr,
-		strategyAddrs: strategyAddrs,
+		elReader:          elReader,
+		avsRegistryReader: avsRegistryReader,
+		logger:            logger,
+		operatorAddr:      operatorAddr,
+		operatorId:        operatorId,
+		quorumNames:       quorumNames,
 		slashingStatus: prometheus.NewDesc(
 			"eigen_slashing_status",
 			"Whether the operator has been slashed",
@@ -68,19 +83,19 @@ func NewEconomicCollector(
 			// no avs_name label since slashing is not avs specific
 			prometheus.Labels{},
 		),
-		delegatedShares: prometheus.NewDesc(
-			"eigen_delegated_shares",
-			"Operator delegated shares in <strategy>, in units of <unit> (wei, gwei, or eth).",
-			// each strategy has a single token for now (eg. stETH, rETH, cbETH), so we add the token label for now
-			[]string{"strategy", "unit", "token"},
-			prometheus.Labels{},
-		),
 		registeredStake: prometheus.NewDesc(
 			"eigen_registered_stakes",
 			"Operator stake in <quorum> of <avs_name>'s StakeRegistry contract",
-			[]string{"quorum"},
+			[]string{"quorum_number", "quorum_name"},
 			prometheus.Labels{"avs_name": avsName},
 		),
+		// delegatedShares: prometheus.NewDesc(
+		// 	"eigen_delegated_shares",
+		// 	"Operator delegated shares in <strategy>, in units of <unit> (wei, gwei, or eth).",
+		// 	// each strategy has a single token for now (eg. stETH, rETH, cbETH), so we add the token label for now
+		// 	[]string{"strategy", "unit", "token"},
+		// 	prometheus.Labels{},
+		// ),
 	}
 }
 
@@ -91,8 +106,8 @@ func NewEconomicCollector(
 // descriptors.
 func (ec *EconomicCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- ec.slashingStatus
-	ch <- ec.delegatedShares
 	ch <- ec.registeredStake
+	// ch <- ec.delegatedShares
 }
 
 // Collect function for the exported slashingIncurredTotal and balanceTotal metrics
@@ -116,28 +131,46 @@ func (ec *EconomicCollector) Collect(ch chan<- prometheus.Metric) {
 		ch <- prometheus.MustNewConstMetric(ec.slashingStatus, prometheus.CounterValue, operatorIsFrozenFloat)
 	}
 
-	// collect delegatedShares metric
-	for _, strategyAddr := range ec.strategyAddrs {
-		sharesWei, err := ec.elReader.GetOperatorSharesInStrategy(context.Background(), ec.operatorAddr, strategyAddr)
-		if err != nil {
-			ec.logger.Error("Failed to get shares", "err", err)
-		} else {
-			// We'll emit all 3 units in case this is needed for whatever reason
-			// might want to change this behavior if this is emitting too many metrics
-			sharesWeiFloat, _ := sharesWei.Float64()
-			// TODO(samlaf): add the token name.. probably need to have a hardcoded dict per env (mainnet, goerli, etc)? Is it really that important..?
-			ch <- prometheus.MustNewConstMetric(ec.delegatedShares, prometheus.GaugeValue, sharesWeiFloat, strategyAddr.String(), "wei", "token")
-
-			sharesGweiFloat, _ := sharesWei.Div(sharesWei, big.NewInt(1e9)).Float64()
-			ch <- prometheus.MustNewConstMetric(ec.delegatedShares, prometheus.GaugeValue, sharesGweiFloat, strategyAddr.String(), "gwei", "token")
-
-			sharesEtherFloat, _ := sharesWei.Div(sharesWei, big.NewInt(1e18)).Float64()
-			ch <- prometheus.MustNewConstMetric(ec.delegatedShares, prometheus.GaugeValue, sharesEtherFloat, strategyAddr.String(), "ether", "token")
-		}
-	}
-
 	// collect registeredStake metric
 	// TODO(samlaf): implement this. probably have to call the BLSOperatorStateRetriever contract?
 	// probably should start using the avsregistry service instead of chainio clients so that we can
 	// swap out backend for a subgraph eventually
+	quorumNums, blsOperatorStateRetrieverOperator, err := ec.avsRegistryReader.GetOperatorsStakeInQuorumsOfOperatorAtCurrentBlock(context.Background(), ec.operatorId)
+	if err != nil {
+		ec.logger.Error("Failed to get operator stake", "err", err)
+	} else {
+		for quorumIdx, quorumNum := range quorumNums {
+			// TODO: this is stupid.. when AVSs scale to have 5K operators we'll be running through a bunch of operators
+			// we should instead just call registryCoordinator.getQuorumBitmapIndicesByOperatorIdsAtBlockNumber
+			// and stakeRegistry.getStakeForOperatorIdForQuorumAtBlockNumber directly
+			for _, operator := range blsOperatorStateRetrieverOperator[quorumIdx] {
+				if operator.OperatorId == ec.operatorId {
+					stakeFloat64, _ := operator.Stake.Float64()
+					ch <- prometheus.MustNewConstMetric(
+						ec.registeredStake, prometheus.GaugeValue, stakeFloat64, strconv.Itoa(int(quorumNum)), ec.quorumNames[quorumNum],
+					)
+				}
+			}
+		}
+	}
+
+	// collect delegatedShares metric
+	// for _, strategyAddr := range ec.strategyAddrs {
+	// 	sharesWei, err := ec.elReader.GetOperatorSharesInStrategy(context.Background(), ec.operatorAddr, strategyAddr)
+	// 	if err != nil {
+	// 		ec.logger.Error("Failed to get shares", "err", err)
+	// 	} else {
+	// 		// We'll emit all 3 units in case this is needed for whatever reason
+	// 		// might want to change this behavior if this is emitting too many metrics
+	// 		sharesWeiFloat, _ := sharesWei.Float64()
+	// 		// TODO(samlaf): add the token name.. probably need to have a hardcoded dict per env (mainnet, goerli, etc)? Is it really that important..?
+	// 		ch <- prometheus.MustNewConstMetric(ec.delegatedShares, prometheus.GaugeValue, sharesWeiFloat, strategyAddr.String(), "wei", "token")
+
+	// 		sharesGweiFloat, _ := sharesWei.Div(sharesWei, big.NewInt(1e9)).Float64()
+	// 		ch <- prometheus.MustNewConstMetric(ec.delegatedShares, prometheus.GaugeValue, sharesGweiFloat, strategyAddr.String(), "gwei", "token")
+
+	// 		sharesEtherFloat, _ := sharesWei.Div(sharesWei, big.NewInt(1e18)).Float64()
+	// 		ch <- prometheus.MustNewConstMetric(ec.delegatedShares, prometheus.GaugeValue, sharesEtherFloat, strategyAddr.String(), "ether", "token")
+	// 	}
+	// }
 }

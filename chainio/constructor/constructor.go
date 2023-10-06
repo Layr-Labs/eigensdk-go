@@ -243,7 +243,7 @@ func (config *Config) buildAvsRegistryContractsChainClient(
 		return nil, err
 	}
 
-	avsregistryContractsChainClient, err := clients.NewAVSContractsChainClient(
+	avsregistryContractsChainClient, err := clients.NewAvsRegistryContractsChainClient(
 		blsRegistryCoordinatorAddr,
 		gethcommon.HexToAddress(config.BlsOperatorStateRetrieverAddr),
 		stakeregistryAddr,

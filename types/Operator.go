@@ -93,3 +93,18 @@ type OperatorAvsState struct {
 	StakePerQuorum map[QuorumNum]StakeAmount
 	BlockNumber    BlockNumber
 }
+
+var (
+	maxNumberOfQuorums = 192
+)
+
+func BitmapToQuorumIds(bitmap *big.Int) []QuorumNum {
+	// loop through each index in the bitmap to construct the array
+	quorumIds := make([]QuorumNum, 0, maxNumberOfQuorums)
+	for i := 0; i < maxNumberOfQuorums; i++ {
+		if bitmap.Bit(i) == 1 {
+			quorumIds = append(quorumIds, QuorumNum(i))
+		}
+	}
+	return quorumIds
+}

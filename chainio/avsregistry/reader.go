@@ -2,11 +2,13 @@ package avsregistry
 
 import (
 	"context"
+	"math"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	blsoperatorstateretrievar "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSOperatorStateRetriever"
 	"github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 )
@@ -17,6 +19,17 @@ type AvsRegistryReader interface {
 		quorumNumbers []byte,
 		blockNumber uint32,
 	) ([][]blsoperatorstateretrievar.BLSOperatorStateRetrieverOperator, error)
+
+	GetOperatorsStakeInQuorumsOfOperatorAtBlock(
+		ctx context.Context,
+		operatorId types.OperatorId,
+		blockNumber uint32,
+	) ([]types.QuorumNum, [][]blsoperatorstateretrievar.BLSOperatorStateRetrieverOperator, error)
+
+	GetOperatorsStakeInQuorumsOfOperatorAtCurrentBlock(
+		ctx context.Context,
+		operatorId types.OperatorId,
+	) ([]types.QuorumNum, [][]blsoperatorstateretrievar.BLSOperatorStateRetrieverOperator, error)
 
 	GetCheckSignaturesIndices(
 		ctx context.Context,
@@ -61,11 +74,44 @@ func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsAtBlock(
 		quorumNumbers,
 		blockNumber)
 	if err != nil {
-		r.logger.Error("Failed to get operator state", "err", err)
+		r.logger.Error("Failed to get operators state", "err", err)
 		return nil, err
 	}
 
 	return operatorStakes, nil
+}
+
+func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsOfOperatorAtBlock(
+	ctx context.Context,
+	operatorId types.OperatorId,
+	blockNumber uint32,
+) ([]types.QuorumNum, [][]blsoperatorstateretrievar.BLSOperatorStateRetrieverOperator, error) {
+	quorums, operatorStakes, err := r.avsRegistryContractsClient.GetOperatorsStakeInQuorumsOfOperatorAtBlock(
+		&bind.CallOpts{},
+		operatorId,
+		blockNumber)
+	if err != nil {
+		r.logger.Error("Failed to get operators state", "err", err)
+		return nil, nil, err
+	}
+
+	return quorums, operatorStakes, nil
+}
+
+func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsOfOperatorAtCurrentBlock(
+	ctx context.Context,
+	operatorId types.OperatorId,
+) ([]types.QuorumNum, [][]blsoperatorstateretrievar.BLSOperatorStateRetrieverOperator, error) {
+	curBlock, err := r.ethClient.BlockNumber(ctx)
+	if err != nil {
+		r.logger.Error("Failed to get current block number", "err", err)
+		return nil, nil, err
+	}
+	if curBlock > math.MaxUint32 {
+		r.logger.Error("Current block number is too large to be converted to uint32")
+		return nil, nil, err
+	}
+	return r.GetOperatorsStakeInQuorumsOfOperatorAtBlock(ctx, operatorId, uint32(curBlock))
 }
 
 func (r *AvsRegistryChainReader) GetCheckSignaturesIndices(
