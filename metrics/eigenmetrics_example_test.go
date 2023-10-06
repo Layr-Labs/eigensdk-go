@@ -7,12 +7,14 @@ package metrics_test
 import (
 	"context"
 
+	"github.com/Layr-Labs/eigensdk-go/chainio/avsregistry"
 	sdkclients "github.com/Layr-Labs/eigensdk-go/chainio/clients"
 	ethclients "github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/chainio/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/metrics"
 	"github.com/Layr-Labs/eigensdk-go/metrics/collectors"
+	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -50,11 +52,23 @@ func ExampleEigenMetrics() {
 		panic(err)
 	}
 
+	blsRegistryCoordAddr := common.HexToAddress("0x0")
+	blsOperatorStateRetrieverAddr := common.HexToAddress("0x0")
+	stakeRegistry := common.HexToAddress("0x0")
+	blsPubkeyRegistryAddr := common.HexToAddress("0x0")
+	avsRegistryClients, err := sdkclients.NewAvsRegistryContractsChainClient(
+		blsRegistryCoordAddr, blsOperatorStateRetrieverAddr, stakeRegistry, blsPubkeyRegistryAddr, ethHttpClient, logger,
+	)
+	avsRegistryReader, err := avsregistry.NewAvsRegistryReader(avsRegistryClients, logger, ethHttpClient)
+
 	operatorAddr := common.HexToAddress("0x0")
-	strategyAddrs := []common.Address{common.HexToAddress("0x0")}
+	quorumNames := map[types.QuorumNum]string{
+		0: "ethQuorum",
+		1: "someOtherTokenQuorum",
+	}
 	// We must register the economic metrics separately because they are exported metrics (from jsonrpc or subgraph calls)
 	// and not instrumented metrics: see https://prometheus.io/docs/instrumenting/writing_clientlibs/#overall-structure
-	economicMetricsCollector := collectors.NewEconomicCollector(eigenlayerReader, "exampleAvs", logger, operatorAddr, strategyAddrs)
+	economicMetricsCollector := collectors.NewEconomicCollector(eigenlayerReader, avsRegistryReader, "exampleAvs", logger, operatorAddr, quorumNames)
 	reg.MustRegister(economicMetricsCollector)
 
 	eigenMetrics.Start(context.Background(), reg)

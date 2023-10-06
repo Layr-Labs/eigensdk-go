@@ -8,6 +8,7 @@ import (
 	blspubkeyregistry "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPubkeyRegistry"
 	regcoord "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSRegistryCoordinatorWithIndices"
 	"github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/types"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -29,9 +30,15 @@ type AVSRegistryContractsClient interface {
 
 	GetOperatorsStakeInQuorumsAtBlock(
 		opts *bind.CallOpts,
-		quorumNumbers []byte,
+		quorumNumbers []types.QuorumNum,
 		blockNumber uint32,
 	) ([][]blsoperatorstateretrievar.BLSOperatorStateRetrieverOperator, error)
+
+	GetOperatorsStakeInQuorumsOfOperatorAtBlock(
+		opts *bind.CallOpts,
+		operatorId types.OperatorId,
+		blockNumber uint32,
+	) ([]types.QuorumNum, [][]blsoperatorstateretrievar.BLSOperatorStateRetrieverOperator, error)
 
 	GetCheckSignaturesIndices(
 		opts *bind.CallOpts,
@@ -55,23 +62,23 @@ type AVSRegistryContractsClient interface {
 	) (*gethTypes.Transaction, error)
 }
 
-type AvsregistryContractsChainClient struct {
+type AvsRegistryContractsChainClient struct {
 	avsRegistryBindings     *avsRegistryContractBindings
 	ethHttpClient           eth.EthClient
 	registryCoordinatorAddr gethcommon.Address
 	logger                  logging.Logger
 }
 
-var _ AVSRegistryContractsClient = (*AvsregistryContractsChainClient)(nil)
+var _ AVSRegistryContractsClient = (*AvsRegistryContractsChainClient)(nil)
 
-func NewAVSContractsChainClient(
+func NewAvsRegistryContractsChainClient(
 	blsRegistryCoordinatorAddr gethcommon.Address,
 	blsOperatorStateRetrieverAddr gethcommon.Address,
 	stakeregistryAddr gethcommon.Address,
 	blsPubkeyRegistryAddr gethcommon.Address,
 	ethClient eth.EthClient,
 	logger logging.Logger,
-) (*AvsregistryContractsChainClient, error) {
+) (*AvsRegistryContractsChainClient, error) {
 	avsRegistryBindings, err := newAVSRegistryContractBindings(
 		blsRegistryCoordinatorAddr,
 		blsOperatorStateRetrieverAddr,
@@ -83,7 +90,7 @@ func NewAVSContractsChainClient(
 		return nil, err
 	}
 
-	return &AvsregistryContractsChainClient{
+	return &AvsRegistryContractsChainClient{
 		avsRegistryBindings:     avsRegistryBindings,
 		ethHttpClient:           ethClient,
 		registryCoordinatorAddr: blsRegistryCoordinatorAddr,
@@ -92,7 +99,7 @@ func NewAVSContractsChainClient(
 }
 
 // Registration specific functions
-func (a *AvsregistryContractsChainClient) RegisterOperatorWithCoordinator(
+func (a *AvsRegistryContractsChainClient) RegisterOperatorWithCoordinator(
 	opts *bind.TransactOpts,
 	quorumNumbers []byte,
 	pubkey regcoord.BN254G1Point,
@@ -106,14 +113,14 @@ func (a *AvsregistryContractsChainClient) RegisterOperatorWithCoordinator(
 	)
 }
 
-func (a *AvsregistryContractsChainClient) GetOperatorId(
+func (a *AvsRegistryContractsChainClient) GetOperatorId(
 	opts *bind.CallOpts,
 	operatorAddress gethcommon.Address,
 ) ([32]byte, error) {
 	return a.avsRegistryBindings.RegistryCoordinator.GetOperatorId(opts, operatorAddress)
 }
 
-func (a *AvsregistryContractsChainClient) GetOperatorsStakeInQuorumsAtBlock(
+func (a *AvsRegistryContractsChainClient) GetOperatorsStakeInQuorumsAtBlock(
 	opts *bind.CallOpts,
 	quorumNumbers []byte,
 	blockNumber uint32,
@@ -125,7 +132,25 @@ func (a *AvsregistryContractsChainClient) GetOperatorsStakeInQuorumsAtBlock(
 		blockNumber)
 }
 
-func (a *AvsregistryContractsChainClient) GetCheckSignaturesIndices(
+func (a *AvsRegistryContractsChainClient) GetOperatorsStakeInQuorumsOfOperatorAtBlock(
+	opts *bind.CallOpts,
+	operatorId types.OperatorId,
+	blockNumber uint32,
+) ([]types.QuorumNum, [][]blsoperatorstateretrievar.BLSOperatorStateRetrieverOperator, error) {
+	quorumBitmap, blsOperatorStateRetrieverOperator, err := a.avsRegistryBindings.BlsOperatorStateRetriever.GetOperatorState0(
+		opts,
+		a.registryCoordinatorAddr,
+		operatorId,
+		blockNumber)
+	if err != nil {
+		return nil, nil, err
+	} else {
+		quorums := types.BitmapToQuorumIds(quorumBitmap)
+		return quorums, blsOperatorStateRetrieverOperator, nil
+	}
+}
+
+func (a *AvsRegistryContractsChainClient) GetCheckSignaturesIndices(
 	opts *bind.CallOpts,
 	referenceBlockNumber uint32,
 	quorumNumbers []byte,
@@ -139,7 +164,7 @@ func (a *AvsregistryContractsChainClient) GetCheckSignaturesIndices(
 		nonSignerOperatorIds)
 }
 
-func (a *AvsregistryContractsChainClient) UpdateStakes(
+func (a *AvsRegistryContractsChainClient) UpdateStakes(
 	opts *bind.TransactOpts,
 	operators []gethcommon.Address,
 	operatorIds [][32]byte,
@@ -152,7 +177,7 @@ func (a *AvsregistryContractsChainClient) UpdateStakes(
 		prevElements)
 }
 
-func (a *AvsregistryContractsChainClient) DeregisterOperator(
+func (a *AvsRegistryContractsChainClient) DeregisterOperator(
 	opts *bind.TransactOpts,
 	operator gethcommon.Address,
 	quorumNumbers []byte,

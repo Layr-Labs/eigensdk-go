@@ -100,6 +100,22 @@ func (mr *MockAVSRegistryContractsClientMockRecorder) GetOperatorsStakeInQuorums
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOperatorsStakeInQuorumsAtBlock", reflect.TypeOf((*MockAVSRegistryContractsClient)(nil).GetOperatorsStakeInQuorumsAtBlock), arg0, arg1, arg2)
 }
 
+// GetOperatorsStakeInQuorumsOfOperatorAtBlock mocks base method.
+func (m *MockAVSRegistryContractsClient) GetOperatorsStakeInQuorumsOfOperatorAtBlock(arg0 *bind.CallOpts, arg1 [32]byte, arg2 uint32) ([]byte, [][]contractBLSOperatorStateRetriever.BLSOperatorStateRetrieverOperator, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetOperatorsStakeInQuorumsOfOperatorAtBlock", arg0, arg1, arg2)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].([][]contractBLSOperatorStateRetriever.BLSOperatorStateRetrieverOperator)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetOperatorsStakeInQuorumsOfOperatorAtBlock indicates an expected call of GetOperatorsStakeInQuorumsOfOperatorAtBlock.
+func (mr *MockAVSRegistryContractsClientMockRecorder) GetOperatorsStakeInQuorumsOfOperatorAtBlock(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOperatorsStakeInQuorumsOfOperatorAtBlock", reflect.TypeOf((*MockAVSRegistryContractsClient)(nil).GetOperatorsStakeInQuorumsOfOperatorAtBlock), arg0, arg1, arg2)
+}
+
 // RegisterOperatorWithCoordinator mocks base method.
 func (m *MockAVSRegistryContractsClient) RegisterOperatorWithCoordinator(arg0 *bind.TransactOpts, arg1 []byte, arg2 contractBLSRegistryCoordinatorWithIndices.BN254G1Point, arg3 string) (*types.Transaction, error) {
 	m.ctrl.T.Helper()
