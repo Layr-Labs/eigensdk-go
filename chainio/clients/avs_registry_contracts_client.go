@@ -144,10 +144,9 @@ func (a *AvsRegistryContractsChainClient) GetOperatorsStakeInQuorumsOfOperatorAt
 		blockNumber)
 	if err != nil {
 		return nil, nil, err
-	} else {
-		quorums := types.BitmapToQuorumIds(quorumBitmap)
-		return quorums, blsOperatorStateRetrieverOperator, nil
 	}
+	quorums := types.BitmapToQuorumIds(quorumBitmap)
+	return quorums, blsOperatorStateRetrieverOperator, nil
 }
 
 func (a *AvsRegistryContractsChainClient) GetCheckSignaturesIndices(
