@@ -17,9 +17,6 @@ func NewNoopMetrics() *NoopMetrics {
 
 func (m *NoopMetrics) AddFeeEarnedTotal(amount float64, token string) {}
 func (m *NoopMetrics) SetPerformanceScore(score float64)              {}
-func (m *NoopMetrics) ObserveRPCRequestDurationSeconds(duration float64, method, client, version string) {
-}
-func (m *NoopMetrics) AddRPCRequestTotal(method, client, version string) {}
 func (m *NoopMetrics) Start(ctx context.Context, reg prometheus.Gatherer) <-chan error {
 	return nil
 }
