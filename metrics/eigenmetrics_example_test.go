@@ -9,11 +9,12 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/avsregistry"
 	sdkclients "github.com/Layr-Labs/eigensdk-go/chainio/clients"
-	ethclients "github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/chainio/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/metrics"
-	"github.com/Layr-Labs/eigensdk-go/metrics/collectors"
+	"github.com/Layr-Labs/eigensdk-go/metrics/collectors/economic"
+	rpccalls "github.com/Layr-Labs/eigensdk-go/metrics/collectors/rpc_calls"
 	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
@@ -35,11 +36,11 @@ func ExampleEigenMetrics() {
 
 	slasherAddr := common.HexToAddress("0x0")
 	blsPubKeyCompendiumAddr := common.HexToAddress("0x0")
-	ethHttpClient, err := ethclients.NewClient("http://localhost:8545")
+	ethHttpClient, err := eth.NewClient("http://localhost:8545")
 	if err != nil {
 		panic(err)
 	}
-	ethWsClient, err := ethclients.NewClient("ws://localhost:8545")
+	ethWsClient, err := eth.NewClient("ws://localhost:8545")
 	if err != nil {
 		panic(err)
 	}
@@ -74,8 +75,17 @@ func ExampleEigenMetrics() {
 	}
 	// We must register the economic metrics separately because they are exported metrics (from jsonrpc or subgraph calls)
 	// and not instrumented metrics: see https://prometheus.io/docs/instrumenting/writing_clientlibs/#overall-structure
-	economicMetricsCollector := collectors.NewEconomicCollector(eigenlayerReader, avsRegistryReader, "exampleAvs", logger, operatorAddr, quorumNames)
+	economicMetricsCollector := economic.NewCollector(eigenlayerReader, avsRegistryReader, "exampleAvs", logger, operatorAddr, quorumNames)
 	reg.MustRegister(economicMetricsCollector)
 
+	rpcCallsCollector := rpccalls.NewCollector("eigen", "exampleAvs", reg)
+	instrumentedEthClient, err := eth.NewInstrumentedClient("http://localhost:8545", rpcCallsCollector)
+	if err != nil {
+		panic(err)
+	}
+
 	eigenMetrics.Start(context.Background(), reg)
+
+	// use instrumentedEthClient as you would a normal ethClient
+	_ = instrumentedEthClient
 }

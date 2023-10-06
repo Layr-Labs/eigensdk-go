@@ -1,5 +1,5 @@
 // Package collectors contains custom prometheus collectors that are not just simple instrumented metrics
-package collectors
+package economic
 
 import (
 	"context"
@@ -13,15 +13,15 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// EconomicCollector to export the economic metrics listed at
+// Collector exports the economic metrics listed at
 //
 //	https://eigen.nethermind.io/docs/spec/metrics/metrics-examples#economics-metrics
 //
 // these are metrics that are exported not via instrumentation, but instead by proxying
 // a call to the relevant eigenlayer contracts
-// EconomicCollector should be registered in the same prometheus registry that is passed to metrics.NewEigenMetrics
+// Collector should be registered in the same prometheus registry that is passed to metrics.NewEigenMetrics
 // so that they are exported on the same port
-type EconomicCollector struct {
+type Collector struct {
 	// TODO(samlaf): we use a chain as the backend for now, but should eventually move to a subgraph
 	elReader          elcontracts.ELReader
 	avsRegistryReader avsregistry.AvsRegistryReader
@@ -48,7 +48,7 @@ type EconomicCollector struct {
 	// then the operator's registeredStake will remain 600 until updateStakes() is called, at which point it will
 	// drop to the correct value of 300.
 	registeredStake *prometheus.Desc
-	
+
 	// TODO(samlaf): Removing this as not part of avs node spec anymore.
 	// delegatedShares is the total shares delegated to the operator in each strategy
 	// strategies are currently token specific, and we have one for cbETH, rETH, and stETH,
@@ -57,18 +57,18 @@ type EconomicCollector struct {
 	// delegatedShares *prometheus.Desc
 }
 
-var _ prometheus.Collector = (*EconomicCollector)(nil)
+var _ prometheus.Collector = (*Collector)(nil)
 
-func NewEconomicCollector(
+func NewCollector(
 	elReader elcontracts.ELReader, avsRegistryReader avsregistry.AvsRegistryReader,
 	avsName string, logger logging.Logger,
 	operatorAddr common.Address, quorumNames map[types.QuorumNum]string,
-) *EconomicCollector {
+) *Collector {
 	operatorId, err := avsRegistryReader.GetOperatorId(context.Background(), operatorAddr)
 	if err != nil {
 		logger.Error("Failed to get operator id", "err", err)
 	}
-	return &EconomicCollector{
+	return &Collector{
 		elReader:          elReader,
 		avsRegistryReader: avsRegistryReader,
 		logger:            logger,
@@ -104,7 +104,7 @@ func NewEconomicCollector(
 // Describe is implemented with DescribeByCollect. That's possible because the
 // Collect method will always return the same two metrics with the same two
 // descriptors.
-func (ec *EconomicCollector) Describe(ch chan<- *prometheus.Desc) {
+func (ec *Collector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- ec.slashingStatus
 	ch <- ec.registeredStake
 	// ch <- ec.delegatedShares
@@ -114,7 +114,7 @@ func (ec *EconomicCollector) Describe(ch chan<- *prometheus.Desc) {
 // see https://github.com/prometheus/client_golang/blob/v1.16.0/prometheus/collector.go#L27
 // collect just makes jsonrpc calls to the slasher and delegationManager and then creates
 // constant metrics with the results
-func (ec *EconomicCollector) Collect(ch chan<- prometheus.Metric) {
+func (ec *Collector) Collect(ch chan<- prometheus.Metric) {
 	// collect slashingStatus metric
 	// TODO(samlaf): note that this call is not avs specific, so every avs will have the same value if the operator has been slashed
 	// if we want instead to only output 1 if the operator has been slashed for a specific avs, we have 2 choices:

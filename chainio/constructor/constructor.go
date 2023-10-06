@@ -28,6 +28,11 @@ type Config struct {
 	PromMetricsIpPortAddress      string `yaml:"prometheus_metrics_ip_port_address"`
 }
 
+// TODO: this is confusing right now because clients are not instrumented clients, but
+// we return metrics and prometheus reg, so user has to build instrumented clients at the call
+// site if they need them. We should probably separate into two separate constructors, one
+// for non-instrumented clients that doesn't return metrics/reg, and another instrumented-constructor
+// that returns instrumented clients and the metrics/reg.
 type Clients struct {
 	AvsRegistryChainReader avsregistry.AvsRegistryReader
 	AvsRegistryChainWriter avsregistry.AvsRegistryWriter

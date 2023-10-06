@@ -1,4 +1,4 @@
-package collectors
+package economic
 
 import (
 	"math/big"
@@ -53,7 +53,7 @@ func TestEconomicCollector(t *testing.T) {
 	avsRegistryReader.EXPECT().GetOperatorId(gomock.Any(), operatorAddr).Return(operatorId, nil)
 
 	logger := logging.NewNoopLogger()
-	economicCollector := NewEconomicCollector(ethReader, avsRegistryReader, "testavs", logger, operatorAddr, quorumNames)
+	economicCollector := NewCollector(ethReader, avsRegistryReader, "testavs", logger, operatorAddr, quorumNames)
 
 	count := testutil.CollectAndCount(economicCollector, "eigen_slashing_status", "eigen_registered_stakes")
 	// 1 for eigen_slashing_status, and 2 for eigen_registered_stakes (1 per quorum)
