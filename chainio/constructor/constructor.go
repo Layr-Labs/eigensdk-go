@@ -34,6 +34,7 @@ type Clients struct {
 	ElChainReader          elcontracts.ELReader
 	ElChainSubscriber      elcontracts.ELSubscriber
 	ElChainWriter          elcontracts.ELWriter
+	// TODO: should we return instrumented clients as well?
 	EthHttpClient          *eth.Client
 	EthWsClient            *eth.Client
 	Metrics                *metrics.EigenMetrics // exposes main avs node spec metrics that need to be incremented by avs code and used to start the metrics server
