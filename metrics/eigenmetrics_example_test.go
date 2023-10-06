@@ -79,7 +79,13 @@ func ExampleEigenMetrics() {
 	reg.MustRegister(economicMetricsCollector)
 
 	rpcCallsCollector := rpccalls.NewCollector("eigen", "exampleAvs", reg)
-	eth.NewInstrumentedClient("http://localhost:8545", rpcCallsCollector)
+	instrumentedEthClient, err := eth.NewInstrumentedClient("http://localhost:8545", rpcCallsCollector)
+	if err != nil {
+		panic(err)
+	}
 
 	eigenMetrics.Start(context.Background(), reg)
+
+	// use instrumentedEthClient as you would a normal ethClient
+	_ = instrumentedEthClient
 }
