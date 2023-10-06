@@ -59,7 +59,13 @@ func ExampleEigenMetrics() {
 	avsRegistryClients, err := sdkclients.NewAvsRegistryContractsChainClient(
 		blsRegistryCoordAddr, blsOperatorStateRetrieverAddr, stakeRegistry, blsPubkeyRegistryAddr, ethHttpClient, logger,
 	)
+	if err != nil {
+		panic(err)
+	}
 	avsRegistryReader, err := avsregistry.NewAvsRegistryReader(avsRegistryClients, logger, ethHttpClient)
+	if err != nil {
+		panic(err)
+	}
 
 	operatorAddr := common.HexToAddress("0x0")
 	quorumNames := map[types.QuorumNum]string{
