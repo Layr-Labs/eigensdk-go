@@ -141,7 +141,8 @@ func (a *AvsRegistryContractsChainClient) GetOperatorsStakeInQuorumsOfOperatorAt
 		opts,
 		a.registryCoordinatorAddr,
 		operatorId,
-		blockNumber)
+		blockNumber,
+	)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -18,8 +18,8 @@ type EigenMetrics struct {
 	logger        logging.Logger
 	// metrics
 	// fees are not yet turned on, so these should just be 0 for the time being
-	feeEarnedTotal            *prometheus.CounterVec
-	performanceScore          prometheus.Gauge
+	feeEarnedTotal   *prometheus.CounterVec
+	performanceScore prometheus.Gauge
 }
 
 var _ Metrics = (*EigenMetrics)(nil)
