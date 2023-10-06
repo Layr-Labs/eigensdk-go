@@ -15,7 +15,7 @@ func TestBlsKeyCreation(t *testing.T) {
 		wantErr  bool
 	}{
 		"valid bls key save": {
-			keyPath:  "./operator_keys/test.bls.key.json",
+			keyPath:  "./operator_keys_test_directory/test.bls.key.json",
 			password: "test",
 			wantErr:  false,
 		},
@@ -35,6 +35,14 @@ func TestBlsKeyCreation(t *testing.T) {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
+			}
+
+			readKeyPair, err := ReadPrivateKeyFromFile(tt.keyPath, tt.password)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, randomKey, readKeyPair)
 			}
 		})
 	}
