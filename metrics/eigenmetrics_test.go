@@ -44,8 +44,6 @@ func (suite *MetricsTestSuite) TestEigenMetricsServerIntegration() {
 
 	suite.metrics.AddFeeEarnedTotal(1, "testtoken")
 	suite.metrics.SetPerformanceScore(1)
-	suite.metrics.ObserveRPCRequestDurationSeconds(1, "testmethod", "testclient", "testversion")
-	suite.metrics.AddRPCRequestTotal("testmethod", "testclient", "testversion")
 
 	resp, err := http.Get("http://localhost:9090/metrics")
 	assert.NoError(suite.T(), err)
@@ -57,8 +55,6 @@ func (suite *MetricsTestSuite) TestEigenMetricsServerIntegration() {
 	// the other metrics have labels (they are vectors) so they don't appear in the output unless we use them once at least
 	assert.Contains(suite.T(), string(body), "eigen_fees_earned_total")
 	assert.Contains(suite.T(), string(body), "eigen_performance_score")
-	assert.Contains(suite.T(), string(body), "eigen_rpc_request_duration_seconds")
-	assert.Contains(suite.T(), string(body), "eigen_rpc_request_total")
 }
 
 // The below tests are very pedantic but at least show how avs teams can make use of
@@ -73,18 +69,6 @@ func (suite *MetricsTestSuite) TestAddEigenFeeEarnedTotal() {
 func (suite *MetricsTestSuite) TestSetEigenPerformanceScore() {
 	suite.metrics.SetPerformanceScore(1)
 	assert.Equal(suite.T(), 1.0, testutil.ToFloat64(suite.metrics.performanceScore))
-}
-
-func (suite *MetricsTestSuite) TestObserveEigenRPCRequestDurationSeconds() {
-	suite.metrics.ObserveRPCRequestDurationSeconds(1, "testmethod", "testclient", "testversion")
-	// TODO(samlaf): not sure how to test histogram values.. there's no mention of histograms in
-	//               https://pkg.go.dev/github.com/prometheus/client_golang/prometheus/testutil
-	// assert.Equal(t, 1.0, testutil.ToFloat64(suite.metrics.rpcRequestDurationSeconds))
-}
-
-func (suite *MetricsTestSuite) TestAddEigenRPCRequestTotal() {
-	suite.metrics.AddRPCRequestTotal("testmethod", "testclient", "testversion")
-	assert.Equal(suite.T(), 1.0, testutil.ToFloat64(suite.metrics.rpcRequestTotal.WithLabelValues("testmethod", "testclient", "testversion")))
 }
 
 // In order for 'go test' to run this suite, we need to create
