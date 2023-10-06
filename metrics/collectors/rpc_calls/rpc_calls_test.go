@@ -10,7 +10,7 @@ import (
 
 func TestRpcCallsCollector(t *testing.T) {
 	reg := prometheus.NewRegistry()
-	rpcCallsCollector := NewCollector("testavs", "testname", reg)
+	rpcCallsCollector := NewCollector("testavs", reg)
 
 	rpcCallsCollector.ObserveRPCRequestDurationSeconds(1, "testmethod", "testclient/testversion")
 	// TODO(samlaf): not sure how to test histogram values.. there's no mention of histograms in
