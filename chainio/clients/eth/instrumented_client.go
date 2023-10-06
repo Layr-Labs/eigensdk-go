@@ -12,8 +12,13 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-// TODO(samlaf): should we instead be instrumenting the geth rpcClient directly?
-// since that is the one doing the actual rpc calls, where the name of the json method is passed in
+// InstrumentedClient is a wrapper around the geth ethclient that instruments 
+// all the calls made to it. It counts each eth_ call made to it, and records the duration of each call,
+// and exposes these as prometheus metrics
+// 
+// TODO: ideally this should be done at the rpcclient level, not the ethclient level, which would make
+// our life much easier... but geth implemented the gethclient using an rpcClient struct instead of interface...
+// see https://github.com/ethereum/go-ethereum/issues/28267
 type InstrumentedClient struct {
 	client  *ethclient.Client
 	metrics metrics.Metrics
