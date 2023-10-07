@@ -14,7 +14,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/metrics"
 	"github.com/Layr-Labs/eigensdk-go/metrics/collectors/economic"
-	rpccalls "github.com/Layr-Labs/eigensdk-go/metrics/collectors/rpc_calls"
+	"github.com/Layr-Labs/eigensdk-go/metrics/collectors/rpc_calls"
 	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
@@ -78,7 +78,7 @@ func ExampleEigenMetrics() {
 	economicMetricsCollector := economic.NewCollector(eigenlayerReader, avsRegistryReader, "exampleAvs", logger, operatorAddr, quorumNames)
 	reg.MustRegister(economicMetricsCollector)
 
-	rpcCallsCollector := rpccalls.NewCollector("eigen", "exampleAvs", reg)
+	rpcCallsCollector := rpccalls.NewCollector("exampleAvs", reg)
 	instrumentedEthClient, err := eth.NewInstrumentedClient("http://localhost:8545", rpcCallsCollector)
 	if err != nil {
 		panic(err)

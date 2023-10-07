@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/types"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -24,8 +25,6 @@ type EigenMetrics struct {
 
 var _ Metrics = (*EigenMetrics)(nil)
 
-const eigenNamespace = "eigen"
-
 // Follows the structure from https://pkg.go.dev/github.com/prometheus/client_golang/prometheus#hdr-A_Basic_Example
 // TODO(samlaf): I think each avs runs in a separate docker bridge network.
 // In order for prometheus to scrape the metrics does the address need to be 0.0.0.0:port to accept connections from other networks?
@@ -34,7 +33,7 @@ func NewEigenMetrics(avsName, ipPortAddress string, reg prometheus.Registerer, l
 	metrics := &EigenMetrics{
 		feeEarnedTotal: promauto.With(reg).NewCounterVec(
 			prometheus.CounterOpts{
-				Namespace:   eigenNamespace,
+				Namespace:   types.EigenPromNamespace,
 				Name:        "fees_earned_total",
 				Help:        "The amount of fees earned in <token>",
 				ConstLabels: prometheus.Labels{"avs_name": avsName},
@@ -43,7 +42,7 @@ func NewEigenMetrics(avsName, ipPortAddress string, reg prometheus.Registerer, l
 		),
 		performanceScore: promauto.With(reg).NewGauge(
 			prometheus.GaugeOpts{
-				Namespace:   eigenNamespace,
+				Namespace:   types.EigenPromNamespace,
 				Name:        "performance_score",
 				Help:        "The performance metric is a score between 0 and 100 and each developer can define their own way of calculating the score. The score is calculated based on the performance of the Node and the performance of the backing services.",
 				ConstLabels: prometheus.Labels{"avs_name": avsName},

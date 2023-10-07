@@ -1,6 +1,7 @@
 package rpccalls
 
 import (
+	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
@@ -14,11 +15,11 @@ type Collector struct {
 }
 
 // NewCollector returns an rpccalls Collector that collects metrics for json-rpc calls
-func NewCollector(eigenNamespace, avsName string, reg prometheus.Registerer) *Collector {
+func NewCollector(avsName string, reg prometheus.Registerer) *Collector {
 	return &Collector{
 		rpcRequestDurationSeconds: promauto.With(reg).NewHistogramVec(
 			prometheus.HistogramOpts{
-				Namespace:   eigenNamespace,
+				Namespace:   types.EigenPromNamespace,
 				Name:        "rpc_request_duration_seconds",
 				Help:        "Duration of json-rpc <method> in seconds",
 				ConstLabels: prometheus.Labels{"avs_name": avsName},
@@ -31,7 +32,7 @@ func NewCollector(eigenNamespace, avsName string, reg prometheus.Registerer) *Co
 		),
 		rpcRequestTotal: promauto.With(reg).NewCounterVec(
 			prometheus.CounterOpts{
-				Namespace:   eigenNamespace,
+				Namespace:   types.EigenPromNamespace,
 				Name:        "rpc_request_total",
 				Help:        "Total number of json-rpc <method> requests",
 				ConstLabels: prometheus.Labels{"avs_name": avsName},
