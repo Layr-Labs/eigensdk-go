@@ -93,14 +93,14 @@ func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
 		name                      string
 		mocksInitializationFunc   func(*chainiomocks.MockAvsRegistryReader, *chainiomocks.MockELReader, *servicemocks.MockPubkeyCompendiumService)
 		queryQuorumNumbers        []types.QuorumNum
-		queryBlockNum             types.BlockNumber
+		queryBlockNum             types.BlockNum
 		wantErr                   error
 		wantOperatorsAvsStateDict map[types.OperatorId]types.OperatorAvsState
 	}{
 		{
 			name: "should return operatorsAvsState",
 			mocksInitializationFunc: func(mockAvsRegistryReader *chainiomocks.MockAvsRegistryReader, mockElReader *chainiomocks.MockELReader, mockPubkeyCompendiumService *servicemocks.MockPubkeyCompendiumService) {
-				mockAvsRegistryReader.EXPECT().GetOperatorsStakeInQuorumsAtBlock(context.Background(), []types.QuorumNum{1}, types.BlockNumber(1)).Return([][]blsoperatorstateretrievar.BLSOperatorStateRetrieverOperator{
+				mockAvsRegistryReader.EXPECT().GetOperatorsStakeInQuorumsAtBlock(context.Background(), []types.QuorumNum{1}, types.BlockNum(1)).Return([][]blsoperatorstateretrievar.BLSOperatorStateRetrieverOperator{
 					{
 						{
 							OperatorId: testOperator.operatorId,
@@ -166,14 +166,14 @@ func TestAvsRegistryServiceChainCaller_GetQuorumsAvsState(t *testing.T) {
 		name                    string
 		mocksInitializationFunc func(*chainiomocks.MockAvsRegistryReader, *chainiomocks.MockELReader, *servicemocks.MockPubkeyCompendiumService)
 		queryQuorumNumbers      []types.QuorumNum
-		queryBlockNum           types.BlockNumber
+		queryBlockNum           types.BlockNum
 		wantErr                 error
 		wantQuorumsAvsStateDict map[types.QuorumNum]types.QuorumAvsState
 	}{
 		{
 			name: "should return operatorsAvsState",
 			mocksInitializationFunc: func(mockAvsRegistryReader *chainiomocks.MockAvsRegistryReader, mockElReader *chainiomocks.MockELReader, mockPubkeyCompendiumService *servicemocks.MockPubkeyCompendiumService) {
-				mockAvsRegistryReader.EXPECT().GetOperatorsStakeInQuorumsAtBlock(context.Background(), []types.QuorumNum{1}, types.BlockNumber(1)).Return([][]blsoperatorstateretrievar.BLSOperatorStateRetrieverOperator{
+				mockAvsRegistryReader.EXPECT().GetOperatorsStakeInQuorumsAtBlock(context.Background(), []types.QuorumNum{1}, types.BlockNum(1)).Return([][]blsoperatorstateretrievar.BLSOperatorStateRetrieverOperator{
 					{
 						{
 							OperatorId: testOperator.operatorId,

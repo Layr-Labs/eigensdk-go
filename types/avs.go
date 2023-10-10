@@ -13,7 +13,8 @@ type TaskDict struct {
 type TaskResponseDigest [32]byte
 
 type SignedTaskResponseDigest struct {
-	TaskResponseDigest TaskResponseDigest
-	BlsSignature       *bls.Signature
-	OperatorId         bls.OperatorId
+	TaskResponseDigest          TaskResponseDigest
+	BlsSignature                *bls.Signature
+	OperatorId                  bls.OperatorId
+	SignatureVerificationErrorC chan error
 }

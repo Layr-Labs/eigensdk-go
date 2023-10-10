@@ -84,7 +84,7 @@ type StakeAmount = *big.Int
 type OperatorId = [32]byte
 type QuorumNum = uint8
 type QuorumThresholdPercentage = uint32
-type BlockNumber = uint32
+type BlockNum = uint32
 
 // AvsOperator represents the operator state in AVS registries
 type OperatorAvsState struct {
@@ -92,7 +92,7 @@ type OperatorAvsState struct {
 	Pubkeys    OperatorPubkeys
 	// Stake of the operator for each quorum
 	StakePerQuorum map[QuorumNum]StakeAmount
-	BlockNumber    BlockNumber
+	BlockNumber    BlockNum
 }
 
 var (
@@ -114,5 +114,5 @@ type QuorumAvsState struct {
 	QuorumNumber QuorumNum
 	TotalStake   StakeAmount
 	AggPubkeyG1  *bls.G1Point
-	BlockNumber  BlockNumber
+	BlockNumber  BlockNum
 }

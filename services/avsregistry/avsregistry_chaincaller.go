@@ -12,9 +12,11 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/types"
 )
 
+// AvsRegistryService is a wrapper around AvsRegistryReader that transforms the data into
+// nicer golang types that are easier to work with
 type AvsRegistryServiceChainCaller struct {
+	avsregistry.AvsRegistryReader
 	elReader                elcontracts.ELReader
-	avsRegistryReader       avsregistry.AvsRegistryReader
 	pubkeyCompendiumService pcservice.PubkeyCompendiumService
 	logger                  logging.Logger
 }
@@ -24,16 +26,16 @@ var _ AvsRegistryService = (*AvsRegistryServiceChainCaller)(nil)
 func NewAvsRegistryServiceChainCaller(avsRegistryReader avsregistry.AvsRegistryReader, elReader elcontracts.ELReader, pubkeyCompendiumService pcservice.PubkeyCompendiumService, logger logging.Logger) *AvsRegistryServiceChainCaller {
 	return &AvsRegistryServiceChainCaller{
 		elReader:                elReader,
-		avsRegistryReader:       avsRegistryReader,
+		AvsRegistryReader:       avsRegistryReader,
 		pubkeyCompendiumService: pubkeyCompendiumService,
 		logger:                  logger,
 	}
 }
 
-func (ar *AvsRegistryServiceChainCaller) GetOperatorsAvsStateAtBlock(ctx context.Context, quorumNumbers []types.QuorumNum, blockNumber types.BlockNumber) (map[types.OperatorId]types.OperatorAvsState, error) {
+func (ar *AvsRegistryServiceChainCaller) GetOperatorsAvsStateAtBlock(ctx context.Context, quorumNumbers []types.QuorumNum, blockNumber types.BlockNum) (map[types.OperatorId]types.OperatorAvsState, error) {
 	operatorsAvsState := make(map[types.OperatorId]types.OperatorAvsState)
 	// Get operator state for each quorum by querying BLSOperatorStateRetriever (this call is why this service implementation is called ChainCaller)
-	operatorsStakesInQuorums, err := ar.avsRegistryReader.GetOperatorsStakeInQuorumsAtBlock(ctx, quorumNumbers, blockNumber)
+	operatorsStakesInQuorums, err := ar.AvsRegistryReader.GetOperatorsStakeInQuorumsAtBlock(ctx, quorumNumbers, blockNumber)
 	if err != nil {
 		ar.logger.Error("Failed to get operator state", "err", err, "service", "AvsRegistryServiceChainCaller")
 		return nil, err
@@ -69,7 +71,7 @@ func (ar *AvsRegistryServiceChainCaller) GetOperatorsAvsStateAtBlock(ctx context
 	return operatorsAvsState, nil
 }
 
-func (ar *AvsRegistryServiceChainCaller) GetQuorumsAvsStateAtBlock(ctx context.Context, quorumNumbers []types.QuorumNum, blockNumber types.BlockNumber) (map[types.QuorumNum]types.QuorumAvsState, error) {
+func (ar *AvsRegistryServiceChainCaller) GetQuorumsAvsStateAtBlock(ctx context.Context, quorumNumbers []types.QuorumNum, blockNumber types.BlockNum) (map[types.QuorumNum]types.QuorumAvsState, error) {
 	operatorsAvsState, err := ar.GetOperatorsAvsStateAtBlock(ctx, quorumNumbers, blockNumber)
 	if err != nil {
 		ar.logger.Error("Failed to get operator state", "err", err, "service", "AvsRegistryServiceChainCaller")
