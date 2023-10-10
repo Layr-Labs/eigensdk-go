@@ -12,11 +12,18 @@ import (
 	"github.com/google/uuid"
 )
 
+// WriteKey writes the private key to the given path
+// The key is encrypted using the given password
+// This function will create the directory if it doesn't exist
+// If there's an existing file at the given path, it will be overwritten
 func WriteKey(path string, privateKey *ecdsa.PrivateKey, password string) error {
 	UUID, err := uuid.NewRandom()
 	if err != nil {
 		return err
 	}
+
+	// We are using https://github.com/ethereum/go-ethereum/blob/master/accounts/keystore/key.go#L41
+	// to store the keys which requires us to have random UUID for encryption
 	key := &keystore.Key{
 		Id:         UUID,
 		Address:    crypto.PubkeyToAddress(privateKey.PublicKey),
