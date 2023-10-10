@@ -244,7 +244,7 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 
 			if checkIfStakeThresholdsMet(digestAggregatedOperators.signersTotalStakePerQuorum, totalStakePerQuorum, quorumThresholdPercentagesMap) {
 				nonSignersOperatorIds := []types.OperatorId{}
-				for operatorId, _ := range operatorsAvsStateDict {
+				for operatorId := range operatorsAvsStateDict {
 					if _, operatorSigned := digestAggregatedOperators.signersOperatorIdsSet[operatorId]; !operatorSigned {
 						nonSignersOperatorIds = append(nonSignersOperatorIds, operatorId)
 					}

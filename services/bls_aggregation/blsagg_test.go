@@ -261,7 +261,8 @@ func TestBlsAgg(t *testing.T) {
 
 		taskResponseDigest2 := types.TaskResponseDigest{2}
 		blsSigOp2 := testOperator2.BlsKeypair.SignMessage(taskResponseDigest2)
-		ctx, _ := context.WithTimeout(context.Background(), 2*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
 		err = blsAggServ.ProcessNewSignature(ctx, taskIndex, taskResponseDigest2, blsSigOp2, testOperator2.OperatorId)
 		// this should timeout because the task goroutine is blocked on the response channel (since we only listen for it below)
 		require.Equal(t, context.DeadlineExceeded, err)
