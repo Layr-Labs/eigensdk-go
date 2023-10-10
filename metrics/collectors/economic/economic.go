@@ -76,7 +76,7 @@ func NewCollector(
 		operatorId:        operatorId,
 		quorumNames:       quorumNames,
 		slashingStatus: prometheus.NewDesc(
-			types.EigenPromNamespace + "_slashing_status",
+			types.EigenPromNamespace+"_slashing_status",
 			"Whether the operator has been slashed",
 			// TODO(samlaf): would be nice to have avs_name as a variable label
 			[]string{},
@@ -84,7 +84,7 @@ func NewCollector(
 			prometheus.Labels{},
 		),
 		registeredStake: prometheus.NewDesc(
-			types.EigenPromNamespace + "_registered_stakes",
+			types.EigenPromNamespace+"_registered_stakes",
 			"Operator stake in <quorum> of <avs_name>'s StakeRegistry contract",
 			[]string{"quorum_number", "quorum_name"},
 			prometheus.Labels{"avs_name": avsName},
