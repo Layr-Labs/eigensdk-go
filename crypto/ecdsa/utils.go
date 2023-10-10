@@ -40,6 +40,8 @@ func WriteKey(path string, privateKey *ecdsa.PrivateKey, password string) error 
 
 func writeBytesToFile(path string, data []byte) error {
 	dir := filepath.Dir(path)
+
+	// create the directory if it doesn't exist. If exists, it does nothing
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		fmt.Println("Error creating directories:", err)
 		return err
