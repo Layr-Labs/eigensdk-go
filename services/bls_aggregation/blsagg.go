@@ -56,7 +56,7 @@ type aggregatedOperators struct {
 	signersAggSigG1 *bls.Signature
 	// aggregate stake of all operators who signed on this header for each quorum
 	signersTotalStakePerQuorum map[types.QuorumNum]*big.Int
-	// OperatorId of operators who signed on this header for each quorum
+	// set of OperatorId of operators who signed on this header
 	signersOperatorIdsSet map[types.OperatorId]bool
 }
 
