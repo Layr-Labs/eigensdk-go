@@ -48,8 +48,8 @@ type Clients struct {
 func BuildClients(config Config, logger logging.Logger) (*Clients, error) {
 
 	// Create the metrics server
-	reg := prometheus.NewRegistry()
-	eigenMetrics := metrics.NewEigenMetrics(config.AvsName, config.PromMetricsIpPortAddress, reg, logger)
+	promReg := prometheus.NewRegistry()
+	eigenMetrics := metrics.NewEigenMetrics(config.AvsName, config.PromMetricsIpPortAddress, promReg, logger)
 
 	// creating two types of Eth clients: HTTP and WS
 	ethHttpClient, err := eth.NewClient(config.EthHttpUrl)
@@ -109,6 +109,8 @@ func BuildClients(config Config, logger logging.Logger) (*Clients, error) {
 		AvsRegistryChainWriter: avsRegistryChainWriter,
 		EthHttpClient:          ethHttpClient,
 		EthWsClient:            ethWsClient,
+		Metrics:                eigenMetrics,
+		PrometheusRegistry:     promReg,
 	}, nil
 
 }
