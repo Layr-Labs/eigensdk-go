@@ -13,6 +13,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+const (
+	ZeroAddress = "0x0"
+)
+
 // Operator represents Eigenlayer's view of an operator
 type Operator struct {
 	// Address addres of the operator
@@ -36,7 +40,7 @@ func (o Operator) Validate() error {
 		return errors.New("invalid EarningsReceiverAddress address")
 	}
 
-	if !utils.IsValidEthereumAddress(o.DelegationApproverAddress) {
+	if o.DelegationApproverAddress != ZeroAddress && !utils.IsValidEthereumAddress(o.DelegationApproverAddress) {
 		return errors.New("invalid DelegationApproverAddress address")
 	}
 

@@ -37,6 +37,19 @@ func TestOperatorValidate(t *testing.T) {
 			wantErr:                 false,
 		},
 		{
+			name: "valid operator validation - 0x0 delegation approver address",
+			operator: Operator{
+				Address:                   "0xd5e099c71b797516c10ed0f0d895f429c2781142",
+				DelegationApproverAddress: "0x0",
+				EarningsReceiverAddress:   "0xd5e099c71b797516c10ed0f0d895f429c2781142",
+				StakerOptOutWindowBlocks:  100,
+				MetadataUrl:               "https://localhost",
+			},
+			metadataURLresponseCode: 200,
+			operatorMetadata:        metadata,
+			wantErr:                 false,
+		},
+		{
 			name: "failed operator validation - bad metadata",
 			operator: Operator{
 				Address:                   "0xd5e099c71b797516c10ed0f0d895f429c2781142",
