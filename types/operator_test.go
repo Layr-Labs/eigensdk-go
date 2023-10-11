@@ -37,10 +37,10 @@ func TestOperatorValidate(t *testing.T) {
 			wantErr:                 false,
 		},
 		{
-			name: "valid operator validation - 0x0 delegation approver address",
+			name: "valid operator validation - ZeroAddress delegation approver address",
 			operator: Operator{
 				Address:                   "0xd5e099c71b797516c10ed0f0d895f429c2781142",
-				DelegationApproverAddress: "0x0",
+				DelegationApproverAddress: ZeroAddress,
 				EarningsReceiverAddress:   "0xd5e099c71b797516c10ed0f0d895f429c2781142",
 				StakerOptOutWindowBlocks:  100,
 				MetadataUrl:               "https://localhost",

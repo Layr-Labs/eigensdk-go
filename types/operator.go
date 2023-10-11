@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	ZeroAddress = "0x0"
+	ZeroAddress = "0x0000000000000000000000000000000000000000"
 )
 
 // Operator represents Eigenlayer's view of an operator
@@ -41,7 +41,10 @@ func (o Operator) Validate() error {
 	}
 
 	if o.DelegationApproverAddress != ZeroAddress && !utils.IsValidEthereumAddress(o.DelegationApproverAddress) {
-		return errors.New("invalid DelegationApproverAddress address")
+		return fmt.Errorf(
+			"invalid DelegationApproverAddress address, it should be either %s or a valid non zero ethereum address",
+			ZeroAddress,
+		)
 	}
 
 	err := checkIfUrlIsValid(o.MetadataUrl)
