@@ -63,7 +63,7 @@ func (o Operator) Validate() error {
 			fmt.Println("error closing metadata url body")
 		}
 	}(resp.Body)
-	
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println("error reading metadata url body")
