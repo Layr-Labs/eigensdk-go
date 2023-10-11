@@ -109,6 +109,7 @@ func BuildClients(config Config, logger logging.Logger) (*Clients, error) {
 		AvsRegistryChainWriter: avsRegistryChainWriter,
 		EthHttpClient:          ethHttpClient,
 		EthWsClient:            ethWsClient,
+		Metrics:                eigenMetrics,
 		PrometheusRegistry:     promReg,
 	}, nil
 
