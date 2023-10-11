@@ -53,7 +53,7 @@ func TestBlsAgg(t *testing.T) {
 			SignersApkG2:        testOperator1.BlsKeypair.GetPubKeyG2(),
 			SignersAggSigG1:     testOperator1.BlsKeypair.SignMessage(taskResponseDigest),
 		}
-		gotAggregationServiceResponse := <-blsAggServ.ResponseC
+		gotAggregationServiceResponse := <-blsAggServ.aggregatedResponsesC
 		require.Equal(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
 	})
 
@@ -111,7 +111,7 @@ func TestBlsAgg(t *testing.T) {
 				Add(testOperator2.BlsKeypair.SignMessage(taskResponseDigest)).
 				Add(testOperator3.BlsKeypair.SignMessage(taskResponseDigest)),
 		}
-		gotAggregationServiceResponse := <-blsAggServ.ResponseC
+		gotAggregationServiceResponse := <-blsAggServ.aggregatedResponsesC
 		require.Equal(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
 	})
 
@@ -135,7 +135,7 @@ func TestBlsAgg(t *testing.T) {
 		wantAggregationServiceResponse := BlsAggregationServiceResponse{
 			Err: TaskExpiredError,
 		}
-		gotAggregationServiceResponse := <-blsAggServ.ResponseC
+		gotAggregationServiceResponse := <-blsAggServ.aggregatedResponsesC
 		require.Equal(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
 	})
 
@@ -174,7 +174,7 @@ func TestBlsAgg(t *testing.T) {
 			SignersApkG2:        testOperator1.BlsKeypair.GetPubKeyG2(),
 			SignersAggSigG1:     testOperator1.BlsKeypair.SignMessage(taskResponseDigest),
 		}
-		gotAggregationServiceResponse := <-blsAggServ.ResponseC
+		gotAggregationServiceResponse := <-blsAggServ.aggregatedResponsesC
 		require.Equal(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
 	})
 
@@ -207,7 +207,7 @@ func TestBlsAgg(t *testing.T) {
 		wantAggregationServiceResponse := BlsAggregationServiceResponse{
 			Err: TaskExpiredError,
 		}
-		gotAggregationServiceResponse := <-blsAggServ.ResponseC
+		gotAggregationServiceResponse := <-blsAggServ.aggregatedResponsesC
 		require.Equal(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
 	})
 
@@ -276,7 +276,7 @@ func TestBlsAgg(t *testing.T) {
 			SignersApkG2:        testOperator1.BlsKeypair.GetPubKeyG2(),
 			SignersAggSigG1:     testOperator1.BlsKeypair.SignMessage(taskResponseDigest1),
 		}
-		gotAggregationServiceResponse := <-blsAggServ.ResponseC
+		gotAggregationServiceResponse := <-blsAggServ.aggregatedResponsesC
 		require.Equal(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
 	})
 
@@ -313,7 +313,7 @@ func TestBlsAgg(t *testing.T) {
 		wantAggregationServiceResponse := BlsAggregationServiceResponse{
 			Err: TaskExpiredError,
 		}
-		gotAggregationServiceResponse := <-blsAggServ.ResponseC
+		gotAggregationServiceResponse := <-blsAggServ.aggregatedResponsesC
 		require.Equal(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
 	})
 }
