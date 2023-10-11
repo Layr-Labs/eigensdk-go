@@ -60,7 +60,14 @@ type aggregatedOperators struct {
 	signersOperatorIdsSet map[types.OperatorId]bool
 }
 
+// BlsAggregationService is the interface provided to avs aggregator code for doing bls aggregation
+// Currently its only implementation is the BlsAggregatorService, so see the comment there for more details
 type BlsAggregationService interface {
+	// InitializeNewTask should be called whenever a new task is created. ProcessNewSignature will return an error
+	// if the task it is trying to process has not been initialized yet.
+	// quorumNumbers and quorumThresholdPercentages set the requirements for this task to be considered complete, which happens
+	// when a particular TaskResponseDigest (received via the a.taskChans[taskIndex]) has been signed by signers whose stake
+	// in each of the listed quorums adds up to at least quorumThresholdPercentages[i] of the total stake in that quorum
 	InitializeNewTask(
 		taskIndex types.TaskIndex,
 		taskCreatedBlock uint32,
@@ -69,6 +76,11 @@ type BlsAggregationService interface {
 		timeToExpiry time.Duration,
 	) error
 
+	// ProcessNewSignature processes a new signature over a taskResponseDigest for a particular taskIndex by a particular operator
+	// It verifies that the signature is correct and returns an error if it is not, and then aggregates the signature and stake of
+	// the operator with all other signatures for the same taskIndex and taskResponseDigest pair.
+	// Note: This function currently only verifies signatures over the taskResponseDigest directly, so avs code needs to verify that the digest
+	// passed to ProcessNewSignature is indeed the digest of a valid taskResponse (that is, BlsAggregationService does not verify semantic integrity of the taskResponses)
 	ProcessNewSignature(
 		ctx context.Context,
 		taskIndex types.TaskIndex,
@@ -77,6 +89,9 @@ type BlsAggregationService interface {
 		operatorId bls.OperatorId,
 	) error
 
+	// GetResponseChannel returns the single channel that meant to be used as the response channel
+	// Any task that is completed (see the completion criterion in the comment above InitializeNewTask)
+	// will be sent on this channel along with all the necessary information to call BLSSignatureChecker onchain
 	GetResponseChannel() <-chan BlsAggregationServiceResponse
 }
 
@@ -124,6 +139,11 @@ func (a *BlsAggregatorService) GetResponseChannel() <-chan BlsAggregationService
 	return a.ResponseC
 }
 
+// InitializeNewTask creates a new task goroutine meant to process new signed task responses for that task
+// (that are sent via ProcessNewSignature) and adds a channel to a.taskChans to send the signed task responses to it
+// quorumNumbers and quorumThresholdPercentages set the requirements for this task to be considered complete, which happens
+// when a particular TaskResponseDigest (received via the a.taskChans[taskIndex]) has been signed by signers whose stake
+// in each of the listed quorums adds up to at least quorumThresholdPercentages[i] of the total stake in that quorum
 func (a *BlsAggregatorService) InitializeNewTask(
 	taskIndex types.TaskIndex,
 	taskCreatedBlock uint32,
