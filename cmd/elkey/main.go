@@ -8,16 +8,17 @@ import (
 )
 
 func main() {
-	var app *cli.App
-
-	app = cli.NewApp()
+	app := cli.NewApp()
 	app.Name = "Eigenlayer batch key manager"
 	app.Commands = []*cli.Command{
 		commandGenerate,
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		_, err := fmt.Fprintln(os.Stderr, err)
+		if err != nil {
+			return
+		}
 		os.Exit(1)
 	}
 
