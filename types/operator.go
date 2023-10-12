@@ -13,6 +13,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+const (
+	ZeroAddress = "0x0000000000000000000000000000000000000000"
+)
+
 // Operator represents Eigenlayer's view of an operator
 type Operator struct {
 	// Address addres of the operator
@@ -36,8 +40,11 @@ func (o Operator) Validate() error {
 		return errors.New("invalid EarningsReceiverAddress address")
 	}
 
-	if !utils.IsValidEthereumAddress(o.DelegationApproverAddress) {
-		return errors.New("invalid DelegationApproverAddress address")
+	if o.DelegationApproverAddress != ZeroAddress && !utils.IsValidEthereumAddress(o.DelegationApproverAddress) {
+		return fmt.Errorf(
+			"invalid DelegationApproverAddress address, it should be either %s or a valid non zero ethereum address",
+			ZeroAddress,
+		)
 	}
 
 	err := checkIfUrlIsValid(o.MetadataUrl)
@@ -50,7 +57,13 @@ func (o Operator) Validate() error {
 		return err
 	}
 
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			fmt.Println("error closing metadata url body")
+		}
+	}(resp.Body)
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println("error reading metadata url body")
