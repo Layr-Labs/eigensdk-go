@@ -3,10 +3,11 @@ package main
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"math/rand"
 	"os"
 	"time"
+
+	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 
 	"github.com/Layr-Labs/eigensdk-go/crypto/ecdsa"
 	"github.com/ethereum/go-ethereum/crypto"
