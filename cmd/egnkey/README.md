@@ -1,4 +1,8 @@
 ## egnkey
+This tool is used to manage keys for AVS development purpose
+
+Features:
+- [Generate ecdsa or bls key in batches](#generate-ecdsa-or-bls-key-in-batches)
 
 ### How to install
 #### Install from source
@@ -12,7 +16,7 @@ Navigate to [egnkey](../egnkey/) directory and run
    go build
 ```
 
-### How to run
+### Generate ecdsa or bls key in batches
 
 To create in a random folder
 ```bash
