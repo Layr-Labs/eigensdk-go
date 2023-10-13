@@ -14,7 +14,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/metrics"
 	"github.com/Layr-Labs/eigensdk-go/metrics/collectors/economic"
 	rpccalls "github.com/Layr-Labs/eigensdk-go/metrics/collectors/rpc_calls"
-	"github.com/Layr-Labs/eigensdk-go/signer"
+	"github.com/Layr-Labs/eigensdk-go/signerV2"
 	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -37,10 +37,8 @@ func ExampleEigenMetrics() {
 	if err != nil {
 		panic(err)
 	}
-	privateKeySigner, err := signer.NewPrivateKeySigner(ecdsaPrivateKey, big.NewInt(1))
-	if err != nil {
-		panic(err)
-	}
+
+	signerV2, _, err := signerv2.SignerFromConfig(signerv2.Config{PrivateKey: ecdsaPrivateKey}, big.NewInt(1))
 
 	chainioConfig := clients.BuildAllConfig{
 		EthHttpUrl:                    "http://localhost:8545",
@@ -50,7 +48,7 @@ func ExampleEigenMetrics() {
 		AvsName:                       "exampleAvs",
 		PromMetricsIpPortAddress:      ":9090",
 	}
-	clients, err := clients.BuildAll(chainioConfig, privateKeySigner, logger)
+	clients, err := clients.BuildAll(chainioConfig, signerV2, logger)
 	if err != nil {
 		panic(err)
 	}
