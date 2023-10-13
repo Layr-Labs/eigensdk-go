@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
@@ -81,11 +82,11 @@ func generate(c *cli.Context) error {
 		return err
 	}
 
-	passwordFile, err := os.Create(folder + "/" + PasswordFile)
+	passwordFile, err := os.Create(filepath.Clean(folder + "/" + PasswordFile))
 	if err != nil {
 		return err
 	}
-	privateKeyFile, err := os.Create(folder + "/" + PrivateKeyHexFile)
+	privateKeyFile, err := os.Create(filepath.Clean(folder + "/" + PrivateKeyHexFile))
 	if err != nil {
 		return err
 	}
@@ -121,7 +122,7 @@ func generateBlsKeys(numKeys int, path string, passwordFile, privateKeyFile *os.
 
 		privateKeyHex := key.PrivKey.String()
 		fileName := fmt.Sprintf("%d.bls.key.json", i+1)
-		err = key.SaveToFile(path+"/"+DefaultKeyFolder+"/"+fileName, password)
+		err = key.SaveToFile(filepath.Clean(path+"/"+DefaultKeyFolder+"/"+fileName), password)
 		if err != nil {
 			return err
 		}
@@ -153,7 +154,7 @@ func generateECDSAKeys(numKeys int, path string, passwordFile, privateKeyFile *o
 
 		privateKeyHex := hex.EncodeToString(key.D.Bytes())
 		fileName := fmt.Sprintf("%d.ecdsa.key.json", i+1)
-		err = ecdsa.WriteKey(path+"/"+DefaultKeyFolder+"/"+fileName, key, password)
+		err = ecdsa.WriteKey(filepath.Clean(path+"/"+DefaultKeyFolder+"/"+fileName), key, password)
 		if err != nil {
 			return err
 		}
@@ -163,7 +164,7 @@ func generateECDSAKeys(numKeys int, path string, passwordFile, privateKeyFile *o
 			return err
 		}
 
-		_, err = privateKeyFile.WriteString(privateKeyHex + "\n")
+		_, err = privateKeyFile.WriteString("0x" + privateKeyHex + "\n")
 		if err != nil {
 			return err
 		}

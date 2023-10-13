@@ -9,16 +9,13 @@ import (
 
 func main() {
 	app := cli.NewApp()
-	app.Name = "Eigenlayer batch key manager"
+	app.Name = "Eigenlayer batch keys manager"
 	app.Commands = []*cli.Command{
 		commandGenerate,
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		_, err := fmt.Fprintln(os.Stderr, err)
-		if err != nil {
-			return
-		}
+		fmt.Println("Error: ", err)
 		os.Exit(1)
 	}
 

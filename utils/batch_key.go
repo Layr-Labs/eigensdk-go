@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	// TODO: move to a common constatns file which
+	// TODO: move to a common constants file which
 	// can be used by utils and cmd
 	DefaultKeyFolder  = "keys"
 	PasswordFile      = "password.txt"
@@ -26,7 +26,7 @@ func ReadBatchKeys(folder string, isECDSA bool) ([]BatchKey, error) {
 	}
 
 	// read the private key file
-	privateKeyFile, err := os.Open(absFolder + "/" + PrivateKeyHexFile)
+	privateKeyFile, err := os.Open(filepath.Clean(absFolder + "/" + PrivateKeyHexFile))
 	if err != nil {
 		fmt.Println("Error opening the file:", err)
 		return nil, err
@@ -40,7 +40,7 @@ func ReadBatchKeys(folder string, isECDSA bool) ([]BatchKey, error) {
 	}(privateKeyFile)
 
 	// read the password file
-	passwordFile, err := os.Open(absFolder + "/" + PasswordFile)
+	passwordFile, err := os.Open(filepath.Clean(absFolder + "/" + PasswordFile))
 	if err != nil {
 		fmt.Println("Error opening the file:", err)
 		return nil, err
