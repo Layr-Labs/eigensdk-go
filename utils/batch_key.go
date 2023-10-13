@@ -34,7 +34,8 @@ func ReadBatchKeys(folder string, isECDSA bool) ([]BatchKey, error) {
 	defer func(privateKeyFile *os.File) {
 		err := privateKeyFile.Close()
 		if err != nil {
-
+			_ = fmt.Errorf("error closing the file: %s", err)
+			return
 		}
 	}(privateKeyFile)
 
@@ -47,7 +48,8 @@ func ReadBatchKeys(folder string, isECDSA bool) ([]BatchKey, error) {
 	defer func(passwordFile *os.File) {
 		err := passwordFile.Close()
 		if err != nil {
-
+			_ = fmt.Errorf("error closing the file: %s", err)
+			return
 		}
 	}(passwordFile)
 
@@ -83,10 +85,12 @@ func ReadBatchKeys(folder string, isECDSA bool) ([]BatchKey, error) {
 
 	if err := privateKeyScanner.Err(); err != nil {
 		fmt.Println("Error reading privateKey file: ", err)
+		return nil, err
 	}
 
 	if err := passwordScanner.Err(); err != nil {
 		fmt.Println("Error reading password file: ", err)
+		return nil, err
 	}
 
 	return batchKey, nil
