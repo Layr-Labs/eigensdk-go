@@ -30,9 +30,10 @@ var (
 		Required: true,
 	}
 	NumKeysFlag = &cli.IntFlag{
-		Name:     "num-keys",
-		Usage:    "number of keys to create",
-		Required: true,
+		Name:        "num-keys",
+		Usage:       "number of keys to create",
+		Required:    true,
+		DefaultText: "1",
 	}
 	OutputDirFlag = &cli.StringFlag{
 		Name:     "output-dir",
@@ -44,8 +45,13 @@ var (
 var commandGenerate = &cli.Command{
 	Name:    "generate",
 	Aliases: []string{"g"},
-	Usage:   "Generate keys",
-	Action:  generate,
+	Description: `Generate keys for testing purpose.
+It creates the following artifacts based on arguments
+- passwords.txt - contains all passwords to decrypt keys
+- private_key_hex.txt - will create plaintext private keys
+- keys/* - create all the encrypted json files in this folder
+`,
+	Action: generate,
 	Flags: []cli.Flag{
 		KeyTypeFlag,
 		NumKeysFlag,
