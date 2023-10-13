@@ -46,6 +46,10 @@ var commandGenerate = &cli.Command{
 	Name:    "generate",
 	Aliases: []string{"g"},
 	Description: `Generate keys for testing purpose.
+This command creates ecdsa or bls key pair for testing purposes. It generates
+all the relevant files for reading and keys and decrypted it and also gets 
+you the private keys in plaintext.
+
 It creates the following artifacts based on arguments
 - passwords.txt - contains all passwords to decrypt keys
 - private_key_hex.txt - will create plaintext private keys
