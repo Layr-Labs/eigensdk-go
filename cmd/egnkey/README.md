@@ -13,17 +13,17 @@ Features:
 #### Build from source
 Navigate to [egnkey](../egnkey/) directory and run
 ```bash
-   go build
+   go install
 ```
 
 ### Generate ecdsa or bls key in batches
 
 To create in a random folder
 ```bash
-   ./egnkey generate --key-type ecdsa --num-keys <num_key>
+   egnkey generate --key-type ecdsa --num-keys <num_key>
 ```
 
 To create  in specific folder
 ```bash
-   ./egnkey generate --key-type ecdsa --num-keys <num_key> --output-dir <path_to_folder>
+   egnkey generate --key-type ecdsa --num-keys <num_key> --output-dir <path_to_folder>
 ```
