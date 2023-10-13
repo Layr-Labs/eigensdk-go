@@ -1,6 +1,12 @@
 ## egnkey
 
-### How to build
+### How to install
+#### Install from source
+```bash
+   go install github.com/Layr-Labs/eigensdk-go/cmd/egnkey@latest
+```
+
+#### Build from source
 Navigate to [egnkey](../egnkey/) directory and run
 ```bash
    go build
