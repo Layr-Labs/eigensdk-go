@@ -3,10 +3,11 @@ package utils
 import (
 	"encoding/hex"
 	"fmt"
+	"testing"
+
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/crypto/ecdsa"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestReadBatchKeys(t *testing.T) {
@@ -33,7 +34,7 @@ func TestReadBatchKeys(t *testing.T) {
 
 		if test.isEcdsa {
 			for _, key := range readKeys {
-				fmt.Println(fmt.Sprintf("Valdiate ecdsa key: %s with password %s", key.FilePath, key.Password))
+				fmt.Printf("Valdiate ecdsa key: %s with password %s\n", key.FilePath, key.Password)
 				pk, err := ecdsa.ReadKey(key.FilePath, key.Password)
 				if err != nil {
 					assert.Fail(t, "Error reading ecdsa key")
@@ -43,7 +44,7 @@ func TestReadBatchKeys(t *testing.T) {
 			}
 		} else {
 			for _, key := range readKeys {
-				fmt.Println(fmt.Sprintf("Valdiate bls key: %s with password %s", key.FilePath, key.Password))
+				fmt.Printf("Valdiate bls key: %s with password %s\n", key.FilePath, key.Password)
 				pk, err := bls.ReadPrivateKeyFromFile(key.FilePath, key.Password)
 				if err != nil {
 					assert.Fail(t, "Error reading bls key")
