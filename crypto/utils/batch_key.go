@@ -3,7 +3,6 @@ package utils
 import (
 	"bufio"
 	"fmt"
-	"github.com/Layr-Labs/eigensdk-go/utils"
 	"os"
 	"path/filepath"
 )
@@ -19,8 +18,8 @@ const (
 // ReadBatchKeys reads the batch keys from the given folder
 // and returns the list of BatchKey
 // folder: folder where the keys are stored, relative to the current directory
-func ReadBatchKeys(folder string, isECDSA bool) ([]utils.BatchKey, error) {
-	var batchKey []utils.BatchKey
+func ReadBatchKeys(folder string, isECDSA bool) ([]BatchKey, error) {
+	var batchKey []BatchKey
 	absFolder, err := filepath.Abs(folder)
 	if err != nil {
 		return nil, err
@@ -75,7 +74,7 @@ func ReadBatchKeys(folder string, isECDSA bool) ([]utils.BatchKey, error) {
 			break
 		}
 
-		bK := utils.BatchKey{
+		bK := BatchKey{
 			FilePath:   filePath,
 			Password:   password,
 			PrivateKey: privateKey,
