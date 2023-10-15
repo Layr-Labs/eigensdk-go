@@ -115,6 +115,52 @@ func TestBlsAgg(t *testing.T) {
 		require.Equal(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
 	})
 
+	t.Run("2 quorums 2 operators 2 correct signatures", func(t *testing.T) {
+		testOperator1 := types.TestOperator{
+			OperatorId:     types.OperatorId{1},
+			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100), 1: big.NewInt(200)},
+			BlsKeypair:     newBlsKeyPairPanics("0x1"),
+		}
+		testOperator2 := types.TestOperator{
+			OperatorId:     types.OperatorId{2},
+			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100), 1: big.NewInt(200)},
+			BlsKeypair:     newBlsKeyPairPanics("0x2"),
+		}
+		taskIndex := types.TaskIndex(0)
+		quorumNumbers := []types.QuorumNum{0, 1}
+		quorumThresholdPercentages := []types.QuorumThresholdPercentage{100, 100}
+		taskResponseDigest := types.TaskResponseDigest{123}
+		blockNum := uint32(1)
+
+		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1, testOperator2})
+		noopLogger := logging.NewNoopLogger()
+		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
+
+		err := blsAggServ.InitializeNewTask(taskIndex, blockNum, quorumNumbers, quorumThresholdPercentages, tasksTimeToExpiry)
+		require.Nil(t, err)
+		blsSigOp1 := testOperator1.BlsKeypair.SignMessage(taskResponseDigest)
+		err = blsAggServ.ProcessNewSignature(context.Background(), taskIndex, taskResponseDigest, blsSigOp1, testOperator1.OperatorId)
+		require.Nil(t, err)
+		blsSigOp2 := testOperator2.BlsKeypair.SignMessage(taskResponseDigest)
+		err = blsAggServ.ProcessNewSignature(context.Background(), taskIndex, taskResponseDigest, blsSigOp2, testOperator2.OperatorId)
+		require.Nil(t, err)
+
+		wantAggregationServiceResponse := BlsAggregationServiceResponse{
+			Err:                 nil,
+			TaskIndex:           taskIndex,
+			TaskResponseDigest:  taskResponseDigest,
+			NonSignersPubkeysG1: []*bls.G1Point{},
+			QuorumApksG1: []*bls.G1Point{
+				bls.NewZeroG1Point().Add(testOperator1.BlsKeypair.GetPubKeyG1()).Add(testOperator2.BlsKeypair.GetPubKeyG1()),
+				bls.NewZeroG1Point().Add(testOperator1.BlsKeypair.GetPubKeyG1()).Add(testOperator2.BlsKeypair.GetPubKeyG1()),
+			},
+			SignersApkG2:    testOperator1.BlsKeypair.GetPubKeyG2().Add(testOperator2.BlsKeypair.GetPubKeyG2()),
+			SignersAggSigG1: testOperator1.BlsKeypair.SignMessage(taskResponseDigest).Add(testOperator2.BlsKeypair.SignMessage(taskResponseDigest)),
+		}
+		gotAggregationServiceResponse := <-blsAggServ.aggregatedResponsesC
+		require.EqualValues(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
+	})
+
 	t.Run("1 quorum 1 operator 0 signatures - task expired", func(t *testing.T) {
 		testOperator1 := types.TestOperator{
 			OperatorId:     types.OperatorId{1},
