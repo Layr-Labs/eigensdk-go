@@ -190,10 +190,11 @@ func generateRandomPassword() string {
 	uppercaseLetters := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	lowercaseLetters := "abcdefghijklmnopqrstuvwxyz"
 	digits := "0123456789"
-	specialSymbols := "!@#$%^&*()-_+=[]{}|;:,.<>?/\\"
+	//specialSymbols := "!@#$%^&*()-_+=[]{}|;:,.<>?/\\"
 
 	// Combine character sets into one
-	allCharacters := uppercaseLetters + lowercaseLetters + digits + specialSymbols
+	//allCharacters := uppercaseLetters + lowercaseLetters + digits + specialSymbols
+	allCharacters := uppercaseLetters + lowercaseLetters + digits
 
 	// Length of the password you want
 	passwordLength := 20
