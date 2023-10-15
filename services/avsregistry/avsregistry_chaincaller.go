@@ -12,7 +12,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/types"
 )
 
-// AvsRegistryService is a wrapper around AvsRegistryReader that transforms the data into
+// AvsRegistryServiceChainCaller is a wrapper around AvsRegistryReader that transforms the data into
 // nicer golang types that are easier to work with
 type AvsRegistryServiceChainCaller struct {
 	avsregistry.AvsRegistryReader
