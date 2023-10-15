@@ -33,6 +33,7 @@ func TestAvsRegistryServiceChainCaller_getOperatorPubkeys(t *testing.T) {
 		},
 	}
 
+	// TODO(samlaf): add error test cases
 	var tests = []struct {
 		name                    string
 		mocksInitializationFunc func(*chainiomocks.MockAvsRegistryReader, *chainiomocks.MockELReader, *servicemocks.MockPubkeyCompendiumService)
