@@ -128,7 +128,7 @@ var _ BlsAggregationService = (*BlsAggregatorService)(nil)
 func NewBlsAggregatorService(avsRegistryService avsregistry.AvsRegistryService, logger logging.Logger) *BlsAggregatorService {
 	return &BlsAggregatorService{
 		aggregatedResponsesC: make(chan BlsAggregationServiceResponse),
-		signedTaskRespsCs:     make(map[types.TaskIndex]chan types.SignedTaskResponseDigest),
+		signedTaskRespsCs:    make(map[types.TaskIndex]chan types.SignedTaskResponseDigest),
 		taskChansMutex:       sync.RWMutex{},
 		avsRegistryService:   avsRegistryService,
 		logger:               logger,
@@ -179,6 +179,8 @@ func (a *BlsAggregatorService) ProcessNewSignature(
 	// send the task to the goroutine processing this task
 	// and return the error (if any) returned by the signature verification routine
 	select {
+	// we need to send this as part of select because if the goroutine is processing another SignedTaskResponseDigest
+	// and cannot receive this one, we want the context to be able to cancel the request
 	case taskC <- types.SignedTaskResponseDigest{
 		TaskResponseDigest:          taskResponseDigest,
 		BlsSignature:                blsSignature,
@@ -233,6 +235,7 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 	for {
 		select {
 		case signedTaskResponseDigest := <-signedTaskRespsC:
+			a.logger.Debug("Task goroutine received new signed task response digest", "taskIndex", taskIndex, "signedTaskResponseDigest", signedTaskResponseDigest)
 			signedTaskResponseDigest.SignatureVerificationErrorC <- a.verifySignature(taskIndex, signedTaskResponseDigest, operatorsAvsStateDict)
 			// after verifying signature we aggregate its sig and pubkey, and update the signed stake amount
 			digestAggregatedOperators, ok := aggregatedOperatorsDict[signedTaskResponseDigest.TaskResponseDigest]
@@ -240,7 +243,7 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 				// first operator to sign on this digest
 				digestAggregatedOperators = aggregatedOperators{
 					// we've already verified that the operator is part of the task's quorum, so we don't need checks here
-					signersApkG2:               operatorsAvsStateDict[signedTaskResponseDigest.OperatorId].Pubkeys.G2Pubkey,
+					signersApkG2:               bls.NewZeroG2Point().Add(operatorsAvsStateDict[signedTaskResponseDigest.OperatorId].Pubkeys.G2Pubkey),
 					signersAggSigG1:            signedTaskResponseDigest.BlsSignature,
 					signersOperatorIdsSet:      map[types.OperatorId]bool{signedTaskResponseDigest.OperatorId: true},
 					signersTotalStakePerQuorum: operatorsAvsStateDict[signedTaskResponseDigest.OperatorId].StakePerQuorum,
