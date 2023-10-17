@@ -47,14 +47,20 @@ func NewG1Point(x, y *big.Int) *G1Point {
 	}
 }
 
+func NewZeroG1Point() *G1Point {
+	return NewG1Point(big.NewInt(0), big.NewInt(0))
+}
+
 // Add another G1 point to this one
-func (p *G1Point) Add(p2 *G1Point) {
+func (p *G1Point) Add(p2 *G1Point) *G1Point {
 	p.G1Affine.Add(p.G1Affine, p2.G1Affine)
+	return p
 }
 
 // Sub another G1 point from this one
-func (p *G1Point) Sub(p2 *G1Point) {
+func (p *G1Point) Sub(p2 *G1Point) *G1Point {
 	p.G1Affine.Sub(p.G1Affine, p2.G1Affine)
+	return p
 }
 
 // VerifyEquivalence verifies G1Point is equivalent the G2Point
@@ -90,14 +96,20 @@ func NewG2Point(X, Y [2]*big.Int) *G2Point {
 	}
 }
 
+func NewZeroG2Point() *G2Point {
+	return NewG2Point([2]*big.Int{big.NewInt(0), big.NewInt(0)}, [2]*big.Int{big.NewInt(0), big.NewInt(0)})
+}
+
 // Add another G2 point to this one
-func (p *G2Point) Add(p2 *G2Point) {
+func (p *G2Point) Add(p2 *G2Point) *G2Point {
 	p.G2Affine.Add(p.G2Affine, p2.G2Affine)
+	return p
 }
 
 // Sub another G2 point from this one
-func (p *G2Point) Sub(p2 *G2Point) {
+func (p *G2Point) Sub(p2 *G2Point) *G2Point {
 	p.G2Affine.Sub(p.G2Affine, p2.G2Affine)
+	return p
 }
 
 func (p *G2Point) Serialize() []byte {
@@ -110,6 +122,15 @@ func (p *G2Point) Deserialize(data []byte) *G2Point {
 
 type Signature struct {
 	*G1Point `json:"g1_point"`
+}
+
+func NewZeroSignature() *Signature {
+	return &Signature{NewZeroG1Point()}
+}
+
+func (s *Signature) Add(otherS *Signature) *Signature {
+	s.G1Point.Add(otherS.G1Point)
+	return s
 }
 
 // Verify a message against a public key

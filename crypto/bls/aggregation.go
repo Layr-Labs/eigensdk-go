@@ -134,7 +134,7 @@ func (a *StdSignatureAggregator) AggregateSignatures(
 				aggSigs[ind] = &Signature{sig.Deserialize(sig.Serialize())}
 				aggPubKeys[ind] = op.PubkeyG2.Deserialize(op.PubkeyG2.Serialize())
 			} else {
-				aggSigs[ind].Add(sig.G1Point)
+				aggSigs[ind].Add(sig)
 				aggPubKeys[ind].Add(op.PubkeyG2)
 			}
 
@@ -203,7 +203,7 @@ func (a *StdSignatureAggregator) AggregateSignatures(
 
 	// Aggregate the aggregated signatures. We reuse the first aggregated signature as the accumulator
 	for i := 1; i < len(aggSigs); i++ {
-		aggSigs[0].Add(aggSigs[i].G1Point)
+		aggSigs[0].Add(aggSigs[i])
 	}
 
 	// Aggregate the aggregated public keys. We reuse the first aggregated public key as the accumulator

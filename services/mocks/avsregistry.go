@@ -8,7 +8,7 @@ import (
 	context "context"
 	reflect "reflect"
 
-	bls "github.com/Layr-Labs/eigensdk-go/crypto/bls"
+	contractBLSOperatorStateRetriever "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSOperatorStateRetriever"
 	types "github.com/Layr-Labs/eigensdk-go/types"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -36,33 +36,47 @@ func (m *MockAvsRegistryService) EXPECT() *MockAvsRegistryServiceMockRecorder {
 	return m.recorder
 }
 
-// GetOperatorPubkeys mocks base method.
-func (m *MockAvsRegistryService) GetOperatorPubkeys(arg0 context.Context, arg1 [32]byte) (types.OperatorPubkeys, error) {
+// GetCheckSignaturesIndices mocks base method.
+func (m *MockAvsRegistryService) GetCheckSignaturesIndices(arg0 context.Context, arg1 uint32, arg2 []byte, arg3 [][32]byte) (contractBLSOperatorStateRetriever.BLSOperatorStateRetrieverCheckSignaturesIndices, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOperatorPubkeys", arg0, arg1)
-	ret0, _ := ret[0].(types.OperatorPubkeys)
+	ret := m.ctrl.Call(m, "GetCheckSignaturesIndices", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(contractBLSOperatorStateRetriever.BLSOperatorStateRetrieverCheckSignaturesIndices)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetOperatorPubkeys indicates an expected call of GetOperatorPubkeys.
-func (mr *MockAvsRegistryServiceMockRecorder) GetOperatorPubkeys(arg0, arg1 interface{}) *gomock.Call {
+// GetCheckSignaturesIndices indicates an expected call of GetCheckSignaturesIndices.
+func (mr *MockAvsRegistryServiceMockRecorder) GetCheckSignaturesIndices(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOperatorPubkeys", reflect.TypeOf((*MockAvsRegistryService)(nil).GetOperatorPubkeys), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCheckSignaturesIndices", reflect.TypeOf((*MockAvsRegistryService)(nil).GetCheckSignaturesIndices), arg0, arg1, arg2, arg3)
 }
 
 // GetOperatorsAvsStateAtBlock mocks base method.
-func (m *MockAvsRegistryService) GetOperatorsAvsStateAtBlock(arg0 context.Context, arg1 []byte, arg2 uint32) (map[[32]byte]types.OperatorAvsState, map[byte]*bls.G1Point, error) {
+func (m *MockAvsRegistryService) GetOperatorsAvsStateAtBlock(arg0 context.Context, arg1 []byte, arg2 uint32) (map[[32]byte]types.OperatorAvsState, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetOperatorsAvsStateAtBlock", arg0, arg1, arg2)
 	ret0, _ := ret[0].(map[[32]byte]types.OperatorAvsState)
-	ret1, _ := ret[1].(map[byte]*bls.G1Point)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // GetOperatorsAvsStateAtBlock indicates an expected call of GetOperatorsAvsStateAtBlock.
 func (mr *MockAvsRegistryServiceMockRecorder) GetOperatorsAvsStateAtBlock(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOperatorsAvsStateAtBlock", reflect.TypeOf((*MockAvsRegistryService)(nil).GetOperatorsAvsStateAtBlock), arg0, arg1, arg2)
+}
+
+// GetQuorumsAvsStateAtBlock mocks base method.
+func (m *MockAvsRegistryService) GetQuorumsAvsStateAtBlock(arg0 context.Context, arg1 []byte, arg2 uint32) (map[byte]types.QuorumAvsState, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetQuorumsAvsStateAtBlock", arg0, arg1, arg2)
+	ret0, _ := ret[0].(map[byte]types.QuorumAvsState)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetQuorumsAvsStateAtBlock indicates an expected call of GetQuorumsAvsStateAtBlock.
+func (mr *MockAvsRegistryServiceMockRecorder) GetQuorumsAvsStateAtBlock(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetQuorumsAvsStateAtBlock", reflect.TypeOf((*MockAvsRegistryService)(nil).GetQuorumsAvsStateAtBlock), arg0, arg1, arg2)
 }
