@@ -347,7 +347,7 @@ func TestBlsAgg(t *testing.T) {
 		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
 
 		err := blsAggServ.ProcessNewSignature(context.Background(), taskIndex, taskResponseDigest, blsSig, testOperator1.OperatorId)
-		require.Equal(t, TaskNotFoundErrorF(taskIndex), err)
+		require.Equal(t, TaskNotFoundErrorFn(taskIndex), err)
 	})
 
 	// this is an edge case as typically we would send new tasks and listen for task responses in a for select loop

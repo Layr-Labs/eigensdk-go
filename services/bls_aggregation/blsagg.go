@@ -15,14 +15,14 @@ import (
 )
 
 var (
-	TaskAlreadyInitializedErrorF = func(taskIndex types.TaskIndex) error {
+	TaskAlreadyInitializedErrorFn = func(taskIndex types.TaskIndex) error {
 		return fmt.Errorf("task %d already initialized", taskIndex)
 	}
-	TaskExpiredError   = fmt.Errorf("task expired")
-	TaskNotFoundErrorF = func(taskIndex types.TaskIndex) error {
+	TaskExpiredError    = fmt.Errorf("task expired")
+	TaskNotFoundErrorFn = func(taskIndex types.TaskIndex) error {
 		return fmt.Errorf("task %d not initialized or already completed", taskIndex)
 	}
-	OperatorNotPartOfTaskQuorumErrorF = func(operatorId types.OperatorId, taskIndex types.TaskIndex) error {
+	OperatorNotPartOfTaskQuorumErrorFn = func(operatorId types.OperatorId, taskIndex types.TaskIndex) error {
 		return fmt.Errorf("operator %x not part of task %d's quorum", operatorId, taskIndex)
 	}
 	SignatureVerificationError = func(err error) error {
@@ -152,7 +152,7 @@ func (a *BlsAggregatorService) InitializeNewTask(
 	timeToExpiry time.Duration,
 ) error {
 	if _, taskExists := a.signedTaskRespsCs[taskIndex]; taskExists {
-		return TaskAlreadyInitializedErrorF(taskIndex)
+		return TaskAlreadyInitializedErrorFn(taskIndex)
 	}
 	signedTaskRespsC := make(chan types.SignedTaskResponseDigest)
 	a.taskChansMutex.Lock()
@@ -173,7 +173,7 @@ func (a *BlsAggregatorService) ProcessNewSignature(
 	taskC, taskInitialized := a.signedTaskRespsCs[taskIndex]
 	a.taskChansMutex.Unlock()
 	if !taskInitialized {
-		return TaskNotFoundErrorF(taskIndex)
+		return TaskNotFoundErrorFn(taskIndex)
 	}
 	signatureVerificationErrorC := make(chan error)
 	// send the task to the goroutine processing this task
@@ -331,13 +331,13 @@ func (a *BlsAggregatorService) verifySignature(
 	_, ok := operatorsAvsStateDict[signedTaskResponseDigest.OperatorId]
 	if !ok {
 		a.logger.Warnf("Operator %#v not found. Skipping message.", signedTaskResponseDigest.OperatorId)
-		return OperatorNotPartOfTaskQuorumErrorF(signedTaskResponseDigest.OperatorId, taskIndex)
+		return OperatorNotPartOfTaskQuorumErrorFn(signedTaskResponseDigest.OperatorId, taskIndex)
 	}
 
 	// 0. verify that the msg actually came from the correct operator
 	operatorG2Pubkey := operatorsAvsStateDict[signedTaskResponseDigest.OperatorId].Pubkeys.G2Pubkey
 	if operatorG2Pubkey == nil {
-		a.logger.Fatalf("Operator G2 pubkey not found")
+		a.logger.Fatal("Operator G2 pubkey not found")
 	}
 	a.logger.Debug("Verifying signed task response digest signature",
 		"operatorG2Pubkey", operatorG2Pubkey,
@@ -346,11 +346,11 @@ func (a *BlsAggregatorService) verifySignature(
 	)
 	signatureVerified, err := signedTaskResponseDigest.BlsSignature.Verify(operatorG2Pubkey, signedTaskResponseDigest.TaskResponseDigest)
 	if err != nil {
-		a.logger.Errorf(SignatureVerificationError(err).Error())
+		a.logger.Error(SignatureVerificationError(err).Error())
 		return SignatureVerificationError(err)
 	}
 	if !signatureVerified {
-		a.logger.Errorf(IncorrectSignatureError.Error())
+		a.logger.Error(IncorrectSignatureError.Error())
 		return IncorrectSignatureError
 	}
 	return nil
