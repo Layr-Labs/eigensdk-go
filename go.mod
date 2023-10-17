@@ -9,7 +9,7 @@ require (
 	github.com/prometheus/client_golang v1.17.0
 	github.com/stretchr/testify v1.8.4
 	github.com/urfave/cli/v2 v2.24.1
-	go.uber.org/mock v0.2.0
+	go.uber.org/mock v0.3.0
 	go.uber.org/zap v1.26.0
 	gopkg.in/yaml.v3 v3.0.1
 )
