@@ -183,7 +183,7 @@ func (w *ELChainWriter) RegisterBLSPublicKey(
 	if err != nil {
 		return nil, err
 	}
-	signedMsgHash := blsKeyPair.MakePubkeyRegistrationData(gethcommon.HexToAddress(operator.Address), chainID)
+	signedMsgHash := blsKeyPair.MakePubkeyRegistrationData(gethcommon.HexToAddress(operator.Address), w.elContractsClient.GetBLSPublicKeyCompendiumContractAddress(), chainID)
 	signedMsgHashBN254 := blspubkeycompendium.BN254G1Point(utils.ConvertToBN254G1Point(signedMsgHash))
 	G1pubkeyBN254 := blspubkeycompendium.BN254G1Point(utils.ConvertToBN254G1Point(blsKeyPair.GetPubKeyG1()))
 	G2pubkeyBN254 := blspubkeycompendium.BN254G2Point(utils.ConvertToBN254G2Point(blsKeyPair.GetPubKeyG2()))
