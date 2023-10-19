@@ -25,7 +25,7 @@ cd $EIGENLAYER_CONTRACT_PATH
 forge clean
 forge build
 
-el_contracts="DelegationManager Slasher StrategyManager IStrategy BLSPublicKeyCompendium EigenPodManager"
+el_contracts="DelegationManager Slasher StrategyManager IStrategy BLSPublicKeyCompendium EigenPodManager EigenPod"
 for contract in $el_contracts; do
     create_binding . $contract ./../../bindings
 done
