@@ -4,7 +4,6 @@ import (
 	"context"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/common"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
 
@@ -29,7 +28,6 @@ type ELWriter interface {
 		ctx context.Context,
 		blsKeyPair *bls.KeyPair,
 		operator types.Operator,
-		blsPubkeyCompendiumAddr common.Address,
 	) (*gethtypes.Receipt, error)
 
 	// DepositERC20IntoStrategy deposits ERC20 tokens into a strategy contract.
@@ -178,7 +176,6 @@ func (w *ELChainWriter) RegisterBLSPublicKey(
 	ctx context.Context,
 	blsKeyPair *bls.KeyPair,
 	operator types.Operator,
-	blsPubkeyCompendiumAddr common.Address,
 ) (*gethtypes.Receipt, error) {
 	w.logger.Infof("Registering BLS Public key to eigenlayer for operator %s", operator.Address)
 	txOpts := w.signer.GetTxOpts()
@@ -186,7 +183,7 @@ func (w *ELChainWriter) RegisterBLSPublicKey(
 	if err != nil {
 		return nil, err
 	}
-	signedMsgHash := blsKeyPair.MakePubkeyRegistrationData(gethcommon.HexToAddress(operator.Address), blsPubkeyCompendiumAddr, chainID)
+	signedMsgHash := blsKeyPair.MakePubkeyRegistrationData(gethcommon.HexToAddress(operator.Address), w.elContractsClient.GetBLSPublicKeyCompendiumContractAddress(), chainID)
 	signedMsgHashBN254 := blspubkeycompendium.BN254G1Point(utils.ConvertToBN254G1Point(signedMsgHash))
 	G1pubkeyBN254 := blspubkeycompendium.BN254G1Point(utils.ConvertToBN254G1Point(blsKeyPair.GetPubKeyG1()))
 	G2pubkeyBN254 := blspubkeycompendium.BN254G2Point(utils.ConvertToBN254G2Point(blsKeyPair.GetPubKeyG2()))
