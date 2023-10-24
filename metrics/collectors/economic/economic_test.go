@@ -29,6 +29,7 @@ func TestEconomicCollector(t *testing.T) {
 	ethReader.EXPECT().OperatorIsFrozen(gomock.Any(), operatorAddr).Return(false, nil)
 
 	avsRegistryReader := mocks.NewMockAvsRegistryReader(mockCtrl)
+	avsRegistryReader.EXPECT().GetOperatorId(gomock.Any(), operatorAddr).Return(operatorId, nil)
 	avsRegistryReader.EXPECT().GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(gomock.Any(), gomock.Any()).Return(
 		map[types.QuorumNum]*big.Int{
 			0: big.NewInt(1000),
@@ -36,7 +37,6 @@ func TestEconomicCollector(t *testing.T) {
 		},
 		nil,
 	)
-	avsRegistryReader.EXPECT().GetOperatorId(gomock.Any(), operatorAddr).Return(operatorId, nil)
 
 	logger := logging.NewNoopLogger()
 	economicCollector := NewCollector(ethReader, avsRegistryReader, "testavs", logger, operatorAddr, quorumNames)

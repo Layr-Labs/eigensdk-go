@@ -112,9 +112,6 @@ func (ec *Collector) cacheOperatorIdIfNotCached() error {
 	if ec.operatorId == [32]byte{} {
 		operatorId, err := ec.avsRegistryReader.GetOperatorId(context.Background(), ec.operatorAddr)
 		if err != nil {
-			// we only log and don't return because we might eventually add more metrics below,
-			// and returning early would introduce a bug that we would be skipping those other metrics
-			ec.logger.Error("Failed to get operator id", "err", err)
 			return err
 		}
 		ec.operatorId = operatorId
@@ -146,6 +143,8 @@ func (ec *Collector) Collect(ch chan<- prometheus.Metric) {
 	// collect registeredStake metric
 	err = ec.cacheOperatorIdIfNotCached()
 	if err != nil {
+		ec.logger.Error("Failed to fetch and catch operator id. Skipping collection of registeredStake metric.", "err", err)
+	} else {
 		// probably should start using the avsregistry service instead of avsRegistryReader so that we can
 		// swap out backend for a subgraph eventually
 		quorumStakeMap, err := ec.avsRegistryReader.GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(context.Background(), ec.operatorId)
