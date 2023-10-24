@@ -190,7 +190,6 @@ func TestBlsAgg(t *testing.T) {
 		err = blsAggServ.InitializeNewTask(task2Index, blockNum, quorumNumbers, quorumThresholdPercentages, tasksTimeToExpiry)
 		require.Nil(t, err)
 
-		// Don't change the order of these, as the checks below assume task1 is completed first
 		blsSigTask1Op1 := testOperator1.BlsKeypair.SignMessage(task1ResponseDigest)
 		err = blsAggServ.ProcessNewSignature(context.Background(), task1Index, task1ResponseDigest, blsSigTask1Op1, testOperator1.OperatorId)
 		require.Nil(t, err)
@@ -216,9 +215,6 @@ func TestBlsAgg(t *testing.T) {
 			SignersApkG2:    bls.NewZeroG2Point().Add(testOperator1.BlsKeypair.GetPubKeyG2().Add(testOperator2.BlsKeypair.GetPubKeyG2())),
 			SignersAggSigG1: testOperator1.BlsKeypair.SignMessage(task1ResponseDigest).Add(testOperator2.BlsKeypair.SignMessage(task1ResponseDigest)),
 		}
-		gotAggregationServiceResponseTask1 := <-blsAggServ.aggregatedResponsesC
-		require.EqualValues(t, wantAggregationServiceResponseTask1, gotAggregationServiceResponseTask1)
-
 		wantAggregationServiceResponseTask2 := BlsAggregationServiceResponse{
 			Err:                 nil,
 			TaskIndex:           task2Index,
@@ -231,8 +227,18 @@ func TestBlsAgg(t *testing.T) {
 			SignersApkG2:    testOperator1.BlsKeypair.GetPubKeyG2().Add(testOperator2.BlsKeypair.GetPubKeyG2()),
 			SignersAggSigG1: testOperator1.BlsKeypair.SignMessage(task2ResponseDigest).Add(testOperator2.BlsKeypair.SignMessage(task2ResponseDigest)),
 		}
-		gotAggregationServiceResponseTask2 := <-blsAggServ.aggregatedResponsesC
-		require.EqualValues(t, wantAggregationServiceResponseTask2, gotAggregationServiceResponseTask2)
+
+		// we don't know which of task1 or task2 responses will be received first
+		gotAggregationServiceResponseTaskFirstReceived := <-blsAggServ.aggregatedResponsesC
+		gotAggregationServiceResponseTaskSecondReceived := <-blsAggServ.aggregatedResponsesC
+
+		if gotAggregationServiceResponseTaskFirstReceived.TaskIndex == task1Index {
+			require.EqualValues(t, wantAggregationServiceResponseTask1, gotAggregationServiceResponseTaskFirstReceived)
+			require.EqualValues(t, wantAggregationServiceResponseTask2, gotAggregationServiceResponseTaskSecondReceived)
+		} else {
+			require.EqualValues(t, wantAggregationServiceResponseTask2, gotAggregationServiceResponseTaskFirstReceived)
+			require.EqualValues(t, wantAggregationServiceResponseTask1, gotAggregationServiceResponseTaskSecondReceived)
+		}
 	})
 
 	t.Run("1 quorum 1 operator 0 signatures - task expired", func(t *testing.T) {
