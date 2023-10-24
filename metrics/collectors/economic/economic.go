@@ -108,7 +108,8 @@ func (ec *Collector) Describe(ch chan<- *prometheus.Desc) {
 	// ch <- ec.delegatedShares
 }
 
-func (ec *Collector) cacheOperatorIdIfNotCached() error {
+// initialize the operatorId if it hasn't already been initialized
+func (ec *Collector) initOperatorId() error {
 	if ec.operatorId == [32]byte{} {
 		operatorId, err := ec.avsRegistryReader.GetOperatorId(context.Background(), ec.operatorAddr)
 		if err != nil {
@@ -141,7 +142,7 @@ func (ec *Collector) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	// collect registeredStake metric
-	err = ec.cacheOperatorIdIfNotCached()
+	err = ec.initOperatorId()
 	if err != nil {
 		ec.logger.Error("Failed to fetch and catch operator id. Skipping collection of registeredStake metric.", "err", err)
 	} else {
