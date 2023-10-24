@@ -131,9 +131,10 @@ func (ec *Collector) Collect(ch chan<- prometheus.Metric) {
 	// swap out backend for a subgraph eventually
 	operatorId, err := ec.avsRegistryReader.GetOperatorId(context.Background(), ec.operatorAddr)
 	if err != nil {
+		// we only log and don't return because we might eventually add more metrics below,
+		// and returning early would introduce a bug that we would be skipping those other metrics
 		ec.logger.Error("Failed to get operator id", "err", err)
-	}
-	if operatorId == [32]byte{} {
+	} else if operatorId == [32]byte{} {
 		ec.logger.Warn("Operator is not registered. Skipping registeredStake metric collection.", "fn", "economicCollector.Collect")
 	} else {
 		quorumNums, blsOperatorStateRetrieverOperator, err := ec.avsRegistryReader.GetOperatorsStakeInQuorumsOfOperatorAtCurrentBlock(context.Background(), operatorId)
