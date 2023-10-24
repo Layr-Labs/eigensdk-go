@@ -28,6 +28,7 @@ type Collector struct {
 	logger            logging.Logger
 	// params to query the metrics for
 	operatorAddr common.Address
+	operatorId   types.OperatorId
 	quorumNames  map[types.QuorumNum]string
 	// metrics
 	// TODO(samlaf): I feel like eigenlayer-core metrics like slashingStatus and delegatedShares, which are not avs specific,
@@ -68,7 +69,10 @@ func NewCollector(
 		avsRegistryReader: avsRegistryReader,
 		logger:            logger,
 		operatorAddr:      operatorAddr,
-		quorumNames:       quorumNames,
+		// we don't fetch operatorId here because operator might not yet be registered (and hence not have an operatorId)
+		// we cache operatorId dynamically in the collect function() inside, which allows constructing collector before registering operator
+		operatorId:  [32]byte{},
+		quorumNames: quorumNames,
 		slashingStatus: prometheus.NewDesc(
 			types.EigenPromNamespace+"_slashing_status",
 			"Whether the operator has been slashed",
@@ -104,6 +108,20 @@ func (ec *Collector) Describe(ch chan<- *prometheus.Desc) {
 	// ch <- ec.delegatedShares
 }
 
+func (ec *Collector) cacheOperatorIdIfNotCached() error {
+	if ec.operatorId == [32]byte{} {
+		operatorId, err := ec.avsRegistryReader.GetOperatorId(context.Background(), ec.operatorAddr)
+		if err != nil {
+			// we only log and don't return because we might eventually add more metrics below,
+			// and returning early would introduce a bug that we would be skipping those other metrics
+			ec.logger.Error("Failed to get operator id", "err", err)
+			return err
+		}
+		ec.operatorId = operatorId
+	}
+	return nil
+}
+
 // Collect function for the exported slashingIncurredTotal and balanceTotal metrics
 // see https://github.com/prometheus/client_golang/blob/v1.16.0/prometheus/collector.go#L27
 // collect just makes jsonrpc calls to the slasher and delegationManager and then creates
@@ -126,17 +144,11 @@ func (ec *Collector) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	// collect registeredStake metric
-	// probably should start using the avsregistry service instead of avsRegistryReader so that we can
-	// swap out backend for a subgraph eventually
-	operatorId, err := ec.avsRegistryReader.GetOperatorId(context.Background(), ec.operatorAddr)
+	err = ec.cacheOperatorIdIfNotCached()
 	if err != nil {
-		// we only log and don't return because we might eventually add more metrics below,
-		// and returning early would introduce a bug that we would be skipping those other metrics
-		ec.logger.Error("Failed to get operator id", "err", err)
-	} else if operatorId == [32]byte{} {
-		ec.logger.Warn("Operator is not registered. Skipping registeredStake metric collection.", "fn", "economicCollector.Collect")
-	} else {
-		quorumStakeMap, err := ec.avsRegistryReader.GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(context.Background(), operatorId)
+		// probably should start using the avsregistry service instead of avsRegistryReader so that we can
+		// swap out backend for a subgraph eventually
+		quorumStakeMap, err := ec.avsRegistryReader.GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(context.Background(), ec.operatorId)
 		if err != nil {
 			ec.logger.Error("Failed to get operator stake", "err", err)
 		} else {
