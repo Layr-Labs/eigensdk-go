@@ -1,8 +1,6 @@
 package clients
 
 import (
-	"math/big"
-
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	blsoperatorstateretrievar "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSOperatorStateRetriever"
 	blspubkeyregistry "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPubkeyRegistry"
@@ -50,8 +48,6 @@ type AVSRegistryContractsClient interface {
 	UpdateStakes(
 		opts *bind.TransactOpts,
 		operators []gethcommon.Address,
-		operatorIds [][32]byte,
-		prevElements []*big.Int,
 	) (*gethTypes.Transaction, error)
 
 	DeregisterOperator(
@@ -167,14 +163,11 @@ func (a *AvsRegistryContractsChainClient) GetCheckSignaturesIndices(
 func (a *AvsRegistryContractsChainClient) UpdateStakes(
 	opts *bind.TransactOpts,
 	operators []gethcommon.Address,
-	operatorIds [][32]byte,
-	prevElements []*big.Int,
 ) (*gethTypes.Transaction, error) {
 	return a.avsRegistryBindings.StakeRegistry.UpdateStakes(
 		opts,
 		operators,
-		operatorIds,
-		prevElements)
+	)
 }
 
 func (a *AvsRegistryContractsChainClient) DeregisterOperator(

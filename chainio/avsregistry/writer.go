@@ -2,7 +2,6 @@ package avsregistry
 
 import (
 	"context"
-	"math/big"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
@@ -25,8 +24,6 @@ type AvsRegistryWriter interface {
 	UpdateStakes(
 		ctx context.Context,
 		operators []gethcommon.Address,
-		operatorIds [][32]byte,
-		prevElements []*big.Int,
 	) (*types.Receipt, error)
 
 	DeregisterOperator(
@@ -81,12 +78,10 @@ func (w *AvsRegistryChainWriter) RegisterOperatorWithAVSRegistryCoordinator(
 func (w *AvsRegistryChainWriter) UpdateStakes(
 	ctx context.Context,
 	operators []gethcommon.Address,
-	operatorIds [][32]byte,
-	prevElements []*big.Int,
 ) (*types.Receipt, error) {
 	w.logger.Info("updating stakes")
 	txOpts := w.signer.GetTxOpts()
-	tx, err := w.avsRegistryContractsClient.UpdateStakes(txOpts, operators, operatorIds, prevElements)
+	tx, err := w.avsRegistryContractsClient.UpdateStakes(txOpts, operators)
 	if err != nil {
 		return nil, err
 	}

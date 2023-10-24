@@ -31,7 +31,7 @@ var (
 
 // ContractIStrategyMetaData contains all meta data concerning the ContractIStrategy contract.
 var ContractIStrategyMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[{\"internalType\":\"contractIERC20\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"deposit\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"explanation\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountShares\",\"type\":\"uint256\"}],\"name\":\"sharesToUnderlying\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountShares\",\"type\":\"uint256\"}],\"name\":\"sharesToUnderlyingView\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"totalShares\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountUnderlying\",\"type\":\"uint256\"}],\"name\":\"underlyingToShares\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountUnderlying\",\"type\":\"uint256\"}],\"name\":\"underlyingToSharesView\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"underlyingToken\",\"outputs\":[{\"internalType\":\"contractIERC20\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"userUnderlying\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"userUnderlyingView\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"depositor\",\"type\":\"address\"},{\"internalType\":\"contractIERC20\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amountShares\",\"type\":\"uint256\"}],\"name\":\"withdraw\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"inputs\":[{\"internalType\":\"contractIERC20\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"deposit\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"explanation\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"shares\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountShares\",\"type\":\"uint256\"}],\"name\":\"sharesToUnderlying\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountShares\",\"type\":\"uint256\"}],\"name\":\"sharesToUnderlyingView\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"totalShares\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountUnderlying\",\"type\":\"uint256\"}],\"name\":\"underlyingToShares\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"amountUnderlying\",\"type\":\"uint256\"}],\"name\":\"underlyingToSharesView\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"underlyingToken\",\"outputs\":[{\"internalType\":\"contractIERC20\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"userUnderlying\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"userUnderlyingView\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"recipient\",\"type\":\"address\"},{\"internalType\":\"contractIERC20\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"amountShares\",\"type\":\"uint256\"}],\"name\":\"withdraw\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 }
 
 // ContractIStrategyABI is the input ABI used to generate the binding from.
@@ -209,6 +209,37 @@ func (_ContractIStrategy *ContractIStrategySession) Explanation() (string, error
 // Solidity: function explanation() view returns(string)
 func (_ContractIStrategy *ContractIStrategyCallerSession) Explanation() (string, error) {
 	return _ContractIStrategy.Contract.Explanation(&_ContractIStrategy.CallOpts)
+}
+
+// Shares is a free data retrieval call binding the contract method 0xce7c2ac2.
+//
+// Solidity: function shares(address user) view returns(uint256)
+func (_ContractIStrategy *ContractIStrategyCaller) Shares(opts *bind.CallOpts, user common.Address) (*big.Int, error) {
+	var out []interface{}
+	err := _ContractIStrategy.contract.Call(opts, &out, "shares", user)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// Shares is a free data retrieval call binding the contract method 0xce7c2ac2.
+//
+// Solidity: function shares(address user) view returns(uint256)
+func (_ContractIStrategy *ContractIStrategySession) Shares(user common.Address) (*big.Int, error) {
+	return _ContractIStrategy.Contract.Shares(&_ContractIStrategy.CallOpts, user)
+}
+
+// Shares is a free data retrieval call binding the contract method 0xce7c2ac2.
+//
+// Solidity: function shares(address user) view returns(uint256)
+func (_ContractIStrategy *ContractIStrategyCallerSession) Shares(user common.Address) (*big.Int, error) {
+	return _ContractIStrategy.Contract.Shares(&_ContractIStrategy.CallOpts, user)
 }
 
 // SharesToUnderlyingView is a free data retrieval call binding the contract method 0x7a8b2637.
@@ -452,21 +483,21 @@ func (_ContractIStrategy *ContractIStrategyTransactorSession) UserUnderlying(use
 
 // Withdraw is a paid mutator transaction binding the contract method 0xd9caed12.
 //
-// Solidity: function withdraw(address depositor, address token, uint256 amountShares) returns()
-func (_ContractIStrategy *ContractIStrategyTransactor) Withdraw(opts *bind.TransactOpts, depositor common.Address, token common.Address, amountShares *big.Int) (*types.Transaction, error) {
-	return _ContractIStrategy.contract.Transact(opts, "withdraw", depositor, token, amountShares)
+// Solidity: function withdraw(address recipient, address token, uint256 amountShares) returns()
+func (_ContractIStrategy *ContractIStrategyTransactor) Withdraw(opts *bind.TransactOpts, recipient common.Address, token common.Address, amountShares *big.Int) (*types.Transaction, error) {
+	return _ContractIStrategy.contract.Transact(opts, "withdraw", recipient, token, amountShares)
 }
 
 // Withdraw is a paid mutator transaction binding the contract method 0xd9caed12.
 //
-// Solidity: function withdraw(address depositor, address token, uint256 amountShares) returns()
-func (_ContractIStrategy *ContractIStrategySession) Withdraw(depositor common.Address, token common.Address, amountShares *big.Int) (*types.Transaction, error) {
-	return _ContractIStrategy.Contract.Withdraw(&_ContractIStrategy.TransactOpts, depositor, token, amountShares)
+// Solidity: function withdraw(address recipient, address token, uint256 amountShares) returns()
+func (_ContractIStrategy *ContractIStrategySession) Withdraw(recipient common.Address, token common.Address, amountShares *big.Int) (*types.Transaction, error) {
+	return _ContractIStrategy.Contract.Withdraw(&_ContractIStrategy.TransactOpts, recipient, token, amountShares)
 }
 
 // Withdraw is a paid mutator transaction binding the contract method 0xd9caed12.
 //
-// Solidity: function withdraw(address depositor, address token, uint256 amountShares) returns()
-func (_ContractIStrategy *ContractIStrategyTransactorSession) Withdraw(depositor common.Address, token common.Address, amountShares *big.Int) (*types.Transaction, error) {
-	return _ContractIStrategy.Contract.Withdraw(&_ContractIStrategy.TransactOpts, depositor, token, amountShares)
+// Solidity: function withdraw(address recipient, address token, uint256 amountShares) returns()
+func (_ContractIStrategy *ContractIStrategyTransactorSession) Withdraw(recipient common.Address, token common.Address, amountShares *big.Int) (*types.Transaction, error) {
+	return _ContractIStrategy.Contract.Withdraw(&_ContractIStrategy.TransactOpts, recipient, token, amountShares)
 }
