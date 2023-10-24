@@ -74,7 +74,7 @@ func (ar *AvsRegistryServiceChainCaller) GetOperatorsAvsStateAtBlock(ctx context
 func (ar *AvsRegistryServiceChainCaller) GetQuorumsAvsStateAtBlock(ctx context.Context, quorumNumbers []types.QuorumNum, blockNumber types.BlockNum) (map[types.QuorumNum]types.QuorumAvsState, error) {
 	operatorsAvsState, err := ar.GetOperatorsAvsStateAtBlock(ctx, quorumNumbers, blockNumber)
 	if err != nil {
-		ar.logger.Error("Failed to get operator state", "err", err, "service", "AvsRegistryServiceChainCaller")
+		ar.logger.Error("Failed to get quorum state", "err", err, "service", "AvsRegistryServiceChainCaller")
 		return nil, err
 	}
 	quorumsAvsState := make(map[types.QuorumNum]types.QuorumAvsState)

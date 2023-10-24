@@ -28,7 +28,6 @@ type Collector struct {
 	logger            logging.Logger
 	// params to query the metrics for
 	operatorAddr common.Address
-	operatorId   types.OperatorId
 	quorumNames  map[types.QuorumNum]string
 	// metrics
 	// TODO(samlaf): I feel like eigenlayer-core metrics like slashingStatus and delegatedShares, which are not avs specific,
@@ -64,16 +63,11 @@ func NewCollector(
 	avsName string, logger logging.Logger,
 	operatorAddr common.Address, quorumNames map[types.QuorumNum]string,
 ) *Collector {
-	operatorId, err := avsRegistryReader.GetOperatorId(context.Background(), operatorAddr)
-	if err != nil {
-		logger.Error("Failed to get operator id", "err", err)
-	}
 	return &Collector{
 		elReader:          elReader,
 		avsRegistryReader: avsRegistryReader,
 		logger:            logger,
 		operatorAddr:      operatorAddr,
-		operatorId:        operatorId,
 		quorumNames:       quorumNames,
 		slashingStatus: prometheus.NewDesc(
 			types.EigenPromNamespace+"_slashing_status",
@@ -135,20 +129,28 @@ func (ec *Collector) Collect(ch chan<- prometheus.Metric) {
 	// TODO(samlaf): implement this. probably have to call the BLSOperatorStateRetriever contract?
 	// probably should start using the avsregistry service instead of chainio clients so that we can
 	// swap out backend for a subgraph eventually
-	quorumNums, blsOperatorStateRetrieverOperator, err := ec.avsRegistryReader.GetOperatorsStakeInQuorumsOfOperatorAtCurrentBlock(context.Background(), ec.operatorId)
+	operatorId, err := ec.avsRegistryReader.GetOperatorId(context.Background(), ec.operatorAddr)
 	if err != nil {
-		ec.logger.Error("Failed to get operator stake", "err", err)
+		ec.logger.Error("Failed to get operator id", "err", err)
+	}
+	if operatorId == [32]byte{} {
+		ec.logger.Warn("Operator is not registered. Skipping registeredStake metric collection.", "fn", "economicCollector.Collect")
 	} else {
-		for quorumIdx, quorumNum := range quorumNums {
-			// TODO: this is stupid.. when AVSs scale to have 5K operators we'll be running through a bunch of operators
-			// we should instead just call registryCoordinator.getQuorumBitmapIndicesByOperatorIdsAtBlockNumber
-			// and stakeRegistry.getStakeForOperatorIdForQuorumAtBlockNumber directly
-			for _, operator := range blsOperatorStateRetrieverOperator[quorumIdx] {
-				if operator.OperatorId == ec.operatorId {
-					stakeFloat64, _ := operator.Stake.Float64()
-					ch <- prometheus.MustNewConstMetric(
-						ec.registeredStake, prometheus.GaugeValue, stakeFloat64, strconv.Itoa(int(quorumNum)), ec.quorumNames[quorumNum],
-					)
+		quorumNums, blsOperatorStateRetrieverOperator, err := ec.avsRegistryReader.GetOperatorsStakeInQuorumsOfOperatorAtCurrentBlock(context.Background(), operatorId)
+		if err != nil {
+			ec.logger.Error("Failed to get operator stake", "err", err)
+		} else {
+			for quorumIdx, quorumNum := range quorumNums {
+				// TODO: this is stupid.. when AVSs scale to have 5K operators we'll be running through a bunch of operators
+				// we should instead just call registryCoordinator.getQuorumBitmapIndicesByOperatorIdsAtBlockNumber
+				// and stakeRegistry.getStakeForOperatorIdForQuorumAtBlockNumber directly
+				for _, operator := range blsOperatorStateRetrieverOperator[quorumIdx] {
+					if operator.OperatorId == operatorId {
+						stakeFloat64, _ := operator.Stake.Float64()
+						ch <- prometheus.MustNewConstMetric(
+							ec.registeredStake, prometheus.GaugeValue, stakeFloat64, strconv.Itoa(int(quorumNum)), ec.quorumNames[quorumNum],
+						)
+					}
 				}
 			}
 		}

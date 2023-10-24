@@ -91,7 +91,7 @@ func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsOfOperatorAtBlock(
 		operatorId,
 		blockNumber)
 	if err != nil {
-		r.logger.Error("Failed to get operators state", "err", err)
+		r.logger.Error("Failed to get operators state", "err", err, "fn", "AvsRegistryChainReader.GetOperatorsStakeInQuorumsOfOperatorAtBlock")
 		return nil, nil, err
 	}
 
