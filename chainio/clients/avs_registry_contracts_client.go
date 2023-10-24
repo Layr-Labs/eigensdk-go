@@ -26,6 +26,17 @@ type AVSRegistryContractsClient interface {
 		operatorAddress gethcommon.Address,
 	) ([32]byte, error)
 
+	GetCurrentOperatorStakeForQuorum(
+		opts *bind.CallOpts,
+		operatorId types.OperatorId,
+		quorumNum types.QuorumNum,
+	) (types.StakeAmount, error)
+
+	GetOperatorQuorumsAtCurrentBlock(
+		opts *bind.CallOpts,
+		operatorId types.OperatorId,
+	) ([]types.QuorumNum, error)
+
 	GetOperatorsStakeInQuorumsAtBlock(
 		opts *bind.CallOpts,
 		quorumNumbers []types.QuorumNum,
@@ -126,6 +137,30 @@ func (a *AvsRegistryContractsChainClient) GetOperatorsStakeInQuorumsAtBlock(
 		a.registryCoordinatorAddr,
 		quorumNumbers,
 		blockNumber)
+}
+
+func (a *AvsRegistryContractsChainClient) GetCurrentOperatorStakeForQuorum(
+	opts *bind.CallOpts,
+	operatorId types.OperatorId,
+	quorumNum types.QuorumNum,
+) (types.StakeAmount, error) {
+	return a.avsRegistryBindings.StakeRegistry.GetCurrentOperatorStakeForQuorum(opts, operatorId, quorumNum)
+}
+
+// registry currently only has a fct to retrieve operatorQuorums at current block
+// if we need it at a specific block, we first need to call
+// getQuorumBitmapIndicesByOperatorIdsAtBlockNumber to get the index of the quorum bitmap
+// followed by getQuorumBitmapByOperatorIdAtBlockNumberByIndex
+func (a *AvsRegistryContractsChainClient) GetOperatorQuorumsAtCurrentBlock(
+	opts *bind.CallOpts,
+	operatorId types.OperatorId,
+) ([]types.QuorumNum, error) {
+	quorumBitmap, err := a.avsRegistryBindings.RegistryCoordinator.GetCurrentQuorumBitmapByOperatorId(opts, operatorId)
+	if err != nil {
+		return nil, err
+	}
+	quorums := types.BitmapToQuorumIds(quorumBitmap)
+	return quorums, nil
 }
 
 func (a *AvsRegistryContractsChainClient) GetOperatorsStakeInQuorumsOfOperatorAtBlock(

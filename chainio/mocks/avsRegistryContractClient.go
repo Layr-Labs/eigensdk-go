@@ -9,6 +9,7 @@
 package mocks
 
 import (
+	big "math/big"
 	reflect "reflect"
 
 	contractBLSOperatorStateRetriever "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSOperatorStateRetriever"
@@ -73,6 +74,21 @@ func (mr *MockAVSRegistryContractsClientMockRecorder) GetCheckSignaturesIndices(
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCheckSignaturesIndices", reflect.TypeOf((*MockAVSRegistryContractsClient)(nil).GetCheckSignaturesIndices), arg0, arg1, arg2, arg3)
 }
 
+// GetCurrentOperatorStakeForQuorum mocks base method.
+func (m *MockAVSRegistryContractsClient) GetCurrentOperatorStakeForQuorum(arg0 *bind.CallOpts, arg1 [32]byte, arg2 byte) (*big.Int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCurrentOperatorStakeForQuorum", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*big.Int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetCurrentOperatorStakeForQuorum indicates an expected call of GetCurrentOperatorStakeForQuorum.
+func (mr *MockAVSRegistryContractsClientMockRecorder) GetCurrentOperatorStakeForQuorum(arg0, arg1, arg2 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCurrentOperatorStakeForQuorum", reflect.TypeOf((*MockAVSRegistryContractsClient)(nil).GetCurrentOperatorStakeForQuorum), arg0, arg1, arg2)
+}
+
 // GetOperatorId mocks base method.
 func (m *MockAVSRegistryContractsClient) GetOperatorId(arg0 *bind.CallOpts, arg1 common.Address) ([32]byte, error) {
 	m.ctrl.T.Helper()
@@ -86,6 +102,21 @@ func (m *MockAVSRegistryContractsClient) GetOperatorId(arg0 *bind.CallOpts, arg1
 func (mr *MockAVSRegistryContractsClientMockRecorder) GetOperatorId(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOperatorId", reflect.TypeOf((*MockAVSRegistryContractsClient)(nil).GetOperatorId), arg0, arg1)
+}
+
+// GetOperatorQuorumsAtCurrentBlock mocks base method.
+func (m *MockAVSRegistryContractsClient) GetOperatorQuorumsAtCurrentBlock(arg0 *bind.CallOpts, arg1 [32]byte) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetOperatorQuorumsAtCurrentBlock", arg0, arg1)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetOperatorQuorumsAtCurrentBlock indicates an expected call of GetOperatorQuorumsAtCurrentBlock.
+func (mr *MockAVSRegistryContractsClientMockRecorder) GetOperatorQuorumsAtCurrentBlock(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOperatorQuorumsAtCurrentBlock", reflect.TypeOf((*MockAVSRegistryContractsClient)(nil).GetOperatorQuorumsAtCurrentBlock), arg0, arg1)
 }
 
 // GetOperatorsStakeInQuorumsAtBlock mocks base method.

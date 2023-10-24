@@ -20,6 +20,11 @@ type AvsRegistryReader interface {
 		blockNumber uint32,
 	) ([][]blsoperatorstateretrievar.BLSOperatorStateRetrieverOperator, error)
 
+	GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(
+		ctx context.Context,
+		operatorId types.OperatorId,
+	) (map[types.QuorumNum]types.StakeAmount, error)
+
 	GetOperatorsStakeInQuorumsOfOperatorAtBlock(
 		ctx context.Context,
 		operatorId types.OperatorId,
@@ -112,6 +117,30 @@ func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsOfOperatorAtCurrentBl
 		return nil, nil, err
 	}
 	return r.GetOperatorsStakeInQuorumsOfOperatorAtBlock(ctx, operatorId, uint32(curBlock))
+}
+
+// GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock could have race conditions
+// it currently makes a bunch of calls to fetch "current block" information,
+// so some of them could actually return information from different blocks
+func (r *AvsRegistryChainReader) GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(
+	ctx context.Context,
+	operatorId types.OperatorId,
+) (map[types.QuorumNum]types.StakeAmount, error) {
+	quorums, err := r.avsRegistryContractsClient.GetOperatorQuorumsAtCurrentBlock(&bind.CallOpts{}, operatorId)
+	if err != nil {
+		r.logger.Error("Failed to get operator quorums", "err", err)
+		return nil, err
+	}
+	quorumStakes := make(map[types.QuorumNum]types.StakeAmount)
+	for _, quorum := range quorums {
+		stake, err := r.avsRegistryContractsClient.GetCurrentOperatorStakeForQuorum(&bind.CallOpts{}, operatorId, quorum)
+		if err != nil {
+			r.logger.Error("Failed to get operator stake", "err", err)
+			return nil, err
+		}
+		quorumStakes[quorum] = stake
+	}
+	return quorumStakes, nil
 }
 
 func (r *AvsRegistryChainReader) GetCheckSignaturesIndices(

@@ -126,8 +126,7 @@ func (ec *Collector) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	// collect registeredStake metric
-	// TODO(samlaf): implement this. probably have to call the BLSOperatorStateRetriever contract?
-	// probably should start using the avsregistry service instead of chainio clients so that we can
+	// probably should start using the avsregistry service instead of avsRegistryReader so that we can
 	// swap out backend for a subgraph eventually
 	operatorId, err := ec.avsRegistryReader.GetOperatorId(context.Background(), ec.operatorAddr)
 	if err != nil {
@@ -137,22 +136,15 @@ func (ec *Collector) Collect(ch chan<- prometheus.Metric) {
 	} else if operatorId == [32]byte{} {
 		ec.logger.Warn("Operator is not registered. Skipping registeredStake metric collection.", "fn", "economicCollector.Collect")
 	} else {
-		quorumNums, blsOperatorStateRetrieverOperator, err := ec.avsRegistryReader.GetOperatorsStakeInQuorumsOfOperatorAtCurrentBlock(context.Background(), operatorId)
+		quorumStakeMap, err := ec.avsRegistryReader.GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(context.Background(), operatorId)
 		if err != nil {
 			ec.logger.Error("Failed to get operator stake", "err", err)
 		} else {
-			for quorumIdx, quorumNum := range quorumNums {
-				// TODO: this is stupid.. when AVSs scale to have 5K operators we'll be running through a bunch of operators
-				// we should instead just call registryCoordinator.getQuorumBitmapIndicesByOperatorIdsAtBlockNumber
-				// and stakeRegistry.getStakeForOperatorIdForQuorumAtBlockNumber directly
-				for _, operator := range blsOperatorStateRetrieverOperator[quorumIdx] {
-					if operator.OperatorId == operatorId {
-						stakeFloat64, _ := operator.Stake.Float64()
-						ch <- prometheus.MustNewConstMetric(
-							ec.registeredStake, prometheus.GaugeValue, stakeFloat64, strconv.Itoa(int(quorumNum)), ec.quorumNames[quorumNum],
-						)
-					}
-				}
+			for quorumNum, stake := range quorumStakeMap {
+				stakeFloat64, _ := stake.Float64()
+				ch <- prometheus.MustNewConstMetric(
+					ec.registeredStake, prometheus.GaugeValue, stakeFloat64, strconv.Itoa(int(quorumNum)), ec.quorumNames[quorumNum],
+				)
 			}
 		}
 	}
