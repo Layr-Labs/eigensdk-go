@@ -146,7 +146,12 @@ func DeserializeG2(b []byte) *bn254.G2Affine {
 	return p
 }
 
-func MakePubkeyRegistrationData(privKey *fr.Element, operatorAddress common.Address, blsPubkeyCompendiumAddress common.Address, chainId *big.Int) *bn254.G1Affine {
+func MakePubkeyRegistrationData(
+	privKey *fr.Element,
+	operatorAddress common.Address,
+	blsPubkeyCompendiumAddress common.Address,
+	chainId *big.Int,
+) *bn254.G1Affine {
 	toHash := make([]byte, 0)
 	toHash = append(toHash, operatorAddress.Bytes()...)
 	// we also sign on the bls pubkey compendium contract's address, to prevent replay attacks

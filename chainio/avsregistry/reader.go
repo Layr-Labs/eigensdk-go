@@ -96,7 +96,13 @@ func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsOfOperatorAtBlock(
 		operatorId,
 		blockNumber)
 	if err != nil {
-		r.logger.Error("Failed to get operators state", "err", err, "fn", "AvsRegistryChainReader.GetOperatorsStakeInQuorumsOfOperatorAtBlock")
+		r.logger.Error(
+			"Failed to get operators state",
+			"err",
+			err,
+			"fn",
+			"AvsRegistryChainReader.GetOperatorsStakeInQuorumsOfOperatorAtBlock",
+		)
 		return nil, nil, err
 	}
 
@@ -133,7 +139,11 @@ func (r *AvsRegistryChainReader) GetOperatorStakeInQuorumsOfOperatorAtCurrentBlo
 	}
 	quorumStakes := make(map[types.QuorumNum]types.StakeAmount)
 	for _, quorum := range quorums {
-		stake, err := r.avsRegistryContractsClient.GetCurrentOperatorStakeForQuorum(&bind.CallOpts{}, operatorId, quorum)
+		stake, err := r.avsRegistryContractsClient.GetCurrentOperatorStakeForQuorum(
+			&bind.CallOpts{},
+			operatorId,
+			quorum,
+		)
 		if err != nil {
 			r.logger.Error("Failed to get operator stake", "err", err)
 			return nil, err
