@@ -222,8 +222,8 @@ func generateECDSAKeys(numKeys int, path string, passwordFile, privateKeyFile *o
 		key, err := crypto.GenerateKey()
 		privateKeyHex := hex.EncodeToString(key.D.Bytes())
 
-		// Low tech fix for creating valid keys, probably better is validation code
-		// Checking if the length of privateKeyHex is 32 bytes (64 characters)
+		// Check if the length of privateKeyHex is 32 bytes (64 characters)
+		// Validation in Library will handle this
 		lenPrivateKey := len(privateKeyHex)
 		if lenPrivateKey != 64 {
 			fmt.Printf("Private key Ignore: %s %d\n", privateKeyHex, lenPrivateKey)
