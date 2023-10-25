@@ -64,17 +64,15 @@ func NewCollector(
 	avsName string, logger logging.Logger,
 	operatorAddr common.Address, quorumNames map[types.QuorumNum]string,
 ) *Collector {
-	operatorId, err := avsRegistryReader.GetOperatorId(context.Background(), operatorAddr)
-	if err != nil {
-		logger.Error("Failed to get operator id", "err", err)
-	}
 	return &Collector{
 		elReader:          elReader,
 		avsRegistryReader: avsRegistryReader,
 		logger:            logger,
 		operatorAddr:      operatorAddr,
-		operatorId:        operatorId,
-		quorumNames:       quorumNames,
+		// we don't fetch operatorId here because operator might not yet be registered (and hence not have an operatorId)
+		// we cache operatorId dynamically in the collect function() inside, which allows constructing collector before registering operator
+		operatorId:  [32]byte{},
+		quorumNames: quorumNames,
 		slashingStatus: prometheus.NewDesc(
 			types.EigenPromNamespace+"_slashing_status",
 			"Whether the operator has been slashed",
@@ -110,6 +108,18 @@ func (ec *Collector) Describe(ch chan<- *prometheus.Desc) {
 	// ch <- ec.delegatedShares
 }
 
+// initialize the operatorId if it hasn't already been initialized
+func (ec *Collector) initOperatorId() error {
+	if ec.operatorId == [32]byte{} {
+		operatorId, err := ec.avsRegistryReader.GetOperatorId(context.Background(), ec.operatorAddr)
+		if err != nil {
+			return err
+		}
+		ec.operatorId = operatorId
+	}
+	return nil
+}
+
 // Collect function for the exported slashingIncurredTotal and balanceTotal metrics
 // see https://github.com/prometheus/client_golang/blob/v1.16.0/prometheus/collector.go#L27
 // collect just makes jsonrpc calls to the slasher and delegationManager and then creates
@@ -132,24 +142,21 @@ func (ec *Collector) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	// collect registeredStake metric
-	// TODO(samlaf): implement this. probably have to call the BLSOperatorStateRetriever contract?
-	// probably should start using the avsregistry service instead of chainio clients so that we can
-	// swap out backend for a subgraph eventually
-	quorumNums, blsOperatorStateRetrieverOperator, err := ec.avsRegistryReader.GetOperatorsStakeInQuorumsOfOperatorAtCurrentBlock(context.Background(), ec.operatorId)
+	err = ec.initOperatorId()
 	if err != nil {
-		ec.logger.Error("Failed to get operator stake", "err", err)
+		ec.logger.Error("Failed to fetch and catch operator id. Skipping collection of registeredStake metric.", "err", err)
 	} else {
-		for quorumIdx, quorumNum := range quorumNums {
-			// TODO: this is stupid.. when AVSs scale to have 5K operators we'll be running through a bunch of operators
-			// we should instead just call registryCoordinator.getQuorumBitmapIndicesByOperatorIdsAtBlockNumber
-			// and stakeRegistry.getStakeForOperatorIdForQuorumAtBlockNumber directly
-			for _, operator := range blsOperatorStateRetrieverOperator[quorumIdx] {
-				if operator.OperatorId == ec.operatorId {
-					stakeFloat64, _ := operator.Stake.Float64()
-					ch <- prometheus.MustNewConstMetric(
-						ec.registeredStake, prometheus.GaugeValue, stakeFloat64, strconv.Itoa(int(quorumNum)), ec.quorumNames[quorumNum],
-					)
-				}
+		// probably should start using the avsregistry service instead of avsRegistryReader so that we can
+		// swap out backend for a subgraph eventually
+		quorumStakeMap, err := ec.avsRegistryReader.GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(context.Background(), ec.operatorId)
+		if err != nil {
+			ec.logger.Error("Failed to get operator stake", "err", err)
+		} else {
+			for quorumNum, stake := range quorumStakeMap {
+				stakeFloat64, _ := stake.Float64()
+				ch <- prometheus.MustNewConstMetric(
+					ec.registeredStake, prometheus.GaugeValue, stakeFloat64, strconv.Itoa(int(quorumNum)), ec.quorumNames[quorumNum],
+				)
 			}
 		}
 	}
