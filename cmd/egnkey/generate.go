@@ -65,7 +65,7 @@ It creates the following artifacts based on arguments
 
 func generate(c *cli.Context) error {
 	keyType := c.String(KeyTypeFlag.Name)
-	if keyType != "ecdsa" && keyType != "bls" {
+	if keyType != "ecdsa" && keyType != "bls" && keyType != "both" {
 		return cli.Exit("Invalid key type", 1)
 	}
 	numKeys := c.Int(NumKeysFlag.Name)
@@ -73,49 +73,116 @@ func generate(c *cli.Context) error {
 		return cli.Exit("Invalid number of keys", 1)
 	}
 
-	folder := c.String(OutputDirFlag.Name)
-	if folder == "" {
-		id, err := uuid.NewUUID()
-		if err != nil {
-			return cli.Exit("Failed to generate UUID", 1)
-		}
-		folder = id.String()
-	}
-
-	_, err := os.Stat(folder)
-	if !os.IsNotExist(err) {
-		return cli.Exit("Folder already exists, choose a different folder or delete the existing folder", 1)
-	}
-
-	err = os.MkdirAll(folder+"/"+DefaultKeyFolder, 0755)
-	if err != nil {
-		return err
-	}
-
-	passwordFile, err := os.Create(filepath.Clean(folder + "/" + PasswordFile))
-	if err != nil {
-		return err
-	}
-	privateKeyFile, err := os.Create(filepath.Clean(folder + "/" + PrivateKeyHexFile))
-	if err != nil {
-		return err
-	}
-
+	// TODO: This can be improved further with a factory pattern
 	if keyType == "ecdsa" {
-		err := generateECDSAKeys(numKeys, folder, passwordFile, privateKeyFile)
+
+		folder, err := createDir(c, "ecdsa-")
 		if err != nil {
 			return err
 		}
+
+		passwordFile, privateKeyFile, err := createPasswordAndPrivateKeyFiles(folder)
+
+		if err != nil {
+			return err
+		}
+
+		err = generateECDSAKeys(numKeys, folder, passwordFile, privateKeyFile)
+		if err != nil {
+			return err
+		}
+
 	} else if keyType == "bls" {
-		err := generateBlsKeys(numKeys, folder, passwordFile, privateKeyFile)
+
+		folder, err := createDir(c, "bls-")
 		if err != nil {
 			return err
 		}
+
+		passwordFile, privateKeyFile, err := createPasswordAndPrivateKeyFiles(folder)
+
+		if err != nil {
+			return err
+		}
+
+		err = generateBlsKeys(numKeys, folder, passwordFile, privateKeyFile)
+		if err != nil {
+			return err
+		}
+	} else if keyType == "both" {
+
+		ecdsaFolder, err := createDir(c, "ecdsa-")
+		if err != nil {
+			return err
+		}
+
+		ecdsaPasswordFile, ecdsaPrivateKeyFile, err := createPasswordAndPrivateKeyFiles(ecdsaFolder)
+
+		if err != nil {
+			return err
+		}
+
+		err = generateECDSAKeys(numKeys, ecdsaFolder, ecdsaPasswordFile, ecdsaPrivateKeyFile)
+		if err != nil {
+			return err
+		}
+
+		blsFolder, err := createDir(c, "bls-")
+		if err != nil {
+			return err
+		}
+
+		blsPasswordFile, blsPrivateKeyFile, err := createPasswordAndPrivateKeyFiles(blsFolder)
+
+		if err != nil {
+			return err
+		}
+
+		err = generateBlsKeys(numKeys, blsFolder, blsPasswordFile, blsPrivateKeyFile)
+		if err != nil {
+			return err
+		}
+
 	} else {
 		return cli.Exit("Invalid key type", 1)
 	}
 
 	return nil
+}
+
+func createDir(c *cli.Context, prefix string) (fileName string, err error) {
+	folder := c.String(OutputDirFlag.Name)
+	if folder == "" {
+		id, err := uuid.NewUUID()
+		if err != nil {
+			return "", err
+		}
+		folder = prefix + id.String()
+	}
+
+	_, err = os.Stat(folder)
+	if !os.IsNotExist(err) {
+		return "", err
+	}
+
+	err = os.MkdirAll(folder+"/"+DefaultKeyFolder, 0755)
+	if err != nil {
+		return "", err
+	}
+	return folder, nil
+}
+
+func createPasswordAndPrivateKeyFiles(folder string) (passwordFile, privateKeyFile *os.File, err error) {
+
+	passwordFile, err = os.Create(filepath.Clean(folder + "/" + PasswordFile))
+	if err != nil {
+		return nil, nil, err
+	}
+	privateKeyFile, err = os.Create(filepath.Clean(folder + "/" + PrivateKeyHexFile))
+	if err != nil {
+		return nil, nil, err
+	}
+	return passwordFile, privateKeyFile, nil
 }
 
 func generateBlsKeys(numKeys int, path string, passwordFile, privateKeyFile *os.File) error {
@@ -153,6 +220,18 @@ func generateBlsKeys(numKeys int, path string, passwordFile, privateKeyFile *os.
 func generateECDSAKeys(numKeys int, path string, passwordFile, privateKeyFile *os.File) error {
 	for i := 0; i < numKeys; i++ {
 		key, err := crypto.GenerateKey()
+		privateKeyHex := hex.EncodeToString(key.D.Bytes())
+
+		// Checking if the length of privateKeyHex is 32 bytes (64 characters)
+		for {
+			if len(privateKeyHex) != 64 {
+				key, err = crypto.GenerateKey()
+				privateKeyHex = hex.EncodeToString(key.D.Bytes())
+			} else {
+				break
+			}
+		}
+
 		if err != nil {
 			return err
 		}
@@ -162,7 +241,6 @@ func generateECDSAKeys(numKeys int, path string, passwordFile, privateKeyFile *o
 			return err
 		}
 
-		privateKeyHex := hex.EncodeToString(key.D.Bytes())
 		fileName := fmt.Sprintf("%d.ecdsa.key.json", i+1)
 		err = ecdsa.WriteKey(filepath.Clean(path+"/"+DefaultKeyFolder+"/"+fileName), key, password)
 		if err != nil {
