@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/hex"
 	"fmt"
+	"log"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -114,6 +115,7 @@ func generate(c *cli.Context) error {
 	} else {
 		return cli.Exit("Invalid key type", 1)
 	}
+	log.Println("Generated all keys")
 
 	return nil
 }
@@ -146,6 +148,9 @@ func generateBlsKeys(numKeys int, path string, passwordFile, privateKeyFile *os.
 		if err != nil {
 			return err
 		}
+		if (i+1)%50 == 0 {
+			log.Printf("Generated %d keys\n", i+1)
+		}
 	}
 	return nil
 }
@@ -162,7 +167,14 @@ func generateECDSAKeys(numKeys int, path string, passwordFile, privateKeyFile *o
 			return err
 		}
 
-		privateKeyHex := hex.EncodeToString(key.D.Bytes())
+		privateKeyBytes := key.D.Bytes()
+
+		if len(privateKeyBytes) != 32 {
+			log.Println("Private key length is not 32 bytes, skipping this iteration")
+			i--
+			continue
+		}
+		privateKeyHex := hex.EncodeToString(privateKeyBytes)
 		fileName := fmt.Sprintf("%d.ecdsa.key.json", i+1)
 		err = ecdsa.WriteKey(filepath.Clean(path+"/"+DefaultKeyFolder+"/"+fileName), key, password)
 		if err != nil {
@@ -177,6 +189,9 @@ func generateECDSAKeys(numKeys int, path string, passwordFile, privateKeyFile *o
 		_, err = privateKeyFile.WriteString("0x" + privateKeyHex + "\n")
 		if err != nil {
 			return err
+		}
+		if (i+1)%50 == 0 {
+			log.Printf("Generated %d keys\n", i+1)
 		}
 	}
 	return nil
