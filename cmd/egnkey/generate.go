@@ -169,6 +169,7 @@ func generateECDSAKeys(numKeys int, path string, passwordFile, privateKeyFile *o
 
 		privateKeyBytes := key.D.Bytes()
 
+		// We don't want to save the private key if it is not 32 bytes
 		if len(privateKeyBytes) != 32 {
 			log.Println("Private key length is not 32 bytes, skipping this iteration")
 			i--
