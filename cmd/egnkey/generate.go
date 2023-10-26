@@ -213,6 +213,10 @@ func generateBlsKeys(numKeys int, path string, passwordFile, privateKeyFile *os.
 		if err != nil {
 			return err
 		}
+
+		if (i+1)%50 == 0 {
+			fmt.Printf("Generated %d keys\n", i+1)
+		}
 	}
 	return nil
 }
@@ -227,6 +231,8 @@ func generateECDSAKeys(numKeys int, path string, passwordFile, privateKeyFile *o
 		lenPrivateKey := len(privateKeyHex)
 		if lenPrivateKey != 64 {
 			fmt.Printf("Private key Ignore: %s %d\n", privateKeyHex, lenPrivateKey)
+			// Reset count
+			i--
 			continue
 		}
 
@@ -253,6 +259,10 @@ func generateECDSAKeys(numKeys int, path string, passwordFile, privateKeyFile *o
 		_, err = privateKeyFile.WriteString("0x" + privateKeyHex + "\n")
 		if err != nil {
 			return err
+		}
+
+		if (i+1)%50 == 0 {
+			fmt.Printf("Generated %d keys\n", i+1)
 		}
 	}
 	return nil
