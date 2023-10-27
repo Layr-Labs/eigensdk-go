@@ -111,7 +111,10 @@ func isImageURL(urlString string) bool {
 	extension := filepath.Ext(path)
 
 	// List of common image file extensions
-	imageExtensions := []string{".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg", ".webp"}
+	// Only support PNG for now to reduce surface are of image validation
+	// We do NOT want to support formats like SVG since they can be used for javascript injection
+	// If we get pushback on supporting jpg, jpeg, gif, etc. we can add them later
+	imageExtensions := []string{".png"}
 
 	// Check if the extension is in the list of image extensions
 	for _, imgExt := range imageExtensions {

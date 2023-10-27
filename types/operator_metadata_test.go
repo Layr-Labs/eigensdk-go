@@ -42,6 +42,17 @@ func TestOperatorMetadata(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "Invalid metadata - wrong image format",
+			metadata: OperatorMetadata{
+				Name:        "test",
+				Description: "My operator",
+				Logo:        "https://test.com/test.svg",
+				Twitter:     "https://twitter.com/test",
+				Website:     "https://test.com",
+			},
+			wantErr: true,
+		},
+		{
 			name: "Invalid metadata - description > 500 characters",
 			metadata: OperatorMetadata{
 				Name:        "test",
