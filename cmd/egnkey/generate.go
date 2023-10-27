@@ -165,7 +165,10 @@ func createDir(c *cli.Context, prefix string) (fileName string, err error) {
 		return "", err
 	}
 
-	err = os.MkdirAll(folder+"/"+DefaultKeyFolder, 0755)
+	// Clean the path
+	cleanFilePath := filepath.Clean(folder + "/" + DefaultKeyFolder)
+
+	err = os.MkdirAll(cleanFilePath, 0755)
 	if err != nil {
 		return "", err
 	}
@@ -227,7 +230,6 @@ func generateECDSAKeys(numKeys int, path string, passwordFile, privateKeyFile *o
 		privateKeyHex := hex.EncodeToString(key.D.Bytes())
 
 		// Check if the length of privateKeyHex is 32 bytes (64 characters)
-		// Validation in Library will handle this
 		lenPrivateKey := len(privateKeyHex)
 		if lenPrivateKey != 64 {
 			fmt.Printf("Private key Ignore: %s %d\n", privateKeyHex, lenPrivateKey)
