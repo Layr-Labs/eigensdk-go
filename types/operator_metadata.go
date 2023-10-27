@@ -113,7 +113,7 @@ func isImageURL(urlString string) bool {
 	// List of common image file extensions
 	// Only support PNG for now to reduce surface are of image validation
 	// We do NOT want to support formats like SVG since they can be used for javascript injection
-	// If we get pushback on supporting jpg, jpeg, gif, etc. we can add them later
+	// If we get pushback on only supporting png, we can  jpg, jpeg, gif, etc. later
 	imageExtensions := []string{".png"}
 
 	// Check if the extension is in the list of image extensions
