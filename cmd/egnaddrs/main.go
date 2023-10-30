@@ -15,7 +15,7 @@ import (
 
 	blspubkeyreg "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPubkeyRegistry"
 	blsregistrycoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSRegistryCoordinatorWithIndices"
-	iblssigchecker "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IBlsSignatureChecker"
+	iblssigchecker "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IBLSSignatureChecker"
 	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/Slasher"
 )
 
@@ -39,6 +39,12 @@ var (
 )
 
 func main() {
+	run(os.Args)
+}
+
+// We structure run in this way to make it testable.
+// see https://github.com/urfave/cli/issues/731
+func run(args []string) {
 	app := cli.NewApp()
 	app.Name = "egnaddrs"
 	app.Usage = "Used to help debug and test deployments and contract setups."
@@ -51,7 +57,7 @@ func main() {
 		RpcUrlFlag,
 	}
 
-	if err := app.Run(os.Args); err != nil {
+	if err := app.Run(args); err != nil {
 		fmt.Println("Error: ", err)
 		os.Exit(1)
 	}
