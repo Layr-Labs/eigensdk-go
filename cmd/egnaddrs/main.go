@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -14,14 +15,20 @@ import (
 
 	blspubkeyreg "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPubkeyRegistry"
 	blsregistrycoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSRegistryCoordinatorWithIndices"
+	iblssigchecker "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IBlsSignatureChecker"
 	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/Slasher"
 )
 
 var (
+	ServiceManagerAddrFlag = &cli.StringFlag{
+		Name:     "service-manager",
+		Usage:    "ServiceManager contract address",
+		Required: false,
+	}
 	RegistryCoordinatorAddrFlag = &cli.StringFlag{
 		Name:     "registry-coordinator",
 		Usage:    "BLSRegistryCoordinatorWithIndices contract address",
-		Required: true,
+		Required: false,
 	}
 	RpcUrlFlag = &cli.StringFlag{
 		Name:        "rpc-url",
@@ -39,6 +46,7 @@ func main() {
 	app.Description = "Prints all reachable Eigenlayer and AVS contract addresses starting from any one contract."
 	app.Action = printAddrs
 	app.Flags = []cli.Flag{
+		ServiceManagerAddrFlag,
 		RegistryCoordinatorAddrFlag,
 		RpcUrlFlag,
 	}
@@ -62,7 +70,10 @@ func printAddrs(c *cli.Context) error {
 		return err
 	}
 
-	registryCoordinatorAddr := common.HexToAddress(c.String(RegistryCoordinatorAddrFlag.Name))
+	registryCoordinatorAddr, err := getRegistryCoordinatorAddr(c, client)
+	if err != nil {
+		return err
+	}
 	eigenlayerContractAddrs, err := getEigenlayerContractAddrs(client, registryCoordinatorAddr)
 	if err != nil {
 		return err
@@ -86,6 +97,32 @@ func printAddrs(c *cli.Context) error {
 	}
 	fmt.Println(string(addrsMarshaled))
 	return nil
+}
+
+func getRegistryCoordinatorAddr(c *cli.Context, client *ethclient.Client) (common.Address, error) {
+	registryCoordinatorAddrString := c.String(RegistryCoordinatorAddrFlag.Name)
+	if registryCoordinatorAddrString != "" {
+		registryCoordinatorAddr := common.HexToAddress(registryCoordinatorAddrString)
+		return registryCoordinatorAddr, nil
+	}
+	serviceManagerAddrString := c.String(ServiceManagerAddrFlag.Name)
+	if serviceManagerAddrString != "" {
+		serviceManagerAddr := common.HexToAddress(serviceManagerAddrString)
+		// we use the IBLSSignatureChecker interface because the IServiceManager interface doesn't have a getter for the registry coordinator
+		// because we don't want to restrict teams to use our registry contracts.
+		// However, egnaddrs is targetted at teams using our registry contracts, so we assume that they are using our registries
+		// and that their service manager inherits the IBLSSignatureChecker interface (to check signatures against the BLSPubkeyRegistry).
+		serviceManagerContract, err := iblssigchecker.NewContractIBLSSignatureChecker(serviceManagerAddr, client)
+		if err != nil {
+			return common.Address{}, err
+		}
+		registryCoordinatorAddr, err := serviceManagerContract.RegistryCoordinator(&bind.CallOpts{})
+		if err != nil {
+			return common.Address{}, err
+		}
+		return registryCoordinatorAddr, nil
+	}
+	return common.Address{}, errors.New("must provide either --registry-coordinator or --service-manager flag")
 }
 
 func getAvsContractAddrs(client *ethclient.Client, registryCoordinatorAddr common.Address) (map[string]string, error) {
