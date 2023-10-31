@@ -15,7 +15,7 @@ If you have git cloned eigensdk-go to your machine, navigate to [cmd/egnaddrs](.
 
 ### Usage
 
-Currently egnaddrs only supports deriving contract addresses starting from the registry-coordinator address. It then prints the following datastructure:
+Currently egnaddrs only supports deriving contract addresses starting from a registry-coordinator or service-manager address. It then prints the following datastructure:
 
 ```bash
 $$$ egnaddrs --registry-coordinator 0x9E545E3C0baAB3E08CdfD552C960A1050f373042
