@@ -13,6 +13,7 @@ func main() {
 	app.Description = "Eigenlayer batch keys manager"
 	app.Commands = []*cli.Command{
 		commandGenerate,
+		commandStore,
 	}
 
 	app.Usage = "Used to manage batch keys for testing"
