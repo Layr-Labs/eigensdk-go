@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/Layr-Labs/eigensdk-go/crypto/ecdsa"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/urfave/cli/v2"
 )
 
@@ -43,13 +42,8 @@ func store(c *cli.Context) error {
 	if outputFile == "" {
 		outputFile = defaultFile
 	}
-	// use geth crypto lib to create an ecdsa private key
-	privateKey, err := crypto.HexToECDSA(c.String(PrivateKey.Name))
-	if err != nil {
-		return err
-	}
 	password := c.String(Password.Name)
-	err = ecdsa.WriteKey(outputFile, privateKey, password)
+	err := ecdsa.WriteKeyFromHex(outputFile, c.String(PrivateKey.Name), password)
 	if err != nil {
 		return err
 	}

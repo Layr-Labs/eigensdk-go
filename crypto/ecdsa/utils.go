@@ -12,6 +12,14 @@ import (
 	"github.com/google/uuid"
 )
 
+func WriteKeyFromHex(path, privateKeyHex, password string) error {
+	privateKey, err := crypto.HexToECDSA(privateKeyHex)
+	if err != nil {
+		return err
+	}
+	return WriteKey(path, privateKey, password)
+}
+
 // WriteKey writes the private key to the given path
 // The key is encrypted using the given password
 // This function will create the directory if it doesn't exist
