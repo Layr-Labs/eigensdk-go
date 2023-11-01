@@ -30,8 +30,7 @@ for contract in $el_contracts; do
     create_binding . $contract ./../../bindings
 done
 
-avs_contracts="BLSRegistryCoordinatorWithIndices BLSOperatorStateRetriever StakeRegistry BLSPubkeyRegistry"
-# avs_contracts="BLSPublicKeyCompendium"
+avs_contracts="BLSRegistryCoordinatorWithIndices BLSOperatorStateRetriever StakeRegistry BLSPubkeyRegistry IBLSSignatureChecker"
 for contract in $avs_contracts; do
     create_binding . $contract ./../../bindings
 done
