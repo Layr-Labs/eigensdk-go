@@ -102,7 +102,7 @@ func (api *NodeApi) DeregisterService(serviceId string) error {
 }
 
 // Start starts the node api server in a goroutine
-func (api *NodeApi) Start() {
+func (api *NodeApi) Start() <-chan error {
 	api.logger.Infof("Starting node api server at address %v", api.ipPortAddr)
 
 	mux := http.NewServeMux()
@@ -119,9 +119,7 @@ func (api *NodeApi) Start() {
 	mux.HandleFunc(baseUrl+"/node/services/", api.serviceHealthHandler)
 
 	errChan := run(api.logger, &httpServer)
-	if err := <-errChan; err != nil {
-		api.logger.Fatal("error while running node_api server", "err", err)
-	}
+	return errChan
 }
 
 // https://eigen.nethermind.io/docs/metrics/metrics-api#get-eigennodespec-version

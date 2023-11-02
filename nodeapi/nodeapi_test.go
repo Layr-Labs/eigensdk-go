@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -13,6 +14,17 @@ import (
 
 var noopLogger = logging.NewNoopLogger()
 var testNodeApi = NewNodeApi("testAvs", "v0.0.1", "localhost:8080", noopLogger)
+
+// just making sure that the nodeapi starts without any errors
+func TestStart(t *testing.T) {
+	errC := testNodeApi.Start()
+	select {
+	case <-time.After(3 * time.Second):
+		// consider it a pass if no errors received after 3 seconds
+	case err := <-errC:
+		assert.NoError(t, err)
+	}
+}
 
 func TestSpecVersionHandler(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/eigen/node/spec-version", nil)
