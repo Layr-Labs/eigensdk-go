@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# cd to the directory of this script so that this can be run from anywhere
+script_path=$(
+    cd "$(dirname "${BASH_SOURCE[0]}")"
+    pwd -P
+)
+
 function create_binding {
     contract_dir=$1
     contract=$2
@@ -19,20 +25,20 @@ function create_binding {
     rm -rf ../data/tmp.abi ../data/tmp.bin
 }
 
-EIGENLAYER_CONTRACT_PATH=./lib/eigenlayer-contracts
-cd $EIGENLAYER_CONTRACT_PATH
-
-forge clean
+EIGENLAYER_MIDDLEWARE_PATH=$script_path/lib/eigenlayer-middleware
+cd $EIGENLAYER_MIDDLEWARE_PATH
 forge build
 
-el_contracts="DelegationManager Slasher StrategyManager IStrategy BLSPublicKeyCompendium EigenPodManager EigenPod"
-for contract in $el_contracts; do
-    create_binding . $contract ./../../bindings
-done
-
-avs_contracts="BLSRegistryCoordinatorWithIndices BLSOperatorStateRetriever StakeRegistry BLSPubkeyRegistry IBLSSignatureChecker"
+avs_contracts="BLSRegistryCoordinatorWithIndices BLSOperatorStateRetriever StakeRegistry BLSPubkeyRegistry IBLSSignatureChecker BLSPublicKeyCompendium"
 for contract in $avs_contracts; do
-    create_binding . $contract ./../../bindings
+    create_binding . $contract ../../bindings
 done
 
-create_binding . IERC20 ./../../bindings
+EIGENLAYER_CONTRACT_PATH=$EIGENLAYER_MIDDLEWARE_PATH/lib/eigenlayer-contracts
+cd $EIGENLAYER_CONTRACT_PATH
+forge build
+
+el_contracts="DelegationManager Slasher StrategyManager IStrategy EigenPodManager EigenPod IERC20"
+for contract in $el_contracts; do
+    create_binding . $contract ../../../../bindings
+done
