@@ -3,6 +3,7 @@ package economic
 
 import (
 	"context"
+	"errors"
 	"strconv"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/avsregistry"
@@ -113,7 +114,11 @@ func (ec *Collector) initOperatorId() error {
 	if ec.operatorId == [32]byte{} {
 		operatorId, err := ec.avsRegistryReader.GetOperatorId(context.Background(), ec.operatorAddr)
 		if err != nil {
+			ec.logger.Error("Failed to get operator id", "err", err)
 			return err
+		}
+		if operatorId == [32]byte{} {
+			return errors.New("operator not registered")
 		}
 		ec.operatorId = operatorId
 	}
@@ -144,7 +149,7 @@ func (ec *Collector) Collect(ch chan<- prometheus.Metric) {
 	// collect registeredStake metric
 	err = ec.initOperatorId()
 	if err != nil {
-		ec.logger.Error("Failed to fetch and catch operator id. Skipping collection of registeredStake metric.", "err", err)
+		ec.logger.Warn("Failed to fetch and cache operator id. Skipping collection of registeredStake metric.", "err", err)
 	} else {
 		// probably should start using the avsregistry service instead of avsRegistryReader so that we can
 		// swap out backend for a subgraph eventually
