@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -13,6 +14,17 @@ import (
 
 var noopLogger = logging.NewNoopLogger()
 var testNodeApi = NewNodeApi("testAvs", "v0.0.1", "localhost:8080", noopLogger)
+
+// just making sure that the nodeapi starts without any errors
+func TestStart(t *testing.T) {
+	errC := testNodeApi.Start()
+	select {
+	case <-time.After(3 * time.Second):
+		// consider it a pass if no errors received after 3 seconds
+	case err := <-errC:
+		assert.NoError(t, err)
+	}
+}
 
 func TestSpecVersionHandler(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/eigen/node/spec-version", nil)
@@ -30,11 +42,11 @@ func TestSpecVersionHandler(t *testing.T) {
 	assert.Equal(t, "{\"spec_version\":\"v0.0.1\"}\n", string(data))
 }
 
-func TestNodeVersionHandler(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/eigen/node/version", nil)
+func TestNodeHandler(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/eigen/node", nil)
 	w := httptest.NewRecorder()
 
-	testNodeApi.nodeVersionHandler(w, req)
+	testNodeApi.nodeHandler(w, req)
 
 	res := w.Result()
 	defer res.Body.Close()
@@ -43,7 +55,7 @@ func TestNodeVersionHandler(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
-	assert.Equal(t, "{\"version\":\"testAvs/v0.0.1\"}\n", string(data))
+	assert.Equal(t, "{\"node_name\":\"testAvs\",\"node_version\":\"v0.0.1\",\"spec_version\":\"v0.0.1\"}\n", string(data))
 }
 
 func TestHealthHandler(t *testing.T) {
