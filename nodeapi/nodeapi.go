@@ -19,7 +19,7 @@ const (
 	baseUrl = "/eigen"
 	// Spec version is the version of the avs node spec that this node is implementing
 	// see https://eigen.nethermind.io/docs/spec/api/#api-versioning
-	specVersion = "v0.0.1"
+	specSemVer = "v0.0.1"
 )
 
 type NodeHealth int
@@ -46,20 +46,22 @@ type nodeService struct {
 }
 
 type NodeApi struct {
-	health         NodeHealth
-	nodeServices   []nodeService
-	ipPortAddr     string
-	logger         logging.Logger
-	avsNameVersion string
+	avsNodeName   string
+	avsNodeSemVer string
+	health        NodeHealth
+	nodeServices  []nodeService
+	ipPortAddr    string
+	logger        logging.Logger
 }
 
-func NewNodeApi(avsName, avsNodeSemVer, IpPortAddr string, logger logging.Logger) *NodeApi {
+func NewNodeApi(avsNodeName, avsNodeSemVer, IpPortAddr string, logger logging.Logger) *NodeApi {
 	nodeApi := &NodeApi{
-		health:         Healthy,
-		nodeServices:   []nodeService{},
-		ipPortAddr:     IpPortAddr,
-		logger:         logger,
-		avsNameVersion: avsName + "/" + avsNodeSemVer,
+		avsNodeName:   avsNodeName,
+		avsNodeSemVer: avsNodeSemVer,
+		health:        Healthy,
+		nodeServices:  []nodeService{},
+		ipPortAddr:    IpPortAddr,
+		logger:        logger,
 	}
 	return nodeApi
 }
@@ -109,8 +111,7 @@ func (api *NodeApi) Start() {
 		Handler: mux,
 	}
 
-	mux.HandleFunc(baseUrl+"/node/spec-version", api.specVersionHandler)
-	mux.HandleFunc(baseUrl+"/node/version", api.nodeVersionHandler)
+	mux.HandleFunc(baseUrl+"/node", api.nodeHandler)
 	mux.HandleFunc(baseUrl+"/node/health", api.healthHandler)
 	mux.HandleFunc(baseUrl+"/node/services", api.servicesHandler)
 	// Note: You'll need to extract the service_ID from the URL
@@ -126,7 +127,7 @@ func (api *NodeApi) Start() {
 // https://eigen.nethermind.io/docs/metrics/metrics-api#get-eigennodespec-version
 func (api *NodeApi) specVersionHandler(w http.ResponseWriter, r *http.Request) {
 	response := map[string]string{
-		"spec_version": specVersion,
+		"spec_version": specSemVer,
 	}
 	err := jsonResponse(w, response)
 	if err != nil {
@@ -135,9 +136,11 @@ func (api *NodeApi) specVersionHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // https://eigen.nethermind.io/docs/metrics/metrics-api#get-eigennodeversion
-func (api *NodeApi) nodeVersionHandler(w http.ResponseWriter, r *http.Request) {
+func (api *NodeApi) nodeHandler(w http.ResponseWriter, r *http.Request) {
 	response := map[string]string{
-		"version": api.avsNameVersion,
+		"node_name":    api.avsNodeName,
+		"spec_version": specSemVer,
+		"node_version": api.avsNodeSemVer,
 	}
 	err := jsonResponse(w, response)
 	if err != nil {

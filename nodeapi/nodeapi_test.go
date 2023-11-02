@@ -30,11 +30,11 @@ func TestSpecVersionHandler(t *testing.T) {
 	assert.Equal(t, "{\"spec_version\":\"v0.0.1\"}\n", string(data))
 }
 
-func TestNodeVersionHandler(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/eigen/node/version", nil)
+func TestNodeHandler(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/eigen/node", nil)
 	w := httptest.NewRecorder()
 
-	testNodeApi.nodeVersionHandler(w, req)
+	testNodeApi.nodeHandler(w, req)
 
 	res := w.Result()
 	defer res.Body.Close()
@@ -43,7 +43,7 @@ func TestNodeVersionHandler(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
-	assert.Equal(t, "{\"version\":\"testAvs/v0.0.1\"}\n", string(data))
+	assert.Equal(t, "{\"node_name\":\"testAvs\",\"node_version\":\"v0.0.1\",\"spec_version\":\"v0.0.1\"}\n", string(data))
 }
 
 func TestHealthHandler(t *testing.T) {
