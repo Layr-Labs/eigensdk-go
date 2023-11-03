@@ -7,17 +7,13 @@ package metrics_test
 import (
 	"context"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/avsregistry"
-	sdkclients "github.com/Layr-Labs/eigensdk-go/chainio/clients"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
-	"github.com/Layr-Labs/eigensdk-go/chainio/elcontracts"
+	"github.com/Layr-Labs/eigensdk-go/chainio/constructor"
 	"github.com/Layr-Labs/eigensdk-go/logging"
-	"github.com/Layr-Labs/eigensdk-go/metrics"
 	"github.com/Layr-Labs/eigensdk-go/metrics/collectors/economic"
 	"github.com/Layr-Labs/eigensdk-go/metrics/collectors/rpc_calls"
 	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 // ExampleEigenMetrics is a testable example (https://go.dev/blog/examples), so tests skip it.
@@ -30,43 +26,23 @@ func ExampleEigenMetrics() {
 	if err != nil {
 		panic(err)
 	}
+	// reg := prometheus.NewRegistry()
+	// eigenMetrics := metrics.NewEigenMetrics("exampleAvs", ":9090", reg, logger)
 
-	reg := prometheus.NewRegistry()
-	eigenMetrics := metrics.NewEigenMetrics("exampleAvs", ":9090", reg, logger)
-
-	slasherAddr := common.HexToAddress("0x0")
-	blsPubKeyCompendiumAddr := common.HexToAddress("0x0")
-	ethHttpClient, err := eth.NewClient("http://localhost:8545")
+	chainioConfig := constructor.Config{
+		EcdsaPrivateKeyString:         "0x0",
+		EthHttpUrl:                    "http://localhost:8545",
+		EthWsUrl:                      "ws://localhost:8545",
+		BlsRegistryCoordinatorAddr:    "0x0",
+		BlsOperatorStateRetrieverAddr: "0x0",
+		AvsName:                       "exampleAvs",
+		PromMetricsIpPortAddress:      ":9090",
+	}
+	clients, err := constructor.BuildClients(chainioConfig, logger)
 	if err != nil {
 		panic(err)
 	}
-	ethWsClient, err := eth.NewClient("ws://localhost:8545")
-	if err != nil {
-		panic(err)
-	}
-	elContractsClient, err := sdkclients.NewELContractsChainClient(slasherAddr, blsPubKeyCompendiumAddr, ethHttpClient, ethWsClient, logger)
-	if err != nil {
-		panic(err)
-	}
-	eigenlayerReader, err := elcontracts.NewELChainReader(elContractsClient, logger, ethHttpClient)
-	if err != nil {
-		panic(err)
-	}
-
-	blsRegistryCoordAddr := common.HexToAddress("0x0")
-	blsOperatorStateRetrieverAddr := common.HexToAddress("0x0")
-	stakeRegistry := common.HexToAddress("0x0")
-	blsPubkeyRegistryAddr := common.HexToAddress("0x0")
-	avsRegistryClients, err := sdkclients.NewAvsRegistryContractsChainClient(
-		blsRegistryCoordAddr, blsOperatorStateRetrieverAddr, stakeRegistry, blsPubkeyRegistryAddr, ethHttpClient, logger,
-	)
-	if err != nil {
-		panic(err)
-	}
-	avsRegistryReader, err := avsregistry.NewAvsRegistryReader(avsRegistryClients, logger, ethHttpClient)
-	if err != nil {
-		panic(err)
-	}
+	reg, eigenMetrics := clients.PrometheusRegistry, clients.Metrics
 
 	operatorAddr := common.HexToAddress("0x0")
 	quorumNames := map[types.QuorumNum]string{
@@ -75,7 +51,7 @@ func ExampleEigenMetrics() {
 	}
 	// We must register the economic metrics separately because they are exported metrics (from jsonrpc or subgraph calls)
 	// and not instrumented metrics: see https://prometheus.io/docs/instrumenting/writing_clientlibs/#overall-structure
-	economicMetricsCollector := economic.NewCollector(eigenlayerReader, avsRegistryReader, "exampleAvs", logger, operatorAddr, quorumNames)
+	economicMetricsCollector := economic.NewCollector(clients.ElChainReader, clients.AvsRegistryChainReader, "exampleAvs", logger, operatorAddr, quorumNames)
 	reg.MustRegister(economicMetricsCollector)
 
 	rpcCallsCollector := rpccalls.NewCollector("exampleAvs", reg)

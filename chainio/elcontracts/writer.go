@@ -7,16 +7,18 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/chainio/utils"
-	blspubkeycompendium "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPublicKeyCompendium"
-	contractDelegationManager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/metrics"
 	"github.com/Layr-Labs/eigensdk-go/signer"
 	"github.com/Layr-Labs/eigensdk-go/types"
+
+	blspubkeycompendium "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPublicKeyCompendium"
+	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
+	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/Slasher"
+	strategymanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StrategyManager"
 )
 
 type ELWriter interface {
@@ -41,37 +43,57 @@ type ELWriter interface {
 }
 
 type ELChainWriter struct {
-	elContractsClient clients.ELContractsClient
-	signer            signer.Signer
-	logger            logging.Logger
-	ethClient         eth.EthClient
+	slasher                 slasher.ContractSlasherTransacts
+	delegationManager       delegationmanager.ContractDelegationManagerTransacts
+	strategyManager         strategymanager.ContractStrategyManagerTransacts
+	strategyManagerAddr     gethcommon.Address
+	blsPubkeyCompendium     blspubkeycompendium.ContractBLSPublicKeyCompendiumTransacts
+	blsPubkeyCompendiumAddr gethcommon.Address
+	elChainReader           ELReader
+	ethClient               eth.EthClient
+	signer                  signer.Signer
+	logger                  logging.Logger
 }
 
 var _ ELWriter = (*ELChainWriter)(nil)
 
 func NewELChainWriter(
-	elContractsClient clients.ELContractsClient,
+	slasher slasher.ContractSlasherTransacts,
+	delegationManager delegationmanager.ContractDelegationManagerTransacts,
+	strategyManager strategymanager.ContractStrategyManagerTransacts,
+	strategyManagerAddr gethcommon.Address,
+	blsPubkeyCompendium blspubkeycompendium.ContractBLSPublicKeyCompendiumTransacts,
+	blsPubkeyCompendiumAddr gethcommon.Address,
+	elChainReader ELReader,
 	ethClient eth.EthClient,
 	signer signer.Signer,
 	logger logging.Logger,
 	eigenMetrics metrics.Metrics,
 ) *ELChainWriter {
 	return &ELChainWriter{
-		elContractsClient: elContractsClient,
-		signer:            signer,
-		logger:            logger,
-		ethClient:         ethClient,
+		slasher:                 slasher,
+		delegationManager:       delegationManager,
+		strategyManager:         strategyManager,
+		strategyManagerAddr:     strategyManagerAddr,
+		blsPubkeyCompendium:     blsPubkeyCompendium,
+		blsPubkeyCompendiumAddr: blsPubkeyCompendiumAddr,
+		elChainReader:           elChainReader,
+		signer:                  signer,
+		logger:                  logger,
+		ethClient:               ethClient,
 	}
 }
 
+// TODO(madhur): do we really want to wait for txreceipts like this in these functions?
+// feels like this should be something decided by callers
 func (w *ELChainWriter) RegisterAsOperator(ctx context.Context, operator types.Operator) (*gethtypes.Receipt, error) {
 	w.logger.Infof("registering operator %s to EigenLayer", operator.Address)
-	opDetails := contractDelegationManager.IDelegationManagerOperatorDetails{
+	opDetails := delegationmanager.IDelegationManagerOperatorDetails{
 		EarningsReceiver:         gethcommon.HexToAddress(operator.EarningsReceiverAddress),
 		StakerOptOutWindowBlocks: operator.StakerOptOutWindowBlocks,
 	}
 	txOpts := w.signer.GetTxOpts()
-	tx, err := w.elContractsClient.RegisterAsOperator(txOpts, opDetails, operator.MetadataUrl)
+	tx, err := w.delegationManager.RegisterAsOperator(txOpts, opDetails, operator.MetadataUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -89,13 +111,13 @@ func (w *ELChainWriter) UpdateOperatorDetails(
 	txOpts := w.signer.GetTxOpts()
 
 	w.logger.Infof("updating operator details of operator %s to EigenLayer", operator.Address)
-	opDetails := contractDelegationManager.IDelegationManagerOperatorDetails{
+	opDetails := delegationmanager.IDelegationManagerOperatorDetails{
 		EarningsReceiver:         gethcommon.HexToAddress(operator.EarningsReceiverAddress),
 		DelegationApprover:       gethcommon.HexToAddress(operator.DelegationApproverAddress),
 		StakerOptOutWindowBlocks: operator.StakerOptOutWindowBlocks,
 	}
 
-	tx, err := w.elContractsClient.ModifyOperatorDetails(txOpts, opDetails)
+	tx, err := w.delegationManager.ModifyOperatorDetails(txOpts, opDetails)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +125,7 @@ func (w *ELChainWriter) UpdateOperatorDetails(
 	w.ethClient.WaitForTransactionReceipt(ctx, tx.Hash())
 
 	w.logger.Infof("updated operator metadata URI for operator %s to EigenLayer", operator.Address)
-	tx, err = w.elContractsClient.UpdateOperatorMetadataURI(txOpts, operator.MetadataUrl)
+	tx, err = w.delegationManager.UpdateOperatorMetadataURI(txOpts, operator.MetadataUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -121,19 +143,15 @@ func (w *ELChainWriter) DepositERC20IntoStrategy(
 ) (*gethtypes.Receipt, error) {
 	w.logger.Infof("depositing %s tokens into strategy %s", amount.String(), strategyAddr)
 	txOpts := w.signer.GetTxOpts()
-	_, underlyingTokenContract, underlyingTokenAddr, err := w.elContractsClient.GetStrategyAndUnderlyingERC20Token(
+	_, underlyingTokenContract, underlyingTokenAddr, err := w.elChainReader.GetStrategyAndUnderlyingERC20Token(
+		ctx,
 		strategyAddr,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	strategyManagerAddr, err := w.elContractsClient.GetStrategyManagerContractAddress()
-	if err != nil {
-		return nil, err
-	}
-
-	tx, err := underlyingTokenContract.Approve(txOpts, strategyManagerAddr, amount)
+	tx, err := underlyingTokenContract.Approve(txOpts, w.strategyManagerAddr, amount)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +159,7 @@ func (w *ELChainWriter) DepositERC20IntoStrategy(
 	// but playing it safe by waiting for approve tx to be mined before sending deposit tx
 	w.ethClient.WaitForTransactionReceipt(ctx, tx.Hash())
 
-	tx, err = w.elContractsClient.DepositIntoStrategy(txOpts, strategyAddr, underlyingTokenAddr, amount)
+	tx, err = w.strategyManager.DepositIntoStrategy(txOpts, strategyAddr, underlyingTokenAddr, amount)
 	if err != nil {
 		return nil, err
 	}
@@ -158,7 +176,7 @@ func (w *ELChainWriter) OptOperatorIntoSlashing(
 	avsServiceManagerAddr gethcommon.Address,
 ) (*gethtypes.Receipt, error) {
 	txOpts := w.signer.GetTxOpts()
-	tx, err := w.elContractsClient.OptIntoSlashing(txOpts, avsServiceManagerAddr)
+	tx, err := w.slasher.OptIntoSlashing(txOpts, avsServiceManagerAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -185,13 +203,13 @@ func (w *ELChainWriter) RegisterBLSPublicKey(
 	}
 	signedMsgHash := blsKeyPair.MakePubkeyRegistrationData(
 		gethcommon.HexToAddress(operator.Address),
-		w.elContractsClient.GetBLSPublicKeyCompendiumContractAddress(),
+		w.blsPubkeyCompendiumAddr,
 		chainID,
 	)
 	signedMsgHashBN254 := blspubkeycompendium.BN254G1Point(utils.ConvertToBN254G1Point(signedMsgHash))
 	G1pubkeyBN254 := blspubkeycompendium.BN254G1Point(utils.ConvertToBN254G1Point(blsKeyPair.GetPubKeyG1()))
 	G2pubkeyBN254 := blspubkeycompendium.BN254G2Point(utils.ConvertToBN254G2Point(blsKeyPair.GetPubKeyG2()))
-	tx, err := w.elContractsClient.RegisterBLSPublicKey(
+	tx, err := w.blsPubkeyCompendium.RegisterBLSPublicKey(
 		txOpts,
 		signedMsgHashBN254,
 		G1pubkeyBN254,

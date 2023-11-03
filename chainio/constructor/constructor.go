@@ -8,7 +8,11 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	elcontracts "github.com/Layr-Labs/eigensdk-go/chainio/elcontracts"
 	blspubkeyreg "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPubkeyRegistry"
+	blspubkeycompendium "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPublicKeyCompendium"
 	blsregcoord "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSRegistryCoordinatorWithIndices"
+	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
+	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/Slasher"
+	strategymanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StrategyManager"
 	logging "github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/metrics"
 	"github.com/Layr-Labs/eigensdk-go/signer"
@@ -64,17 +68,10 @@ func BuildClients(config Config, logger logging.Logger) (*Clients, error) {
 		return nil, err
 	}
 
-	// creating EL contracts client (simple wrapper around abigen bindings)
-	elContractsClient, err := config.buildElContractsChainClient(logger, ethHttpClient, ethWsClient)
-	if err != nil {
-		logger.Error("Failed to create ELHttpContractsChainClient", "err", err)
-		return nil, err
-	}
-
 	// creating EL clients: Reader, Writer and Subscriber
 	elChainReader, elChainWriter, elChainSubscriber, err := config.buildElClients(
-		elContractsClient,
 		ethHttpClient,
+		ethWsClient,
 		logger,
 		eigenMetrics,
 	)
@@ -115,11 +112,13 @@ func BuildClients(config Config, logger logging.Logger) (*Clients, error) {
 
 }
 
-func (config *Config) buildElContractsChainClient(
-	logger logging.Logger,
+func (config *Config) buildElClients(
 	ethHttpClient eth.EthClient,
 	ethWsClient eth.EthClient,
-) (clients.ELContractsClient, error) {
+	logger logging.Logger,
+	eigenMetrics *metrics.EigenMetrics,
+) (elcontracts.ELReader, elcontracts.ELWriter, elcontracts.ELSubscriber, error) {
+
 	blsRegistryCoordinatorAddr := gethcommon.HexToAddress(config.BlsRegistryCoordinatorAddr)
 	contractBLSRegistryCoordWithIndices, err := blsregcoord.NewContractBLSRegistryCoordinatorWithIndices(
 		blsRegistryCoordinatorAddr,
@@ -141,37 +140,42 @@ func (config *Config) buildElContractsChainClient(
 	if err != nil {
 		logger.Fatal("Failed to fetch PubkeyCompendium contract", "err", err)
 	}
-
+	contractBlsPubkeyCompendium, err := blspubkeycompendium.NewContractBLSPublicKeyCompendium(blsPubKeyCompendiumAddr, ethHttpClient)
+	if err != nil {
+		logger.Fatal("Failed to fetch BLSPublicKeyCompendium contract", "err", err)
+	}
 	slasherAddr, err := contractBLSRegistryCoordWithIndices.Slasher(&bind.CallOpts{})
 	if err != nil {
-		logger.Error("Failed to fetch Slasher contract", "err", err)
-		return nil, err
+		logger.Fatal("Failed to fetch Slasher contract", "err", err)
 	}
-	elContractsChainClient, err := clients.NewELContractsChainClient(
-		slasherAddr,
-		blsPubKeyCompendiumAddr,
-		ethHttpClient,
-		ethWsClient,
-		logger,
-	)
+	contractSlasher, err := slasher.NewContractSlasher(slasherAddr, ethHttpClient)
 	if err != nil {
-		logger.Error("Failed to create ELContractsChainClient", "err", err)
-		return nil, err
+		logger.Fatal("Failed to fetch Slasher contract", "err", err)
 	}
-
-	return elContractsChainClient, nil
-}
-
-func (config *Config) buildElClients(
-	elContractsClient clients.ELContractsClient,
-	ethHttpClient eth.EthClient,
-	logger logging.Logger,
-	eigenMetrics *metrics.EigenMetrics,
-) (elcontracts.ELReader, elcontracts.ELWriter, elcontracts.ELSubscriber, error) {
+	delegationManagerAddr, err := contractSlasher.Delegation(&bind.CallOpts{})
+	if err != nil {
+		logger.Fatal("Failed to fetch DelegationManager contract", "err", err)
+	}
+	contractDelegationManager, err := delegationmanager.NewContractDelegationManager(delegationManagerAddr, ethHttpClient)
+	if err != nil {
+		logger.Fatal("Failed to fetch DelegationManager contract", "err", err)
+	}
+	strategyManagerAddr, err := contractSlasher.StrategyManager(&bind.CallOpts{})
+	if err != nil {
+		logger.Fatal("Failed to fetch StrategyManager address", "err", err)
+	}
+	contractStrategyManager, err := strategymanager.NewContractStrategyManager(strategyManagerAddr, ethHttpClient)
+	if err != nil {
+		logger.Fatal("Failed to fetch StrategyManager contract", "err", err)
+	}
 
 	// get the Reader for the EL contracts
 	elChainReader, err := elcontracts.NewELChainReader(
-		elContractsClient,
+		contractSlasher,
+		contractDelegationManager,
+		contractStrategyManager,
+		contractBlsPubkeyCompendium,
+		blsPubKeyCompendiumAddr,
 		logger,
 		ethHttpClient,
 	)
@@ -181,8 +185,12 @@ func (config *Config) buildElClients(
 	}
 
 	// get the Subscriber for the EL contracts
+	contractBlsPubkeyCompendiumWs, err := blspubkeycompendium.NewContractBLSPublicKeyCompendium(blsPubKeyCompendiumAddr, ethWsClient)
+	if err != nil {
+		logger.Fatal("Failed to fetch BLSPublicKeyCompendium contract", "err", err)
+	}
 	elChainSubscriber, err := elcontracts.NewELChainSubscriber(
-		elContractsClient,
+		contractBlsPubkeyCompendiumWs,
 		logger,
 	)
 	if err != nil {
@@ -210,7 +218,13 @@ func (config *Config) buildElClients(
 	}
 
 	elChainWriter := elcontracts.NewELChainWriter(
-		elContractsClient,
+		contractSlasher,
+		contractDelegationManager,
+		contractStrategyManager,
+		strategyManagerAddr,
+		contractBlsPubkeyCompendium,
+		blsPubKeyCompendiumAddr,
+		elChainReader,
 		ethHttpClient,
 		privateKeySigner,
 		logger,
