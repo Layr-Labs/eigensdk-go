@@ -74,6 +74,30 @@ func DeployContractBLSOperatorStateRetriever(auth *bind.TransactOpts, backend bi
 	return address, tx, &ContractBLSOperatorStateRetriever{ContractBLSOperatorStateRetrieverCaller: ContractBLSOperatorStateRetrieverCaller{contract: contract}, ContractBLSOperatorStateRetrieverTransactor: ContractBLSOperatorStateRetrieverTransactor{contract: contract}, ContractBLSOperatorStateRetrieverFilterer: ContractBLSOperatorStateRetrieverFilterer{contract: contract}}, nil
 }
 
+// ContractBLSOperatorStateRetrieverMethods is an auto generated interface around an Ethereum contract.
+type ContractBLSOperatorStateRetrieverMethods interface {
+	ContractBLSOperatorStateRetrieverCalls
+	ContractBLSOperatorStateRetrieverTransacts
+	ContractBLSOperatorStateRetrieverFilters
+}
+
+// ContractBLSOperatorStateRetrieverCalls is an auto generated interface that defines the call methods available for an Ethereum contract.
+type ContractBLSOperatorStateRetrieverCalls interface {
+	GetCheckSignaturesIndices(opts *bind.CallOpts, registryCoordinator common.Address, referenceBlockNumber uint32, quorumNumbers []byte, nonSignerOperatorIds [][32]byte) (BLSOperatorStateRetrieverCheckSignaturesIndices, error)
+
+	GetOperatorState(opts *bind.CallOpts, registryCoordinator common.Address, quorumNumbers []byte, blockNumber uint32) ([][]BLSOperatorStateRetrieverOperator, error)
+
+	GetOperatorState0(opts *bind.CallOpts, registryCoordinator common.Address, operatorId [32]byte, blockNumber uint32) (*big.Int, [][]BLSOperatorStateRetrieverOperator, error)
+}
+
+// ContractBLSOperatorStateRetrieverTransacts is an auto generated interface that defines the transact methods available for an Ethereum contract.
+type ContractBLSOperatorStateRetrieverTransacts interface {
+}
+
+// ContractBLSOperatorStateRetrieverFilterer is an auto generated interface that defines the log filtering methods available for an Ethereum contract.
+type ContractBLSOperatorStateRetrieverFilters interface {
+}
+
 // ContractBLSOperatorStateRetriever is an auto generated Go binding around an Ethereum contract.
 type ContractBLSOperatorStateRetriever struct {
 	ContractBLSOperatorStateRetrieverCaller     // Read-only binding to the contract
@@ -81,20 +105,32 @@ type ContractBLSOperatorStateRetriever struct {
 	ContractBLSOperatorStateRetrieverFilterer   // Log filterer for contract events
 }
 
+// ContractBLSOperatorStateRetriever implements the ContractBLSOperatorStateRetrieverMethods interface.
+var _ ContractBLSOperatorStateRetrieverMethods = (*ContractBLSOperatorStateRetriever)(nil)
+
 // ContractBLSOperatorStateRetrieverCaller is an auto generated read-only Go binding around an Ethereum contract.
 type ContractBLSOperatorStateRetrieverCaller struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
+
+// ContractBLSOperatorStateRetrieverCaller implements the ContractBLSOperatorStateRetrieverCalls interface.
+var _ ContractBLSOperatorStateRetrieverCalls = (*ContractBLSOperatorStateRetrieverCaller)(nil)
 
 // ContractBLSOperatorStateRetrieverTransactor is an auto generated write-only Go binding around an Ethereum contract.
 type ContractBLSOperatorStateRetrieverTransactor struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
+// ContractBLSOperatorStateRetrieverTransactor implements the ContractBLSOperatorStateRetrieverTransacts interface.
+var _ ContractBLSOperatorStateRetrieverTransacts = (*ContractBLSOperatorStateRetrieverTransactor)(nil)
+
 // ContractBLSOperatorStateRetrieverFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
 type ContractBLSOperatorStateRetrieverFilterer struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
+
+// ContractBLSOperatorStateRetrieverFilterer implements the ContractBLSOperatorStateRetrieverFilters interface.
+var _ ContractBLSOperatorStateRetrieverFilters = (*ContractBLSOperatorStateRetrieverFilterer)(nil)
 
 // ContractBLSOperatorStateRetrieverSession is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.

@@ -100,6 +100,142 @@ func DeployContractBLSRegistryCoordinatorWithIndices(auth *bind.TransactOpts, ba
 	return address, tx, &ContractBLSRegistryCoordinatorWithIndices{ContractBLSRegistryCoordinatorWithIndicesCaller: ContractBLSRegistryCoordinatorWithIndicesCaller{contract: contract}, ContractBLSRegistryCoordinatorWithIndicesTransactor: ContractBLSRegistryCoordinatorWithIndicesTransactor{contract: contract}, ContractBLSRegistryCoordinatorWithIndicesFilterer: ContractBLSRegistryCoordinatorWithIndicesFilterer{contract: contract}}, nil
 }
 
+// ContractBLSRegistryCoordinatorWithIndicesMethods is an auto generated interface around an Ethereum contract.
+type ContractBLSRegistryCoordinatorWithIndicesMethods interface {
+	ContractBLSRegistryCoordinatorWithIndicesCalls
+	ContractBLSRegistryCoordinatorWithIndicesTransacts
+	ContractBLSRegistryCoordinatorWithIndicesFilters
+}
+
+// ContractBLSRegistryCoordinatorWithIndicesCalls is an auto generated interface that defines the call methods available for an Ethereum contract.
+type ContractBLSRegistryCoordinatorWithIndicesCalls interface {
+	OPERATORCHURNAPPROVALTYPEHASH(opts *bind.CallOpts) ([32]byte, error)
+
+	BlsPubkeyRegistry(opts *bind.CallOpts) (common.Address, error)
+
+	CalculateOperatorChurnApprovalDigestHash(opts *bind.CallOpts, registeringOperatorId [32]byte, operatorKickParams []IBLSRegistryCoordinatorWithIndicesOperatorKickParam, salt [32]byte, expiry *big.Int) ([32]byte, error)
+
+	ChurnApprover(opts *bind.CallOpts) (common.Address, error)
+
+	Ejector(opts *bind.CallOpts) (common.Address, error)
+
+	GetCurrentQuorumBitmapByOperatorId(opts *bind.CallOpts, operatorId [32]byte) (*big.Int, error)
+
+	GetOperator(opts *bind.CallOpts, operator common.Address) (IRegistryCoordinatorOperator, error)
+
+	GetOperatorFromId(opts *bind.CallOpts, operatorId [32]byte) (common.Address, error)
+
+	GetOperatorId(opts *bind.CallOpts, operator common.Address) ([32]byte, error)
+
+	GetOperatorSetParams(opts *bind.CallOpts, quorumNumber uint8) (IBLSRegistryCoordinatorWithIndicesOperatorSetParam, error)
+
+	GetOperatorStatus(opts *bind.CallOpts, operator common.Address) (uint8, error)
+
+	GetQuorumBitmapByOperatorIdAtBlockNumberByIndex(opts *bind.CallOpts, operatorId [32]byte, blockNumber uint32, index *big.Int) (*big.Int, error)
+
+	GetQuorumBitmapIndicesByOperatorIdsAtBlockNumber(opts *bind.CallOpts, blockNumber uint32, operatorIds [][32]byte) ([]uint32, error)
+
+	GetQuorumBitmapUpdateByOperatorIdByIndex(opts *bind.CallOpts, operatorId [32]byte, index *big.Int) (IRegistryCoordinatorQuorumBitmapUpdate, error)
+
+	GetQuorumBitmapUpdateByOperatorIdLength(opts *bind.CallOpts, operatorId [32]byte) (*big.Int, error)
+
+	IndexRegistry(opts *bind.CallOpts) (common.Address, error)
+
+	IsChurnApproverSaltUsed(opts *bind.CallOpts, arg0 [32]byte) (bool, error)
+
+	NumRegistries(opts *bind.CallOpts) (*big.Int, error)
+
+	Paused(opts *bind.CallOpts, index uint8) (bool, error)
+
+	Paused0(opts *bind.CallOpts) (*big.Int, error)
+
+	PauserRegistry(opts *bind.CallOpts) (common.Address, error)
+
+	Registries(opts *bind.CallOpts, arg0 *big.Int) (common.Address, error)
+
+	ServiceManager(opts *bind.CallOpts) (common.Address, error)
+
+	Slasher(opts *bind.CallOpts) (common.Address, error)
+
+	StakeRegistry(opts *bind.CallOpts) (common.Address, error)
+}
+
+// ContractBLSRegistryCoordinatorWithIndicesTransacts is an auto generated interface that defines the transact methods available for an Ethereum contract.
+type ContractBLSRegistryCoordinatorWithIndicesTransacts interface {
+	DeregisterOperatorWithCoordinator(opts *bind.TransactOpts, quorumNumbers []byte, pubkey BN254G1Point) (*types.Transaction, error)
+
+	DeregisterOperatorWithCoordinator0(opts *bind.TransactOpts, quorumNumbers []byte, deregistrationData []byte) (*types.Transaction, error)
+
+	EjectOperatorFromCoordinator(opts *bind.TransactOpts, operator common.Address, quorumNumbers []byte, pubkey BN254G1Point) (*types.Transaction, error)
+
+	Initialize(opts *bind.TransactOpts, _churnApprover common.Address, _ejector common.Address, _operatorSetParams []IBLSRegistryCoordinatorWithIndicesOperatorSetParam, _pauserRegistry common.Address, _initialPausedStatus *big.Int) (*types.Transaction, error)
+
+	Pause(opts *bind.TransactOpts, newPausedStatus *big.Int) (*types.Transaction, error)
+
+	PauseAll(opts *bind.TransactOpts) (*types.Transaction, error)
+
+	RegisterOperatorWithCoordinator(opts *bind.TransactOpts, quorumNumbers []byte, pubkey BN254G1Point, socket string, operatorKickParams []IBLSRegistryCoordinatorWithIndicesOperatorKickParam, signatureWithSaltAndExpiry ISignatureUtilsSignatureWithSaltAndExpiry) (*types.Transaction, error)
+
+	RegisterOperatorWithCoordinator0(opts *bind.TransactOpts, quorumNumbers []byte, registrationData []byte) (*types.Transaction, error)
+
+	RegisterOperatorWithCoordinator1(opts *bind.TransactOpts, quorumNumbers []byte, pubkey BN254G1Point, socket string) (*types.Transaction, error)
+
+	SetChurnApprover(opts *bind.TransactOpts, _churnApprover common.Address) (*types.Transaction, error)
+
+	SetEjector(opts *bind.TransactOpts, _ejector common.Address) (*types.Transaction, error)
+
+	SetOperatorSetParams(opts *bind.TransactOpts, quorumNumber uint8, operatorSetParam IBLSRegistryCoordinatorWithIndicesOperatorSetParam) (*types.Transaction, error)
+
+	SetPauserRegistry(opts *bind.TransactOpts, newPauserRegistry common.Address) (*types.Transaction, error)
+
+	Unpause(opts *bind.TransactOpts, newPausedStatus *big.Int) (*types.Transaction, error)
+
+	UpdateSocket(opts *bind.TransactOpts, socket string) (*types.Transaction, error)
+}
+
+// ContractBLSRegistryCoordinatorWithIndicesFilterer is an auto generated interface that defines the log filtering methods available for an Ethereum contract.
+type ContractBLSRegistryCoordinatorWithIndicesFilters interface {
+	FilterChurnApproverUpdated(opts *bind.FilterOpts) (*ContractBLSRegistryCoordinatorWithIndicesChurnApproverUpdatedIterator, error)
+	WatchChurnApproverUpdated(opts *bind.WatchOpts, sink chan<- *ContractBLSRegistryCoordinatorWithIndicesChurnApproverUpdated) (event.Subscription, error)
+	ParseChurnApproverUpdated(log types.Log) (*ContractBLSRegistryCoordinatorWithIndicesChurnApproverUpdated, error)
+
+	FilterEjectorUpdated(opts *bind.FilterOpts) (*ContractBLSRegistryCoordinatorWithIndicesEjectorUpdatedIterator, error)
+	WatchEjectorUpdated(opts *bind.WatchOpts, sink chan<- *ContractBLSRegistryCoordinatorWithIndicesEjectorUpdated) (event.Subscription, error)
+	ParseEjectorUpdated(log types.Log) (*ContractBLSRegistryCoordinatorWithIndicesEjectorUpdated, error)
+
+	FilterInitialized(opts *bind.FilterOpts) (*ContractBLSRegistryCoordinatorWithIndicesInitializedIterator, error)
+	WatchInitialized(opts *bind.WatchOpts, sink chan<- *ContractBLSRegistryCoordinatorWithIndicesInitialized) (event.Subscription, error)
+	ParseInitialized(log types.Log) (*ContractBLSRegistryCoordinatorWithIndicesInitialized, error)
+
+	FilterOperatorDeregistered(opts *bind.FilterOpts, operator []common.Address, operatorId [][32]byte) (*ContractBLSRegistryCoordinatorWithIndicesOperatorDeregisteredIterator, error)
+	WatchOperatorDeregistered(opts *bind.WatchOpts, sink chan<- *ContractBLSRegistryCoordinatorWithIndicesOperatorDeregistered, operator []common.Address, operatorId [][32]byte) (event.Subscription, error)
+	ParseOperatorDeregistered(log types.Log) (*ContractBLSRegistryCoordinatorWithIndicesOperatorDeregistered, error)
+
+	FilterOperatorRegistered(opts *bind.FilterOpts, operator []common.Address, operatorId [][32]byte) (*ContractBLSRegistryCoordinatorWithIndicesOperatorRegisteredIterator, error)
+	WatchOperatorRegistered(opts *bind.WatchOpts, sink chan<- *ContractBLSRegistryCoordinatorWithIndicesOperatorRegistered, operator []common.Address, operatorId [][32]byte) (event.Subscription, error)
+	ParseOperatorRegistered(log types.Log) (*ContractBLSRegistryCoordinatorWithIndicesOperatorRegistered, error)
+
+	FilterOperatorSetParamsUpdated(opts *bind.FilterOpts, quorumNumber []uint8) (*ContractBLSRegistryCoordinatorWithIndicesOperatorSetParamsUpdatedIterator, error)
+	WatchOperatorSetParamsUpdated(opts *bind.WatchOpts, sink chan<- *ContractBLSRegistryCoordinatorWithIndicesOperatorSetParamsUpdated, quorumNumber []uint8) (event.Subscription, error)
+	ParseOperatorSetParamsUpdated(log types.Log) (*ContractBLSRegistryCoordinatorWithIndicesOperatorSetParamsUpdated, error)
+
+	FilterOperatorSocketUpdate(opts *bind.FilterOpts, operatorId [][32]byte) (*ContractBLSRegistryCoordinatorWithIndicesOperatorSocketUpdateIterator, error)
+	WatchOperatorSocketUpdate(opts *bind.WatchOpts, sink chan<- *ContractBLSRegistryCoordinatorWithIndicesOperatorSocketUpdate, operatorId [][32]byte) (event.Subscription, error)
+	ParseOperatorSocketUpdate(log types.Log) (*ContractBLSRegistryCoordinatorWithIndicesOperatorSocketUpdate, error)
+
+	FilterPaused(opts *bind.FilterOpts, account []common.Address) (*ContractBLSRegistryCoordinatorWithIndicesPausedIterator, error)
+	WatchPaused(opts *bind.WatchOpts, sink chan<- *ContractBLSRegistryCoordinatorWithIndicesPaused, account []common.Address) (event.Subscription, error)
+	ParsePaused(log types.Log) (*ContractBLSRegistryCoordinatorWithIndicesPaused, error)
+
+	FilterPauserRegistrySet(opts *bind.FilterOpts) (*ContractBLSRegistryCoordinatorWithIndicesPauserRegistrySetIterator, error)
+	WatchPauserRegistrySet(opts *bind.WatchOpts, sink chan<- *ContractBLSRegistryCoordinatorWithIndicesPauserRegistrySet) (event.Subscription, error)
+	ParsePauserRegistrySet(log types.Log) (*ContractBLSRegistryCoordinatorWithIndicesPauserRegistrySet, error)
+
+	FilterUnpaused(opts *bind.FilterOpts, account []common.Address) (*ContractBLSRegistryCoordinatorWithIndicesUnpausedIterator, error)
+	WatchUnpaused(opts *bind.WatchOpts, sink chan<- *ContractBLSRegistryCoordinatorWithIndicesUnpaused, account []common.Address) (event.Subscription, error)
+	ParseUnpaused(log types.Log) (*ContractBLSRegistryCoordinatorWithIndicesUnpaused, error)
+}
+
 // ContractBLSRegistryCoordinatorWithIndices is an auto generated Go binding around an Ethereum contract.
 type ContractBLSRegistryCoordinatorWithIndices struct {
 	ContractBLSRegistryCoordinatorWithIndicesCaller     // Read-only binding to the contract
@@ -107,20 +243,32 @@ type ContractBLSRegistryCoordinatorWithIndices struct {
 	ContractBLSRegistryCoordinatorWithIndicesFilterer   // Log filterer for contract events
 }
 
+// ContractBLSRegistryCoordinatorWithIndices implements the ContractBLSRegistryCoordinatorWithIndicesMethods interface.
+var _ ContractBLSRegistryCoordinatorWithIndicesMethods = (*ContractBLSRegistryCoordinatorWithIndices)(nil)
+
 // ContractBLSRegistryCoordinatorWithIndicesCaller is an auto generated read-only Go binding around an Ethereum contract.
 type ContractBLSRegistryCoordinatorWithIndicesCaller struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
+
+// ContractBLSRegistryCoordinatorWithIndicesCaller implements the ContractBLSRegistryCoordinatorWithIndicesCalls interface.
+var _ ContractBLSRegistryCoordinatorWithIndicesCalls = (*ContractBLSRegistryCoordinatorWithIndicesCaller)(nil)
 
 // ContractBLSRegistryCoordinatorWithIndicesTransactor is an auto generated write-only Go binding around an Ethereum contract.
 type ContractBLSRegistryCoordinatorWithIndicesTransactor struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
+// ContractBLSRegistryCoordinatorWithIndicesTransactor implements the ContractBLSRegistryCoordinatorWithIndicesTransacts interface.
+var _ ContractBLSRegistryCoordinatorWithIndicesTransacts = (*ContractBLSRegistryCoordinatorWithIndicesTransactor)(nil)
+
 // ContractBLSRegistryCoordinatorWithIndicesFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
 type ContractBLSRegistryCoordinatorWithIndicesFilterer struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
+
+// ContractBLSRegistryCoordinatorWithIndicesFilterer implements the ContractBLSRegistryCoordinatorWithIndicesFilters interface.
+var _ ContractBLSRegistryCoordinatorWithIndicesFilters = (*ContractBLSRegistryCoordinatorWithIndicesFilterer)(nil)
 
 // ContractBLSRegistryCoordinatorWithIndicesSession is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.

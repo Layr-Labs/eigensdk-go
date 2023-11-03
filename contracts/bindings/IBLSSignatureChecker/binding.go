@@ -68,6 +68,32 @@ var ContractIBLSSignatureCheckerMetaData = &bind.MetaData{
 // Deprecated: Use ContractIBLSSignatureCheckerMetaData.ABI instead.
 var ContractIBLSSignatureCheckerABI = ContractIBLSSignatureCheckerMetaData.ABI
 
+// ContractIBLSSignatureCheckerMethods is an auto generated interface around an Ethereum contract.
+type ContractIBLSSignatureCheckerMethods interface {
+	ContractIBLSSignatureCheckerCalls
+	ContractIBLSSignatureCheckerTransacts
+	ContractIBLSSignatureCheckerFilters
+}
+
+// ContractIBLSSignatureCheckerCalls is an auto generated interface that defines the call methods available for an Ethereum contract.
+type ContractIBLSSignatureCheckerCalls interface {
+	BlsPubkeyRegistry(opts *bind.CallOpts) (common.Address, error)
+
+	CheckSignatures(opts *bind.CallOpts, msgHash [32]byte, quorumNumbers []byte, referenceBlockNumber uint32, nonSignerStakesAndSignature IBLSSignatureCheckerNonSignerStakesAndSignature) (IBLSSignatureCheckerQuorumStakeTotals, [32]byte, error)
+
+	RegistryCoordinator(opts *bind.CallOpts) (common.Address, error)
+
+	StakeRegistry(opts *bind.CallOpts) (common.Address, error)
+}
+
+// ContractIBLSSignatureCheckerTransacts is an auto generated interface that defines the transact methods available for an Ethereum contract.
+type ContractIBLSSignatureCheckerTransacts interface {
+}
+
+// ContractIBLSSignatureCheckerFilterer is an auto generated interface that defines the log filtering methods available for an Ethereum contract.
+type ContractIBLSSignatureCheckerFilters interface {
+}
+
 // ContractIBLSSignatureChecker is an auto generated Go binding around an Ethereum contract.
 type ContractIBLSSignatureChecker struct {
 	ContractIBLSSignatureCheckerCaller     // Read-only binding to the contract
@@ -75,20 +101,32 @@ type ContractIBLSSignatureChecker struct {
 	ContractIBLSSignatureCheckerFilterer   // Log filterer for contract events
 }
 
+// ContractIBLSSignatureChecker implements the ContractIBLSSignatureCheckerMethods interface.
+var _ ContractIBLSSignatureCheckerMethods = (*ContractIBLSSignatureChecker)(nil)
+
 // ContractIBLSSignatureCheckerCaller is an auto generated read-only Go binding around an Ethereum contract.
 type ContractIBLSSignatureCheckerCaller struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
+
+// ContractIBLSSignatureCheckerCaller implements the ContractIBLSSignatureCheckerCalls interface.
+var _ ContractIBLSSignatureCheckerCalls = (*ContractIBLSSignatureCheckerCaller)(nil)
 
 // ContractIBLSSignatureCheckerTransactor is an auto generated write-only Go binding around an Ethereum contract.
 type ContractIBLSSignatureCheckerTransactor struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
+// ContractIBLSSignatureCheckerTransactor implements the ContractIBLSSignatureCheckerTransacts interface.
+var _ ContractIBLSSignatureCheckerTransacts = (*ContractIBLSSignatureCheckerTransactor)(nil)
+
 // ContractIBLSSignatureCheckerFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
 type ContractIBLSSignatureCheckerFilterer struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
+
+// ContractIBLSSignatureCheckerFilterer implements the ContractIBLSSignatureCheckerFilters interface.
+var _ ContractIBLSSignatureCheckerFilters = (*ContractIBLSSignatureCheckerFilterer)(nil)
 
 // ContractIBLSSignatureCheckerSession is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.

@@ -60,6 +60,128 @@ func DeployContractEigenPodManager(auth *bind.TransactOpts, backend bind.Contrac
 	return address, tx, &ContractEigenPodManager{ContractEigenPodManagerCaller: ContractEigenPodManagerCaller{contract: contract}, ContractEigenPodManagerTransactor: ContractEigenPodManagerTransactor{contract: contract}, ContractEigenPodManagerFilterer: ContractEigenPodManagerFilterer{contract: contract}}, nil
 }
 
+// ContractEigenPodManagerMethods is an auto generated interface around an Ethereum contract.
+type ContractEigenPodManagerMethods interface {
+	ContractEigenPodManagerCalls
+	ContractEigenPodManagerTransacts
+	ContractEigenPodManagerFilters
+}
+
+// ContractEigenPodManagerCalls is an auto generated interface that defines the call methods available for an Ethereum contract.
+type ContractEigenPodManagerCalls interface {
+	BeaconChainETHStrategy(opts *bind.CallOpts) (common.Address, error)
+
+	BeaconChainOracle(opts *bind.CallOpts) (common.Address, error)
+
+	DelegationManager(opts *bind.CallOpts) (common.Address, error)
+
+	EigenPodBeacon(opts *bind.CallOpts) (common.Address, error)
+
+	EthPOS(opts *bind.CallOpts) (common.Address, error)
+
+	GetBlockRootAtTimestamp(opts *bind.CallOpts, timestamp uint64) ([32]byte, error)
+
+	GetPod(opts *bind.CallOpts, podOwner common.Address) (common.Address, error)
+
+	HasPod(opts *bind.CallOpts, podOwner common.Address) (bool, error)
+
+	MaxPods(opts *bind.CallOpts) (*big.Int, error)
+
+	NumPods(opts *bind.CallOpts) (*big.Int, error)
+
+	Owner(opts *bind.CallOpts) (common.Address, error)
+
+	OwnerToPod(opts *bind.CallOpts, arg0 common.Address) (common.Address, error)
+
+	Paused(opts *bind.CallOpts, index uint8) (bool, error)
+
+	Paused0(opts *bind.CallOpts) (*big.Int, error)
+
+	PauserRegistry(opts *bind.CallOpts) (common.Address, error)
+
+	PodOwnerShares(opts *bind.CallOpts, arg0 common.Address) (*big.Int, error)
+
+	Slasher(opts *bind.CallOpts) (common.Address, error)
+
+	StrategyManager(opts *bind.CallOpts) (common.Address, error)
+}
+
+// ContractEigenPodManagerTransacts is an auto generated interface that defines the transact methods available for an Ethereum contract.
+type ContractEigenPodManagerTransacts interface {
+	AddShares(opts *bind.TransactOpts, podOwner common.Address, shares *big.Int) (*types.Transaction, error)
+
+	CreatePod(opts *bind.TransactOpts) (*types.Transaction, error)
+
+	Initialize(opts *bind.TransactOpts, _maxPods *big.Int, _beaconChainOracle common.Address, initialOwner common.Address, _pauserRegistry common.Address, _initPausedStatus *big.Int) (*types.Transaction, error)
+
+	Pause(opts *bind.TransactOpts, newPausedStatus *big.Int) (*types.Transaction, error)
+
+	PauseAll(opts *bind.TransactOpts) (*types.Transaction, error)
+
+	RecordBeaconChainETHBalanceUpdate(opts *bind.TransactOpts, podOwner common.Address, sharesDelta *big.Int) (*types.Transaction, error)
+
+	RemoveShares(opts *bind.TransactOpts, podOwner common.Address, shares *big.Int) (*types.Transaction, error)
+
+	RenounceOwnership(opts *bind.TransactOpts) (*types.Transaction, error)
+
+	SetMaxPods(opts *bind.TransactOpts, newMaxPods *big.Int) (*types.Transaction, error)
+
+	SetPauserRegistry(opts *bind.TransactOpts, newPauserRegistry common.Address) (*types.Transaction, error)
+
+	Stake(opts *bind.TransactOpts, pubkey []byte, signature []byte, depositDataRoot [32]byte) (*types.Transaction, error)
+
+	TransferOwnership(opts *bind.TransactOpts, newOwner common.Address) (*types.Transaction, error)
+
+	Unpause(opts *bind.TransactOpts, newPausedStatus *big.Int) (*types.Transaction, error)
+
+	UpdateBeaconChainOracle(opts *bind.TransactOpts, newBeaconChainOracle common.Address) (*types.Transaction, error)
+
+	WithdrawSharesAsTokens(opts *bind.TransactOpts, podOwner common.Address, destination common.Address, shares *big.Int) (*types.Transaction, error)
+}
+
+// ContractEigenPodManagerFilterer is an auto generated interface that defines the log filtering methods available for an Ethereum contract.
+type ContractEigenPodManagerFilters interface {
+	FilterBeaconChainETHDeposited(opts *bind.FilterOpts, podOwner []common.Address) (*ContractEigenPodManagerBeaconChainETHDepositedIterator, error)
+	WatchBeaconChainETHDeposited(opts *bind.WatchOpts, sink chan<- *ContractEigenPodManagerBeaconChainETHDeposited, podOwner []common.Address) (event.Subscription, error)
+	ParseBeaconChainETHDeposited(log types.Log) (*ContractEigenPodManagerBeaconChainETHDeposited, error)
+
+	FilterBeaconChainETHWithdrawalCompleted(opts *bind.FilterOpts, podOwner []common.Address) (*ContractEigenPodManagerBeaconChainETHWithdrawalCompletedIterator, error)
+	WatchBeaconChainETHWithdrawalCompleted(opts *bind.WatchOpts, sink chan<- *ContractEigenPodManagerBeaconChainETHWithdrawalCompleted, podOwner []common.Address) (event.Subscription, error)
+	ParseBeaconChainETHWithdrawalCompleted(log types.Log) (*ContractEigenPodManagerBeaconChainETHWithdrawalCompleted, error)
+
+	FilterBeaconOracleUpdated(opts *bind.FilterOpts, newOracleAddress []common.Address) (*ContractEigenPodManagerBeaconOracleUpdatedIterator, error)
+	WatchBeaconOracleUpdated(opts *bind.WatchOpts, sink chan<- *ContractEigenPodManagerBeaconOracleUpdated, newOracleAddress []common.Address) (event.Subscription, error)
+	ParseBeaconOracleUpdated(log types.Log) (*ContractEigenPodManagerBeaconOracleUpdated, error)
+
+	FilterInitialized(opts *bind.FilterOpts) (*ContractEigenPodManagerInitializedIterator, error)
+	WatchInitialized(opts *bind.WatchOpts, sink chan<- *ContractEigenPodManagerInitialized) (event.Subscription, error)
+	ParseInitialized(log types.Log) (*ContractEigenPodManagerInitialized, error)
+
+	FilterMaxPodsUpdated(opts *bind.FilterOpts) (*ContractEigenPodManagerMaxPodsUpdatedIterator, error)
+	WatchMaxPodsUpdated(opts *bind.WatchOpts, sink chan<- *ContractEigenPodManagerMaxPodsUpdated) (event.Subscription, error)
+	ParseMaxPodsUpdated(log types.Log) (*ContractEigenPodManagerMaxPodsUpdated, error)
+
+	FilterOwnershipTransferred(opts *bind.FilterOpts, previousOwner []common.Address, newOwner []common.Address) (*ContractEigenPodManagerOwnershipTransferredIterator, error)
+	WatchOwnershipTransferred(opts *bind.WatchOpts, sink chan<- *ContractEigenPodManagerOwnershipTransferred, previousOwner []common.Address, newOwner []common.Address) (event.Subscription, error)
+	ParseOwnershipTransferred(log types.Log) (*ContractEigenPodManagerOwnershipTransferred, error)
+
+	FilterPaused(opts *bind.FilterOpts, account []common.Address) (*ContractEigenPodManagerPausedIterator, error)
+	WatchPaused(opts *bind.WatchOpts, sink chan<- *ContractEigenPodManagerPaused, account []common.Address) (event.Subscription, error)
+	ParsePaused(log types.Log) (*ContractEigenPodManagerPaused, error)
+
+	FilterPauserRegistrySet(opts *bind.FilterOpts) (*ContractEigenPodManagerPauserRegistrySetIterator, error)
+	WatchPauserRegistrySet(opts *bind.WatchOpts, sink chan<- *ContractEigenPodManagerPauserRegistrySet) (event.Subscription, error)
+	ParsePauserRegistrySet(log types.Log) (*ContractEigenPodManagerPauserRegistrySet, error)
+
+	FilterPodDeployed(opts *bind.FilterOpts, eigenPod []common.Address, podOwner []common.Address) (*ContractEigenPodManagerPodDeployedIterator, error)
+	WatchPodDeployed(opts *bind.WatchOpts, sink chan<- *ContractEigenPodManagerPodDeployed, eigenPod []common.Address, podOwner []common.Address) (event.Subscription, error)
+	ParsePodDeployed(log types.Log) (*ContractEigenPodManagerPodDeployed, error)
+
+	FilterUnpaused(opts *bind.FilterOpts, account []common.Address) (*ContractEigenPodManagerUnpausedIterator, error)
+	WatchUnpaused(opts *bind.WatchOpts, sink chan<- *ContractEigenPodManagerUnpaused, account []common.Address) (event.Subscription, error)
+	ParseUnpaused(log types.Log) (*ContractEigenPodManagerUnpaused, error)
+}
+
 // ContractEigenPodManager is an auto generated Go binding around an Ethereum contract.
 type ContractEigenPodManager struct {
 	ContractEigenPodManagerCaller     // Read-only binding to the contract
@@ -67,20 +189,32 @@ type ContractEigenPodManager struct {
 	ContractEigenPodManagerFilterer   // Log filterer for contract events
 }
 
+// ContractEigenPodManager implements the ContractEigenPodManagerMethods interface.
+var _ ContractEigenPodManagerMethods = (*ContractEigenPodManager)(nil)
+
 // ContractEigenPodManagerCaller is an auto generated read-only Go binding around an Ethereum contract.
 type ContractEigenPodManagerCaller struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
+
+// ContractEigenPodManagerCaller implements the ContractEigenPodManagerCalls interface.
+var _ ContractEigenPodManagerCalls = (*ContractEigenPodManagerCaller)(nil)
 
 // ContractEigenPodManagerTransactor is an auto generated write-only Go binding around an Ethereum contract.
 type ContractEigenPodManagerTransactor struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
+// ContractEigenPodManagerTransactor implements the ContractEigenPodManagerTransacts interface.
+var _ ContractEigenPodManagerTransacts = (*ContractEigenPodManagerTransactor)(nil)
+
 // ContractEigenPodManagerFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
 type ContractEigenPodManagerFilterer struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
+
+// ContractEigenPodManagerFilterer implements the ContractEigenPodManagerFilters interface.
+var _ ContractEigenPodManagerFilters = (*ContractEigenPodManagerFilterer)(nil)
 
 // ContractEigenPodManagerSession is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.

@@ -73,6 +73,65 @@ func DeployContractBLSPubkeyRegistry(auth *bind.TransactOpts, backend bind.Contr
 	return address, tx, &ContractBLSPubkeyRegistry{ContractBLSPubkeyRegistryCaller: ContractBLSPubkeyRegistryCaller{contract: contract}, ContractBLSPubkeyRegistryTransactor: ContractBLSPubkeyRegistryTransactor{contract: contract}, ContractBLSPubkeyRegistryFilterer: ContractBLSPubkeyRegistryFilterer{contract: contract}}, nil
 }
 
+// ContractBLSPubkeyRegistryMethods is an auto generated interface around an Ethereum contract.
+type ContractBLSPubkeyRegistryMethods interface {
+	ContractBLSPubkeyRegistryCalls
+	ContractBLSPubkeyRegistryTransacts
+	ContractBLSPubkeyRegistryFilters
+}
+
+// ContractBLSPubkeyRegistryCalls is an auto generated interface that defines the call methods available for an Ethereum contract.
+type ContractBLSPubkeyRegistryCalls interface {
+	GetApkForQuorum(opts *bind.CallOpts, quorumNumber uint8) (BN254G1Point, error)
+
+	GetApkHashForQuorumAtBlockNumberFromIndex(opts *bind.CallOpts, quorumNumber uint8, blockNumber uint32, index *big.Int) ([24]byte, error)
+
+	GetApkIndicesForQuorumsAtBlockNumber(opts *bind.CallOpts, quorumNumbers []byte, blockNumber *big.Int) ([]uint32, error)
+
+	GetApkUpdateForQuorumByIndex(opts *bind.CallOpts, quorumNumber uint8, index *big.Int) (IBLSPubkeyRegistryApkUpdate, error)
+
+	GetOperatorFromPubkeyHash(opts *bind.CallOpts, pubkeyHash [32]byte) (common.Address, error)
+
+	GetQuorumApkHistoryLength(opts *bind.CallOpts, quorumNumber uint8) (uint32, error)
+
+	PubkeyCompendium(opts *bind.CallOpts) (common.Address, error)
+
+	QuorumApk(opts *bind.CallOpts, arg0 uint8) (struct {
+		X *big.Int
+		Y *big.Int
+	}, error)
+
+	QuorumApkUpdates(opts *bind.CallOpts, arg0 uint8, arg1 *big.Int) (struct {
+		ApkHash               [24]byte
+		UpdateBlockNumber     uint32
+		NextUpdateBlockNumber uint32
+	}, error)
+
+	RegistryCoordinator(opts *bind.CallOpts) (common.Address, error)
+}
+
+// ContractBLSPubkeyRegistryTransacts is an auto generated interface that defines the transact methods available for an Ethereum contract.
+type ContractBLSPubkeyRegistryTransacts interface {
+	DeregisterOperator(opts *bind.TransactOpts, operator common.Address, quorumNumbers []byte, pubkey BN254G1Point) (*types.Transaction, error)
+
+	RegisterOperator(opts *bind.TransactOpts, operator common.Address, quorumNumbers []byte, pubkey BN254G1Point) (*types.Transaction, error)
+}
+
+// ContractBLSPubkeyRegistryFilterer is an auto generated interface that defines the log filtering methods available for an Ethereum contract.
+type ContractBLSPubkeyRegistryFilters interface {
+	FilterInitialized(opts *bind.FilterOpts) (*ContractBLSPubkeyRegistryInitializedIterator, error)
+	WatchInitialized(opts *bind.WatchOpts, sink chan<- *ContractBLSPubkeyRegistryInitialized) (event.Subscription, error)
+	ParseInitialized(log types.Log) (*ContractBLSPubkeyRegistryInitialized, error)
+
+	FilterOperatorAddedToQuorums(opts *bind.FilterOpts) (*ContractBLSPubkeyRegistryOperatorAddedToQuorumsIterator, error)
+	WatchOperatorAddedToQuorums(opts *bind.WatchOpts, sink chan<- *ContractBLSPubkeyRegistryOperatorAddedToQuorums) (event.Subscription, error)
+	ParseOperatorAddedToQuorums(log types.Log) (*ContractBLSPubkeyRegistryOperatorAddedToQuorums, error)
+
+	FilterOperatorRemovedFromQuorums(opts *bind.FilterOpts) (*ContractBLSPubkeyRegistryOperatorRemovedFromQuorumsIterator, error)
+	WatchOperatorRemovedFromQuorums(opts *bind.WatchOpts, sink chan<- *ContractBLSPubkeyRegistryOperatorRemovedFromQuorums) (event.Subscription, error)
+	ParseOperatorRemovedFromQuorums(log types.Log) (*ContractBLSPubkeyRegistryOperatorRemovedFromQuorums, error)
+}
+
 // ContractBLSPubkeyRegistry is an auto generated Go binding around an Ethereum contract.
 type ContractBLSPubkeyRegistry struct {
 	ContractBLSPubkeyRegistryCaller     // Read-only binding to the contract
@@ -80,20 +139,32 @@ type ContractBLSPubkeyRegistry struct {
 	ContractBLSPubkeyRegistryFilterer   // Log filterer for contract events
 }
 
+// ContractBLSPubkeyRegistry implements the ContractBLSPubkeyRegistryMethods interface.
+var _ ContractBLSPubkeyRegistryMethods = (*ContractBLSPubkeyRegistry)(nil)
+
 // ContractBLSPubkeyRegistryCaller is an auto generated read-only Go binding around an Ethereum contract.
 type ContractBLSPubkeyRegistryCaller struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
+
+// ContractBLSPubkeyRegistryCaller implements the ContractBLSPubkeyRegistryCalls interface.
+var _ ContractBLSPubkeyRegistryCalls = (*ContractBLSPubkeyRegistryCaller)(nil)
 
 // ContractBLSPubkeyRegistryTransactor is an auto generated write-only Go binding around an Ethereum contract.
 type ContractBLSPubkeyRegistryTransactor struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
+// ContractBLSPubkeyRegistryTransactor implements the ContractBLSPubkeyRegistryTransacts interface.
+var _ ContractBLSPubkeyRegistryTransacts = (*ContractBLSPubkeyRegistryTransactor)(nil)
+
 // ContractBLSPubkeyRegistryFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
 type ContractBLSPubkeyRegistryFilterer struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
+
+// ContractBLSPubkeyRegistryFilterer implements the ContractBLSPubkeyRegistryFilters interface.
+var _ ContractBLSPubkeyRegistryFilters = (*ContractBLSPubkeyRegistryFilterer)(nil)
 
 // ContractBLSPubkeyRegistrySession is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.

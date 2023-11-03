@@ -73,6 +73,128 @@ func DeployContractSlasher(auth *bind.TransactOpts, backend bind.ContractBackend
 	return address, tx, &ContractSlasher{ContractSlasherCaller: ContractSlasherCaller{contract: contract}, ContractSlasherTransactor: ContractSlasherTransactor{contract: contract}, ContractSlasherFilterer: ContractSlasherFilterer{contract: contract}}, nil
 }
 
+// ContractSlasherMethods is an auto generated interface around an Ethereum contract.
+type ContractSlasherMethods interface {
+	ContractSlasherCalls
+	ContractSlasherTransacts
+	ContractSlasherFilters
+}
+
+// ContractSlasherCalls is an auto generated interface that defines the call methods available for an Ethereum contract.
+type ContractSlasherCalls interface {
+	CanSlash(opts *bind.CallOpts, toBeSlashed common.Address, slashingContract common.Address) (bool, error)
+
+	CanWithdraw(opts *bind.CallOpts, operator common.Address, withdrawalStartBlock uint32, middlewareTimesIndex *big.Int) (bool, error)
+
+	ContractCanSlashOperatorUntilBlock(opts *bind.CallOpts, operator common.Address, serviceContract common.Address) (uint32, error)
+
+	Delegation(opts *bind.CallOpts) (common.Address, error)
+
+	GetCorrectValueForInsertAfter(opts *bind.CallOpts, operator common.Address, updateBlock uint32) (*big.Int, error)
+
+	GetMiddlewareTimesIndexServeUntilBlock(opts *bind.CallOpts, operator common.Address, index uint32) (uint32, error)
+
+	GetMiddlewareTimesIndexStalestUpdateBlock(opts *bind.CallOpts, operator common.Address, index uint32) (uint32, error)
+
+	GetPreviousWhitelistedContractByUpdate(opts *bind.CallOpts, operator common.Address, node *big.Int) (bool, *big.Int, error)
+
+	IsFrozen(opts *bind.CallOpts, staker common.Address) (bool, error)
+
+	LatestUpdateBlock(opts *bind.CallOpts, operator common.Address, serviceContract common.Address) (uint32, error)
+
+	MiddlewareTimesLength(opts *bind.CallOpts, operator common.Address) (*big.Int, error)
+
+	OperatorToMiddlewareTimes(opts *bind.CallOpts, operator common.Address, arrayIndex *big.Int) (ISlasherMiddlewareTimes, error)
+
+	OperatorWhitelistedContractsLinkedListEntry(opts *bind.CallOpts, operator common.Address, node common.Address) (bool, *big.Int, *big.Int, error)
+
+	OperatorWhitelistedContractsLinkedListSize(opts *bind.CallOpts, operator common.Address) (*big.Int, error)
+
+	Owner(opts *bind.CallOpts) (common.Address, error)
+
+	Paused(opts *bind.CallOpts, index uint8) (bool, error)
+
+	Paused0(opts *bind.CallOpts) (*big.Int, error)
+
+	PauserRegistry(opts *bind.CallOpts) (common.Address, error)
+
+	StrategyManager(opts *bind.CallOpts) (common.Address, error)
+
+	WhitelistedContractDetails(opts *bind.CallOpts, operator common.Address, serviceContract common.Address) (ISlasherMiddlewareDetails, error)
+}
+
+// ContractSlasherTransacts is an auto generated interface that defines the transact methods available for an Ethereum contract.
+type ContractSlasherTransacts interface {
+	FreezeOperator(opts *bind.TransactOpts, toBeFrozen common.Address) (*types.Transaction, error)
+
+	Initialize(opts *bind.TransactOpts, initialOwner common.Address, _pauserRegistry common.Address, initialPausedStatus *big.Int) (*types.Transaction, error)
+
+	OptIntoSlashing(opts *bind.TransactOpts, contractAddress common.Address) (*types.Transaction, error)
+
+	Pause(opts *bind.TransactOpts, newPausedStatus *big.Int) (*types.Transaction, error)
+
+	PauseAll(opts *bind.TransactOpts) (*types.Transaction, error)
+
+	RecordFirstStakeUpdate(opts *bind.TransactOpts, operator common.Address, serveUntilBlock uint32) (*types.Transaction, error)
+
+	RecordLastStakeUpdateAndRevokeSlashingAbility(opts *bind.TransactOpts, operator common.Address, serveUntilBlock uint32) (*types.Transaction, error)
+
+	RecordStakeUpdate(opts *bind.TransactOpts, operator common.Address, updateBlock uint32, serveUntilBlock uint32, insertAfter *big.Int) (*types.Transaction, error)
+
+	RenounceOwnership(opts *bind.TransactOpts) (*types.Transaction, error)
+
+	ResetFrozenStatus(opts *bind.TransactOpts, frozenAddresses []common.Address) (*types.Transaction, error)
+
+	SetPauserRegistry(opts *bind.TransactOpts, newPauserRegistry common.Address) (*types.Transaction, error)
+
+	TransferOwnership(opts *bind.TransactOpts, newOwner common.Address) (*types.Transaction, error)
+
+	Unpause(opts *bind.TransactOpts, newPausedStatus *big.Int) (*types.Transaction, error)
+}
+
+// ContractSlasherFilterer is an auto generated interface that defines the log filtering methods available for an Ethereum contract.
+type ContractSlasherFilters interface {
+	FilterFrozenStatusReset(opts *bind.FilterOpts, previouslySlashedAddress []common.Address) (*ContractSlasherFrozenStatusResetIterator, error)
+	WatchFrozenStatusReset(opts *bind.WatchOpts, sink chan<- *ContractSlasherFrozenStatusReset, previouslySlashedAddress []common.Address) (event.Subscription, error)
+	ParseFrozenStatusReset(log types.Log) (*ContractSlasherFrozenStatusReset, error)
+
+	FilterInitialized(opts *bind.FilterOpts) (*ContractSlasherInitializedIterator, error)
+	WatchInitialized(opts *bind.WatchOpts, sink chan<- *ContractSlasherInitialized) (event.Subscription, error)
+	ParseInitialized(log types.Log) (*ContractSlasherInitialized, error)
+
+	FilterMiddlewareTimesAdded(opts *bind.FilterOpts) (*ContractSlasherMiddlewareTimesAddedIterator, error)
+	WatchMiddlewareTimesAdded(opts *bind.WatchOpts, sink chan<- *ContractSlasherMiddlewareTimesAdded) (event.Subscription, error)
+	ParseMiddlewareTimesAdded(log types.Log) (*ContractSlasherMiddlewareTimesAdded, error)
+
+	FilterOperatorFrozen(opts *bind.FilterOpts, slashedOperator []common.Address, slashingContract []common.Address) (*ContractSlasherOperatorFrozenIterator, error)
+	WatchOperatorFrozen(opts *bind.WatchOpts, sink chan<- *ContractSlasherOperatorFrozen, slashedOperator []common.Address, slashingContract []common.Address) (event.Subscription, error)
+	ParseOperatorFrozen(log types.Log) (*ContractSlasherOperatorFrozen, error)
+
+	FilterOptedIntoSlashing(opts *bind.FilterOpts, operator []common.Address, contractAddress []common.Address) (*ContractSlasherOptedIntoSlashingIterator, error)
+	WatchOptedIntoSlashing(opts *bind.WatchOpts, sink chan<- *ContractSlasherOptedIntoSlashing, operator []common.Address, contractAddress []common.Address) (event.Subscription, error)
+	ParseOptedIntoSlashing(log types.Log) (*ContractSlasherOptedIntoSlashing, error)
+
+	FilterOwnershipTransferred(opts *bind.FilterOpts, previousOwner []common.Address, newOwner []common.Address) (*ContractSlasherOwnershipTransferredIterator, error)
+	WatchOwnershipTransferred(opts *bind.WatchOpts, sink chan<- *ContractSlasherOwnershipTransferred, previousOwner []common.Address, newOwner []common.Address) (event.Subscription, error)
+	ParseOwnershipTransferred(log types.Log) (*ContractSlasherOwnershipTransferred, error)
+
+	FilterPaused(opts *bind.FilterOpts, account []common.Address) (*ContractSlasherPausedIterator, error)
+	WatchPaused(opts *bind.WatchOpts, sink chan<- *ContractSlasherPaused, account []common.Address) (event.Subscription, error)
+	ParsePaused(log types.Log) (*ContractSlasherPaused, error)
+
+	FilterPauserRegistrySet(opts *bind.FilterOpts) (*ContractSlasherPauserRegistrySetIterator, error)
+	WatchPauserRegistrySet(opts *bind.WatchOpts, sink chan<- *ContractSlasherPauserRegistrySet) (event.Subscription, error)
+	ParsePauserRegistrySet(log types.Log) (*ContractSlasherPauserRegistrySet, error)
+
+	FilterSlashingAbilityRevoked(opts *bind.FilterOpts, operator []common.Address, contractAddress []common.Address) (*ContractSlasherSlashingAbilityRevokedIterator, error)
+	WatchSlashingAbilityRevoked(opts *bind.WatchOpts, sink chan<- *ContractSlasherSlashingAbilityRevoked, operator []common.Address, contractAddress []common.Address) (event.Subscription, error)
+	ParseSlashingAbilityRevoked(log types.Log) (*ContractSlasherSlashingAbilityRevoked, error)
+
+	FilterUnpaused(opts *bind.FilterOpts, account []common.Address) (*ContractSlasherUnpausedIterator, error)
+	WatchUnpaused(opts *bind.WatchOpts, sink chan<- *ContractSlasherUnpaused, account []common.Address) (event.Subscription, error)
+	ParseUnpaused(log types.Log) (*ContractSlasherUnpaused, error)
+}
+
 // ContractSlasher is an auto generated Go binding around an Ethereum contract.
 type ContractSlasher struct {
 	ContractSlasherCaller     // Read-only binding to the contract
@@ -80,20 +202,32 @@ type ContractSlasher struct {
 	ContractSlasherFilterer   // Log filterer for contract events
 }
 
+// ContractSlasher implements the ContractSlasherMethods interface.
+var _ ContractSlasherMethods = (*ContractSlasher)(nil)
+
 // ContractSlasherCaller is an auto generated read-only Go binding around an Ethereum contract.
 type ContractSlasherCaller struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
+
+// ContractSlasherCaller implements the ContractSlasherCalls interface.
+var _ ContractSlasherCalls = (*ContractSlasherCaller)(nil)
 
 // ContractSlasherTransactor is an auto generated write-only Go binding around an Ethereum contract.
 type ContractSlasherTransactor struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
+// ContractSlasherTransactor implements the ContractSlasherTransacts interface.
+var _ ContractSlasherTransacts = (*ContractSlasherTransactor)(nil)
+
 // ContractSlasherFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
 type ContractSlasherFilterer struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
+
+// ContractSlasherFilterer implements the ContractSlasherFilters interface.
+var _ ContractSlasherFilters = (*ContractSlasherFilterer)(nil)
 
 // ContractSlasherSession is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.
