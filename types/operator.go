@@ -19,7 +19,7 @@ const (
 
 // Operator represents Eigenlayer's view of an operator
 type Operator struct {
-	// Address addres of the operator
+	// Address address of the operator
 	Address string `yaml:"address" json:"address"`
 
 	// https://github.com/Layr-Labs/eigenlayer-contracts/blob/delegation-redesign/src/contracts/interfaces/IDelegationManager.sol#L18
