@@ -35,7 +35,7 @@ type ServiceStatus string
 const (
 	ServiceStatusUp           ServiceStatus = "Up"
 	ServiceStatusDown         ServiceStatus = "Down"
-	ServiceStatusInitializing ServiceStatus = "Initialiazing"
+	ServiceStatusInitializing ServiceStatus = "Initializing"
 )
 
 type nodeService struct {
