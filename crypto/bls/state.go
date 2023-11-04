@@ -22,7 +22,7 @@ type OperatorInfo struct {
 
 // OperatorState contains information about the current state of operators which is stored in the blockchain state
 type OperatorState struct {
-	// Operators is a map from quorum ID to a map from the operators in that quourm to their StoredOperatorInfo.
+	// Operators is a map from quorum ID to a map from the operators in that quorum to their StoredOperatorInfo.
 	// Membership
 	// in the map implies membership in the quorum.
 	Operators map[QuorumID]map[OperatorId]*OperatorInfo
@@ -36,7 +36,7 @@ type OperatorState struct {
 // contracts. Note that
 // this information does not depend on the quorum.
 type IndexedOperatorInfo struct {
-	// PubKeyG1 and PubKeyG2 are the public keys of the operator, which are retreived from the EigenDAPubKeyCompendium
+	// PubKeyG1 and PubKeyG2 are the public keys of the operator, which are retrieved from the EigenDAPubKeyCompendium
 	// smart contract
 	PubkeyG1 *G1Point
 	PubkeyG2 *G2Point
