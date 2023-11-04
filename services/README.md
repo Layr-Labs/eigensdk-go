@@ -10,4 +10,4 @@ eigensdk services are high level APIs that provide backend like functionality fo
   - this service is needed to be able to check that an eigenlayer operator was registered at a specific block and that the stake threshold had been met for an aggregate bls signature
 - Signature aggregation service
   - this service will provide endpoints to aggregate operator signatures for various avs tasks
-  - this service will aggregate signatures in the background and return an aggregated bls signature once its reached a threshold (this will require using the registry service to get operator stakes)
+  - this service will aggregate signatures in the background and return an aggregated bls signature once it reached a threshold (this will require using the registry service to get operator stakes)
