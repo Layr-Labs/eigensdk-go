@@ -1,6 +1,6 @@
 ## ChainIO
 
-This module is used to facilitate reading/writing/subsribing to [eigenlayer core](./elcontracts/) contracts and [avs registry](./avsregistry/) contracts.
+This module is used to facilitate reading/writing/subscribing to [eigenlayer core](./elcontracts/) contracts and [avs registry](./avsregistry/) contracts.
 
 To make it easier to understand the different structs in this package, and their hierarchical relationship, we describe each of them below:
 - geth's ethClient
