@@ -13,7 +13,7 @@ import (
 	big "math/big"
 	reflect "reflect"
 
-	clients "github.com/Layr-Labs/eigensdk-go/chainio/clients"
+	contractIERC20 "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IERC20"
 	contractIStrategy "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IStrategy"
 	types "github.com/Layr-Labs/eigensdk-go/types"
 	common "github.com/ethereum/go-ethereum/common"
@@ -104,11 +104,11 @@ func (mr *MockELReaderMockRecorder) GetOperatorSharesInStrategy(arg0, arg1, arg2
 }
 
 // GetStrategyAndUnderlyingERC20Token mocks base method.
-func (m *MockELReader) GetStrategyAndUnderlyingERC20Token(arg0 context.Context, arg1 common.Address) (*contractIStrategy.ContractIStrategy, clients.ERC20ContractClient, common.Address, error) {
+func (m *MockELReader) GetStrategyAndUnderlyingERC20Token(arg0 context.Context, arg1 common.Address) (*contractIStrategy.ContractIStrategy, contractIERC20.ContractIERC20Methods, common.Address, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetStrategyAndUnderlyingERC20Token", arg0, arg1)
 	ret0, _ := ret[0].(*contractIStrategy.ContractIStrategy)
-	ret1, _ := ret[1].(clients.ERC20ContractClient)
+	ret1, _ := ret[1].(contractIERC20.ContractIERC20Methods)
 	ret2, _ := ret[2].(common.Address)
 	ret3, _ := ret[3].(error)
 	return ret0, ret1, ret2, ret3

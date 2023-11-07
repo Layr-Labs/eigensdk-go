@@ -11,7 +11,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
@@ -20,6 +19,7 @@ import (
 
 	blspkcompendium "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPublicKeyCompendium"
 	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
+	erc20 "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IERC20"
 	strategy "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IStrategy"
 	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/Slasher"
 	strategymanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StrategyManager"
@@ -39,7 +39,7 @@ type ELReader interface {
 	// GetStrategyAndUnderlyingERC20Token returns the strategy contract and the underlying ERC20 token address
 	GetStrategyAndUnderlyingERC20Token(
 		ctx context.Context, strategyAddr gethcommon.Address,
-	) (*strategy.ContractIStrategy, clients.ERC20ContractClient, gethcommon.Address, error)
+	) (*strategy.ContractIStrategy, erc20.ContractIERC20Methods, gethcommon.Address, error)
 
 	QueryExistingRegisteredOperatorPubKeys(
 		startBlock *big.Int,
@@ -169,7 +169,7 @@ func (r *ELChainReader) GetStrategyAndUnderlyingToken(
 
 func (r *ELChainReader) GetStrategyAndUnderlyingERC20Token(
 	ctx context.Context, strategyAddr gethcommon.Address,
-) (*strategy.ContractIStrategy, clients.ERC20ContractClient, gethcommon.Address, error) {
+) (*strategy.ContractIStrategy, erc20.ContractIERC20Methods, gethcommon.Address, error) {
 	contractStrategy, err := strategy.NewContractIStrategy(strategyAddr, r.ethClient)
 	if err != nil {
 		r.logger.Error("Failed to fetch strategy contract", "err", err)
@@ -180,7 +180,7 @@ func (r *ELChainReader) GetStrategyAndUnderlyingERC20Token(
 		r.logger.Error("Failed to fetch token contract", "err", err)
 		return nil, nil, common.Address{}, err
 	}
-	contractUnderlyingToken, err := clients.NewERC20ContractChainClient(underlyingTokenAddr, r.ethClient)
+	contractUnderlyingToken, err := erc20.NewContractIERC20(underlyingTokenAddr, r.ethClient)
 	if err != nil {
 		r.logger.Error("Failed to fetch token contract", "err", err)
 		return nil, nil, common.Address{}, err

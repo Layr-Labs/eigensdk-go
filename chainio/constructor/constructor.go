@@ -4,14 +4,15 @@ import (
 	"context"
 
 	avsregistry "github.com/Layr-Labs/eigensdk-go/chainio/avsregistry"
-	clients "github.com/Layr-Labs/eigensdk-go/chainio/clients"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	elcontracts "github.com/Layr-Labs/eigensdk-go/chainio/elcontracts"
+	blsoperatorstateretriever "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSOperatorStateRetriever"
 	blspubkeyreg "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPubkeyRegistry"
 	blspubkeycompendium "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPublicKeyCompendium"
 	blsregcoord "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSRegistryCoordinatorWithIndices"
 	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
 	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/Slasher"
+	stakeregistry "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StakeRegistry"
 	strategymanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StrategyManager"
 	logging "github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/metrics"
@@ -80,16 +81,8 @@ func BuildClients(config Config, logger logging.Logger) (*Clients, error) {
 		return nil, err
 	}
 
-	// creating AVS contracts client
-	avsRegistryContractsClient, err := config.buildAvsRegistryContractsChainClient(logger, ethHttpClient)
-	if err != nil {
-		logger.Error("Failed to create AvsRegistryContractsChainClient", "err", err)
-		return nil, err
-	}
-
 	// creating AVS clients: Reader and Writer
 	avsRegistryChainReader, avsRegistryChainWriter, err := config.buildAvsClients(
-		avsRegistryContractsClient,
 		logger,
 		ethHttpClient,
 	)
@@ -238,10 +231,11 @@ func (config *Config) buildElClients(
 	return elChainReader, elChainWriter, elChainSubscriber, nil
 }
 
-func (config *Config) buildAvsRegistryContractsChainClient(
+func (config *Config) buildAvsClients(
 	logger logging.Logger,
 	ethHttpClient eth.EthClient,
-) (clients.AVSRegistryContractsClient, error) {
+) (avsregistry.AvsRegistryReader, avsregistry.AvsRegistryWriter, error) {
+
 	blsRegistryCoordinatorAddr := gethcommon.HexToAddress(config.BlsRegistryCoordinatorAddr)
 	contractBLSRegistryCoordWithIndices, err := blsregcoord.NewContractBLSRegistryCoordinatorWithIndices(
 		blsRegistryCoordinatorAddr,
@@ -249,44 +243,27 @@ func (config *Config) buildAvsRegistryContractsChainClient(
 	)
 	if err != nil {
 		logger.Error("Failed to fetch BLSRegistryCoordinatorWithIndices contract", "err", err)
-		return nil, err
+		return nil, nil, err
 	}
 
 	stakeregistryAddr, err := contractBLSRegistryCoordWithIndices.StakeRegistry(&bind.CallOpts{})
 	if err != nil {
 		logger.Error("Failed to fetch StakeRegistry contract", "err", err)
-		return nil, err
+		return nil, nil, err
 	}
+	contractStakeRegistry, err := stakeregistry.NewContractStakeRegistry(stakeregistryAddr, ethHttpClient)
 
-	blsPubkeyRegistryAddr, err := contractBLSRegistryCoordWithIndices.BlsPubkeyRegistry(&bind.CallOpts{})
-	if err != nil {
-		logger.Error("Failed to fetch BlsPubkeyRegistry contract", "err", err)
-		return nil, err
-	}
-
-	avsregistryContractsChainClient, err := clients.NewAvsRegistryContractsChainClient(
-		blsRegistryCoordinatorAddr,
-		gethcommon.HexToAddress(config.BlsOperatorStateRetrieverAddr),
-		stakeregistryAddr,
-		blsPubkeyRegistryAddr,
+	blsOperatorStateRetrieverAddr := gethcommon.HexToAddress(config.BlsOperatorStateRetrieverAddr)
+	contractBLSOperatorStateRetriever, err := blsoperatorstateretriever.NewContractBLSOperatorStateRetriever(
+		blsOperatorStateRetrieverAddr,
 		ethHttpClient,
-		logger,
 	)
-	if err != nil {
-		logger.Error("Failed to create AVSRegistryContractsChainClient", "err", err)
-		return nil, err
-	}
 
-	return avsregistryContractsChainClient, nil
-}
-
-func (config *Config) buildAvsClients(
-	avsContractsClient clients.AVSRegistryContractsClient,
-	logger logging.Logger,
-	ethHttpClient eth.EthClient,
-) (avsregistry.AvsRegistryReader, avsregistry.AvsRegistryWriter, error) {
 	avsRegistryChainReader, err := avsregistry.NewAvsRegistryReader(
-		avsContractsClient,
+		blsRegistryCoordinatorAddr,
+		contractBLSRegistryCoordWithIndices,
+		contractBLSOperatorStateRetriever,
+		contractStakeRegistry,
 		logger,
 		ethHttpClient,
 	)
@@ -313,8 +290,22 @@ func (config *Config) buildAvsClients(
 		return nil, nil, err
 	}
 
+	blsPubkeyRegistryAddr, err := contractBLSRegistryCoordWithIndices.BlsPubkeyRegistry(&bind.CallOpts{})
+	if err != nil {
+		logger.Error("Failed to fetch BlsPubkeyRegistry contract", "err", err)
+		return nil, nil, err
+	}
+	contractBlsPubkeyRegistry, err := blspubkeyreg.NewContractBLSPubkeyRegistry(blsPubkeyRegistryAddr, ethHttpClient)
+	if err != nil {
+		logger.Error("Failed to construct BlsPubkeyRegistry contract", "err", err)
+		return nil, nil, err
+	}
+
 	avsRegistryChainWriter, err := avsregistry.NewAvsRegistryWriter(
-		avsContractsClient,
+		contractBLSRegistryCoordWithIndices,
+		contractBLSOperatorStateRetriever,
+		contractStakeRegistry,
+		contractBlsPubkeyRegistry,
 		logger,
 		privateKeySigner,
 		ethHttpClient,

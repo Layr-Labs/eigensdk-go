@@ -6,7 +6,7 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
-	blsoperatorstateretrievar "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSOperatorStateRetriever"
+	blsoperatorstateretriever "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSOperatorStateRetriever"
 	blspubkeyregistry "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPubkeyRegistry"
 	blspubkeycompendium "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPublicKeyCompendium"
 	blsregistrycoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSRegistryCoordinatorWithIndices"
@@ -77,7 +77,7 @@ func newEigenlayerContractBindings(
 
 type avsRegistryContractBindings struct {
 	RegistryCoordinator       *blsregistrycoordinator.ContractBLSRegistryCoordinatorWithIndices
-	BlsOperatorStateRetriever *blsoperatorstateretrievar.ContractBLSOperatorStateRetriever
+	BlsOperatorStateRetriever *blsoperatorstateretriever.ContractBLSOperatorStateRetriever
 	StakeRegistry             *stakeregistry.ContractStakeRegistry
 	BlsPubkeyRegistry         *blspubkeyregistry.ContractBLSPubkeyRegistry
 }
@@ -99,7 +99,7 @@ func newAVSRegistryContractBindings(
 		return nil, err
 	}
 
-	contractBlsOperatorStateRetriever, err := blsoperatorstateretrievar.NewContractBLSOperatorStateRetriever(
+	contractBlsOperatorStateRetriever, err := blsoperatorstateretriever.NewContractBLSOperatorStateRetriever(
 		blsOperatorStateRetrieverAddr,
 		ethclient,
 	)
