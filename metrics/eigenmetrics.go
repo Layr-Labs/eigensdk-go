@@ -13,7 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-// Eigenmetrics contains instrumented metrics that should be incremented by the avs node using the methods below
+// EigenMetrics contains instrumented metrics that should be incremented by the avs node using the methods below
 type EigenMetrics struct {
 	ipPortAddress string
 	logger        logging.Logger

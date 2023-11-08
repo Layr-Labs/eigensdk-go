@@ -10,10 +10,12 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/chainio/constructor"
 	"github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/metrics"
 	"github.com/Layr-Labs/eigensdk-go/metrics/collectors/economic"
 	"github.com/Layr-Labs/eigensdk-go/metrics/collectors/rpc_calls"
 	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // ExampleEigenMetrics is a testable example (https://go.dev/blog/examples), so tests skip it.
@@ -40,7 +42,8 @@ func ExampleEigenMetrics() {
 	if err != nil {
 		panic(err)
 	}
-	reg, eigenMetrics := clients.PrometheusRegistry, clients.Metrics
+	reg := prometheus.NewRegistry()
+	eigenMetrics := metrics.NewEigenMetrics("exampleAvs", ":9090", reg, logger)
 
 	operatorAddr := common.HexToAddress("0x0")
 	quorumNames := map[types.QuorumNum]string{
