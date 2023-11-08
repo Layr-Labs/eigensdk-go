@@ -1,11 +1,11 @@
-package constructor
+package clients
 
 import (
 	"context"
 
-	avsregistry "github.com/Layr-Labs/eigensdk-go/chainio/avsregistry"
+	avsregistry "github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
+	elcontracts "github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
-	elcontracts "github.com/Layr-Labs/eigensdk-go/chainio/elcontracts"
 	chainioutils "github.com/Layr-Labs/eigensdk-go/chainio/utils"
 	blspubkeycompendium "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPublicKeyCompendium"
 	logging "github.com/Layr-Labs/eigensdk-go/logging"
@@ -17,7 +17,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-type Config struct {
+type BuildAllConfig struct {
 	EcdsaPrivateKeyString         string `yaml:"ecdsa_private_key_string"`
 	EthHttpUrl                    string `yaml:"eth_http_url"`
 	EthWsUrl                      string `yaml:"eth_ws_url"`
@@ -44,7 +44,7 @@ type Clients struct {
 	PrometheusRegistry     *prometheus.Registry  // Used if avs teams need to register avs-specific metrics
 }
 
-func BuildClients(config Config, logger logging.Logger) (*Clients, error) {
+func BuildAll(config BuildAllConfig, logger logging.Logger) (*Clients, error) {
 
 	// Create the metrics server
 	promReg := prometheus.NewRegistry()
@@ -99,7 +99,7 @@ func BuildClients(config Config, logger logging.Logger) (*Clients, error) {
 
 }
 
-func (config *Config) buildElClients(
+func (config *BuildAllConfig) buildElClients(
 	ethHttpClient eth.EthClient,
 	ethWsClient eth.EthClient,
 	logger logging.Logger,
@@ -198,7 +198,7 @@ func (config *Config) buildElClients(
 	return elChainReader, elChainWriter, elChainSubscriber, nil
 }
 
-func (config *Config) buildAvsClients(
+func (config *BuildAllConfig) buildAvsClients(
 	logger logging.Logger,
 	ethHttpClient eth.EthClient,
 ) (avsregistry.AvsRegistryReader, avsregistry.AvsRegistryWriter, error) {

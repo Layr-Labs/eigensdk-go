@@ -6,8 +6,8 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/avsregistry"
-	"github.com/Layr-Labs/eigensdk-go/chainio/elcontracts"
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum/common"

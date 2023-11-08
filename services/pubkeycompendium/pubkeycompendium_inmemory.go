@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	sdkelcontracts "github.com/Layr-Labs/eigensdk-go/chainio/elcontracts"
+	sdkelcontracts "github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/types"

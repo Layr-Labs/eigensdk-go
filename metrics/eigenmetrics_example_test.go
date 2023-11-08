@@ -7,12 +7,12 @@ package metrics_test
 import (
 	"context"
 
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
-	"github.com/Layr-Labs/eigensdk-go/chainio/constructor"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/metrics"
 	"github.com/Layr-Labs/eigensdk-go/metrics/collectors/economic"
-	"github.com/Layr-Labs/eigensdk-go/metrics/collectors/rpc_calls"
+	rpccalls "github.com/Layr-Labs/eigensdk-go/metrics/collectors/rpc_calls"
 	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
@@ -29,7 +29,7 @@ func ExampleEigenMetrics() {
 		panic(err)
 	}
 
-	chainioConfig := constructor.Config{
+	chainioConfig := clients.BuildAllConfig{
 		EcdsaPrivateKeyString:         "0x0",
 		EthHttpUrl:                    "http://localhost:8545",
 		EthWsUrl:                      "ws://localhost:8545",
@@ -38,7 +38,7 @@ func ExampleEigenMetrics() {
 		AvsName:                       "exampleAvs",
 		PromMetricsIpPortAddress:      ":9090",
 	}
-	clients, err := constructor.BuildClients(chainioConfig, logger)
+	clients, err := clients.BuildAll(chainioConfig, logger)
 	if err != nil {
 		panic(err)
 	}

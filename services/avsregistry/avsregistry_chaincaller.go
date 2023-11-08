@@ -4,8 +4,8 @@ import (
 	"context"
 	"math/big"
 
-	avsregistry "github.com/Layr-Labs/eigensdk-go/chainio/avsregistry"
-	elcontracts "github.com/Layr-Labs/eigensdk-go/chainio/elcontracts"
+	avsregistry "github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
+	elcontracts "github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	pcservice "github.com/Layr-Labs/eigensdk-go/services/pubkeycompendium"
