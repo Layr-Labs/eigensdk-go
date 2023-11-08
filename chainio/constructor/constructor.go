@@ -6,14 +6,8 @@ import (
 	avsregistry "github.com/Layr-Labs/eigensdk-go/chainio/avsregistry"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	elcontracts "github.com/Layr-Labs/eigensdk-go/chainio/elcontracts"
-	blsoperatorstateretriever "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSOperatorStateRetriever"
-	blspubkeyreg "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPubkeyRegistry"
+	chainioutils "github.com/Layr-Labs/eigensdk-go/chainio/utils"
 	blspubkeycompendium "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPublicKeyCompendium"
-	blsregcoord "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSRegistryCoordinatorWithIndices"
-	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
-	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/Slasher"
-	stakeregistry "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StakeRegistry"
-	strategymanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StrategyManager"
 	logging "github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/metrics"
 	"github.com/Layr-Labs/eigensdk-go/signer"
@@ -112,73 +106,42 @@ func (config *Config) buildElClients(
 	eigenMetrics *metrics.EigenMetrics,
 ) (elcontracts.ELReader, elcontracts.ELWriter, elcontracts.ELSubscriber, error) {
 
-	blsRegistryCoordinatorAddr := gethcommon.HexToAddress(config.BlsRegistryCoordinatorAddr)
-	contractBLSRegistryCoordWithIndices, err := blsregcoord.NewContractBLSRegistryCoordinatorWithIndices(
-		blsRegistryCoordinatorAddr,
+	avsRegistryContractBindings, err := chainioutils.NewAVSRegistryContractBindings(
+		gethcommon.HexToAddress(config.BlsRegistryCoordinatorAddr),
+		gethcommon.HexToAddress(config.BlsOperatorStateRetrieverAddr),
 		ethHttpClient,
-	)
-	if err != nil {
-		logger.Fatal("Failed to fetch BLSRegistryCoordinatorWithIndices contract", "err", err)
-	}
-
-	blsPubkeyRegistryAddr, err := contractBLSRegistryCoordWithIndices.BlsPubkeyRegistry(&bind.CallOpts{})
-	if err != nil {
-		logger.Fatal("Failed to fetch BlsPubkeyRegistry contract", "err", err)
-	}
-	contractBlsPubkeyRegistry, err := blspubkeyreg.NewContractBLSPubkeyRegistry(blsPubkeyRegistryAddr, ethHttpClient)
-	if err != nil {
-		logger.Fatal("Failed to construct BlsPubkeyRegistry contract", "err", err)
-	}
-	blsPubKeyCompendiumAddr, err := contractBlsPubkeyRegistry.PubkeyCompendium(&bind.CallOpts{})
-	if err != nil {
-		logger.Fatal("Failed to fetch PubkeyCompendium contract", "err", err)
-	}
-	contractBlsPubkeyCompendium, err := blspubkeycompendium.NewContractBLSPublicKeyCompendium(blsPubKeyCompendiumAddr, ethHttpClient)
-	if err != nil {
-		logger.Fatal("Failed to fetch BLSPublicKeyCompendium contract", "err", err)
-	}
-	slasherAddr, err := contractBLSRegistryCoordWithIndices.Slasher(&bind.CallOpts{})
-	if err != nil {
-		logger.Fatal("Failed to fetch Slasher contract", "err", err)
-	}
-	contractSlasher, err := slasher.NewContractSlasher(slasherAddr, ethHttpClient)
-	if err != nil {
-		logger.Fatal("Failed to fetch Slasher contract", "err", err)
-	}
-	delegationManagerAddr, err := contractSlasher.Delegation(&bind.CallOpts{})
-	if err != nil {
-		logger.Fatal("Failed to fetch DelegationManager contract", "err", err)
-	}
-	contractDelegationManager, err := delegationmanager.NewContractDelegationManager(delegationManagerAddr, ethHttpClient)
-	if err != nil {
-		logger.Fatal("Failed to fetch DelegationManager contract", "err", err)
-	}
-	strategyManagerAddr, err := contractSlasher.StrategyManager(&bind.CallOpts{})
-	if err != nil {
-		logger.Fatal("Failed to fetch StrategyManager address", "err", err)
-	}
-	contractStrategyManager, err := strategymanager.NewContractStrategyManager(strategyManagerAddr, ethHttpClient)
-	if err != nil {
-		logger.Fatal("Failed to fetch StrategyManager contract", "err", err)
-	}
-
-	// get the Reader for the EL contracts
-	elChainReader, err := elcontracts.NewELChainReader(
-		contractSlasher,
-		contractDelegationManager,
-		contractStrategyManager,
-		contractBlsPubkeyCompendium,
-		blsPubKeyCompendiumAddr,
 		logger,
-		ethHttpClient,
 	)
 	if err != nil {
-		logger.Error("Failed to create ELChainReader", "err", err)
+		logger.Error("Failed to create AVSRegistryContractBindings", "err", err)
 		return nil, nil, nil, err
 	}
 
+	slasherAddr, err := avsRegistryContractBindings.RegistryCoordinator.Slasher(&bind.CallOpts{})
+	if err != nil {
+		logger.Fatal("Failed to fetch Slasher contract", "err", err)
+	}
+
+	elContractBindings, err := chainioutils.NewEigenlayerContractBindings(
+		slasherAddr,
+		avsRegistryContractBindings.BlsPubkeyCompendiumAddr,
+		ethHttpClient,
+		logger,
+	)
+
+	// get the Reader for the EL contracts
+	elChainReader := elcontracts.NewELChainReader(
+		elContractBindings.Slasher,
+		elContractBindings.DelegationManager,
+		elContractBindings.StrategyManager,
+		elContractBindings.BlsPubkeyCompendium,
+		elContractBindings.BlspubkeyCompendiumAddr,
+		logger,
+		ethHttpClient,
+	)
+
 	// get the Subscriber for the EL contracts
-	contractBlsPubkeyCompendiumWs, err := blspubkeycompendium.NewContractBLSPublicKeyCompendium(blsPubKeyCompendiumAddr, ethWsClient)
+	contractBlsPubkeyCompendiumWs, err := blspubkeycompendium.NewContractBLSPublicKeyCompendium(elContractBindings.BlspubkeyCompendiumAddr, ethWsClient)
 	if err != nil {
 		logger.Fatal("Failed to fetch BLSPublicKeyCompendium contract", "err", err)
 	}
@@ -211,12 +174,12 @@ func (config *Config) buildElClients(
 	}
 
 	elChainWriter := elcontracts.NewELChainWriter(
-		contractSlasher,
-		contractDelegationManager,
-		contractStrategyManager,
-		strategyManagerAddr,
-		contractBlsPubkeyCompendium,
-		blsPubKeyCompendiumAddr,
+		elContractBindings.Slasher,
+		elContractBindings.DelegationManager,
+		elContractBindings.StrategyManager,
+		elContractBindings.StrategyManagerAddr,
+		elContractBindings.BlsPubkeyCompendium,
+		elContractBindings.BlspubkeyCompendiumAddr,
 		elChainReader,
 		ethHttpClient,
 		privateKeySigner,
@@ -236,34 +199,22 @@ func (config *Config) buildAvsClients(
 	ethHttpClient eth.EthClient,
 ) (avsregistry.AvsRegistryReader, avsregistry.AvsRegistryWriter, error) {
 
-	blsRegistryCoordinatorAddr := gethcommon.HexToAddress(config.BlsRegistryCoordinatorAddr)
-	contractBLSRegistryCoordWithIndices, err := blsregcoord.NewContractBLSRegistryCoordinatorWithIndices(
-		blsRegistryCoordinatorAddr,
+	avsRegistryContractBindings, err := chainioutils.NewAVSRegistryContractBindings(
+		gethcommon.HexToAddress(config.BlsRegistryCoordinatorAddr),
+		gethcommon.HexToAddress(config.BlsOperatorStateRetrieverAddr),
 		ethHttpClient,
+		logger,
 	)
 	if err != nil {
-		logger.Error("Failed to fetch BLSRegistryCoordinatorWithIndices contract", "err", err)
+		logger.Error("Failed to create AVSRegistryContractBindings", "err", err)
 		return nil, nil, err
 	}
-
-	stakeregistryAddr, err := contractBLSRegistryCoordWithIndices.StakeRegistry(&bind.CallOpts{})
-	if err != nil {
-		logger.Error("Failed to fetch StakeRegistry contract", "err", err)
-		return nil, nil, err
-	}
-	contractStakeRegistry, err := stakeregistry.NewContractStakeRegistry(stakeregistryAddr, ethHttpClient)
-
-	blsOperatorStateRetrieverAddr := gethcommon.HexToAddress(config.BlsOperatorStateRetrieverAddr)
-	contractBLSOperatorStateRetriever, err := blsoperatorstateretriever.NewContractBLSOperatorStateRetriever(
-		blsOperatorStateRetrieverAddr,
-		ethHttpClient,
-	)
 
 	avsRegistryChainReader, err := avsregistry.NewAvsRegistryReader(
-		blsRegistryCoordinatorAddr,
-		contractBLSRegistryCoordWithIndices,
-		contractBLSOperatorStateRetriever,
-		contractStakeRegistry,
+		avsRegistryContractBindings.RegistryCoordinatorAddr,
+		avsRegistryContractBindings.RegistryCoordinator,
+		avsRegistryContractBindings.BlsOperatorStateRetriever,
+		avsRegistryContractBindings.StakeRegistry,
 		logger,
 		ethHttpClient,
 	)
@@ -290,22 +241,11 @@ func (config *Config) buildAvsClients(
 		return nil, nil, err
 	}
 
-	blsPubkeyRegistryAddr, err := contractBLSRegistryCoordWithIndices.BlsPubkeyRegistry(&bind.CallOpts{})
-	if err != nil {
-		logger.Error("Failed to fetch BlsPubkeyRegistry contract", "err", err)
-		return nil, nil, err
-	}
-	contractBlsPubkeyRegistry, err := blspubkeyreg.NewContractBLSPubkeyRegistry(blsPubkeyRegistryAddr, ethHttpClient)
-	if err != nil {
-		logger.Error("Failed to construct BlsPubkeyRegistry contract", "err", err)
-		return nil, nil, err
-	}
-
 	avsRegistryChainWriter, err := avsregistry.NewAvsRegistryWriter(
-		contractBLSRegistryCoordWithIndices,
-		contractBLSOperatorStateRetriever,
-		contractStakeRegistry,
-		contractBlsPubkeyRegistry,
+		avsRegistryContractBindings.RegistryCoordinator,
+		avsRegistryContractBindings.BlsOperatorStateRetriever,
+		avsRegistryContractBindings.StakeRegistry,
+		avsRegistryContractBindings.BlsPubkeyRegistry,
 		logger,
 		privateKeySigner,
 		ethHttpClient,

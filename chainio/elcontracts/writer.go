@@ -9,6 +9,7 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/chainio/utils"
+	chainioutils "github.com/Layr-Labs/eigensdk-go/chainio/utils"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/metrics"
@@ -82,6 +83,42 @@ func NewELChainWriter(
 		logger:                  logger,
 		ethClient:               ethClient,
 	}
+}
+
+func BuildELChainWriter(
+	slasherAddr gethcommon.Address,
+	blsPubKeyCompendiumAddr gethcommon.Address,
+	ethClient eth.EthClient,
+	signer signer.Signer,
+	logger logging.Logger,
+	eigenMetrics metrics.Metrics,
+) (*ELChainWriter, error) {
+	elContractBindings, err := chainioutils.NewEigenlayerContractBindings(slasherAddr, blsPubKeyCompendiumAddr, ethClient, logger)
+	if err != nil {
+		return nil, err
+	}
+	elChainReader := NewELChainReader(
+		elContractBindings.Slasher,
+		elContractBindings.DelegationManager,
+		elContractBindings.StrategyManager,
+		elContractBindings.BlsPubkeyCompendium,
+		blsPubKeyCompendiumAddr,
+		logger,
+		ethClient,
+	)
+	return NewELChainWriter(
+		elContractBindings.Slasher,
+		elContractBindings.DelegationManager,
+		elContractBindings.StrategyManager,
+		elContractBindings.StrategyManagerAddr,
+		elContractBindings.BlsPubkeyCompendium,
+		blsPubKeyCompendiumAddr,
+		elChainReader,
+		ethClient,
+		signer,
+		logger,
+		eigenMetrics,
+	), nil
 }
 
 // TODO(madhur): do we really want to wait for txreceipts like this in these functions?

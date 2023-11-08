@@ -12,6 +12,7 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
+	chainioutils "github.com/Layr-Labs/eigensdk-go/chainio/utils"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/types"
@@ -86,7 +87,7 @@ func NewELChainReader(
 	blsPubKeyCompendiumAddr common.Address,
 	logger logging.Logger,
 	ethClient eth.EthClient,
-) (*ELChainReader, error) {
+) *ELChainReader {
 	return &ELChainReader{
 		slasher:                 slasher,
 		delegationManager:       delegationManager,
@@ -95,7 +96,28 @@ func NewELChainReader(
 		blsPubKeyCompendiumAddr: blsPubKeyCompendiumAddr,
 		logger:                  logger,
 		ethClient:               ethClient,
-	}, nil
+	}
+}
+
+func BuildELChainReader(
+	slasherAddr gethcommon.Address,
+	blsPubKeyCompendiumAddr gethcommon.Address,
+	ethClient eth.EthClient,
+	logger logging.Logger,
+) (*ELChainReader, error) {
+	elContractBindings, err := chainioutils.NewEigenlayerContractBindings(slasherAddr, blsPubKeyCompendiumAddr, ethClient, logger)
+	if err != nil {
+		return nil, err
+	}
+	return NewELChainReader(
+		elContractBindings.Slasher,
+		elContractBindings.DelegationManager,
+		elContractBindings.StrategyManager,
+		elContractBindings.BlsPubkeyCompendium,
+		blsPubKeyCompendiumAddr,
+		logger,
+		ethClient,
+	), nil
 }
 
 // TODO(samlaf): should we just pass the CallOpts directly as argument instead of the context?
