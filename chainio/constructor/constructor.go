@@ -128,6 +128,10 @@ func (config *Config) buildElClients(
 		ethHttpClient,
 		logger,
 	)
+	if err != nil {
+		logger.Error("Failed to create EigenlayerContractBindings", "err", err)
+		return nil, nil, nil, err
+	}
 
 	// get the Reader for the EL contracts
 	elChainReader := elcontracts.NewELChainReader(

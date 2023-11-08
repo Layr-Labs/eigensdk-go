@@ -26,8 +26,6 @@ func ExampleEigenMetrics() {
 	if err != nil {
 		panic(err)
 	}
-	// reg := prometheus.NewRegistry()
-	// eigenMetrics := metrics.NewEigenMetrics("exampleAvs", ":9090", reg, logger)
 
 	chainioConfig := constructor.Config{
 		EcdsaPrivateKeyString:         "0x0",

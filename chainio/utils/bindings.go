@@ -119,6 +119,10 @@ func NewAVSRegistryContractBindings(
 	}
 
 	stakeregistryAddr, err := contractBlsRegistryCoordinator.StakeRegistry(&bind.CallOpts{})
+	if err != nil {
+		logger.Error("Failed to fetch StakeRegistry address", "err", err)
+		return nil, err
+	}
 	contractStakeRegistry, err := stakeregistry.NewContractStakeRegistry(
 		stakeregistryAddr,
 		ethclient,
@@ -129,6 +133,10 @@ func NewAVSRegistryContractBindings(
 	}
 
 	blsPubkeyRegistryAddr, err := contractBlsRegistryCoordinator.BlsPubkeyRegistry(&bind.CallOpts{})
+	if err != nil {
+		logger.Error("Failed to fetch BLSPubkeyRegistry address", "err", err)
+		return nil, err
+	}
 	contractBlsPubkeyRegistry, err := blspubkeyregistry.NewContractBLSPubkeyRegistry(
 		blsPubkeyRegistryAddr,
 		ethclient,
@@ -139,6 +147,10 @@ func NewAVSRegistryContractBindings(
 	}
 
 	blsPubkeyCompendiumAddr, err := contractBlsPubkeyRegistry.PubkeyCompendium(&bind.CallOpts{})
+	if err != nil {
+		logger.Error("Failed to fetch BLSPublicKeyCompendium address", "err", err)
+		return nil, err
+	}
 	contractBlsPubkeyCompendium, err := blspubkeycompendium.NewContractBLSPublicKeyCompendium(
 		blsPubkeyCompendiumAddr,
 		ethclient,
