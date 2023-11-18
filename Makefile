@@ -1,6 +1,6 @@
 ############################# HELP MESSAGE #############################
 # Make sure the help command stays first, so that it's printed by default when `make` is called without arguments
-.PHONY: help bindings mocks tests tests-cover fmt format-lines
+.PHONY: help binding mock test test-cover fmt format-lines
 
 GO_LINES_IGNORED_DIRS=contracts
 GO_PACKAGES=./chainio/... ./crypto/... ./logging/... \
@@ -9,17 +9,17 @@ GO_FOLDERS=$(shell echo ${GO_PACKAGES} | sed -e "s/\.\///g" | sed -e "s/\/\.\.\.
 help:
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-bindings: ## generates contract bindings
+binding: ## generates contract bindings
 	cd contracts && rm -rf bindings/* && ./generate-bindings.sh 
 
-mocks: ## generates mocks
+mock: ## generates mocks
 	go install go.uber.org/mock/mockgen@v0.3.0
 	go generate ./...
 
-tests: ## runs all tests
+test: ## runs all tests
 	go test ./... -covermode=atomic
 
-tests-cover: ## run all tests with test coverge
+test-cover: ## run all tests with test coverge
 	go test ./... -coverprofile=coverage.out -covermode=atomic -v -count=1
 	go tool cover -html=coverage.out -o coverage.html
 	open coverage.html
