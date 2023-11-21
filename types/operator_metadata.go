@@ -52,8 +52,8 @@ func (om *OperatorMetadata) Validate() error {
 		return errors.New("logo is required")
 	}
 
-	if !isImageURL(om.Logo) {
-		return errors.New("logo must be a valid image url")
+	if err := isImageURL(om.Logo); err != nil {
+		return err
 	}
 
 	if len(om.Website) != 0 {
@@ -97,11 +97,11 @@ func checkIfUrlIsValid(rawUrl string) error {
 	}
 }
 
-func isImageURL(urlString string) bool {
+func isImageURL(urlString string) error {
 	// Parse the URL
 	parsedURL, err := url.Parse(urlString)
 	if err != nil {
-		return false
+		return err
 	}
 
 	// Extract the path component from the URL
@@ -119,9 +119,9 @@ func isImageURL(urlString string) bool {
 	// Check if the extension is in the list of image extensions
 	for _, imgExt := range imageExtensions {
 		if strings.EqualFold(extension, imgExt) {
-			return true
+			return nil
 		}
 	}
 
-	return false
+	return errors.New("invalid image extension. only " + strings.Join(imageExtensions, ",") + "is supported")
 }
