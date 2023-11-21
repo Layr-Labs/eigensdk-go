@@ -53,7 +53,7 @@ func (om *OperatorMetadata) Validate() error {
 	}
 
 	if err := isImageURL(om.Logo); err != nil {
-		return errors.New("logo must be a valid image url with err: " + err.Error())
+		return err
 	}
 
 	if len(om.Website) != 0 {
