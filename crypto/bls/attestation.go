@@ -243,6 +243,15 @@ func ReadPrivateKeyFromFile(path string, password string) (*KeyPair, error) {
 		return nil, err
 	}
 
+	// Check if pubkey is present, if not return error
+	// There is an issue where if you specify ecdsa key file
+	// it still works and returns a keypair since the format of storage is same.
+	// This is to prevent and make sure pubkey is present.
+	// ecdsa keys doesn't have that field
+	if encryptedBLSStruct.PubKey == "" {
+		return nil, fmt.Errorf("invalid bls key file. pubkey not found")
+	}
+
 	skBytes, err := keystore.DecryptDataV3(encryptedBLSStruct.Crypto, password)
 	if err != nil {
 		return nil, err
