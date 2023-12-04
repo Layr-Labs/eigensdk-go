@@ -140,7 +140,9 @@ func startCollector(c *cli.Context) error {
 	logger.Infof("Starting metrics server at port %v", metricsListeningAddr)
 	http.Handle("/metrics", promhttp.HandlerFor(
 		reg,
-		promhttp.HandlerOpts{},
+		promhttp.HandlerOpts{
+			Registry: reg,
+		},
 	))
 	err = http.ListenAndServe(metricsListeningAddr, nil)
 	return err
