@@ -80,6 +80,30 @@ func NewELChainReader(
 	}, nil
 }
 
+// Dial follows the geth constructor name convention, and is a low level contructor that
+// builds a new ELChainReader from config values as opposed to other data types
+func Dial(
+	rpcHttpUrl string,
+	rpcWsUrl string,
+	slasherAddr gethcommon.Address,
+	blsPubKeyCompendiumAddr gethcommon.Address,
+	logger logging.Logger,
+) (*ELChainReader, error) {
+	ethHttpClient, err := eth.NewClient(rpcHttpUrl)
+	if err != nil {
+		panic(err)
+	}
+	ethWsClient, err := eth.NewClient(rpcWsUrl)
+	if err != nil {
+		panic(err)
+	}
+	elContractsClient, err := clients.NewELContractsChainClient(slasherAddr, blsPubKeyCompendiumAddr, ethHttpClient, ethWsClient, logger)
+	if err != nil {
+		panic(err)
+	}
+	return NewELChainReader(elContractsClient, logger, ethHttpClient)
+}
+
 func (r *ELChainReader) IsOperatorRegistered(ctx context.Context, operator types.Operator) (bool, error) {
 	isOperator, err := r.elContractsClient.IsOperator(
 		&bind.CallOpts{},
