@@ -56,7 +56,7 @@ func TestGetOperatorPubkeys(t *testing.T) {
 				errC := make(chan error)
 				mockSubscription.EXPECT().Err().AnyTimes().Return(errC)
 				mockElSubscriber.EXPECT().SubscribeToNewPubkeyRegistrations().Return(nil, mockSubscription, nil)
-				mockElReader.EXPECT().QueryExistingRegisteredOperatorPubKeys(nil, nil).Return(nil, nil, nil)
+				mockElReader.EXPECT().QueryExistingRegisteredOperatorPubKeys(gomock.Any(), nil, nil).Return(nil, nil, nil)
 			},
 			queryOperatorAddr:   testOperator1.operatorAddr,
 			wantOperatorFound:   false,
@@ -68,7 +68,7 @@ func TestGetOperatorPubkeys(t *testing.T) {
 				errC := make(chan error)
 				mockSubscription.EXPECT().Err().AnyTimes().Return(errC)
 				mockElSubscriber.EXPECT().SubscribeToNewPubkeyRegistrations().Return(nil, mockSubscription, nil)
-				mockElReader.EXPECT().QueryExistingRegisteredOperatorPubKeys(nil, nil).
+				mockElReader.EXPECT().QueryExistingRegisteredOperatorPubKeys(gomock.Any(), nil, nil).
 					Return([]common.Address{testOperator1.operatorAddr}, []types.OperatorPubkeys{testOperator1.pubkeys}, nil)
 			},
 			queryOperatorAddr:   testOperator1.operatorAddr,
@@ -89,7 +89,7 @@ func TestGetOperatorPubkeys(t *testing.T) {
 				pubkeyRegistrationEventC <- pubkeyRegistrationEvent
 				mockSubscription.EXPECT().Err().AnyTimes().Return(errC)
 				mockElSubscriber.EXPECT().SubscribeToNewPubkeyRegistrations().Return(pubkeyRegistrationEventC, mockSubscription, nil)
-				mockElReader.EXPECT().QueryExistingRegisteredOperatorPubKeys(nil, nil).
+				mockElReader.EXPECT().QueryExistingRegisteredOperatorPubKeys(gomock.Any(), nil, nil).
 					Return([]common.Address{}, []types.OperatorPubkeys{}, nil)
 			},
 			queryOperatorAddr:   testOperator1.operatorAddr,

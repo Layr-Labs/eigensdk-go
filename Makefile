@@ -17,7 +17,7 @@ mocks: ## generates mocks
 	go generate ./...
 
 tests: ## runs all tests
-	go test ./... -covermode=atomic
+	go test ./... -covermode=atomic -timeout=30s
 
 tests-cover: ## run all tests with test coverge
 	go test ./... -coverprofile=coverage.out -covermode=atomic -v -count=1

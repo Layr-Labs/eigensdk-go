@@ -80,7 +80,7 @@ func (pkcs *PubkeyCompendiumServiceInMemory) startServiceInGoroutine(ctx context
 			// see the warning above the struct definition to understand why we panic here
 			panic(err)
 		}
-		pkcs.queryPastRegisteredOperatorEventsAndFillDb(pubkeyDict)
+		pkcs.queryPastRegisteredOperatorEventsAndFillDb(ctx, pubkeyDict)
 		// The constructor can return after we have backfilled the db by querying the events of operators that have registered with the pubkey compendium
 		// before the block at which we started the ws subscription above
 		wg.Done()
@@ -118,10 +118,10 @@ func (pkcs *PubkeyCompendiumServiceInMemory) startServiceInGoroutine(ctx context
 	}()
 }
 
-func (pkcs *PubkeyCompendiumServiceInMemory) queryPastRegisteredOperatorEventsAndFillDb(pubkeydict map[common.Address]types.OperatorPubkeys) {
+func (pkcs *PubkeyCompendiumServiceInMemory) queryPastRegisteredOperatorEventsAndFillDb(ctx context.Context, pubkeydict map[common.Address]types.OperatorPubkeys) {
 	// Querying with nil startBlock and stopBlock will return all events. It doesn't matter if we query some events that we will receive again in the websocket,
 	// since we will just overwrite the pubkey dict with the same values.
-	alreadyRegisteredOperatorAddrs, alreadyRegisteredOperatorPubkeys, err := pkcs.eigenlayerReader.QueryExistingRegisteredOperatorPubKeys(nil, nil)
+	alreadyRegisteredOperatorAddrs, alreadyRegisteredOperatorPubkeys, err := pkcs.eigenlayerReader.QueryExistingRegisteredOperatorPubKeys(ctx, nil, nil)
 	if err != nil {
 		pkcs.logger.Error("Fatal error querying existing registered operators", "err", err, "service", "PubkeyCompendiumServiceInMemory")
 		panic(err)

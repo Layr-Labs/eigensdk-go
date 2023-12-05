@@ -135,7 +135,7 @@ func (ec *Collector) Collect(ch chan<- prometheus.Metric) {
 	// if we want instead to only output 1 if the operator has been slashed for a specific avs, we have 2 choices:
 	// 1. keep this collector format but query the OperatorFrozen event from a subgraph
 	// 2. subscribe to the event and keep a local state of whether the operator has been slashed, exporting it via normal prometheus instrumentation
-	operatorIsFrozen, err := ec.elReader.OperatorIsFrozen(context.Background(), ec.operatorAddr)
+	operatorIsFrozen, err := ec.elReader.OperatorIsFrozen(nil, ec.operatorAddr)
 	if err != nil {
 		ec.logger.Error("Failed to get slashing incurred", "err", err)
 	} else {

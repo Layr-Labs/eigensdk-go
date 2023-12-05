@@ -4,6 +4,7 @@ import (
 	"context"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
 
@@ -182,7 +183,7 @@ func (w *ELChainWriter) DepositERC20IntoStrategy(
 	w.logger.Infof("depositing %s tokens into strategy %s", amount.String(), strategyAddr)
 	txOpts := w.signer.GetTxOpts()
 	_, underlyingTokenContract, underlyingTokenAddr, err := w.elChainReader.GetStrategyAndUnderlyingERC20Token(
-		ctx,
+		&bind.CallOpts{Context: ctx},
 		strategyAddr,
 	)
 	if err != nil {

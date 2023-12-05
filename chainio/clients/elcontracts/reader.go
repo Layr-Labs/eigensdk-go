@@ -27,40 +27,39 @@ import (
 )
 
 type ELReader interface {
-	IsOperatorRegistered(ctx context.Context, operator types.Operator) (bool, error)
+	IsOperatorRegistered(opts *bind.CallOpts, operator types.Operator) (bool, error)
 
-	GetOperatorDetails(ctx context.Context, operator types.Operator) (types.Operator, error)
+	GetOperatorDetails(opts *bind.CallOpts, operator types.Operator) (types.Operator, error)
 
 	// GetStrategyAndUnderlyingToken returns the strategy contract and the underlying token address
 	// use GetStrategyAndUnderlyingERC20Token if the contract address confirms with ERC20 standard
 	GetStrategyAndUnderlyingToken(
-		ctx context.Context, strategyAddr gethcommon.Address,
+		opts *bind.CallOpts, strategyAddr gethcommon.Address,
 	) (*strategy.ContractIStrategy, gethcommon.Address, error)
 
 	// GetStrategyAndUnderlyingERC20Token returns the strategy contract and the underlying ERC20 token address
 	GetStrategyAndUnderlyingERC20Token(
-		ctx context.Context, strategyAddr gethcommon.Address,
+		opts *bind.CallOpts, strategyAddr gethcommon.Address,
 	) (*strategy.ContractIStrategy, erc20.ContractIERC20Methods, gethcommon.Address, error)
 
 	QueryExistingRegisteredOperatorPubKeys(
-		startBlock *big.Int,
-		stopBlock *big.Int,
+		ctx context.Context, startBlock *big.Int, stopBlock *big.Int,
 	) ([]types.OperatorAddr, []types.OperatorPubkeys, error)
 
-	GetOperatorPubkeyHash(ctx context.Context, operator types.Operator) ([32]byte, error)
+	GetOperatorPubkeyHash(opts *bind.CallOpts, operator types.Operator) ([32]byte, error)
 
-	GetOperatorAddressFromPubkeyHash(ctx context.Context, pubkeyHash [32]byte) (gethcommon.Address, error)
+	GetOperatorAddressFromPubkeyHash(opts *bind.CallOpts, pubkeyHash [32]byte) (gethcommon.Address, error)
 
 	ServiceManagerCanSlashOperatorUntilBlock(
-		ctx context.Context,
+		opts *bind.CallOpts,
 		operatorAddr gethcommon.Address,
 		serviceManagerAddr gethcommon.Address,
 	) (uint32, error)
 
-	OperatorIsFrozen(ctx context.Context, operatorAddr gethcommon.Address) (bool, error)
+	OperatorIsFrozen(opts *bind.CallOpts, operatorAddr gethcommon.Address) (bool, error)
 
 	GetOperatorSharesInStrategy(
-		ctx context.Context,
+		opts *bind.CallOpts,
 		operatorAddr gethcommon.Address,
 		strategyAddr gethcommon.Address,
 	) (*big.Int, error)
@@ -121,9 +120,9 @@ func BuildELChainReader(
 }
 
 // TODO(samlaf): should we just pass the CallOpts directly as argument instead of the context?
-func (r *ELChainReader) IsOperatorRegistered(ctx context.Context, operator types.Operator) (bool, error) {
+func (r *ELChainReader) IsOperatorRegistered(opts *bind.CallOpts, operator types.Operator) (bool, error) {
 	isOperator, err := r.delegationManager.IsOperator(
-		&bind.CallOpts{Context: ctx},
+		opts,
 		gethcommon.HexToAddress(operator.Address),
 	)
 	if err != nil {
@@ -133,9 +132,9 @@ func (r *ELChainReader) IsOperatorRegistered(ctx context.Context, operator types
 	return isOperator, nil
 }
 
-func (r *ELChainReader) GetOperatorPubkeyHash(ctx context.Context, operator types.Operator) ([32]byte, error) {
+func (r *ELChainReader) GetOperatorPubkeyHash(opts *bind.CallOpts, operator types.Operator) ([32]byte, error) {
 	operatorPubkeyHash, err := r.blsPubkeyCompendium.OperatorToPubkeyHash(
-		&bind.CallOpts{},
+		opts,
 		gethcommon.HexToAddress(operator.Address),
 	)
 	if err != nil {
@@ -146,18 +145,18 @@ func (r *ELChainReader) GetOperatorPubkeyHash(ctx context.Context, operator type
 }
 
 func (r *ELChainReader) GetOperatorAddressFromPubkeyHash(
-	ctx context.Context,
+	opts *bind.CallOpts,
 	pubkeyHash [32]byte,
 ) (gethcommon.Address, error) {
 	return r.blsPubkeyCompendium.PubkeyHashToOperator(
-		&bind.CallOpts{},
+		opts,
 		pubkeyHash,
 	)
 }
 
-func (r *ELChainReader) GetOperatorDetails(ctx context.Context, operator types.Operator) (types.Operator, error) {
+func (r *ELChainReader) GetOperatorDetails(opts *bind.CallOpts, operator types.Operator) (types.Operator, error) {
 	operatorDetails, err := r.delegationManager.OperatorDetails(
-		&bind.CallOpts{},
+		opts,
 		gethcommon.HexToAddress(operator.Address),
 	)
 	if err != nil {
@@ -174,14 +173,14 @@ func (r *ELChainReader) GetOperatorDetails(ctx context.Context, operator types.O
 
 // GetStrategyAndUnderlyingToken returns the strategy contract and the underlying token address
 func (r *ELChainReader) GetStrategyAndUnderlyingToken(
-	ctx context.Context, strategyAddr gethcommon.Address,
+	opts *bind.CallOpts, strategyAddr gethcommon.Address,
 ) (*strategy.ContractIStrategy, gethcommon.Address, error) {
 	contractStrategy, err := strategy.NewContractIStrategy(strategyAddr, r.ethClient)
 	if err != nil {
 		r.logger.Error("Failed to fetch strategy contract", "err", err)
 		return nil, common.Address{}, err
 	}
-	underlyingTokenAddr, err := contractStrategy.UnderlyingToken(&bind.CallOpts{})
+	underlyingTokenAddr, err := contractStrategy.UnderlyingToken(opts)
 	if err != nil {
 		r.logger.Error("Failed to fetch token contract", "err", err)
 		return nil, common.Address{}, err
@@ -192,14 +191,14 @@ func (r *ELChainReader) GetStrategyAndUnderlyingToken(
 // GetStrategyAndUnderlyingERC20Token returns the strategy contract, the erc20 bindings for the underlying token
 // and the underlying token address
 func (r *ELChainReader) GetStrategyAndUnderlyingERC20Token(
-	ctx context.Context, strategyAddr gethcommon.Address,
+	opts *bind.CallOpts, strategyAddr gethcommon.Address,
 ) (*strategy.ContractIStrategy, erc20.ContractIERC20Methods, gethcommon.Address, error) {
 	contractStrategy, err := strategy.NewContractIStrategy(strategyAddr, r.ethClient)
 	if err != nil {
 		r.logger.Error("Failed to fetch strategy contract", "err", err)
 		return nil, nil, common.Address{}, err
 	}
-	underlyingTokenAddr, err := contractStrategy.UnderlyingToken(&bind.CallOpts{})
+	underlyingTokenAddr, err := contractStrategy.UnderlyingToken(opts)
 	if err != nil {
 		r.logger.Error("Failed to fetch token contract", "err", err)
 		return nil, nil, common.Address{}, err
@@ -213,12 +212,12 @@ func (r *ELChainReader) GetStrategyAndUnderlyingERC20Token(
 }
 
 func (r *ELChainReader) ServiceManagerCanSlashOperatorUntilBlock(
-	ctx context.Context,
+	opts *bind.CallOpts,
 	operatorAddr gethcommon.Address,
 	serviceManagerAddr gethcommon.Address,
 ) (uint32, error) {
 	serviceManagerCanSlashOperatorUntilBlock, err := r.slasher.ContractCanSlashOperatorUntilBlock(
-		&bind.CallOpts{Context: ctx}, operatorAddr, serviceManagerAddr,
+		opts, operatorAddr, serviceManagerAddr,
 	)
 	if err != nil {
 		return 0, err
@@ -226,8 +225,8 @@ func (r *ELChainReader) ServiceManagerCanSlashOperatorUntilBlock(
 	return serviceManagerCanSlashOperatorUntilBlock, nil
 }
 
-func (r *ELChainReader) OperatorIsFrozen(ctx context.Context, operatorAddr gethcommon.Address) (bool, error) {
-	operatorIsFrozen, err := r.slasher.IsFrozen(&bind.CallOpts{Context: ctx}, operatorAddr)
+func (r *ELChainReader) OperatorIsFrozen(opts *bind.CallOpts, operatorAddr gethcommon.Address) (bool, error) {
+	operatorIsFrozen, err := r.slasher.IsFrozen(opts, operatorAddr)
 	if err != nil {
 		return false, err
 	}
@@ -235,6 +234,7 @@ func (r *ELChainReader) OperatorIsFrozen(ctx context.Context, operatorAddr gethc
 }
 
 func (r *ELChainReader) QueryExistingRegisteredOperatorPubKeys(
+	ctx context.Context,
 	startBlock *big.Int,
 	stopBlock *big.Int,
 ) ([]types.OperatorAddr, []types.OperatorPubkeys, error) {
@@ -247,7 +247,7 @@ func (r *ELChainReader) QueryExistingRegisteredOperatorPubKeys(
 		},
 	}
 
-	logs, err := r.ethClient.FilterLogs(context.Background(), query)
+	logs, err := r.ethClient.FilterLogs(ctx, query)
 	if err != nil {
 		r.logger.Error("Error filtering logs", "err", err)
 		return nil, nil, err
@@ -304,12 +304,12 @@ func (r *ELChainReader) QueryExistingRegisteredOperatorPubKeys(
 }
 
 func (r *ELChainReader) GetOperatorSharesInStrategy(
-	ctx context.Context,
+	opts *bind.CallOpts,
 	operatorAddr gethcommon.Address,
 	strategyAddr gethcommon.Address,
 ) (*big.Int, error) {
 	operatorSharesInStrategy, err := r.delegationManager.OperatorShares(
-		&bind.CallOpts{Context: ctx},
+		opts,
 		operatorAddr,
 		strategyAddr,
 	)
