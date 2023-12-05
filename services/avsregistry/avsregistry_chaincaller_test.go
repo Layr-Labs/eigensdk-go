@@ -68,7 +68,7 @@ func TestAvsRegistryServiceChainCaller_getOperatorPubkeys(t *testing.T) {
 			service := NewAvsRegistryServiceChainCaller(mockAvsRegistryReader, mockElReader, mockPubkeyCompendium, logger)
 
 			// Call the GetOperatorPubkeys method with the test operator address
-			gotOperatorPubkeys, gotErr := service.getOperatorPubkeys(nil, tt.queryOperatorId)
+			gotOperatorPubkeys, gotErr := service.getOperatorPubkeys(context.Background(), tt.queryOperatorId)
 			if tt.wantErr != gotErr {
 				t.Fatalf("GetOperatorPubkeys returned wrong error. Got: %v, want: %v.", gotErr, tt.wantErr)
 			}
