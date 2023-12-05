@@ -121,8 +121,9 @@ func BuildELChainWriter(
 	), nil
 }
 
-// TODO(madhur): do we really want to wait for txreceipts like this in these functions?
-// feels like this should be something decided by callers
+// TODO(madhur): we wait for txreceipts in these functions right now, but
+// this will be changed once we have a better tx manager design implemented
+// see https://github.com/Layr-Labs/eigensdk-go/pull/75
 func (w *ELChainWriter) RegisterAsOperator(ctx context.Context, operator types.Operator) (*gethtypes.Receipt, error) {
 	w.logger.Infof("registering operator %s to EigenLayer", operator.Address)
 	opDetails := delegationmanager.IDelegationManagerOperatorDetails{
