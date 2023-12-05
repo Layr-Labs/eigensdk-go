@@ -1,8 +1,6 @@
 package clients
 
 import (
-	"context"
-
 	avsregistry "github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
 	elcontracts "github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
@@ -13,12 +11,10 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/signer"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	gethcommon "github.com/ethereum/go-ethereum/common"
-	crypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 type BuildAllConfig struct {
-	EcdsaPrivateKeyString         string `yaml:"ecdsa_private_key_string"`
 	EthHttpUrl                    string `yaml:"eth_http_url"`
 	EthWsUrl                      string `yaml:"eth_ws_url"`
 	BlsRegistryCoordinatorAddr    string `yaml:"bls_registry_coordinator_address"`
@@ -44,7 +40,7 @@ type Clients struct {
 	PrometheusRegistry     *prometheus.Registry  // Used if avs teams need to register avs-specific metrics
 }
 
-func BuildAll(config BuildAllConfig, logger logging.Logger) (*Clients, error) {
+func BuildAll(config BuildAllConfig, signer signer.Signer, logger logging.Logger) (*Clients, error) {
 
 	// Create the metrics server
 	promReg := prometheus.NewRegistry()
@@ -67,6 +63,7 @@ func BuildAll(config BuildAllConfig, logger logging.Logger) (*Clients, error) {
 	elChainReader, elChainWriter, elChainSubscriber, err := config.buildElClients(
 		ethHttpClient,
 		ethWsClient,
+		signer,
 		logger,
 		eigenMetrics,
 	)
@@ -77,8 +74,9 @@ func BuildAll(config BuildAllConfig, logger logging.Logger) (*Clients, error) {
 
 	// creating AVS clients: Reader and Writer
 	avsRegistryChainReader, avsRegistryChainWriter, err := config.buildAvsClients(
-		logger,
 		ethHttpClient,
+		signer,
+		logger,
 	)
 	if err != nil {
 		logger.Error("Failed to create AVS Registry Reader and Writer", "err", err)
@@ -102,6 +100,7 @@ func BuildAll(config BuildAllConfig, logger logging.Logger) (*Clients, error) {
 func (config *BuildAllConfig) buildElClients(
 	ethHttpClient eth.EthClient,
 	ethWsClient eth.EthClient,
+	signer signer.Signer,
 	logger logging.Logger,
 	eigenMetrics *metrics.EigenMetrics,
 ) (elcontracts.ELReader, elcontracts.ELWriter, elcontracts.ELSubscriber, error) {
@@ -158,25 +157,6 @@ func (config *BuildAllConfig) buildElClients(
 		return nil, nil, nil, err
 	}
 
-	// get the Writer for the EL contracts
-	ecdsaPrivateKey, err := crypto.HexToECDSA(config.EcdsaPrivateKeyString)
-	if err != nil {
-		logger.Errorf("Cannot parse ecdsa private key", "err", err)
-		return nil, nil, nil, err
-	}
-
-	chainId, err := ethHttpClient.ChainID(context.Background())
-	if err != nil {
-		logger.Error("Cannot get chainId", "err", err)
-		return nil, nil, nil, err
-	}
-
-	privateKeySigner, err := signer.NewPrivateKeySigner(ecdsaPrivateKey, chainId)
-	if err != nil {
-		logger.Error("Cannot create signer", "err", err)
-		return nil, nil, nil, err
-	}
-
 	elChainWriter := elcontracts.NewELChainWriter(
 		elContractBindings.Slasher,
 		elContractBindings.DelegationManager,
@@ -186,7 +166,7 @@ func (config *BuildAllConfig) buildElClients(
 		elContractBindings.BlspubkeyCompendiumAddr,
 		elChainReader,
 		ethHttpClient,
-		privateKeySigner,
+		signer,
 		logger,
 		eigenMetrics,
 	)
@@ -199,8 +179,9 @@ func (config *BuildAllConfig) buildElClients(
 }
 
 func (config *BuildAllConfig) buildAvsClients(
-	logger logging.Logger,
 	ethHttpClient eth.EthClient,
+	signer signer.Signer,
+	logger logging.Logger,
 ) (avsregistry.AvsRegistryReader, avsregistry.AvsRegistryWriter, error) {
 
 	avsRegistryContractBindings, err := chainioutils.NewAVSRegistryContractBindings(
@@ -227,31 +208,13 @@ func (config *BuildAllConfig) buildAvsClients(
 		return nil, nil, err
 	}
 
-	ecdsaPrivateKey, err := crypto.HexToECDSA(config.EcdsaPrivateKeyString)
-	if err != nil {
-		logger.Errorf("Cannot parse ecdsa private key", "err", err)
-		return nil, nil, err
-	}
-
-	chainId, err := ethHttpClient.ChainID(context.Background())
-	if err != nil {
-		logger.Error("Cannot get chainId", "err", err)
-		return nil, nil, err
-	}
-
-	privateKeySigner, err := signer.NewPrivateKeySigner(ecdsaPrivateKey, chainId)
-	if err != nil {
-		logger.Error("Cannot create signer", "err", err)
-		return nil, nil, err
-	}
-
 	avsRegistryChainWriter, err := avsregistry.NewAvsRegistryWriter(
 		avsRegistryContractBindings.RegistryCoordinator,
 		avsRegistryContractBindings.BlsOperatorStateRetriever,
 		avsRegistryContractBindings.StakeRegistry,
 		avsRegistryContractBindings.BlsPubkeyRegistry,
 		logger,
-		privateKeySigner,
+		signer,
 		ethHttpClient,
 	)
 	if err != nil {
