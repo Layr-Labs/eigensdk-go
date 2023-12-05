@@ -189,6 +189,8 @@ func (r *ELChainReader) GetStrategyAndUnderlyingToken(
 	return contractStrategy, underlyingTokenAddr, nil
 }
 
+// GetStrategyAndUnderlyingERC20Token returns the strategy contract, the erc20 bindings for the underlying token
+// and the underlying token address
 func (r *ELChainReader) GetStrategyAndUnderlyingERC20Token(
 	ctx context.Context, strategyAddr gethcommon.Address,
 ) (*strategy.ContractIStrategy, erc20.ContractIERC20Methods, gethcommon.Address, error) {
