@@ -101,7 +101,7 @@ func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
 		{
 			name: "should return operatorsAvsState",
 			mocksInitializationFunc: func(mockAvsRegistryReader *chainiomocks.MockAvsRegistryReader, mockElReader *chainiomocks.MockELReader, mockPubkeyCompendiumService *servicemocks.MockPubkeyCompendiumService) {
-				mockAvsRegistryReader.EXPECT().GetOperatorsStakeInQuorumsAtBlock(context.Background(), []types.QuorumNum{1}, types.BlockNum(1)).Return([][]blsoperatorstateretrievar.BLSOperatorStateRetrieverOperator{
+				mockAvsRegistryReader.EXPECT().GetOperatorsStakeInQuorumsAtBlock(gomock.Any(), []types.QuorumNum{1}, types.BlockNum(1)).Return([][]blsoperatorstateretrievar.BLSOperatorStateRetrieverOperator{
 					{
 						{
 							OperatorId: testOperator.operatorId,

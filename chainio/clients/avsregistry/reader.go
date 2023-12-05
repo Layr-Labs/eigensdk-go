@@ -1,8 +1,8 @@
 package avsregistry
 
 import (
-	"context"
 	"math"
+	"math/big"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/logging"
@@ -17,37 +17,37 @@ import (
 
 type AvsRegistryReader interface {
 	GetOperatorsStakeInQuorumsAtBlock(
-		ctx context.Context,
+		opts *bind.CallOpts,
 		quorumNumbers []byte,
 		blockNumber uint32,
 	) ([][]blsoperatorstateretriever.BLSOperatorStateRetrieverOperator, error)
 
 	GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(
-		ctx context.Context,
+		opts *bind.CallOpts,
 		operatorId types.OperatorId,
 	) (map[types.QuorumNum]types.StakeAmount, error)
 
 	GetOperatorsStakeInQuorumsOfOperatorAtBlock(
-		ctx context.Context,
+		opts *bind.CallOpts,
 		operatorId types.OperatorId,
 		blockNumber uint32,
 	) ([]types.QuorumNum, [][]blsoperatorstateretriever.BLSOperatorStateRetrieverOperator, error)
 
 	GetOperatorsStakeInQuorumsOfOperatorAtCurrentBlock(
-		ctx context.Context,
+		opts *bind.CallOpts,
 		operatorId types.OperatorId,
 	) ([]types.QuorumNum, [][]blsoperatorstateretriever.BLSOperatorStateRetrieverOperator, error)
 
 	GetCheckSignaturesIndices(
-		ctx context.Context,
+		opts *bind.CallOpts,
 		referenceBlockNumber uint32,
 		quorumNumbers []byte,
 		nonSignerOperatorIds [][32]byte,
 	) (blsoperatorstateretriever.BLSOperatorStateRetrieverCheckSignaturesIndices, error)
 
-	GetOperatorId(ctx context.Context, operatorAddress gethcommon.Address) ([32]byte, error)
+	GetOperatorId(opts *bind.CallOpts, operatorAddress gethcommon.Address) ([32]byte, error)
 
-	IsOperatorRegistered(ctx context.Context, operatorAddress gethcommon.Address) (bool, error)
+	IsOperatorRegistered(opts *bind.CallOpts, operatorAddress gethcommon.Address) (bool, error)
 }
 
 type AvsRegistryChainReader struct {
@@ -80,13 +80,15 @@ func NewAvsRegistryReader(
 	}, nil
 }
 
+// the contract stores historical state, so blockNumber should be the block number of the state you want to query
+// and the blockNumber in opts should be the block number of the latest block (or set to nil, which is equivalent)
 func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsAtBlock(
-	ctx context.Context,
+	opts *bind.CallOpts,
 	quorumNumbers []byte,
 	blockNumber uint32,
 ) ([][]blsoperatorstateretriever.BLSOperatorStateRetrieverOperator, error) {
 	operatorStakes, err := r.blsOperatorStateRetriever.GetOperatorState(
-		&bind.CallOpts{},
+		opts,
 		r.registryCoordinatorAddr,
 		quorumNumbers,
 		blockNumber)
@@ -99,12 +101,12 @@ func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsAtBlock(
 }
 
 func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsOfOperatorAtBlock(
-	ctx context.Context,
+	opts *bind.CallOpts,
 	operatorId types.OperatorId,
 	blockNumber uint32,
 ) ([]types.QuorumNum, [][]blsoperatorstateretriever.BLSOperatorStateRetrieverOperator, error) {
 	quorumBitmap, operatorStakes, err := r.blsOperatorStateRetriever.GetOperatorState0(
-		&bind.CallOpts{},
+		opts,
 		r.registryCoordinatorAddr,
 		operatorId,
 		blockNumber)
@@ -122,11 +124,13 @@ func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsOfOperatorAtBlock(
 	return quorums, operatorStakes, nil
 }
 
+// opts will be modified to have the latest blockNumber, so make sure not to reuse it
+// blockNumber in opts will be ignored, and the chain will be queried to get the latest blockNumber
 func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsOfOperatorAtCurrentBlock(
-	ctx context.Context,
+	opts *bind.CallOpts,
 	operatorId types.OperatorId,
 ) ([]types.QuorumNum, [][]blsoperatorstateretriever.BLSOperatorStateRetrieverOperator, error) {
-	curBlock, err := r.ethClient.BlockNumber(ctx)
+	curBlock, err := r.ethClient.BlockNumber(opts.Context)
 	if err != nil {
 		r.logger.Error("Failed to get current block number", "err", err)
 		return nil, nil, err
@@ -135,17 +139,18 @@ func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsOfOperatorAtCurrentBl
 		r.logger.Error("Current block number is too large to be converted to uint32")
 		return nil, nil, err
 	}
-	return r.GetOperatorsStakeInQuorumsOfOperatorAtBlock(ctx, operatorId, uint32(curBlock))
+	opts.BlockNumber = big.NewInt(int64(curBlock))
+	return r.GetOperatorsStakeInQuorumsOfOperatorAtBlock(opts, operatorId, uint32(curBlock))
 }
 
 // GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock could have race conditions
 // it currently makes a bunch of calls to fetch "current block" information,
 // so some of them could actually return information from different blocks
 func (r *AvsRegistryChainReader) GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(
-	ctx context.Context,
+	opts *bind.CallOpts,
 	operatorId types.OperatorId,
 ) (map[types.QuorumNum]types.StakeAmount, error) {
-	quorumBitmap, err := r.registryCoordinator.GetCurrentQuorumBitmapByOperatorId(&bind.CallOpts{}, operatorId)
+	quorumBitmap, err := r.registryCoordinator.GetCurrentQuorumBitmapByOperatorId(opts, operatorId)
 	if err != nil {
 		r.logger.Error("Failed to get operator quorums", "err", err)
 		return nil, err
@@ -168,13 +173,13 @@ func (r *AvsRegistryChainReader) GetOperatorStakeInQuorumsOfOperatorAtCurrentBlo
 }
 
 func (r *AvsRegistryChainReader) GetCheckSignaturesIndices(
-	ctx context.Context,
+	opts *bind.CallOpts,
 	referenceBlockNumber uint32,
 	quorumNumbers []byte,
 	nonSignerOperatorIds [][32]byte,
 ) (blsoperatorstateretriever.BLSOperatorStateRetrieverCheckSignaturesIndices, error) {
 	checkSignatureIndices, err := r.blsOperatorStateRetriever.GetCheckSignaturesIndices(
-		&bind.CallOpts{},
+		opts,
 		r.registryCoordinatorAddr,
 		referenceBlockNumber,
 		quorumNumbers,
@@ -188,11 +193,11 @@ func (r *AvsRegistryChainReader) GetCheckSignaturesIndices(
 }
 
 func (r *AvsRegistryChainReader) GetOperatorId(
-	ctx context.Context,
+	opts *bind.CallOpts,
 	operatorAddress gethcommon.Address,
 ) ([32]byte, error) {
 	operatorId, err := r.registryCoordinator.GetOperatorId(
-		&bind.CallOpts{},
+		opts,
 		operatorAddress,
 	)
 	if err != nil {
@@ -203,10 +208,10 @@ func (r *AvsRegistryChainReader) GetOperatorId(
 }
 
 func (r *AvsRegistryChainReader) IsOperatorRegistered(
-	ctx context.Context,
+	opts *bind.CallOpts,
 	operatorAddress gethcommon.Address,
 ) (bool, error) {
-	operatorId, err := r.registryCoordinator.GetOperatorId(&bind.CallOpts{}, operatorAddress)
+	operatorId, err := r.registryCoordinator.GetOperatorId(opts, operatorAddress)
 	if err != nil {
 		r.logger.Error("Cannot get operator id", "err", err)
 		return false, err
