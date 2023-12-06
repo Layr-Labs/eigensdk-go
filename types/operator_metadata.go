@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/url"
 	"path/filepath"
-	"regexp"
 	"strings"
 )
 
@@ -73,28 +72,6 @@ func (om *OperatorMetadata) Validate() error {
 	}
 
 	return nil
-}
-
-func checkIfUrlIsValid(rawUrl string) error {
-	// Regular expression to validate URLs
-	urlPattern := regexp.MustCompile(`^(https?|ftp)://[^\s/$.?#].[^\s]*$`)
-
-	// Check if the URL matches the regular expression
-	if !urlPattern.MatchString(rawUrl) {
-		return errors.New("invalid url")
-	}
-
-	parsedURL, err := url.Parse(rawUrl)
-	if err != nil {
-		return err
-	}
-
-	// Check if the URL is valid
-	if parsedURL.Scheme != "" && parsedURL.Host != "" {
-		return nil
-	} else {
-		return errors.New("invalid url")
-	}
 }
 
 func isImageURL(urlString string) bool {

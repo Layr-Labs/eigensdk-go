@@ -8,9 +8,9 @@ import (
 	"math/big"
 	"net/http"
 
-	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
-	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 )
 
 const (
@@ -32,15 +32,15 @@ type Operator struct {
 }
 
 func (o Operator) Validate() error {
-	if !utils.IsValidEthereumAddress(o.Address) {
+	if !isValidEthereumAddress(o.Address) {
 		return errors.New("invalid operator address")
 	}
 
-	if !utils.IsValidEthereumAddress(o.EarningsReceiverAddress) {
+	if !isValidEthereumAddress(o.EarningsReceiverAddress) {
 		return errors.New("invalid EarningsReceiverAddress address")
 	}
 
-	if o.DelegationApproverAddress != ZeroAddress && !utils.IsValidEthereumAddress(o.DelegationApproverAddress) {
+	if o.DelegationApproverAddress != ZeroAddress && !isValidEthereumAddress(o.DelegationApproverAddress) {
 		return fmt.Errorf(
 			"invalid DelegationApproverAddress address, it should be either %s or a valid non zero ethereum address",
 			ZeroAddress,
@@ -106,21 +106,6 @@ type OperatorAvsState struct {
 	// Stake of the operator for each quorum
 	StakePerQuorum map[QuorumNum]StakeAmount
 	BlockNumber    BlockNum
-}
-
-var (
-	maxNumberOfQuorums = 192
-)
-
-func BitmapToQuorumIds(bitmap *big.Int) []QuorumNum {
-	// loop through each index in the bitmap to construct the array
-	quorumIds := make([]QuorumNum, 0, maxNumberOfQuorums)
-	for i := 0; i < maxNumberOfQuorums; i++ {
-		if bitmap.Bit(i) == 1 {
-			quorumIds = append(quorumIds, QuorumNum(i))
-		}
-	}
-	return quorumIds
 }
 
 type QuorumAvsState struct {

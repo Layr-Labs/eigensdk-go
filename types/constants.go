@@ -1,3 +1,6 @@
 package types
 
-const EigenPromNamespace = "eigen"
+const (
+	EigenPromNamespace = "eigen"
+	MaxNumberOfQuorums = 192
+)

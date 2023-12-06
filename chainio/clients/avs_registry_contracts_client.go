@@ -7,6 +7,7 @@ import (
 	regcoord "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSRegistryCoordinatorWithIndices"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/types"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -159,7 +160,7 @@ func (a *AvsRegistryContractsChainClient) GetOperatorQuorumsAtCurrentBlock(
 	if err != nil {
 		return nil, err
 	}
-	quorums := types.BitmapToQuorumIds(quorumBitmap)
+	quorums := bitmapToQuorumIds(quorumBitmap)
 	return quorums, nil
 }
 
@@ -177,7 +178,7 @@ func (a *AvsRegistryContractsChainClient) GetOperatorsStakeInQuorumsOfOperatorAt
 	if err != nil {
 		return nil, nil, err
 	}
-	quorums := types.BitmapToQuorumIds(quorumBitmap)
+	quorums := bitmapToQuorumIds(quorumBitmap)
 	return quorums, blsOperatorStateRetrieverOperator, nil
 }
 
@@ -216,4 +217,15 @@ func (a *AvsRegistryContractsChainClient) DeregisterOperator(
 		operator,
 		quorumNumbers,
 		pubkey)
+}
+
+func bitmapToQuorumIds(bitmap *big.Int) []types.QuorumNum {
+	// loop through each index in the bitmap to construct the array
+	quorumIds := make([]types.QuorumNum, 0, types.MaxNumberOfQuorums)
+	for i := 0; i < types.MaxNumberOfQuorums; i++ {
+		if bitmap.Bit(i) == 1 {
+			quorumIds = append(quorumIds, types.QuorumNum(i))
+		}
+	}
+	return quorumIds
 }
