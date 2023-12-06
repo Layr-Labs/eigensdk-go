@@ -14,6 +14,7 @@ Before you make your changes, check to see if an [issue](https://github.com/Layr
 If you spot something new, open an issue using a [template](https://github.com/Layr-Labs/eigensdk-go/issues/new/choose). We'll use the issue to have a conversation about the problem you want to fix.
 
 ### Open a Pull Request
+Before making a pull request, please fork the repository and create a new branch.
 
 When you're done making changes and you'd like to propose them for review, use the pull request template to open your PR (pull request).
 
