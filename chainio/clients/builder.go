@@ -41,6 +41,7 @@ type Clients struct {
 }
 
 func BuildAll(config BuildAllConfig, signer signer.Signer, logger logging.Logger) (*Clients, error) {
+	config.validate(logger)
 
 	// Create the metrics server
 	promReg := prometheus.NewRegistry()
@@ -223,4 +224,28 @@ func (config *BuildAllConfig) buildAvsClients(
 	}
 
 	return avsRegistryChainReader, avsRegistryChainWriter, nil
+}
+
+// Very basic validation that makes sure all fields are nonempty
+// we might eventually want more sophisticated validation, based on regexp,
+// or use something like https://json-schema.org/ (?)
+func (config *BuildAllConfig) validate(logger logging.Logger) {
+	if config.EthHttpUrl == "" {
+		logger.Fatalf("BuildAllConfig.validate: Missing eth http url")
+	}
+	if config.EthWsUrl == "" {
+		logger.Fatalf("BuildAllConfig.validate: Missing eth ws url")
+	}
+	if config.BlsRegistryCoordinatorAddr == "" {
+		logger.Fatalf("BuildAllConfig.validate: Missing bls registry coordinator address")
+	}
+	if config.BlsOperatorStateRetrieverAddr == "" {
+		logger.Fatalf("BuildAllConfig.validate: Missing bls operator state retriever address")
+	}
+	if config.AvsName == "" {
+		logger.Fatalf("BuildAllConfig.validate: Missing avs name")
+	}
+	if config.PromMetricsIpPortAddress == "" {
+		logger.Fatalf("BuildAllConfig.validate: Missing prometheus metrics ip port address")
+	}
 }
