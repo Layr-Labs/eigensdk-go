@@ -4,7 +4,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/event"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients"
 	pubkeycompendium "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPublicKeyCompendium"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 )
@@ -14,27 +13,27 @@ type ELSubscriber interface {
 }
 
 type ELChainSubscriber struct {
-	logger            logging.Logger
-	elContractsClient clients.ELContractsClient
+	logger              logging.Logger
+	blsPubkeyCompendium pubkeycompendium.ContractBLSPublicKeyCompendiumFilters
 }
 
 // forces EthSubscriber to implement the chainio.Subscriber interface
 var _ ELSubscriber = (*ELChainSubscriber)(nil)
 
 func NewELChainSubscriber(
-	elContractsClient clients.ELContractsClient,
+	blsPubkeyCompendium pubkeycompendium.ContractBLSPublicKeyCompendiumFilters,
 	logger logging.Logger,
 ) (*ELChainSubscriber, error) {
 
 	return &ELChainSubscriber{
-		logger:            logger,
-		elContractsClient: elContractsClient,
+		logger:              logger,
+		blsPubkeyCompendium: blsPubkeyCompendium,
 	}, nil
 }
 
 func (s *ELChainSubscriber) SubscribeToNewPubkeyRegistrations() (chan *pubkeycompendium.ContractBLSPublicKeyCompendiumNewPubkeyRegistration, event.Subscription, error) {
 	newPubkeyRegistrationChan := make(chan *pubkeycompendium.ContractBLSPublicKeyCompendiumNewPubkeyRegistration)
-	sub, err := s.elContractsClient.WatchNewPubkeyRegistration(
+	sub, err := s.blsPubkeyCompendium.WatchNewPubkeyRegistration(
 		&bind.WatchOpts{}, newPubkeyRegistrationChan, nil,
 	)
 	if err != nil {

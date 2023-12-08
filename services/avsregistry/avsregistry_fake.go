@@ -8,6 +8,7 @@ import (
 	blsoperatorstateretrievar "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSOperatorStateRetriever"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/types"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
 type FakeAvsRegistryService struct {
@@ -67,6 +68,6 @@ func (f *FakeAvsRegistryService) GetQuorumsAvsStateAtBlock(ctx context.Context, 
 	return quorumsAvsState, nil
 }
 
-func (f *FakeAvsRegistryService) GetCheckSignaturesIndices(ctx context.Context, referenceBlockNumber types.BlockNum, quorumNumbers []types.QuorumNum, nonSignerOperatorIds []types.OperatorId) (blsoperatorstateretrievar.BLSOperatorStateRetrieverCheckSignaturesIndices, error) {
+func (f *FakeAvsRegistryService) GetCheckSignaturesIndices(opts *bind.CallOpts, referenceBlockNumber types.BlockNum, quorumNumbers []types.QuorumNum, nonSignerOperatorIds []types.OperatorId) (blsoperatorstateretrievar.BLSOperatorStateRetrieverCheckSignaturesIndices, error) {
 	return blsoperatorstateretrievar.BLSOperatorStateRetrieverCheckSignaturesIndices{}, nil
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/services/avsregistry"
 	"github.com/Layr-Labs/eigensdk-go/types"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
 var (
@@ -272,7 +273,7 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 						nonSignersOperatorIds = append(nonSignersOperatorIds, operatorId)
 					}
 				}
-				indices, err := a.avsRegistryService.GetCheckSignaturesIndices(context.Background(), taskCreatedBlock, quorumNumbers, nonSignersOperatorIds)
+				indices, err := a.avsRegistryService.GetCheckSignaturesIndices(&bind.CallOpts{}, taskCreatedBlock, quorumNumbers, nonSignersOperatorIds)
 				if err != nil {
 					a.logger.Error("Failed to get check signatures indices", "err", err)
 					a.aggregatedResponsesC <- BlsAggregationServiceResponse{

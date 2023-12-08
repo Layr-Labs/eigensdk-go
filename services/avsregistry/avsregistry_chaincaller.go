@@ -4,12 +4,13 @@ import (
 	"context"
 	"math/big"
 
-	avsregistry "github.com/Layr-Labs/eigensdk-go/chainio/avsregistry"
-	elcontracts "github.com/Layr-Labs/eigensdk-go/chainio/elcontracts"
+	avsregistry "github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
+	elcontracts "github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	pcservice "github.com/Layr-Labs/eigensdk-go/services/pubkeycompendium"
 	"github.com/Layr-Labs/eigensdk-go/types"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
 // AvsRegistryServiceChainCaller is a wrapper around AvsRegistryReader that transforms the data into
@@ -35,7 +36,7 @@ func NewAvsRegistryServiceChainCaller(avsRegistryReader avsregistry.AvsRegistryR
 func (ar *AvsRegistryServiceChainCaller) GetOperatorsAvsStateAtBlock(ctx context.Context, quorumNumbers []types.QuorumNum, blockNumber types.BlockNum) (map[types.OperatorId]types.OperatorAvsState, error) {
 	operatorsAvsState := make(map[types.OperatorId]types.OperatorAvsState)
 	// Get operator state for each quorum by querying BLSOperatorStateRetriever (this call is why this service implementation is called ChainCaller)
-	operatorsStakesInQuorums, err := ar.AvsRegistryReader.GetOperatorsStakeInQuorumsAtBlock(ctx, quorumNumbers, blockNumber)
+	operatorsStakesInQuorums, err := ar.AvsRegistryReader.GetOperatorsStakeInQuorumsAtBlock(&bind.CallOpts{Context: ctx}, quorumNumbers, blockNumber)
 	if err != nil {
 		ar.logger.Error("Failed to get operator state", "err", err, "service", "AvsRegistryServiceChainCaller")
 		return nil, err
@@ -106,7 +107,7 @@ func (ar *AvsRegistryServiceChainCaller) GetQuorumsAvsStateAtBlock(ctx context.C
 // When the above PR is merged, we should change this to instead call GetOperatorAddressFromOperatorId on the avsRegistryReader
 // and not hardcode the definition of the operatorId here
 func (ar *AvsRegistryServiceChainCaller) getOperatorPubkeys(ctx context.Context, operatorId types.OperatorId) (types.OperatorPubkeys, error) {
-	operatorAddr, err := ar.elReader.GetOperatorAddressFromPubkeyHash(ctx, operatorId)
+	operatorAddr, err := ar.elReader.GetOperatorAddressFromPubkeyHash(&bind.CallOpts{Context: ctx}, operatorId)
 	if err != nil {
 		ar.logger.Error("Failed to get operator address from pubkey hash", "err", err, "service", "AvsRegistryServiceChainCaller")
 		return types.OperatorPubkeys{}, err

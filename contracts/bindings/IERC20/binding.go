@@ -38,6 +38,42 @@ var ContractIERC20MetaData = &bind.MetaData{
 // Deprecated: Use ContractIERC20MetaData.ABI instead.
 var ContractIERC20ABI = ContractIERC20MetaData.ABI
 
+// ContractIERC20Methods is an auto generated interface around an Ethereum contract.
+type ContractIERC20Methods interface {
+	ContractIERC20Calls
+	ContractIERC20Transacts
+	ContractIERC20Filters
+}
+
+// ContractIERC20Calls is an auto generated interface that defines the call methods available for an Ethereum contract.
+type ContractIERC20Calls interface {
+	Allowance(opts *bind.CallOpts, owner common.Address, spender common.Address) (*big.Int, error)
+
+	BalanceOf(opts *bind.CallOpts, account common.Address) (*big.Int, error)
+
+	TotalSupply(opts *bind.CallOpts) (*big.Int, error)
+}
+
+// ContractIERC20Transacts is an auto generated interface that defines the transact methods available for an Ethereum contract.
+type ContractIERC20Transacts interface {
+	Approve(opts *bind.TransactOpts, spender common.Address, amount *big.Int) (*types.Transaction, error)
+
+	Transfer(opts *bind.TransactOpts, to common.Address, amount *big.Int) (*types.Transaction, error)
+
+	TransferFrom(opts *bind.TransactOpts, from common.Address, to common.Address, amount *big.Int) (*types.Transaction, error)
+}
+
+// ContractIERC20Filterer is an auto generated interface that defines the log filtering methods available for an Ethereum contract.
+type ContractIERC20Filters interface {
+	FilterApproval(opts *bind.FilterOpts, owner []common.Address, spender []common.Address) (*ContractIERC20ApprovalIterator, error)
+	WatchApproval(opts *bind.WatchOpts, sink chan<- *ContractIERC20Approval, owner []common.Address, spender []common.Address) (event.Subscription, error)
+	ParseApproval(log types.Log) (*ContractIERC20Approval, error)
+
+	FilterTransfer(opts *bind.FilterOpts, from []common.Address, to []common.Address) (*ContractIERC20TransferIterator, error)
+	WatchTransfer(opts *bind.WatchOpts, sink chan<- *ContractIERC20Transfer, from []common.Address, to []common.Address) (event.Subscription, error)
+	ParseTransfer(log types.Log) (*ContractIERC20Transfer, error)
+}
+
 // ContractIERC20 is an auto generated Go binding around an Ethereum contract.
 type ContractIERC20 struct {
 	ContractIERC20Caller     // Read-only binding to the contract
@@ -45,20 +81,32 @@ type ContractIERC20 struct {
 	ContractIERC20Filterer   // Log filterer for contract events
 }
 
+// ContractIERC20 implements the ContractIERC20Methods interface.
+var _ ContractIERC20Methods = (*ContractIERC20)(nil)
+
 // ContractIERC20Caller is an auto generated read-only Go binding around an Ethereum contract.
 type ContractIERC20Caller struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
+
+// ContractIERC20Caller implements the ContractIERC20Calls interface.
+var _ ContractIERC20Calls = (*ContractIERC20Caller)(nil)
 
 // ContractIERC20Transactor is an auto generated write-only Go binding around an Ethereum contract.
 type ContractIERC20Transactor struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
+// ContractIERC20Transactor implements the ContractIERC20Transacts interface.
+var _ ContractIERC20Transacts = (*ContractIERC20Transactor)(nil)
+
 // ContractIERC20Filterer is an auto generated log filtering Go binding around an Ethereum contract events.
 type ContractIERC20Filterer struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
+
+// ContractIERC20Filterer implements the ContractIERC20Filters interface.
+var _ ContractIERC20Filters = (*ContractIERC20Filterer)(nil)
 
 // ContractIERC20Session is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.

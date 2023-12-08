@@ -38,6 +38,47 @@ var ContractIStrategyMetaData = &bind.MetaData{
 // Deprecated: Use ContractIStrategyMetaData.ABI instead.
 var ContractIStrategyABI = ContractIStrategyMetaData.ABI
 
+// ContractIStrategyMethods is an auto generated interface around an Ethereum contract.
+type ContractIStrategyMethods interface {
+	ContractIStrategyCalls
+	ContractIStrategyTransacts
+	ContractIStrategyFilters
+}
+
+// ContractIStrategyCalls is an auto generated interface that defines the call methods available for an Ethereum contract.
+type ContractIStrategyCalls interface {
+	Explanation(opts *bind.CallOpts) (string, error)
+
+	Shares(opts *bind.CallOpts, user common.Address) (*big.Int, error)
+
+	SharesToUnderlyingView(opts *bind.CallOpts, amountShares *big.Int) (*big.Int, error)
+
+	TotalShares(opts *bind.CallOpts) (*big.Int, error)
+
+	UnderlyingToSharesView(opts *bind.CallOpts, amountUnderlying *big.Int) (*big.Int, error)
+
+	UnderlyingToken(opts *bind.CallOpts) (common.Address, error)
+
+	UserUnderlyingView(opts *bind.CallOpts, user common.Address) (*big.Int, error)
+}
+
+// ContractIStrategyTransacts is an auto generated interface that defines the transact methods available for an Ethereum contract.
+type ContractIStrategyTransacts interface {
+	Deposit(opts *bind.TransactOpts, token common.Address, amount *big.Int) (*types.Transaction, error)
+
+	SharesToUnderlying(opts *bind.TransactOpts, amountShares *big.Int) (*types.Transaction, error)
+
+	UnderlyingToShares(opts *bind.TransactOpts, amountUnderlying *big.Int) (*types.Transaction, error)
+
+	UserUnderlying(opts *bind.TransactOpts, user common.Address) (*types.Transaction, error)
+
+	Withdraw(opts *bind.TransactOpts, recipient common.Address, token common.Address, amountShares *big.Int) (*types.Transaction, error)
+}
+
+// ContractIStrategyFilterer is an auto generated interface that defines the log filtering methods available for an Ethereum contract.
+type ContractIStrategyFilters interface {
+}
+
 // ContractIStrategy is an auto generated Go binding around an Ethereum contract.
 type ContractIStrategy struct {
 	ContractIStrategyCaller     // Read-only binding to the contract
@@ -45,20 +86,32 @@ type ContractIStrategy struct {
 	ContractIStrategyFilterer   // Log filterer for contract events
 }
 
+// ContractIStrategy implements the ContractIStrategyMethods interface.
+var _ ContractIStrategyMethods = (*ContractIStrategy)(nil)
+
 // ContractIStrategyCaller is an auto generated read-only Go binding around an Ethereum contract.
 type ContractIStrategyCaller struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
+
+// ContractIStrategyCaller implements the ContractIStrategyCalls interface.
+var _ ContractIStrategyCalls = (*ContractIStrategyCaller)(nil)
 
 // ContractIStrategyTransactor is an auto generated write-only Go binding around an Ethereum contract.
 type ContractIStrategyTransactor struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
+// ContractIStrategyTransactor implements the ContractIStrategyTransacts interface.
+var _ ContractIStrategyTransacts = (*ContractIStrategyTransactor)(nil)
+
 // ContractIStrategyFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
 type ContractIStrategyFilterer struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
+
+// ContractIStrategyFilterer implements the ContractIStrategyFilters interface.
+var _ ContractIStrategyFilters = (*ContractIStrategyFilterer)(nil)
 
 // ContractIStrategySession is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.

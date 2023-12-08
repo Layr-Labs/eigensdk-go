@@ -44,8 +44,8 @@ func TestAvsRegistryServiceChainCaller_getOperatorPubkeys(t *testing.T) {
 		{
 			name: "should return operatorpubkeys",
 			mocksInitializationFunc: func(mockAvsRegistryReader *chainiomocks.MockAvsRegistryReader, mockElReader *chainiomocks.MockELReader, mockPubkeyCompendiumService *servicemocks.MockPubkeyCompendiumService) {
-				mockElReader.EXPECT().GetOperatorAddressFromPubkeyHash(context.Background(), testOperator.operatorId).Return(testOperator.operatorAddr, nil)
-				mockPubkeyCompendiumService.EXPECT().GetOperatorPubkeys(context.Background(), testOperator.operatorAddr).Return(testOperator.pubkeys, true)
+				mockElReader.EXPECT().GetOperatorAddressFromPubkeyHash(gomock.Any(), testOperator.operatorId).Return(testOperator.operatorAddr, nil)
+				mockPubkeyCompendiumService.EXPECT().GetOperatorPubkeys(gomock.Any(), testOperator.operatorAddr).Return(testOperator.pubkeys, true)
 			},
 			queryOperatorId:     testOperator.operatorId,
 			wantErr:             nil,
@@ -101,7 +101,7 @@ func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
 		{
 			name: "should return operatorsAvsState",
 			mocksInitializationFunc: func(mockAvsRegistryReader *chainiomocks.MockAvsRegistryReader, mockElReader *chainiomocks.MockELReader, mockPubkeyCompendiumService *servicemocks.MockPubkeyCompendiumService) {
-				mockAvsRegistryReader.EXPECT().GetOperatorsStakeInQuorumsAtBlock(context.Background(), []types.QuorumNum{1}, types.BlockNum(1)).Return([][]blsoperatorstateretrievar.BLSOperatorStateRetrieverOperator{
+				mockAvsRegistryReader.EXPECT().GetOperatorsStakeInQuorumsAtBlock(gomock.Any(), []types.QuorumNum{1}, types.BlockNum(1)).Return([][]blsoperatorstateretrievar.BLSOperatorStateRetrieverOperator{
 					{
 						{
 							OperatorId: testOperator.operatorId,
@@ -109,8 +109,8 @@ func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
 						},
 					},
 				}, nil)
-				mockElReader.EXPECT().GetOperatorAddressFromPubkeyHash(context.Background(), testOperator.operatorId).Return(testOperator.operatorAddr, nil)
-				mockPubkeyCompendiumService.EXPECT().GetOperatorPubkeys(context.Background(), testOperator.operatorAddr).Return(testOperator.pubkeys, true)
+				mockElReader.EXPECT().GetOperatorAddressFromPubkeyHash(gomock.Any(), testOperator.operatorId).Return(testOperator.operatorAddr, nil)
+				mockPubkeyCompendiumService.EXPECT().GetOperatorPubkeys(gomock.Any(), testOperator.operatorAddr).Return(testOperator.pubkeys, true)
 			},
 			queryQuorumNumbers: []types.QuorumNum{1},
 			queryBlockNum:      1,
@@ -174,7 +174,7 @@ func TestAvsRegistryServiceChainCaller_GetQuorumsAvsState(t *testing.T) {
 		{
 			name: "should return operatorsAvsState",
 			mocksInitializationFunc: func(mockAvsRegistryReader *chainiomocks.MockAvsRegistryReader, mockElReader *chainiomocks.MockELReader, mockPubkeyCompendiumService *servicemocks.MockPubkeyCompendiumService) {
-				mockAvsRegistryReader.EXPECT().GetOperatorsStakeInQuorumsAtBlock(context.Background(), []types.QuorumNum{1}, types.BlockNum(1)).Return([][]blsoperatorstateretrievar.BLSOperatorStateRetrieverOperator{
+				mockAvsRegistryReader.EXPECT().GetOperatorsStakeInQuorumsAtBlock(gomock.Any(), []types.QuorumNum{1}, types.BlockNum(1)).Return([][]blsoperatorstateretrievar.BLSOperatorStateRetrieverOperator{
 					{
 						{
 							OperatorId: testOperator.operatorId,
@@ -182,8 +182,8 @@ func TestAvsRegistryServiceChainCaller_GetQuorumsAvsState(t *testing.T) {
 						},
 					},
 				}, nil)
-				mockElReader.EXPECT().GetOperatorAddressFromPubkeyHash(context.Background(), testOperator.operatorId).Return(testOperator.operatorAddr, nil)
-				mockPubkeyCompendiumService.EXPECT().GetOperatorPubkeys(context.Background(), testOperator.operatorAddr).Return(testOperator.pubkeys, true)
+				mockElReader.EXPECT().GetOperatorAddressFromPubkeyHash(gomock.Any(), testOperator.operatorId).Return(testOperator.operatorAddr, nil)
+				mockPubkeyCompendiumService.EXPECT().GetOperatorPubkeys(gomock.Any(), testOperator.operatorAddr).Return(testOperator.pubkeys, true)
 			},
 			queryQuorumNumbers: []types.QuorumNum{1},
 			queryBlockNum:      1,

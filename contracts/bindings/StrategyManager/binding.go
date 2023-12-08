@@ -76,6 +76,128 @@ func DeployContractStrategyManager(auth *bind.TransactOpts, backend bind.Contrac
 	return address, tx, &ContractStrategyManager{ContractStrategyManagerCaller: ContractStrategyManagerCaller{contract: contract}, ContractStrategyManagerTransactor: ContractStrategyManagerTransactor{contract: contract}, ContractStrategyManagerFilterer: ContractStrategyManagerFilterer{contract: contract}}, nil
 }
 
+// ContractStrategyManagerMethods is an auto generated interface around an Ethereum contract.
+type ContractStrategyManagerMethods interface {
+	ContractStrategyManagerCalls
+	ContractStrategyManagerTransacts
+	ContractStrategyManagerFilters
+}
+
+// ContractStrategyManagerCalls is an auto generated interface that defines the call methods available for an Ethereum contract.
+type ContractStrategyManagerCalls interface {
+	DEPOSITTYPEHASH(opts *bind.CallOpts) ([32]byte, error)
+
+	DOMAINTYPEHASH(opts *bind.CallOpts) ([32]byte, error)
+
+	CalculateWithdrawalRoot(opts *bind.CallOpts, queuedWithdrawal IStrategyManagerDeprecatedStructQueuedWithdrawal) ([32]byte, error)
+
+	Delegation(opts *bind.CallOpts) (common.Address, error)
+
+	DomainSeparator(opts *bind.CallOpts) ([32]byte, error)
+
+	EigenPodManager(opts *bind.CallOpts) (common.Address, error)
+
+	GetDeposits(opts *bind.CallOpts, staker common.Address) ([]common.Address, []*big.Int, error)
+
+	Nonces(opts *bind.CallOpts, arg0 common.Address) (*big.Int, error)
+
+	Owner(opts *bind.CallOpts) (common.Address, error)
+
+	Paused(opts *bind.CallOpts, index uint8) (bool, error)
+
+	Paused0(opts *bind.CallOpts) (*big.Int, error)
+
+	PauserRegistry(opts *bind.CallOpts) (common.Address, error)
+
+	Slasher(opts *bind.CallOpts) (common.Address, error)
+
+	StakerStrategyList(opts *bind.CallOpts, arg0 common.Address, arg1 *big.Int) (common.Address, error)
+
+	StakerStrategyListLength(opts *bind.CallOpts, staker common.Address) (*big.Int, error)
+
+	StakerStrategyShares(opts *bind.CallOpts, arg0 common.Address, arg1 common.Address) (*big.Int, error)
+
+	StrategyIsWhitelistedForDeposit(opts *bind.CallOpts, arg0 common.Address) (bool, error)
+
+	StrategyWhitelister(opts *bind.CallOpts) (common.Address, error)
+
+	WithdrawalRootPending(opts *bind.CallOpts, arg0 [32]byte) (bool, error)
+}
+
+// ContractStrategyManagerTransacts is an auto generated interface that defines the transact methods available for an Ethereum contract.
+type ContractStrategyManagerTransacts interface {
+	AddShares(opts *bind.TransactOpts, staker common.Address, strategy common.Address, shares *big.Int) (*types.Transaction, error)
+
+	AddStrategiesToDepositWhitelist(opts *bind.TransactOpts, strategiesToWhitelist []common.Address) (*types.Transaction, error)
+
+	DepositIntoStrategy(opts *bind.TransactOpts, strategy common.Address, token common.Address, amount *big.Int) (*types.Transaction, error)
+
+	DepositIntoStrategyWithSignature(opts *bind.TransactOpts, strategy common.Address, token common.Address, amount *big.Int, staker common.Address, expiry *big.Int, signature []byte) (*types.Transaction, error)
+
+	Initialize(opts *bind.TransactOpts, initialOwner common.Address, initialStrategyWhitelister common.Address, _pauserRegistry common.Address, initialPausedStatus *big.Int) (*types.Transaction, error)
+
+	MigrateQueuedWithdrawal(opts *bind.TransactOpts, queuedWithdrawal IStrategyManagerDeprecatedStructQueuedWithdrawal) (*types.Transaction, error)
+
+	Pause(opts *bind.TransactOpts, newPausedStatus *big.Int) (*types.Transaction, error)
+
+	PauseAll(opts *bind.TransactOpts) (*types.Transaction, error)
+
+	RemoveShares(opts *bind.TransactOpts, staker common.Address, strategy common.Address, shares *big.Int) (*types.Transaction, error)
+
+	RemoveStrategiesFromDepositWhitelist(opts *bind.TransactOpts, strategiesToRemoveFromWhitelist []common.Address) (*types.Transaction, error)
+
+	RenounceOwnership(opts *bind.TransactOpts) (*types.Transaction, error)
+
+	SetPauserRegistry(opts *bind.TransactOpts, newPauserRegistry common.Address) (*types.Transaction, error)
+
+	SetStrategyWhitelister(opts *bind.TransactOpts, newStrategyWhitelister common.Address) (*types.Transaction, error)
+
+	TransferOwnership(opts *bind.TransactOpts, newOwner common.Address) (*types.Transaction, error)
+
+	Unpause(opts *bind.TransactOpts, newPausedStatus *big.Int) (*types.Transaction, error)
+
+	WithdrawSharesAsTokens(opts *bind.TransactOpts, recipient common.Address, strategy common.Address, shares *big.Int, token common.Address) (*types.Transaction, error)
+}
+
+// ContractStrategyManagerFilterer is an auto generated interface that defines the log filtering methods available for an Ethereum contract.
+type ContractStrategyManagerFilters interface {
+	FilterDeposit(opts *bind.FilterOpts) (*ContractStrategyManagerDepositIterator, error)
+	WatchDeposit(opts *bind.WatchOpts, sink chan<- *ContractStrategyManagerDeposit) (event.Subscription, error)
+	ParseDeposit(log types.Log) (*ContractStrategyManagerDeposit, error)
+
+	FilterInitialized(opts *bind.FilterOpts) (*ContractStrategyManagerInitializedIterator, error)
+	WatchInitialized(opts *bind.WatchOpts, sink chan<- *ContractStrategyManagerInitialized) (event.Subscription, error)
+	ParseInitialized(log types.Log) (*ContractStrategyManagerInitialized, error)
+
+	FilterOwnershipTransferred(opts *bind.FilterOpts, previousOwner []common.Address, newOwner []common.Address) (*ContractStrategyManagerOwnershipTransferredIterator, error)
+	WatchOwnershipTransferred(opts *bind.WatchOpts, sink chan<- *ContractStrategyManagerOwnershipTransferred, previousOwner []common.Address, newOwner []common.Address) (event.Subscription, error)
+	ParseOwnershipTransferred(log types.Log) (*ContractStrategyManagerOwnershipTransferred, error)
+
+	FilterPaused(opts *bind.FilterOpts, account []common.Address) (*ContractStrategyManagerPausedIterator, error)
+	WatchPaused(opts *bind.WatchOpts, sink chan<- *ContractStrategyManagerPaused, account []common.Address) (event.Subscription, error)
+	ParsePaused(log types.Log) (*ContractStrategyManagerPaused, error)
+
+	FilterPauserRegistrySet(opts *bind.FilterOpts) (*ContractStrategyManagerPauserRegistrySetIterator, error)
+	WatchPauserRegistrySet(opts *bind.WatchOpts, sink chan<- *ContractStrategyManagerPauserRegistrySet) (event.Subscription, error)
+	ParsePauserRegistrySet(log types.Log) (*ContractStrategyManagerPauserRegistrySet, error)
+
+	FilterStrategyAddedToDepositWhitelist(opts *bind.FilterOpts) (*ContractStrategyManagerStrategyAddedToDepositWhitelistIterator, error)
+	WatchStrategyAddedToDepositWhitelist(opts *bind.WatchOpts, sink chan<- *ContractStrategyManagerStrategyAddedToDepositWhitelist) (event.Subscription, error)
+	ParseStrategyAddedToDepositWhitelist(log types.Log) (*ContractStrategyManagerStrategyAddedToDepositWhitelist, error)
+
+	FilterStrategyRemovedFromDepositWhitelist(opts *bind.FilterOpts) (*ContractStrategyManagerStrategyRemovedFromDepositWhitelistIterator, error)
+	WatchStrategyRemovedFromDepositWhitelist(opts *bind.WatchOpts, sink chan<- *ContractStrategyManagerStrategyRemovedFromDepositWhitelist) (event.Subscription, error)
+	ParseStrategyRemovedFromDepositWhitelist(log types.Log) (*ContractStrategyManagerStrategyRemovedFromDepositWhitelist, error)
+
+	FilterStrategyWhitelisterChanged(opts *bind.FilterOpts) (*ContractStrategyManagerStrategyWhitelisterChangedIterator, error)
+	WatchStrategyWhitelisterChanged(opts *bind.WatchOpts, sink chan<- *ContractStrategyManagerStrategyWhitelisterChanged) (event.Subscription, error)
+	ParseStrategyWhitelisterChanged(log types.Log) (*ContractStrategyManagerStrategyWhitelisterChanged, error)
+
+	FilterUnpaused(opts *bind.FilterOpts, account []common.Address) (*ContractStrategyManagerUnpausedIterator, error)
+	WatchUnpaused(opts *bind.WatchOpts, sink chan<- *ContractStrategyManagerUnpaused, account []common.Address) (event.Subscription, error)
+	ParseUnpaused(log types.Log) (*ContractStrategyManagerUnpaused, error)
+}
+
 // ContractStrategyManager is an auto generated Go binding around an Ethereum contract.
 type ContractStrategyManager struct {
 	ContractStrategyManagerCaller     // Read-only binding to the contract
@@ -83,20 +205,32 @@ type ContractStrategyManager struct {
 	ContractStrategyManagerFilterer   // Log filterer for contract events
 }
 
+// ContractStrategyManager implements the ContractStrategyManagerMethods interface.
+var _ ContractStrategyManagerMethods = (*ContractStrategyManager)(nil)
+
 // ContractStrategyManagerCaller is an auto generated read-only Go binding around an Ethereum contract.
 type ContractStrategyManagerCaller struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
+
+// ContractStrategyManagerCaller implements the ContractStrategyManagerCalls interface.
+var _ ContractStrategyManagerCalls = (*ContractStrategyManagerCaller)(nil)
 
 // ContractStrategyManagerTransactor is an auto generated write-only Go binding around an Ethereum contract.
 type ContractStrategyManagerTransactor struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
+// ContractStrategyManagerTransactor implements the ContractStrategyManagerTransacts interface.
+var _ ContractStrategyManagerTransacts = (*ContractStrategyManagerTransactor)(nil)
+
 // ContractStrategyManagerFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
 type ContractStrategyManagerFilterer struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
+
+// ContractStrategyManagerFilterer implements the ContractStrategyManagerFilters interface.
+var _ ContractStrategyManagerFilters = (*ContractStrategyManagerFilterer)(nil)
 
 // ContractStrategyManagerSession is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.

@@ -73,6 +73,125 @@ func DeployContractStakeRegistry(auth *bind.TransactOpts, backend bind.ContractB
 	return address, tx, &ContractStakeRegistry{ContractStakeRegistryCaller: ContractStakeRegistryCaller{contract: contract}, ContractStakeRegistryTransactor: ContractStakeRegistryTransactor{contract: contract}, ContractStakeRegistryFilterer: ContractStakeRegistryFilterer{contract: contract}}, nil
 }
 
+// ContractStakeRegistryMethods is an auto generated interface around an Ethereum contract.
+type ContractStakeRegistryMethods interface {
+	ContractStakeRegistryCalls
+	ContractStakeRegistryTransacts
+	ContractStakeRegistryFilters
+}
+
+// ContractStakeRegistryCalls is an auto generated interface that defines the call methods available for an Ethereum contract.
+type ContractStakeRegistryCalls interface {
+	MAXQUORUMCOUNT(opts *bind.CallOpts) (uint8, error)
+
+	MAXWEIGHINGFUNCTIONLENGTH(opts *bind.CallOpts) (uint8, error)
+
+	WEIGHTINGDIVISOR(opts *bind.CallOpts) (*big.Int, error)
+
+	Delegation(opts *bind.CallOpts) (common.Address, error)
+
+	GetCurrentOperatorStakeForQuorum(opts *bind.CallOpts, operatorId [32]byte, quorumNumber uint8) (*big.Int, error)
+
+	GetCurrentTotalStakeForQuorum(opts *bind.CallOpts, quorumNumber uint8) (*big.Int, error)
+
+	GetLengthOfOperatorIdStakeHistoryForQuorum(opts *bind.CallOpts, operatorId [32]byte, quorumNumber uint8) (*big.Int, error)
+
+	GetLengthOfTotalStakeHistoryForQuorum(opts *bind.CallOpts, quorumNumber uint8) (*big.Int, error)
+
+	GetMostRecentStakeUpdateByOperatorId(opts *bind.CallOpts, operatorId [32]byte, quorumNumber uint8) (IStakeRegistryOperatorStakeUpdate, error)
+
+	GetOperatorIdToStakeHistory(opts *bind.CallOpts, operatorId [32]byte, quorumNumber uint8) ([]IStakeRegistryOperatorStakeUpdate, error)
+
+	GetStakeForOperatorIdForQuorumAtBlockNumber(opts *bind.CallOpts, operatorId [32]byte, quorumNumber uint8, blockNumber uint32) (*big.Int, error)
+
+	GetStakeForQuorumAtBlockNumberFromOperatorIdAndIndex(opts *bind.CallOpts, quorumNumber uint8, blockNumber uint32, operatorId [32]byte, index *big.Int) (*big.Int, error)
+
+	GetStakeUpdateForQuorumFromOperatorIdAndIndex(opts *bind.CallOpts, quorumNumber uint8, operatorId [32]byte, index *big.Int) (IStakeRegistryOperatorStakeUpdate, error)
+
+	GetStakeUpdateIndexForOperatorIdForQuorumAtBlockNumber(opts *bind.CallOpts, operatorId [32]byte, quorumNumber uint8, blockNumber uint32) (uint32, error)
+
+	GetTotalStakeAtBlockNumberFromIndex(opts *bind.CallOpts, quorumNumber uint8, blockNumber uint32, index *big.Int) (*big.Int, error)
+
+	GetTotalStakeIndicesByQuorumNumbersAtBlockNumber(opts *bind.CallOpts, blockNumber uint32, quorumNumbers []byte) ([]uint32, error)
+
+	GetTotalStakeUpdateForQuorumFromIndex(opts *bind.CallOpts, quorumNumber uint8, index *big.Int) (IStakeRegistryOperatorStakeUpdate, error)
+
+	MinimumStakeForQuorum(opts *bind.CallOpts, arg0 *big.Int) (*big.Int, error)
+
+	QuorumCount(opts *bind.CallOpts) (uint16, error)
+
+	RegistryCoordinator(opts *bind.CallOpts) (common.Address, error)
+
+	ServiceManager(opts *bind.CallOpts) (common.Address, error)
+
+	Slasher(opts *bind.CallOpts) (common.Address, error)
+
+	StrategiesConsideredAndMultipliers(opts *bind.CallOpts, arg0 uint8, arg1 *big.Int) (struct {
+		Strategy   common.Address
+		Multiplier *big.Int
+	}, error)
+
+	StrategiesConsideredAndMultipliersLength(opts *bind.CallOpts, quorumNumber uint8) (*big.Int, error)
+
+	StrategyAndWeightingMultiplierForQuorumByIndex(opts *bind.CallOpts, quorumNumber uint8, index *big.Int) (IVoteWeigherStrategyAndWeightingMultiplier, error)
+
+	StrategyManager(opts *bind.CallOpts) (common.Address, error)
+
+	WeightOfOperatorForQuorum(opts *bind.CallOpts, quorumNumber uint8, operator common.Address) (*big.Int, error)
+}
+
+// ContractStakeRegistryTransacts is an auto generated interface that defines the transact methods available for an Ethereum contract.
+type ContractStakeRegistryTransacts interface {
+	AddStrategiesConsideredAndMultipliers(opts *bind.TransactOpts, quorumNumber uint8, _newStrategiesConsideredAndMultipliers []IVoteWeigherStrategyAndWeightingMultiplier) (*types.Transaction, error)
+
+	CreateQuorum(opts *bind.TransactOpts, _strategiesConsideredAndMultipliers []IVoteWeigherStrategyAndWeightingMultiplier) (*types.Transaction, error)
+
+	DeregisterOperator(opts *bind.TransactOpts, operatorId [32]byte, quorumNumbers []byte) (*types.Transaction, error)
+
+	Initialize(opts *bind.TransactOpts, _minimumStakeForQuorum []*big.Int, _quorumStrategiesConsideredAndMultipliers [][]IVoteWeigherStrategyAndWeightingMultiplier) (*types.Transaction, error)
+
+	ModifyStrategyWeights(opts *bind.TransactOpts, quorumNumber uint8, strategyIndices []*big.Int, newMultipliers []*big.Int) (*types.Transaction, error)
+
+	RegisterOperator(opts *bind.TransactOpts, operator common.Address, operatorId [32]byte, quorumNumbers []byte) (*types.Transaction, error)
+
+	RemoveStrategiesConsideredAndMultipliers(opts *bind.TransactOpts, quorumNumber uint8, indicesToRemove []*big.Int) (*types.Transaction, error)
+
+	SetMinimumStakeForQuorum(opts *bind.TransactOpts, quorumNumber uint8, minimumStake *big.Int) (*types.Transaction, error)
+
+	UpdateStakes(opts *bind.TransactOpts, operators []common.Address) (*types.Transaction, error)
+}
+
+// ContractStakeRegistryFilterer is an auto generated interface that defines the log filtering methods available for an Ethereum contract.
+type ContractStakeRegistryFilters interface {
+	FilterInitialized(opts *bind.FilterOpts) (*ContractStakeRegistryInitializedIterator, error)
+	WatchInitialized(opts *bind.WatchOpts, sink chan<- *ContractStakeRegistryInitialized) (event.Subscription, error)
+	ParseInitialized(log types.Log) (*ContractStakeRegistryInitialized, error)
+
+	FilterMinimumStakeForQuorumUpdated(opts *bind.FilterOpts, quorumNumber []uint8) (*ContractStakeRegistryMinimumStakeForQuorumUpdatedIterator, error)
+	WatchMinimumStakeForQuorumUpdated(opts *bind.WatchOpts, sink chan<- *ContractStakeRegistryMinimumStakeForQuorumUpdated, quorumNumber []uint8) (event.Subscription, error)
+	ParseMinimumStakeForQuorumUpdated(log types.Log) (*ContractStakeRegistryMinimumStakeForQuorumUpdated, error)
+
+	FilterQuorumCreated(opts *bind.FilterOpts, quorumNumber []uint8) (*ContractStakeRegistryQuorumCreatedIterator, error)
+	WatchQuorumCreated(opts *bind.WatchOpts, sink chan<- *ContractStakeRegistryQuorumCreated, quorumNumber []uint8) (event.Subscription, error)
+	ParseQuorumCreated(log types.Log) (*ContractStakeRegistryQuorumCreated, error)
+
+	FilterStakeUpdate(opts *bind.FilterOpts, operatorId [][32]byte) (*ContractStakeRegistryStakeUpdateIterator, error)
+	WatchStakeUpdate(opts *bind.WatchOpts, sink chan<- *ContractStakeRegistryStakeUpdate, operatorId [][32]byte) (event.Subscription, error)
+	ParseStakeUpdate(log types.Log) (*ContractStakeRegistryStakeUpdate, error)
+
+	FilterStrategyAddedToQuorum(opts *bind.FilterOpts, quorumNumber []uint8) (*ContractStakeRegistryStrategyAddedToQuorumIterator, error)
+	WatchStrategyAddedToQuorum(opts *bind.WatchOpts, sink chan<- *ContractStakeRegistryStrategyAddedToQuorum, quorumNumber []uint8) (event.Subscription, error)
+	ParseStrategyAddedToQuorum(log types.Log) (*ContractStakeRegistryStrategyAddedToQuorum, error)
+
+	FilterStrategyMultiplierUpdated(opts *bind.FilterOpts, quorumNumber []uint8) (*ContractStakeRegistryStrategyMultiplierUpdatedIterator, error)
+	WatchStrategyMultiplierUpdated(opts *bind.WatchOpts, sink chan<- *ContractStakeRegistryStrategyMultiplierUpdated, quorumNumber []uint8) (event.Subscription, error)
+	ParseStrategyMultiplierUpdated(log types.Log) (*ContractStakeRegistryStrategyMultiplierUpdated, error)
+
+	FilterStrategyRemovedFromQuorum(opts *bind.FilterOpts, quorumNumber []uint8) (*ContractStakeRegistryStrategyRemovedFromQuorumIterator, error)
+	WatchStrategyRemovedFromQuorum(opts *bind.WatchOpts, sink chan<- *ContractStakeRegistryStrategyRemovedFromQuorum, quorumNumber []uint8) (event.Subscription, error)
+	ParseStrategyRemovedFromQuorum(log types.Log) (*ContractStakeRegistryStrategyRemovedFromQuorum, error)
+}
+
 // ContractStakeRegistry is an auto generated Go binding around an Ethereum contract.
 type ContractStakeRegistry struct {
 	ContractStakeRegistryCaller     // Read-only binding to the contract
@@ -80,20 +199,32 @@ type ContractStakeRegistry struct {
 	ContractStakeRegistryFilterer   // Log filterer for contract events
 }
 
+// ContractStakeRegistry implements the ContractStakeRegistryMethods interface.
+var _ ContractStakeRegistryMethods = (*ContractStakeRegistry)(nil)
+
 // ContractStakeRegistryCaller is an auto generated read-only Go binding around an Ethereum contract.
 type ContractStakeRegistryCaller struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
+
+// ContractStakeRegistryCaller implements the ContractStakeRegistryCalls interface.
+var _ ContractStakeRegistryCalls = (*ContractStakeRegistryCaller)(nil)
 
 // ContractStakeRegistryTransactor is an auto generated write-only Go binding around an Ethereum contract.
 type ContractStakeRegistryTransactor struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
 
+// ContractStakeRegistryTransactor implements the ContractStakeRegistryTransacts interface.
+var _ ContractStakeRegistryTransacts = (*ContractStakeRegistryTransactor)(nil)
+
 // ContractStakeRegistryFilterer is an auto generated log filtering Go binding around an Ethereum contract events.
 type ContractStakeRegistryFilterer struct {
 	contract *bind.BoundContract // Generic contract wrapper for the low level calls
 }
+
+// ContractStakeRegistryFilterer implements the ContractStakeRegistryFilters interface.
+var _ ContractStakeRegistryFilters = (*ContractStakeRegistryFilterer)(nil)
 
 // ContractStakeRegistrySession is an auto generated Go binding around an Ethereum contract,
 // with pre-set call and transact options.
