@@ -1,15 +1,15 @@
 package clients
 
 import (
-	avsregistry "github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
-	elcontracts "github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	chainioutils "github.com/Layr-Labs/eigensdk-go/chainio/utils"
 	blspubkeycompendium "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPublicKeyCompendium"
-	logging "github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/metrics"
-	"github.com/Layr-Labs/eigensdk-go/signerV2"
+	"github.com/Layr-Labs/eigensdk-go/signerv2"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
@@ -147,7 +147,10 @@ func (config *BuildAllConfig) buildElClients(
 	)
 
 	// get the Subscriber for the EL contracts
-	contractBlsPubkeyCompendiumWs, err := blspubkeycompendium.NewContractBLSPublicKeyCompendium(elContractBindings.BlspubkeyCompendiumAddr, ethWsClient)
+	contractBlsPubkeyCompendiumWs, err := blspubkeycompendium.NewContractBLSPublicKeyCompendium(
+		elContractBindings.BlspubkeyCompendiumAddr,
+		ethWsClient,
+	)
 	if err != nil {
 		logger.Fatal("Failed to fetch BLSPublicKeyCompendium contract", "err", err)
 	}

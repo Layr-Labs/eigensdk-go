@@ -95,7 +95,12 @@ func BuildELChainWriter(
 	eigenMetrics metrics.Metrics,
 	txMgr txmgr.TxManager,
 ) (*ELChainWriter, error) {
-	elContractBindings, err := chainioutils.NewEigenlayerContractBindings(slasherAddr, blsPubKeyCompendiumAddr, ethClient, logger)
+	elContractBindings, err := chainioutils.NewEigenlayerContractBindings(
+		slasherAddr,
+		blsPubKeyCompendiumAddr,
+		ethClient,
+		logger,
+	)
 	if err != nil {
 		return nil, err
 	}

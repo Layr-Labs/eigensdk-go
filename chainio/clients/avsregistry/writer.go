@@ -3,6 +3,7 @@ package avsregistry
 import (
 	"context"
 	"errors"
+
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/signerv2"
 
