@@ -4,10 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
-	"github.com/Layr-Labs/eigensdk-go/signerv2"
-
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
+	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -43,7 +41,6 @@ type AvsRegistryChainWriter struct {
 	blsOperatorStateRetriever *blsoperatorstateretriever.ContractBLSOperatorStateRetriever
 	stakeRegistry             *stakeregistry.ContractStakeRegistry
 	blsPubkeyRegistry         *blspubkeyregistry.ContractBLSPubkeyRegistry
-	signer                    signerv2.SignerFn
 	logger                    logging.Logger
 	ethClient                 eth.EthClient
 	txMgr                     txmgr.TxManager
@@ -79,6 +76,9 @@ func (w *AvsRegistryChainWriter) RegisterOperatorWithAVSRegistryCoordinator(
 ) (*types.Receipt, error) {
 	w.logger.Info("registering operator with the AVS's registry coordinator")
 	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
+	if err != nil {
+		return nil, err
+	}
 	// TODO: this call will fail if max number of operators are already registered
 	// in that case, need to call churner to kick out another operator. See eigenDA's node/operator.go implementation
 	tx, err := w.registryCoordinator.RegisterOperatorWithCoordinator1(noSendTxOpts, quorumNumbers, pubkey, socket)
@@ -100,6 +100,9 @@ func (w *AvsRegistryChainWriter) UpdateStakes(
 ) (*types.Receipt, error) {
 	w.logger.Info("updating stakes")
 	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
+	if err != nil {
+		return nil, err
+	}
 	tx, err := w.stakeRegistry.UpdateStakes(noSendTxOpts, operators)
 	if err != nil {
 		return nil, err
@@ -121,6 +124,9 @@ func (w *AvsRegistryChainWriter) DeregisterOperator(
 ) (*types.Receipt, error) {
 	w.logger.Info("deregistering operator with the AVS's registry coordinator")
 	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
+	if err != nil {
+		return nil, err
+	}
 	tx, err := w.registryCoordinator.DeregisterOperatorWithCoordinator(noSendTxOpts, quorumNumbers, pubkey)
 	if err != nil {
 		return nil, err

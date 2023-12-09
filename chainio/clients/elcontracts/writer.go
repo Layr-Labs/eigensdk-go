@@ -176,7 +176,7 @@ func (w *ELChainWriter) UpdateOperatorDetails(
 	if err != nil {
 		return nil, err
 	}
-	receipt, err := w.txMgr.Send(ctx, tx)
+	_, err = w.txMgr.Send(ctx, tx)
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
@@ -187,7 +187,7 @@ func (w *ELChainWriter) UpdateOperatorDetails(
 	if err != nil {
 		return nil, err
 	}
-	receipt, err = w.txMgr.Send(ctx, tx)
+	receipt, err := w.txMgr.Send(ctx, tx)
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
@@ -204,6 +204,9 @@ func (w *ELChainWriter) DepositERC20IntoStrategy(
 ) (*gethtypes.Receipt, error) {
 	w.logger.Infof("depositing %s tokens into strategy %s", amount.String(), strategyAddr)
 	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
+	if err != nil {
+		return nil, err
+	}
 	_, underlyingTokenContract, underlyingTokenAddr, err := w.elChainReader.GetStrategyAndUnderlyingERC20Token(
 		&bind.CallOpts{Context: ctx},
 		strategyAddr,
@@ -216,7 +219,7 @@ func (w *ELChainWriter) DepositERC20IntoStrategy(
 	if err != nil {
 		return nil, err
 	}
-	receipt, err := w.txMgr.Send(ctx, tx)
+	_, err = w.txMgr.Send(ctx, tx)
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
@@ -225,7 +228,7 @@ func (w *ELChainWriter) DepositERC20IntoStrategy(
 	if err != nil {
 		return nil, err
 	}
-	receipt, err = w.txMgr.Send(ctx, tx)
+	receipt, err := w.txMgr.Send(ctx, tx)
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
@@ -241,6 +244,9 @@ func (w *ELChainWriter) OptOperatorIntoSlashing(
 	avsServiceManagerAddr gethcommon.Address,
 ) (*gethtypes.Receipt, error) {
 	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
+	if err != nil {
+		return nil, err
+	}
 	tx, err := w.slasher.OptIntoSlashing(noSendTxOpts, avsServiceManagerAddr)
 	if err != nil {
 		return nil, err
@@ -265,6 +271,9 @@ func (w *ELChainWriter) RegisterBLSPublicKey(
 ) (*gethtypes.Receipt, error) {
 	w.logger.Infof("Registering BLS Public key to eigenlayer for operator %s", operator.Address)
 	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
+	if err != nil {
+		return nil, err
+	}
 	chainID, err := w.ethClient.ChainID(ctx)
 	if err != nil {
 		return nil, err

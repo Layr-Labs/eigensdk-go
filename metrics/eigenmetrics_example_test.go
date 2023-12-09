@@ -39,6 +39,9 @@ func ExampleEigenMetrics() {
 	}
 
 	signerV2, _, err := signerv2.SignerFromConfig(signerv2.Config{PrivateKey: ecdsaPrivateKey}, big.NewInt(1))
+	if err != nil {
+		panic(err)
+	}
 
 	chainioConfig := clients.BuildAllConfig{
 		EthHttpUrl:                    "http://localhost:8545",
