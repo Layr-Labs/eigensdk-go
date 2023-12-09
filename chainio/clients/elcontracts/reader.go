@@ -104,7 +104,12 @@ func BuildELChainReader(
 	ethClient eth.EthClient,
 	logger logging.Logger,
 ) (*ELChainReader, error) {
-	elContractBindings, err := chainioutils.NewEigenlayerContractBindings(slasherAddr, blsPubKeyCompendiumAddr, ethClient, logger)
+	elContractBindings, err := chainioutils.NewEigenlayerContractBindings(
+		slasherAddr,
+		blsPubKeyCompendiumAddr,
+		ethClient,
+		logger,
+	)
 	if err != nil {
 		return nil, err
 	}

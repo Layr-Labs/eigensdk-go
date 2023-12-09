@@ -1,14 +1,15 @@
 package clients
 
 import (
-	avsregistry "github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
-	elcontracts "github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
+	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	chainioutils "github.com/Layr-Labs/eigensdk-go/chainio/utils"
 	blspubkeycompendium "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPublicKeyCompendium"
-	logging "github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/metrics"
-	"github.com/Layr-Labs/eigensdk-go/signer"
+	"github.com/Layr-Labs/eigensdk-go/signerv2"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
@@ -40,7 +41,7 @@ type Clients struct {
 	PrometheusRegistry     *prometheus.Registry  // Used if avs teams need to register avs-specific metrics
 }
 
-func BuildAll(config BuildAllConfig, signer signer.Signer, logger logging.Logger) (*Clients, error) {
+func BuildAll(config BuildAllConfig, signer signerv2.SignerFn, logger logging.Logger) (*Clients, error) {
 	config.validate(logger)
 
 	// Create the metrics server
@@ -60,11 +61,12 @@ func BuildAll(config BuildAllConfig, signer signer.Signer, logger logging.Logger
 		return nil, err
 	}
 
+	txMgr := txmgr.NewSimpleTxManager(ethHttpClient, logger, signer, gethcommon.Address{})
 	// creating EL clients: Reader, Writer and Subscriber
 	elChainReader, elChainWriter, elChainSubscriber, err := config.buildElClients(
 		ethHttpClient,
 		ethWsClient,
-		signer,
+		txMgr,
 		logger,
 		eigenMetrics,
 	)
@@ -76,7 +78,7 @@ func BuildAll(config BuildAllConfig, signer signer.Signer, logger logging.Logger
 	// creating AVS clients: Reader and Writer
 	avsRegistryChainReader, avsRegistryChainWriter, err := config.buildAvsClients(
 		ethHttpClient,
-		signer,
+		txMgr,
 		logger,
 	)
 	if err != nil {
@@ -101,7 +103,7 @@ func BuildAll(config BuildAllConfig, signer signer.Signer, logger logging.Logger
 func (config *BuildAllConfig) buildElClients(
 	ethHttpClient eth.EthClient,
 	ethWsClient eth.EthClient,
-	signer signer.Signer,
+	txMgr txmgr.TxManager,
 	logger logging.Logger,
 	eigenMetrics *metrics.EigenMetrics,
 ) (elcontracts.ELReader, elcontracts.ELWriter, elcontracts.ELSubscriber, error) {
@@ -145,7 +147,10 @@ func (config *BuildAllConfig) buildElClients(
 	)
 
 	// get the Subscriber for the EL contracts
-	contractBlsPubkeyCompendiumWs, err := blspubkeycompendium.NewContractBLSPublicKeyCompendium(elContractBindings.BlspubkeyCompendiumAddr, ethWsClient)
+	contractBlsPubkeyCompendiumWs, err := blspubkeycompendium.NewContractBLSPublicKeyCompendium(
+		elContractBindings.BlspubkeyCompendiumAddr,
+		ethWsClient,
+	)
 	if err != nil {
 		logger.Fatal("Failed to fetch BLSPublicKeyCompendium contract", "err", err)
 	}
@@ -167,9 +172,9 @@ func (config *BuildAllConfig) buildElClients(
 		elContractBindings.BlspubkeyCompendiumAddr,
 		elChainReader,
 		ethHttpClient,
-		signer,
 		logger,
 		eigenMetrics,
+		txMgr,
 	)
 	if err != nil {
 		logger.Error("Failed to create ELChainWriter", "err", err)
@@ -181,7 +186,7 @@ func (config *BuildAllConfig) buildElClients(
 
 func (config *BuildAllConfig) buildAvsClients(
 	ethHttpClient eth.EthClient,
-	signer signer.Signer,
+	txMgr txmgr.TxManager,
 	logger logging.Logger,
 ) (avsregistry.AvsRegistryReader, avsregistry.AvsRegistryWriter, error) {
 
@@ -215,8 +220,8 @@ func (config *BuildAllConfig) buildAvsClients(
 		avsRegistryContractBindings.StakeRegistry,
 		avsRegistryContractBindings.BlsPubkeyRegistry,
 		logger,
-		signer,
 		ethHttpClient,
+		txMgr,
 	)
 	if err != nil {
 		logger.Error("Failed to create AVSRegistryChainWriter", "err", err)

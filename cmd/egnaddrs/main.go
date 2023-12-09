@@ -114,10 +114,12 @@ func getRegistryCoordinatorAddr(c *cli.Context, client *ethclient.Client) (commo
 	serviceManagerAddrString := c.String(ServiceManagerAddrFlag.Name)
 	if serviceManagerAddrString != "" {
 		serviceManagerAddr := common.HexToAddress(serviceManagerAddrString)
-		// we use the IBLSSignatureChecker interface because the IServiceManager interface doesn't have a getter for the registry coordinator
+		// we use the IBLSSignatureChecker interface because the IServiceManager interface doesn't have a getter for the
+		// registry coordinator
 		// because we don't want to restrict teams to use our registry contracts.
-		// However, egnaddrs is targetted at teams using our registry contracts, so we assume that they are using our registries
-		// and that their service manager inherits the IBLSSignatureChecker interface (to check signatures against the BLSPubkeyRegistry).
+		// However, egnaddrs is targetted at teams using our registry contracts, so we assume that they are using our
+		// registries and that their service manager inherits the IBLSSignatureChecker interface (to check signatures
+		// against the BLSPubkeyRegistry).
 		serviceManagerContract, err := iblssigchecker.NewContractIBLSSignatureChecker(serviceManagerAddr, client)
 		if err != nil {
 			return common.Address{}, err
@@ -132,7 +134,10 @@ func getRegistryCoordinatorAddr(c *cli.Context, client *ethclient.Client) (commo
 }
 
 func getAvsContractAddrs(client *ethclient.Client, registryCoordinatorAddr common.Address) (map[string]string, error) {
-	blsRegistryCoordinatorWithIndicesC, err := blsregistrycoordinator.NewContractBLSRegistryCoordinatorWithIndices(registryCoordinatorAddr, client)
+	blsRegistryCoordinatorWithIndicesC, err := blsregistrycoordinator.NewContractBLSRegistryCoordinatorWithIndices(
+		registryCoordinatorAddr,
+		client,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -178,8 +183,14 @@ func getAvsContractAddrs(client *ethclient.Client, registryCoordinatorAddr commo
 	return addrsDict, nil
 }
 
-func getEigenlayerContractAddrs(client *ethclient.Client, registryCoordinatorAddr common.Address) (map[string]string, error) {
-	blsRegistryCoordinatorWithIndicesC, err := blsregistrycoordinator.NewContractBLSRegistryCoordinatorWithIndices(registryCoordinatorAddr, client)
+func getEigenlayerContractAddrs(
+	client *ethclient.Client,
+	registryCoordinatorAddr common.Address,
+) (map[string]string, error) {
+	blsRegistryCoordinatorWithIndicesC, err := blsregistrycoordinator.NewContractBLSRegistryCoordinatorWithIndices(
+		registryCoordinatorAddr,
+		client,
+	)
 	if err != nil {
 		return nil, err
 	}

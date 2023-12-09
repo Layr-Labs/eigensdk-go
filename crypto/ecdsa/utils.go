@@ -3,9 +3,12 @@ package ecdsa
 import (
 	"bufio"
 	"crypto/ecdsa"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+
+	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -87,4 +90,26 @@ func ReadKey(keyStoreFile string, password string) (*ecdsa.PrivateKey, error) {
 	}
 
 	return sk.PrivateKey, nil
+}
+
+// GetAddressFromKeyStoreFile We are using Web3 format defined by
+// https://ethereum.org/en/developers/docs/data-structures-and-encoding/web3-secret-storage/
+func GetAddressFromKeyStoreFile(keyStoreFile string) (gethcommon.Address, error) {
+	keyJson, err := os.ReadFile(keyStoreFile)
+	if err != nil {
+		return gethcommon.Address{}, err
+	}
+
+	// The reason we have map[string]interface{} is because `address` is string but the `crypto` field is an object
+	// we don't care about the object in this method, but we still need to unmarshal it
+	m := make(map[string]interface{})
+	if err := json.Unmarshal(keyJson, &m); err != nil {
+		return gethcommon.Address{}, err
+	}
+
+	if address, ok := m["address"].(string); !ok {
+		return gethcommon.Address{}, fmt.Errorf("address not found in key file")
+	} else {
+		return gethcommon.HexToAddress(address), nil
+	}
 }

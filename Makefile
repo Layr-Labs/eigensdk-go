@@ -1,10 +1,11 @@
 ############################# HELP MESSAGE #############################
 # Make sure the help command stays first, so that it's printed by default when `make` is called without arguments
-.PHONY: help bindings mocks tests tests-cover fmt format-lines
+.PHONY: help bindings mocks tests tests-cover fmt format-lines lint
 
 GO_LINES_IGNORED_DIRS=contracts
 GO_PACKAGES=./chainio/... ./crypto/... ./logging/... \
-	./types/... ./utils/... ./signer/... ./cmd/...
+	./types/... ./utils/... ./signer/... ./cmd/... \
+	./signerv2/...
 GO_FOLDERS=$(shell echo ${GO_PACKAGES} | sed -e "s/\.\///g" | sed -e "s/\/\.\.\.//g")
 help:
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
@@ -44,3 +45,7 @@ fmt: ## formats all go files
 format-lines: ## formats all go files with golines
 	go install github.com/segmentio/golines@latest
 	golines -w -m 120 --ignore-generated --shorten-comments --ignored-dirs=${GO_LINES_IGNORED_DIRS} ${GO_FOLDERS}
+
+lint: ## runs all linters
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	golangci-lint run ./...
