@@ -3,10 +3,16 @@ package types
 import (
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"net/url"
 	"path/filepath"
 	"regexp"
 	"strings"
+)
+
+const (
+	PngMimeType = "image/png"
 )
 
 // OperatorMetadata is the metadata operator uploads while registering
@@ -119,6 +125,19 @@ func isImageURL(urlString string) error {
 	// Check if the extension is in the list of image extensions
 	for _, imgExt := range imageExtensions {
 		if strings.EqualFold(extension, imgExt) {
+			imageResponse, err := http.Get(urlString)
+			if err != nil {
+				return err
+			}
+			imageBytes, err := io.ReadAll(imageResponse.Body)
+			if err != nil {
+				return err
+			}
+
+			contentType := http.DetectContentType(imageBytes)
+			if contentType != PngMimeType {
+				return errors.New("invalid image format. only png is supported")
+			}
 			return nil
 		}
 	}
