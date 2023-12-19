@@ -13,7 +13,7 @@ func TestOperatorMetadata(t *testing.T) {
 			metadata: OperatorMetadata{
 				Name:        "test",
 				Description: "test",
-				Logo:        "https://test.com/test.png",
+				Logo:        "https://goerli-operator-metadata.s3.amazonaws.com/eigenlayer.png",
 				Twitter:     "https://twitter.com/test",
 				Website:     "https://test.com",
 			},
@@ -24,7 +24,7 @@ func TestOperatorMetadata(t *testing.T) {
 			metadata: OperatorMetadata{
 				Name:        "",
 				Description: "test",
-				Logo:        "https://test.com/test.png",
+				Logo:        "https://goerli-operator-metadata.s3.amazonaws.com/eigenlayer.png",
 				Twitter:     "https://twitter.com/test",
 				Website:     "https://test.com",
 			},
@@ -35,7 +35,7 @@ func TestOperatorMetadata(t *testing.T) {
 			metadata: OperatorMetadata{
 				Name:        "test",
 				Description: "",
-				Logo:        "https://test.com/test.png",
+				Logo:        "https://goerli-operator-metadata.s3.amazonaws.com/eigenlayer.png",
 				Twitter:     "https://twitter.com/test",
 				Website:     "https://test.com",
 			},
@@ -53,11 +53,22 @@ func TestOperatorMetadata(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "Invalid metadata - invalid mime type with correct extension",
+			metadata: OperatorMetadata{
+				Name:        "test",
+				Description: "My operator",
+				Logo:        "https://goerli-operator-metadata.s3.amazonaws.com/cat.png",
+				Twitter:     "https://twitter.com/test",
+				Website:     "https://test.com",
+			},
+			wantErr: true,
+		},
+		{
 			name: "Invalid metadata - description > 500 characters",
 			metadata: OperatorMetadata{
 				Name:        "test",
 				Description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-				Logo:        "https://test.com/test.png",
+				Logo:        "https://goerli-operator-metadata.s3.amazonaws.com/eigenlayer.png",
 				Twitter:     "https://twitter.com/test",
 				Website:     "https://test.com",
 			},
@@ -101,7 +112,7 @@ func TestOperatorMetadata(t *testing.T) {
 			metadata: OperatorMetadata{
 				Name:        "test",
 				Description: "test",
-				Logo:        "https://test.com/test.png",
+				Logo:        "https://goerli-operator-metadata.s3.amazonaws.com/eigenlayer.png",
 				Twitter:     "https://twitter.com/test",
 				Website:     "https",
 			},
@@ -112,7 +123,7 @@ func TestOperatorMetadata(t *testing.T) {
 			metadata: OperatorMetadata{
 				Name:        "test",
 				Description: "test",
-				Logo:        "https://test.com/test.png",
+				Logo:        "https://goerli-operator-metadata.s3.amazonaws.com/eigenlayer.png",
 				Twitter:     "https://twitter.com/test",
 				Website:     "https:/test.com",
 			},
@@ -123,7 +134,7 @@ func TestOperatorMetadata(t *testing.T) {
 			metadata: OperatorMetadata{
 				Name:        "test",
 				Description: "test",
-				Logo:        "https://test.com/test.png",
+				Logo:        "https://goerli-operator-metadata.s3.amazonaws.com/eigenlayer.png",
 				Twitter:     "https://twitter.com/test",
 				Website:     "ps://test.com",
 			},
@@ -134,7 +145,7 @@ func TestOperatorMetadata(t *testing.T) {
 			metadata: OperatorMetadata{
 				Name:        "test",
 				Description: "test",
-				Logo:        "https://test.com/test.png",
+				Logo:        "https://goerli-operator-metadata.s3.amazonaws.com/eigenlayer.png",
 				Twitter:     "http",
 				Website:     "https://test.com",
 			},
@@ -145,7 +156,7 @@ func TestOperatorMetadata(t *testing.T) {
 			metadata: OperatorMetadata{
 				Name:        "test",
 				Description: "test",
-				Logo:        "https://test.com/test.png",
+				Logo:        "https://goerli-operator-metadata.s3.amazonaws.com/eigenlayer.png",
 				Twitter:     "ht://twitter.com/test",
 				Website:     "https:/test.com",
 			},
@@ -156,7 +167,7 @@ func TestOperatorMetadata(t *testing.T) {
 			metadata: OperatorMetadata{
 				Name:        "test",
 				Description: "test",
-				Logo:        "https://test.com/test.png",
+				Logo:        "https://goerli-operator-metadata.s3.amazonaws.com/eigenlayer.png",
 				Twitter:     "https://twitt",
 				Website:     "ps://test.com",
 			},
