@@ -11,7 +11,7 @@ func TestOperatorValidate(t *testing.T) {
 	metadata := OperatorMetadata{
 		Name:        "test",
 		Description: "test",
-		Logo:        "https://test.com/test.png",
+		Logo:        "https://goerli-operator-metadata.s3.amazonaws.com/eigenlayer.png",
 		Twitter:     "https://twitter.com/test",
 		Website:     "https://test.com",
 	}
