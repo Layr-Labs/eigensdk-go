@@ -119,6 +119,9 @@ func getRegCoordAndServiceMngrAddr(
 			return common.Address{}, common.Address{}, err
 		}
 		serviceManagerAddr, err := registryCoordinatorC.ServiceManager(&bind.CallOpts{})
+		if err != nil {
+			return common.Address{}, common.Address{}, err
+		}
 		return registryCoordinatorAddr, serviceManagerAddr, nil
 	}
 
