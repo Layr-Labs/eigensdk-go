@@ -12,7 +12,8 @@ import (
 	context "context"
 	reflect "reflect"
 
-	contractBLSRegistryCoordinatorWithIndices "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSRegistryCoordinatorWithIndices"
+	contractRegistryCoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
+	bls "github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	common "github.com/ethereum/go-ethereum/common"
 	types "github.com/ethereum/go-ethereum/core/types"
 	gomock "go.uber.org/mock/gomock"
@@ -42,7 +43,7 @@ func (m *MockAvsRegistryWriter) EXPECT() *MockAvsRegistryWriterMockRecorder {
 }
 
 // DeregisterOperator mocks base method.
-func (m *MockAvsRegistryWriter) DeregisterOperator(arg0 context.Context, arg1 []byte, arg2 contractBLSRegistryCoordinatorWithIndices.BN254G1Point) (*types.Receipt, error) {
+func (m *MockAvsRegistryWriter) DeregisterOperator(arg0 context.Context, arg1 []byte, arg2 contractRegistryCoordinator.BN254G1Point) (*types.Receipt, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeregisterOperator", arg0, arg1, arg2)
 	ret0, _ := ret[0].(*types.Receipt)
@@ -57,31 +58,31 @@ func (mr *MockAvsRegistryWriterMockRecorder) DeregisterOperator(arg0, arg1, arg2
 }
 
 // RegisterOperatorWithAVSRegistryCoordinator mocks base method.
-func (m *MockAvsRegistryWriter) RegisterOperatorWithAVSRegistryCoordinator(arg0 context.Context, arg1 []byte, arg2 contractBLSRegistryCoordinatorWithIndices.BN254G1Point, arg3 string) (*types.Receipt, error) {
+func (m *MockAvsRegistryWriter) RegisterOperatorWithAVSRegistryCoordinator(arg0 context.Context, arg1 *bls.KeyPair, arg2 common.Address, arg3 []byte, arg4 string) (*types.Receipt, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RegisterOperatorWithAVSRegistryCoordinator", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "RegisterOperatorWithAVSRegistryCoordinator", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(*types.Receipt)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // RegisterOperatorWithAVSRegistryCoordinator indicates an expected call of RegisterOperatorWithAVSRegistryCoordinator.
-func (mr *MockAvsRegistryWriterMockRecorder) RegisterOperatorWithAVSRegistryCoordinator(arg0, arg1, arg2, arg3 any) *gomock.Call {
+func (mr *MockAvsRegistryWriterMockRecorder) RegisterOperatorWithAVSRegistryCoordinator(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterOperatorWithAVSRegistryCoordinator", reflect.TypeOf((*MockAvsRegistryWriter)(nil).RegisterOperatorWithAVSRegistryCoordinator), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterOperatorWithAVSRegistryCoordinator", reflect.TypeOf((*MockAvsRegistryWriter)(nil).RegisterOperatorWithAVSRegistryCoordinator), arg0, arg1, arg2, arg3, arg4)
 }
 
-// UpdateStakes mocks base method.
-func (m *MockAvsRegistryWriter) UpdateStakes(arg0 context.Context, arg1 []common.Address) (*types.Receipt, error) {
+// UpdateOperatorStakes mocks base method.
+func (m *MockAvsRegistryWriter) UpdateOperatorStakes(arg0 context.Context, arg1 []common.Address) (*types.Receipt, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateStakes", arg0, arg1)
+	ret := m.ctrl.Call(m, "UpdateOperatorStakes", arg0, arg1)
 	ret0, _ := ret[0].(*types.Receipt)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// UpdateStakes indicates an expected call of UpdateStakes.
-func (mr *MockAvsRegistryWriterMockRecorder) UpdateStakes(arg0, arg1 any) *gomock.Call {
+// UpdateOperatorStakes indicates an expected call of UpdateOperatorStakes.
+func (mr *MockAvsRegistryWriterMockRecorder) UpdateOperatorStakes(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateStakes", reflect.TypeOf((*MockAvsRegistryWriter)(nil).UpdateStakes), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateOperatorStakes", reflect.TypeOf((*MockAvsRegistryWriter)(nil).UpdateOperatorStakes), arg0, arg1)
 }

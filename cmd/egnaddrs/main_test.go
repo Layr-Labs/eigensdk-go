@@ -11,10 +11,11 @@ import (
 )
 
 const (
-	// TODO: these are currently hardcoded for the contracts deployed in
-	//       test_data/avs-and-eigenlayer-deplyed-anvil-state.json
-	serviceManagerAddr      = "0xc3e53F4d16Ae77Db1c982e75a937B9f60FE63690"
-	registryCoordinatorAddr = "0x9E545E3C0baAB3E08CdfD552C960A1050f373042"
+	// just copied this file from an eigencert deployment and hardcoded addrs below
+	// TODO(samlaf): eventually we should make updating this file automated
+	anvilStateFileName      = "eigenlayer-and-registries-deployed-anvil-state.json"
+	serviceManagerAddr      = "0x7a2088a1bFc9d81c55368AE168C2C02570cB814F"
+	registryCoordinatorAddr = "0x09635F643e140090A9A8Dcd712eD6285858ceBef"
 )
 
 func TestEgnAddrsWithServiceManagerFlag(t *testing.T) {
@@ -62,7 +63,7 @@ func startAnvilTestContainer() testcontainers.Container {
 					HostPath: filepath.Join(
 						integrationDir,
 						"test_data",
-						"avs-and-eigenlayer-deployed-anvil-state.json",
+						anvilStateFileName,
 					),
 				},
 				Target: "/root/.anvil/state.json",

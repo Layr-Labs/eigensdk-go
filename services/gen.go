@@ -1,6 +1,6 @@
 package services
 
-//go:generate mockgen -destination=./mocks/pubkeycompendium.go -package=mocks github.com/Layr-Labs/eigensdk-go/services/pubkeycompendium PubkeyCompendiumService
+//go:generate mockgen -destination=./mocks/operatorpubkeys.go -package=mocks github.com/Layr-Labs/eigensdk-go/services/operatorpubkeys OperatorPubkeysService
 //go:generate mockgen -destination=./mocks/avsregistry.go -package=mocks github.com/Layr-Labs/eigensdk-go/services/avsregistry AvsRegistryService
 
 // We generate it in ./mocks/blsagg/ instead of ./mocks like the others because otherwise we get a circular dependency

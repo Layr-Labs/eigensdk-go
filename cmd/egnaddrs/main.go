@@ -13,10 +13,9 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/urfave/cli/v2"
 
-	blspubkeyreg "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPubkeyRegistry"
-	blsregistrycoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSRegistryCoordinatorWithIndices"
+	dm "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
 	iblssigchecker "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IBLSSignatureChecker"
-	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/Slasher"
+	regcoord "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
 )
 
 var (
@@ -76,11 +75,11 @@ func printAddrs(c *cli.Context) error {
 		return err
 	}
 
-	registryCoordinatorAddr, err := getRegistryCoordinatorAddr(c, client)
+	registryCoordinatorAddr, serviceManagerAddr, err := getRegCoordAndServiceMngrAddr(c, client)
 	if err != nil {
 		return err
 	}
-	eigenlayerContractAddrs, err := getEigenlayerContractAddrs(client, registryCoordinatorAddr)
+	eigenlayerContractAddrs, err := getEigenlayerContractAddrs(client, serviceManagerAddr)
 	if err != nil {
 		return err
 	}
@@ -105,12 +104,25 @@ func printAddrs(c *cli.Context) error {
 	return nil
 }
 
-func getRegistryCoordinatorAddr(c *cli.Context, client *ethclient.Client) (common.Address, error) {
+func getRegCoordAndServiceMngrAddr(
+	c *cli.Context, client *ethclient.Client,
+) (regcoordAddr common.Address, servicemanagerAddr common.Address, err error) {
+	// if registry coordinator addr was passed as argument
 	registryCoordinatorAddrString := c.String(RegistryCoordinatorAddrFlag.Name)
 	if registryCoordinatorAddrString != "" {
 		registryCoordinatorAddr := common.HexToAddress(registryCoordinatorAddrString)
-		return registryCoordinatorAddr, nil
+		registryCoordinatorC, err := regcoord.NewContractRegistryCoordinator(
+			registryCoordinatorAddr,
+			client,
+		)
+		if err != nil {
+			return common.Address{}, common.Address{}, err
+		}
+		serviceManagerAddr, err := registryCoordinatorC.ServiceManager(&bind.CallOpts{})
+		return registryCoordinatorAddr, serviceManagerAddr, nil
 	}
+
+	// else service manager addr was passed as argument
 	serviceManagerAddrString := c.String(ServiceManagerAddrFlag.Name)
 	if serviceManagerAddrString != "" {
 		serviceManagerAddr := common.HexToAddress(serviceManagerAddrString)
@@ -122,19 +134,20 @@ func getRegistryCoordinatorAddr(c *cli.Context, client *ethclient.Client) (commo
 		// against the BLSPubkeyRegistry).
 		serviceManagerContract, err := iblssigchecker.NewContractIBLSSignatureChecker(serviceManagerAddr, client)
 		if err != nil {
-			return common.Address{}, err
+			return common.Address{}, common.Address{}, err
 		}
 		registryCoordinatorAddr, err := serviceManagerContract.RegistryCoordinator(&bind.CallOpts{})
 		if err != nil {
-			return common.Address{}, err
+			return common.Address{}, common.Address{}, err
 		}
-		return registryCoordinatorAddr, nil
+		return registryCoordinatorAddr, serviceManagerAddr, nil
 	}
-	return common.Address{}, errors.New("must provide either --registry-coordinator or --service-manager flag")
+	// else neither registry coordinator addr nor service manager addr was passed as argument
+	return common.Address{}, common.Address{}, errors.New("must provide either --registry-coordinator or --service-manager flag")
 }
 
 func getAvsContractAddrs(client *ethclient.Client, registryCoordinatorAddr common.Address) (map[string]string, error) {
-	blsRegistryCoordinatorWithIndicesC, err := blsregistrycoordinator.NewContractBLSRegistryCoordinatorWithIndices(
+	blsRegistryCoordinatorWithIndicesC, err := regcoord.NewContractRegistryCoordinator(
 		registryCoordinatorAddr,
 		client,
 	)
@@ -149,7 +162,7 @@ func getAvsContractAddrs(client *ethclient.Client, registryCoordinatorAddr commo
 	}
 
 	// 3 registries
-	blsPubkeyRegistryAddr, err := blsRegistryCoordinatorWithIndicesC.BlsPubkeyRegistry(&bind.CallOpts{})
+	blsPubkeyApkAddr, err := blsRegistryCoordinatorWithIndicesC.BlsApkRegistry(&bind.CallOpts{})
 	if err != nil {
 		return nil, err
 	}
@@ -162,52 +175,41 @@ func getAvsContractAddrs(client *ethclient.Client, registryCoordinatorAddr commo
 		return nil, err
 	}
 
-	// pubkey compendium (shared avs contract)
-	contractBlsPubkeyRegistry, err := blspubkeyreg.NewContractBLSPubkeyRegistry(blsPubkeyRegistryAddr, client)
-	if err != nil {
-		return nil, err
-	}
-	blsPubKeyCompendiumAddr, err := contractBlsPubkeyRegistry.PubkeyCompendium(&bind.CallOpts{})
-	if err != nil {
-		return nil, err
-	}
-
 	addrsDict := map[string]string{
-		"service-manager":                serviceManagerAddr.Hex(),
-		"registry-coordinator":           registryCoordinatorAddr.Hex(),
-		"bls-pubkey-registry":            blsPubkeyRegistryAddr.Hex(),
-		"index-registry":                 indexRegistryAddr.Hex(),
-		"stake-registry":                 stakeRegistryAddr.Hex(),
-		"bls-pubkey-compendium (shared)": blsPubKeyCompendiumAddr.Hex(),
+		"service-manager":      serviceManagerAddr.Hex(),
+		"registry-coordinator": registryCoordinatorAddr.Hex(),
+		"bls-apk-registry":     blsPubkeyApkAddr.Hex(),
+		"index-registry":       indexRegistryAddr.Hex(),
+		"stake-registry":       stakeRegistryAddr.Hex(),
 	}
 	return addrsDict, nil
 }
 
 func getEigenlayerContractAddrs(
 	client *ethclient.Client,
-	registryCoordinatorAddr common.Address,
+	serviceManagerAddr common.Address,
 ) (map[string]string, error) {
-	blsRegistryCoordinatorWithIndicesC, err := blsregistrycoordinator.NewContractBLSRegistryCoordinatorWithIndices(
-		registryCoordinatorAddr,
+	serviceManagerC, err := iblssigchecker.NewContractIBLSSignatureChecker(
+		serviceManagerAddr,
 		client,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	slasherAddr, err := blsRegistryCoordinatorWithIndicesC.Slasher(&bind.CallOpts{})
+	delegationManagerAddr, err := serviceManagerC.Delegation(&bind.CallOpts{})
 	if err != nil {
 		return nil, err
 	}
-	slasherC, err := slasher.NewContractSlasher(slasherAddr, client)
+	delegationManagerC, err := dm.NewContractDelegationManager(delegationManagerAddr, client)
 	if err != nil {
 		return nil, err
 	}
-	delegationManagerAddr, err := slasherC.Delegation(&bind.CallOpts{})
+	slasherAddr, err := delegationManagerC.Slasher(&bind.CallOpts{})
 	if err != nil {
 		return nil, err
 	}
-	strategyManagerAddr, err := slasherC.StrategyManager(&bind.CallOpts{})
+	strategyManagerAddr, err := delegationManagerC.StrategyManager(&bind.CallOpts{})
 	if err != nil {
 		return nil, err
 	}

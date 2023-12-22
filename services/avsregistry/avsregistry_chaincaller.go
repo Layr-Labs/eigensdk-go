@@ -5,10 +5,9 @@ import (
 	"math/big"
 
 	avsregistry "github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
-	elcontracts "github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
-	pcservice "github.com/Layr-Labs/eigensdk-go/services/pubkeycompendium"
+	oppubkeysservice "github.com/Layr-Labs/eigensdk-go/services/operatorpubkeys"
 	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
@@ -17,19 +16,17 @@ import (
 // nicer golang types that are easier to work with
 type AvsRegistryServiceChainCaller struct {
 	avsregistry.AvsRegistryReader
-	elReader                elcontracts.ELReader
-	pubkeyCompendiumService pcservice.PubkeyCompendiumService
-	logger                  logging.Logger
+	operatorPubkeysService oppubkeysservice.OperatorPubkeysService
+	logger                 logging.Logger
 }
 
 var _ AvsRegistryService = (*AvsRegistryServiceChainCaller)(nil)
 
-func NewAvsRegistryServiceChainCaller(avsRegistryReader avsregistry.AvsRegistryReader, elReader elcontracts.ELReader, pubkeyCompendiumService pcservice.PubkeyCompendiumService, logger logging.Logger) *AvsRegistryServiceChainCaller {
+func NewAvsRegistryServiceChainCaller(avsRegistryReader avsregistry.AvsRegistryReader, operatorPubkeysService oppubkeysservice.OperatorPubkeysService, logger logging.Logger) *AvsRegistryServiceChainCaller {
 	return &AvsRegistryServiceChainCaller{
-		elReader:                elReader,
-		AvsRegistryReader:       avsRegistryReader,
-		pubkeyCompendiumService: pubkeyCompendiumService,
-		logger:                  logger,
+		AvsRegistryReader:      avsRegistryReader,
+		operatorPubkeysService: operatorPubkeysService,
+		logger:                 logger,
 	}
 }
 
@@ -107,12 +104,12 @@ func (ar *AvsRegistryServiceChainCaller) GetQuorumsAvsStateAtBlock(ctx context.C
 // When the above PR is merged, we should change this to instead call GetOperatorAddressFromOperatorId on the avsRegistryReader
 // and not hardcode the definition of the operatorId here
 func (ar *AvsRegistryServiceChainCaller) getOperatorPubkeys(ctx context.Context, operatorId types.OperatorId) (types.OperatorPubkeys, error) {
-	operatorAddr, err := ar.elReader.GetOperatorAddressFromPubkeyHash(&bind.CallOpts{Context: ctx}, operatorId)
+	operatorAddr, err := ar.AvsRegistryReader.GetOperatorFromId(&bind.CallOpts{Context: ctx}, operatorId)
 	if err != nil {
 		ar.logger.Error("Failed to get operator address from pubkey hash", "err", err, "service", "AvsRegistryServiceChainCaller")
 		return types.OperatorPubkeys{}, err
 	}
-	pubkeys, ok := ar.pubkeyCompendiumService.GetOperatorPubkeys(ctx, operatorAddr)
+	pubkeys, ok := ar.operatorPubkeysService.GetOperatorPubkeys(ctx, operatorAddr)
 	if !ok {
 		ar.logger.Error("Failed to get operator pubkeys from pubkey compendium service", "service", "AvsRegistryServiceChainCaller", "operatorAddr", operatorAddr, "operatorId", operatorId)
 		return types.OperatorPubkeys{}, err

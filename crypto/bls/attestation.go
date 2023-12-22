@@ -269,6 +269,12 @@ func (k *KeyPair) SignMessage(message [32]byte) *Signature {
 	return &Signature{&G1Point{sig}}
 }
 
+// This signs a message on G1, and so will require a G2Pubkey to verify
+func (k *KeyPair) SignHashedToCurveMessage(g1HashedMsg *bn254.G1Affine) *Signature {
+	sig := new(bn254.G1Affine).ScalarMultiplication(g1HashedMsg, k.PrivKey.BigInt(new(big.Int)))
+	return &Signature{&G1Point{sig}}
+}
+
 func (k *KeyPair) GetPubKeyG2() *G2Point {
 	return &G2Point{bn254utils.MulByGeneratorG2(k.PrivKey)}
 }

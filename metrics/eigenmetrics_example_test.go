@@ -44,12 +44,12 @@ func ExampleEigenMetrics() {
 	}
 
 	chainioConfig := clients.BuildAllConfig{
-		EthHttpUrl:                    "http://localhost:8545",
-		EthWsUrl:                      "ws://localhost:8545",
-		BlsRegistryCoordinatorAddr:    "0x0",
-		BlsOperatorStateRetrieverAddr: "0x0",
-		AvsName:                       "exampleAvs",
-		PromMetricsIpPortAddress:      ":9090",
+		EthHttpUrl:                 "http://localhost:8545",
+		EthWsUrl:                   "ws://localhost:8545",
+		RegistryCoordinatorAddr:    "0x0",
+		OperatorStateRetrieverAddr: "0x0",
+		AvsName:                    "exampleAvs",
+		PromMetricsIpPortAddress:   ":9090",
 	}
 	clients, err := clients.BuildAll(chainioConfig, signerV2, logger)
 	if err != nil {
