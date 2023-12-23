@@ -72,7 +72,6 @@ func NewELChainWriter(
 
 func BuildELChainWriter(
 	slasherAddr gethcommon.Address,
-	blsPubKeyCompendiumAddr gethcommon.Address,
 	ethClient eth.EthClient,
 	logger logging.Logger,
 	eigenMetrics metrics.Metrics,

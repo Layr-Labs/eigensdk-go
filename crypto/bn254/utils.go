@@ -145,30 +145,3 @@ func DeserializeG2(b []byte) *bn254.G2Affine {
 	p.Y.A1.SetBytes(b[96:128])
 	return p
 }
-
-func MakePubkeyRegistrationData(
-	privKey *fr.Element,
-	operatorAddress common.Address,
-	blsPubkeyCompendiumAddress common.Address,
-	chainId *big.Int,
-) *bn254.G1Affine {
-	toHash := make([]byte, 0)
-	toHash = append(toHash, operatorAddress.Bytes()...)
-	// we also sign on the bls pubkey compendium contract's address, to prevent replay attacks
-	// in different bls pubkey compendiums (in case some teams have deployed their own compendium)
-	toHash = append(toHash, blsPubkeyCompendiumAddress.Bytes()...)
-	// make sure chainId is 32 bytes
-	toHash = append(toHash, common.LeftPadBytes(chainId.Bytes(), 32)...)
-	toHash = append(toHash, []byte("EigenLayer_BN254_Pubkey_Registration")...)
-
-	msgHash := crypto.Keccak256(toHash)
-	// convert to [32]byte
-	var msgHash32 [32]byte
-	for i := 0; i < 32; i++ {
-		msgHash32[i] = msgHash[i]
-	}
-	// hash to G1
-	hashToSign := MapToCurve(msgHash32)
-
-	return new(bn254.G1Affine).ScalarMultiplication(hashToSign, privKey.BigInt(new(big.Int)))
-}

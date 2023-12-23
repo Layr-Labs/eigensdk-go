@@ -12,7 +12,7 @@ import (
 )
 
 // OperatorPubkeysServiceInMemory is a stateful goroutine (see https://gobyexample.com/stateful-goroutines)
-// implementation of PubkeyCompendiumService that listen for the NewPubkeyRegistration using a websocket connection
+// implementation of OperatorPubkeysService that listen for the NewPubkeyRegistration using a websocket connection
 // to an eth client and stores the pubkeys in memory. Another possible implementation is using a mutex
 // (https://gobyexample.com/mutexes) instead. We can switch to that if we ever find a good reason to.
 //
@@ -41,12 +41,12 @@ type resp struct {
 
 var _ OperatorPubkeysService = (*OperatorPubkeysServiceInMemory)(nil)
 
-// NewPubkeyCompendiumInMemory constructs a PubkeyCompendiumServiceInMemory and starts it in a goroutine.
+// NewOperatorPubkeysServiceInMemory constructs a OperatorPubkeysServiceInMemory and starts it in a goroutine.
 // It takes a context as argument because the "backfilling" of the database is done inside this constructor,
 // so we wait for all past NewPubkeyRegistration events to be queried and the db to be filled before returning the service.
 // The constructor is thus following a RAII-like pattern, of initializing the serving during construction.
 // Using a separate initialize() function might lead to some users forgetting to call it and the service not behaving properly.
-func NewPubkeyCompendiumInMemory(
+func NewOperatorPubkeysServiceInMemory(
 	ctx context.Context,
 	avsRegistrySubscriber avsregistry.AvsRegistrySubscriber,
 	avsRegistryReader avsregistry.AvsRegistryReader,
@@ -73,10 +73,10 @@ func (ops *OperatorPubkeysServiceInMemory) startServiceInGoroutine(ctx context.C
 		pubkeyDict := make(map[common.Address]types.OperatorPubkeys)
 
 		// TODO(samlaf): we should probably save the service in the logger itself and add it automatically to all logs
-		ops.logger.Debug("Subscribing to new pubkey registration event on pubkey compendium contract", "service", "PubkeyCompendiumServiceInMemory")
+		ops.logger.Debug("Subscribing to new pubkey registration event on pubkey compendium contract", "service", "OperatorPubkeysServiceInMemory")
 		newPubkeyRegistrationC, newPubkeyRegistrationSub, err := ops.avsRegistrySubscriber.SubscribeToNewPubkeyRegistrations()
 		if err != nil {
-			ops.logger.Error("Fatal error opening websocket subscription for new pubkey registrations", "err", err, "service", "PubkeyCompendiumServiceInMemory")
+			ops.logger.Error("Fatal error opening websocket subscription for new pubkey registrations", "err", err, "service", "OperatorPubkeysServiceInMemory")
 			// see the warning above the struct definition to understand why we panic here
 			panic(err)
 		}
@@ -88,14 +88,14 @@ func (ops *OperatorPubkeysServiceInMemory) startServiceInGoroutine(ctx context.C
 			select {
 			case <-ctx.Done():
 				// TODO(samlaf): should we do anything here? Seems like this only happens when the aggregator is shutting down and we want graceful exit
-				ops.logger.Infof("PubkeyCompendiumServiceInMemory: Context cancelled, exiting")
+				ops.logger.Infof("OperatorPubkeysServiceInMemory: Context cancelled, exiting")
 				return
 			case err := <-newPubkeyRegistrationSub.Err():
-				ops.logger.Error("Error in websocket subscription for new pubkey registration events. Attempting to reconnect...", "err", err, "service", "PubkeyCompendiumServiceInMemory")
+				ops.logger.Error("Error in websocket subscription for new pubkey registration events. Attempting to reconnect...", "err", err, "service", "OperatorPubkeysServiceInMemory")
 				newPubkeyRegistrationSub.Unsubscribe()
 				newPubkeyRegistrationC, newPubkeyRegistrationSub, err = ops.avsRegistrySubscriber.SubscribeToNewPubkeyRegistrations()
 				if err != nil {
-					ops.logger.Error("Error opening websocket subscription for new pubkey registrations", "err", err, "service", "PubkeyCompendiumServiceInMemory")
+					ops.logger.Error("Error opening websocket subscription for new pubkey registrations", "err", err, "service", "OperatorPubkeysServiceInMemory")
 					// see the warning above the struct definition to understand why we panic here
 					panic(err)
 				}
@@ -106,7 +106,7 @@ func (ops *OperatorPubkeysServiceInMemory) startServiceInGoroutine(ctx context.C
 					G2Pubkey: bls.NewG2Point(newPubkeyRegistrationEvent.PubkeyG2.X, newPubkeyRegistrationEvent.PubkeyG2.Y),
 				}
 				ops.logger.Debug("Added operator pubkeys to pubkey dict",
-					"service", "PubkeyCompendiumServiceInMemory", "operatorAddr", operatorAddr,
+					"service", "OperatorPubkeysServiceInMemory", "operatorAddr", operatorAddr,
 					"G1pubkey", pubkeyDict[operatorAddr].G1Pubkey, "G2pubkey", pubkeyDict[operatorAddr].G2Pubkey,
 				)
 			// Receive a query from GetOperatorPubkeys
@@ -123,10 +123,10 @@ func (pkcs *OperatorPubkeysServiceInMemory) queryPastRegisteredOperatorEventsAnd
 	// since we will just overwrite the pubkey dict with the same values.
 	alreadyRegisteredOperatorAddrs, alreadyRegisteredOperatorPubkeys, err := pkcs.avsRegistryReader.QueryExistingRegisteredOperatorPubKeys(ctx, nil, nil)
 	if err != nil {
-		pkcs.logger.Error("Fatal error querying existing registered operators", "err", err, "service", "PubkeyCompendiumServiceInMemory")
+		pkcs.logger.Error("Fatal error querying existing registered operators", "err", err, "service", "OperatorPubkeysServiceInMemory")
 		panic(err)
 	}
-	pkcs.logger.Debug("List of queried operator registration events in pubkey compendium", "alreadyRegisteredOperatorAddr", alreadyRegisteredOperatorAddrs, "service", "PubkeyCompendiumServiceInMemory")
+	pkcs.logger.Debug("List of queried operator registration events in pubkey compendium", "alreadyRegisteredOperatorAddr", alreadyRegisteredOperatorAddrs, "service", "OperatorPubkeysServiceInMemory")
 
 	// Fill the pubkeydict db with the operators and pubkeys found
 	for i, operatorAddr := range alreadyRegisteredOperatorAddrs {

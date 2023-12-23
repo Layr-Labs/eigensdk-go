@@ -53,7 +53,7 @@ type AvsRegistryChainWriter struct {
 
 var _ AvsRegistryWriter = (*AvsRegistryChainWriter)(nil)
 
-func NewAvsRegistryWriter(
+func NewAvsRegistryChainWriter(
 	registryCoordinator *regcoord.ContractRegistryCoordinator,
 	operatorStateRetriever *opstateretriever.ContractOperatorStateRetriever,
 	stakeRegistry *stakeregistry.ContractStakeRegistry,
@@ -71,6 +71,48 @@ func NewAvsRegistryWriter(
 		ethClient:              ethClient,
 		txMgr:                  txMgr,
 	}, nil
+}
+
+func BuildAvsRegistryChainWriter(
+	registryCoordinatorAddr gethcommon.Address,
+	operatorStateRetrieverAddr gethcommon.Address,
+	logger logging.Logger,
+	ethClient eth.EthClient,
+	txMgr txmgr.TxManager,
+) (*AvsRegistryChainWriter, error) {
+	registryCoordinator, err := regcoord.NewContractRegistryCoordinator(registryCoordinatorAddr, ethClient)
+	if err != nil {
+		return nil, err
+	}
+	operatorStateRetriever, err := opstateretriever.NewContractOperatorStateRetriever(operatorStateRetrieverAddr, ethClient)
+	if err != nil {
+		return nil, err
+	}
+	blsApkRegistryAddr, err := registryCoordinator.BlsApkRegistry(&bind.CallOpts{})
+	if err != nil {
+		return nil, err
+	}
+	blsApkRegistry, err := blsapkregistry.NewContractBLSApkRegistry(blsApkRegistryAddr, ethClient)
+	if err != nil {
+		return nil, err
+	}
+	stakeRegistryAddr, err := registryCoordinator.StakeRegistry(&bind.CallOpts{})
+	if err != nil {
+		return nil, err
+	}
+	stakeRegistry, err := stakeregistry.NewContractStakeRegistry(stakeRegistryAddr, ethClient)
+	if err != nil {
+		return nil, err
+	}
+	return NewAvsRegistryChainWriter(
+		registryCoordinator,
+		operatorStateRetriever,
+		stakeRegistry,
+		blsApkRegistry,
+		logger,
+		ethClient,
+		txMgr,
+	)
 }
 
 // TODO(samlaf): clean up this function

@@ -178,7 +178,7 @@ func (config *BuildAllConfig) buildAvsClients(
 		return nil, nil, nil, err
 	}
 
-	avsRegistryChainReader, err := avsregistry.NewAvsRegistryReader(
+	avsRegistryChainReader := avsregistry.NewAvsRegistryChainReader(
 		avsRegistryContractBindings.RegistryCoordinatorAddr,
 		avsRegistryContractBindings.BlsApkRegistryAddr,
 		avsRegistryContractBindings.RegistryCoordinator,
@@ -187,10 +187,6 @@ func (config *BuildAllConfig) buildAvsClients(
 		logger,
 		ethHttpClient,
 	)
-	if err != nil {
-		logger.Error("Failed to create AVSRegistryChainReader", "err", err)
-		return nil, nil, nil, err
-	}
 
 	// get the Subscriber for Avs Registry contracts
 	avsRegistrySubscriber, err := avsregistry.NewAvsRegistryChainSubscriber(
@@ -202,7 +198,7 @@ func (config *BuildAllConfig) buildAvsClients(
 		return nil, nil, nil, err
 	}
 
-	avsRegistryChainWriter, err := avsregistry.NewAvsRegistryWriter(
+	avsRegistryChainWriter, err := avsregistry.NewAvsRegistryChainWriter(
 		avsRegistryContractBindings.RegistryCoordinator,
 		avsRegistryContractBindings.OperatorStateRetriever,
 		avsRegistryContractBindings.StakeRegistry,

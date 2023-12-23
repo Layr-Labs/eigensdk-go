@@ -15,8 +15,9 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
+	contractOperatorStateRetriever "github.com/Layr-Labs/eigensdk-go/contracts/bindings/OperatorStateRetriever"
 	opstateretriever "github.com/Layr-Labs/eigensdk-go/contracts/bindings/OperatorStateRetriever"
-	regcoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
+	regcoord "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
 	stakeregistry "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StakeRegistry"
 	eigenabi "github.com/Layr-Labs/eigensdk-go/types/abi"
 )
@@ -68,7 +69,7 @@ type AvsRegistryChainReader struct {
 	logger                  logging.Logger
 	blsApkRegistryAddr      gethcommon.Address
 	registryCoordinatorAddr gethcommon.Address
-	registryCoordinator     *regcoordinator.ContractRegistryCoordinator
+	registryCoordinator     *regcoord.ContractRegistryCoordinator
 	operatorStateRetriever  *opstateretriever.ContractOperatorStateRetriever
 	stakeRegistry           *stakeregistry.ContractStakeRegistry
 	ethClient               eth.EthClient
@@ -77,15 +78,15 @@ type AvsRegistryChainReader struct {
 // forces AvsReader to implement the clients.ReaderInterface interface
 var _ AvsRegistryReader = (*AvsRegistryChainReader)(nil)
 
-func NewAvsRegistryReader(
+func NewAvsRegistryChainReader(
 	registryCoordinatorAddr gethcommon.Address,
 	blsApkRegistryAddr gethcommon.Address,
-	registryCoordinator *regcoordinator.ContractRegistryCoordinator,
+	registryCoordinator *regcoord.ContractRegistryCoordinator,
 	operatorStateRetriever *opstateretriever.ContractOperatorStateRetriever,
 	stakeRegistry *stakeregistry.ContractStakeRegistry,
 	logger logging.Logger,
 	ethClient eth.EthClient,
-) (*AvsRegistryChainReader, error) {
+) *AvsRegistryChainReader {
 	return &AvsRegistryChainReader{
 		blsApkRegistryAddr:      blsApkRegistryAddr,
 		registryCoordinatorAddr: registryCoordinatorAddr,
@@ -94,7 +95,44 @@ func NewAvsRegistryReader(
 		stakeRegistry:           stakeRegistry,
 		logger:                  logger,
 		ethClient:               ethClient,
-	}, nil
+	}
+}
+
+func BuildAvsRegistryChainReader(
+	registryCoordinatorAddr gethcommon.Address,
+	operatorStateRetrieverAddr gethcommon.Address,
+	ethClient eth.EthClient,
+	logger logging.Logger,
+) (*AvsRegistryChainReader, error) {
+	contractRegistryCoordinator, err := regcoord.NewContractRegistryCoordinator(registryCoordinatorAddr, ethClient)
+	if err != nil {
+		return nil, err
+	}
+	blsApkRegistryAddr, err := contractRegistryCoordinator.BlsApkRegistry(&bind.CallOpts{})
+	if err != nil {
+		return nil, err
+	}
+	stakeRegistryAddr, err := contractRegistryCoordinator.StakeRegistry(&bind.CallOpts{})
+	if err != nil {
+		return nil, err
+	}
+	contractStakeRegistry, err := stakeregistry.NewContractStakeRegistry(stakeRegistryAddr, ethClient)
+	if err != nil {
+		return nil, err
+	}
+	contractOperatorStateRetriever, err := contractOperatorStateRetriever.NewContractOperatorStateRetriever(operatorStateRetrieverAddr, ethClient)
+	if err != nil {
+		return nil, err
+	}
+	return NewAvsRegistryChainReader(
+		registryCoordinatorAddr,
+		blsApkRegistryAddr,
+		contractRegistryCoordinator,
+		contractOperatorStateRetriever,
+		contractStakeRegistry,
+		logger,
+		ethClient,
+	), nil
 }
 
 // the contract stores historical state, so blockNumber should be the block number of the state you want to query
@@ -274,7 +312,7 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorPubKeys(
 	}
 	r.logger.Info("logs:", "logs", logs)
 
-	pubkeyCompendiumAbi, err := abi.JSON(bytes.NewReader(eigenabi.BLSPublicKeyCompendiumAbi))
+	blsApkRegistryAbi, err := abi.JSON(bytes.NewReader(eigenabi.BLSApkRegistryAbi))
 	if err != nil {
 		r.logger.Error("Error getting Abi", "err", err)
 		return nil, nil, err
@@ -289,7 +327,7 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorPubKeys(
 		operatorAddr := gethcommon.HexToAddress(vLog.Topics[1].Hex())
 		operatorAddresses = append(operatorAddresses, operatorAddr)
 
-		event, err := pubkeyCompendiumAbi.Unpack("NewPubkeyRegistration", vLog.Data)
+		event, err := blsApkRegistryAbi.Unpack("NewPubkeyRegistration", vLog.Data)
 		if err != nil {
 			r.logger.Error("Error unpacking event data", "err", err)
 			return nil, nil, err

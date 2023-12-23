@@ -109,8 +109,8 @@ func TestGetOperatorPubkeys(t *testing.T) {
 			if tt.mocksInitializationFunc != nil {
 				tt.mocksInitializationFunc(mockAvsRegistrySubscriber, mockElReader, mockSubscription)
 			}
-			// Create a new instance of the pubkeycompendium service
-			service := NewPubkeyCompendiumInMemory(context.Background(), mockAvsRegistrySubscriber, mockElReader, logger)
+			// Create a new instance of the operatorpubkeys service
+			service := NewOperatorPubkeysServiceInMemory(context.Background(), mockAvsRegistrySubscriber, mockElReader, logger)
 
 			// Call the GetOperatorPubkeys method with the test operator address
 			gotOperatorPubkeys, gotOperatorFound := service.GetOperatorPubkeys(context.Background(), tt.queryOperatorAddr)

@@ -97,10 +97,10 @@ func (ar *AvsRegistryServiceChainCaller) GetQuorumsAvsStateAtBlock(ctx context.C
 }
 
 // getOperatorPubkeys is a temporary hack until we implement GetOperatorAddr on the BLSpubkeyregistry contract
-// TODO(samlaf): we need operatorId -> operatorAddr so that we can query the pubkeyCompendiumService
+// TODO(samlaf): we need operatorId -> operatorAddr so that we can query the operatorPubkeysService
 // this inverse mapping (only operatorAddr->operatorId is stored in registryCoordinator) is not stored,
 // but we know that the current implementation uses the hash of the G1 pubkey as the operatorId,
-// and the pubkeycompendium contract stores the mapping G1pubkeyHash -> operatorAddr
+// and the BLSApkRegistry contract stores the mapping G1pubkeyHash -> operatorAddr
 // When the above PR is merged, we should change this to instead call GetOperatorAddressFromOperatorId on the avsRegistryReader
 // and not hardcode the definition of the operatorId here
 func (ar *AvsRegistryServiceChainCaller) getOperatorPubkeys(ctx context.Context, operatorId types.OperatorId) (types.OperatorPubkeys, error) {
