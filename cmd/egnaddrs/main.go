@@ -146,7 +146,9 @@ func getRegCoordAndServiceMngrAddr(
 		return registryCoordinatorAddr, serviceManagerAddr, nil
 	}
 	// else neither registry coordinator addr nor service manager addr was passed as argument
-	return common.Address{}, common.Address{}, errors.New("must provide either --registry-coordinator or --service-manager flag")
+	return common.Address{}, common.Address{}, errors.New(
+		"must provide either --registry-coordinator or --service-manager flag",
+	)
 }
 
 func getAvsContractAddrs(client *ethclient.Client, registryCoordinatorAddr common.Address) (map[string]string, error) {

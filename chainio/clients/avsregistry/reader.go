@@ -120,7 +120,10 @@ func BuildAvsRegistryChainReader(
 	if err != nil {
 		return nil, err
 	}
-	contractOperatorStateRetriever, err := contractOperatorStateRetriever.NewContractOperatorStateRetriever(operatorStateRetrieverAddr, ethClient)
+	contractOperatorStateRetriever, err := contractOperatorStateRetriever.NewContractOperatorStateRetriever(
+		operatorStateRetrieverAddr,
+		ethClient,
+	)
 	if err != nil {
 		return nil, err
 	}

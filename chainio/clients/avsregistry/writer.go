@@ -84,7 +84,10 @@ func BuildAvsRegistryChainWriter(
 	if err != nil {
 		return nil, err
 	}
-	operatorStateRetriever, err := opstateretriever.NewContractOperatorStateRetriever(operatorStateRetrieverAddr, ethClient)
+	operatorStateRetriever, err := opstateretriever.NewContractOperatorStateRetriever(
+		operatorStateRetrieverAddr,
+		ethClient,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +131,9 @@ func (w *AvsRegistryChainWriter) RegisterOperatorWithAVSRegistryCoordinator(
 	if err != nil {
 		return nil, err
 	}
-	signedMsg := utils.ConvertToBN254G1Point(blsKeyPair.SignHashedToCurveMessage(utils.ConvertBn254GethToGnark(g1HashedMsgToSign)).G1Point)
+	signedMsg := utils.ConvertToBN254G1Point(
+		blsKeyPair.SignHashedToCurveMessage(utils.ConvertBn254GethToGnark(g1HashedMsgToSign)).G1Point,
+	)
 	G1pubkeyBN254 := utils.ConvertToBN254G1Point(blsKeyPair.GetPubKeyG1())
 	G2pubkeyBN254 := utils.ConvertToBN254G2Point(blsKeyPair.GetPubKeyG2())
 	pubkeyRegParams := regcoord.IBLSApkRegistryPubkeyRegistrationParams{
@@ -143,7 +148,13 @@ func (w *AvsRegistryChainWriter) RegisterOperatorWithAVSRegistryCoordinator(
 	operatorSignature := regcoord.ISignatureUtilsSignatureWithSaltAndExpiry{}
 	// TODO: this call will fail if max number of operators are already registered
 	// in that case, need to call churner to kick out another operator. See eigenDA's node/operator.go implementation
-	tx, err := w.registryCoordinator.RegisterOperator(noSendTxOpts, quorumNumbers, socket, pubkeyRegParams, operatorSignature)
+	tx, err := w.registryCoordinator.RegisterOperator(
+		noSendTxOpts,
+		quorumNumbers,
+		socket,
+		pubkeyRegParams,
+		operatorSignature,
+	)
 	if err != nil {
 		return nil, err
 	}
