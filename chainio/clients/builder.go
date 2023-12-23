@@ -29,11 +29,11 @@ type BuildAllConfig struct {
 // for non-instrumented clients that doesn't return metrics/reg, and another instrumented-constructor
 // that returns instrumented clients and the metrics/reg.
 type Clients struct {
-	AvsRegistryChainReader     avsregistry.AvsRegistryReader
-	AvsRegistryChainSubscriber avsregistry.AvsRegistrySubscriber
-	AvsRegistryChainWriter     avsregistry.AvsRegistryWriter
-	ElChainReader              elcontracts.ELReader
-	ElChainWriter              elcontracts.ELWriter
+	AvsRegistryChainReader     *avsregistry.AvsRegistryChainReader
+	AvsRegistryChainSubscriber *avsregistry.AvsRegistryChainSubscriber
+	AvsRegistryChainWriter     *avsregistry.AvsRegistryChainWriter
+	ElChainReader              *elcontracts.ELChainReader
+	ElChainWriter              *elcontracts.ELChainWriter
 	EthHttpClient              *eth.Client
 	EthWsClient                *eth.Client
 	Metrics                    *metrics.EigenMetrics // exposes main avs node spec metrics that need to be incremented by avs code and used to start the metrics server
@@ -60,6 +60,7 @@ func BuildAll(config BuildAllConfig, signer signerv2.SignerFn, logger logging.Lo
 		return nil, err
 	}
 
+	// TODO(madhur): is it fine to not set the sender address?
 	txMgr := txmgr.NewSimpleTxManager(ethHttpClient, logger, signer, gethcommon.Address{})
 	// creating EL clients: Reader, Writer and Subscriber
 	elChainReader, elChainWriter, err := config.buildElClients(
@@ -105,7 +106,7 @@ func (config *BuildAllConfig) buildElClients(
 	txMgr txmgr.TxManager,
 	logger logging.Logger,
 	eigenMetrics *metrics.EigenMetrics,
-) (elcontracts.ELReader, elcontracts.ELWriter, error) {
+) (*elcontracts.ELChainReader, *elcontracts.ELChainWriter, error) {
 
 	avsRegistryContractBindings, err := chainioutils.NewAVSRegistryContractBindings(
 		gethcommon.HexToAddress(config.RegistryCoordinatorAddr),
@@ -165,7 +166,7 @@ func (config *BuildAllConfig) buildAvsClients(
 	ethHttpClient eth.EthClient,
 	txMgr txmgr.TxManager,
 	logger logging.Logger,
-) (avsregistry.AvsRegistryReader, avsregistry.AvsRegistrySubscriber, avsregistry.AvsRegistryWriter, error) {
+) (*avsregistry.AvsRegistryChainReader, *avsregistry.AvsRegistryChainSubscriber, *avsregistry.AvsRegistryChainWriter, error) {
 
 	avsRegistryContractBindings, err := chainioutils.NewAVSRegistryContractBindings(
 		gethcommon.HexToAddress(config.RegistryCoordinatorAddr),
