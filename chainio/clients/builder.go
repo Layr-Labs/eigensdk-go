@@ -65,7 +65,6 @@ func BuildAll(config BuildAllConfig, signer signerv2.SignerFn, logger logging.Lo
 	// creating EL clients: Reader, Writer and Subscriber
 	elChainReader, elChainWriter, err := config.buildElClients(
 		ethHttpClient,
-		ethWsClient,
 		txMgr,
 		logger,
 		eigenMetrics,
@@ -78,6 +77,7 @@ func BuildAll(config BuildAllConfig, signer signerv2.SignerFn, logger logging.Lo
 	// creating AVS clients: Reader and Writer
 	avsRegistryChainReader, avsRegistryChainSubscriber, avsRegistryChainWriter, err := config.buildAvsClients(
 		ethHttpClient,
+		ethWsClient,
 		txMgr,
 		logger,
 	)
@@ -102,7 +102,6 @@ func BuildAll(config BuildAllConfig, signer signerv2.SignerFn, logger logging.Lo
 
 func (config *BuildAllConfig) buildElClients(
 	ethHttpClient eth.EthClient,
-	ethWsClient eth.EthClient,
 	txMgr txmgr.TxManager,
 	logger logging.Logger,
 	eigenMetrics *metrics.EigenMetrics,
@@ -164,6 +163,7 @@ func (config *BuildAllConfig) buildElClients(
 
 func (config *BuildAllConfig) buildAvsClients(
 	ethHttpClient eth.EthClient,
+	ethWsClient eth.EthClient,
 	txMgr txmgr.TxManager,
 	logger logging.Logger,
 ) (*avsregistry.AvsRegistryChainReader, *avsregistry.AvsRegistryChainSubscriber, *avsregistry.AvsRegistryChainWriter, error) {
@@ -189,16 +189,6 @@ func (config *BuildAllConfig) buildAvsClients(
 		ethHttpClient,
 	)
 
-	// get the Subscriber for Avs Registry contracts
-	avsRegistrySubscriber, err := avsregistry.NewAvsRegistryChainSubscriber(
-		avsRegistryContractBindings.BlsApkRegistry,
-		logger,
-	)
-	if err != nil {
-		logger.Error("Failed to create ELChainSubscriber", "err", err)
-		return nil, nil, nil, err
-	}
-
 	avsRegistryChainWriter, err := avsregistry.NewAvsRegistryChainWriter(
 		avsRegistryContractBindings.RegistryCoordinator,
 		avsRegistryContractBindings.OperatorStateRetriever,
@@ -210,6 +200,18 @@ func (config *BuildAllConfig) buildAvsClients(
 	)
 	if err != nil {
 		logger.Error("Failed to create AVSRegistryChainWriter", "err", err)
+		return nil, nil, nil, err
+	}
+
+	// get the Subscriber for Avs Registry contracts
+	// note that the subscriber needs a ws connection instead of http
+	avsRegistrySubscriber, err := avsregistry.BuildAvsRegistryChainSubscriber(
+		gethcommon.HexToAddress(config.RegistryCoordinatorAddr),
+		ethWsClient,
+		logger,
+	)
+	if err != nil {
+		logger.Error("Failed to create ELChainSubscriber", "err", err)
 		return nil, nil, nil, err
 	}
 
