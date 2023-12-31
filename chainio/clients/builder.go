@@ -40,7 +40,7 @@ type Clients struct {
 	PrometheusRegistry         *prometheus.Registry  // Used if avs teams need to register avs-specific metrics
 }
 
-func BuildAll(config BuildAllConfig, signer signerv2.SignerFn, logger logging.Logger) (*Clients, error) {
+func BuildAll(config BuildAllConfig, signerAddr gethcommon.Address, signerFn signerv2.SignerFn, logger logging.Logger) (*Clients, error) {
 	config.validate(logger)
 
 	// Create the metrics server
@@ -61,7 +61,7 @@ func BuildAll(config BuildAllConfig, signer signerv2.SignerFn, logger logging.Lo
 	}
 
 	// TODO(madhur): is it fine to not set the sender address?
-	txMgr := txmgr.NewSimpleTxManager(ethHttpClient, logger, signer, gethcommon.Address{})
+	txMgr := txmgr.NewSimpleTxManager(ethHttpClient, logger, signerFn, signerAddr)
 	// creating EL clients: Reader, Writer and Subscriber
 	elChainReader, elChainWriter, err := config.buildElClients(
 		ethHttpClient,

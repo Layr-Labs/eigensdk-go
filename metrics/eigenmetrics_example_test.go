@@ -16,7 +16,6 @@ import (
 	rpccalls "github.com/Layr-Labs/eigensdk-go/metrics/collectors/rpc_calls"
 	"github.com/Layr-Labs/eigensdk-go/signerv2"
 	"github.com/Layr-Labs/eigensdk-go/types"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -37,6 +36,7 @@ func ExampleEigenMetrics() {
 	if err != nil {
 		panic(err)
 	}
+	operatorEcdsaAddr := crypto.PubkeyToAddress(ecdsaPrivateKey.PublicKey)
 
 	signerV2, _, err := signerv2.SignerFromConfig(signerv2.Config{PrivateKey: ecdsaPrivateKey}, big.NewInt(1))
 	if err != nil {
@@ -51,21 +51,20 @@ func ExampleEigenMetrics() {
 		AvsName:                    "exampleAvs",
 		PromMetricsIpPortAddress:   ":9090",
 	}
-	clients, err := clients.BuildAll(chainioConfig, signerV2, logger)
+	clients, err := clients.BuildAll(chainioConfig, operatorEcdsaAddr, signerV2, logger)
 	if err != nil {
 		panic(err)
 	}
 	reg := prometheus.NewRegistry()
 	eigenMetrics := metrics.NewEigenMetrics("exampleAvs", ":9090", reg, logger)
 
-	operatorAddr := common.HexToAddress("0x0")
 	quorumNames := map[types.QuorumNum]string{
 		0: "ethQuorum",
 		1: "someOtherTokenQuorum",
 	}
 	// We must register the economic metrics separately because they are exported metrics (from jsonrpc or subgraph calls)
 	// and not instrumented metrics: see https://prometheus.io/docs/instrumenting/writing_clientlibs/#overall-structure
-	economicMetricsCollector := economic.NewCollector(clients.ElChainReader, clients.AvsRegistryChainReader, "exampleAvs", logger, operatorAddr, quorumNames)
+	economicMetricsCollector := economic.NewCollector(clients.ElChainReader, clients.AvsRegistryChainReader, "exampleAvs", logger, operatorEcdsaAddr, quorumNames)
 	reg.MustRegister(economicMetricsCollector)
 
 	rpcCallsCollector := rpccalls.NewCollector("exampleAvs", reg)
