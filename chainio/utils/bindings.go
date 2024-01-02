@@ -51,7 +51,7 @@ func NewEigenlayerContractBindings(
 		return nil, err
 	}
 
-	strategyManagerAddr, err := contractSlasher.StrategyManager(&bind.CallOpts{})
+	strategyManagerAddr, err := contractDelegationManager.StrategyManager(&bind.CallOpts{})
 	if err != nil {
 		logger.Error("Failed to fetch StrategyManager address", "err", err)
 		return nil, err
