@@ -1,4 +1,4 @@
-package pubkeycompendium
+package operatorpubkeys
 
 import (
 	"context"
@@ -14,14 +14,14 @@ import (
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
 	"go.uber.org/mock/gomock"
 
-	pubkeycompendiumbindings "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPublicKeyCompendium"
+	apkregistrybindings "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSApkRegistry"
 )
 
 type testOperator struct {
 	operatorAddr     common.Address
 	pubkeys          types.OperatorPubkeys
-	contractG1Pubkey pubkeycompendiumbindings.BN254G1Point
-	contractG2Pubkey pubkeycompendiumbindings.BN254G2Point
+	contractG1Pubkey apkregistrybindings.BN254G1Point
+	contractG2Pubkey apkregistrybindings.BN254G2Point
 }
 
 func TestGetOperatorPubkeys(t *testing.T) {
@@ -32,11 +32,11 @@ func TestGetOperatorPubkeys(t *testing.T) {
 			G1Pubkey: bls.NewG1Point(big.NewInt(1), big.NewInt(1)),
 			G2Pubkey: bls.NewG2Point([2]*big.Int{big.NewInt(1), big.NewInt(1)}, [2]*big.Int{big.NewInt(1), big.NewInt(1)}),
 		},
-		contractG1Pubkey: pubkeycompendiumbindings.BN254G1Point{
+		contractG1Pubkey: apkregistrybindings.BN254G1Point{
 			X: big.NewInt(1),
 			Y: big.NewInt(1),
 		},
-		contractG2Pubkey: pubkeycompendiumbindings.BN254G2Point{
+		contractG2Pubkey: apkregistrybindings.BN254G2Point{
 			X: [2]*big.Int{big.NewInt(1), big.NewInt(1)},
 			Y: [2]*big.Int{big.NewInt(1), big.NewInt(1)},
 		},
@@ -45,17 +45,17 @@ func TestGetOperatorPubkeys(t *testing.T) {
 	// Define tests
 	var tests = []struct {
 		name                    string
-		mocksInitializationFunc func(*mocks.MockELSubscriber, *mocks.MockELReader, *mocks.MockSubscription)
+		mocksInitializationFunc func(*mocks.MockAvsRegistrySubscriber, *mocks.MockAvsRegistryReader, *mocks.MockSubscription)
 		queryOperatorAddr       common.Address
 		wantOperatorFound       bool
 		wantOperatorPubkeys     types.OperatorPubkeys
 	}{
 		{
 			name: "should return false if operator not found",
-			mocksInitializationFunc: func(mockElSubscriber *mocks.MockELSubscriber, mockElReader *mocks.MockELReader, mockSubscription *mocks.MockSubscription) {
+			mocksInitializationFunc: func(mockAvsRegistrySubscriber *mocks.MockAvsRegistrySubscriber, mockElReader *mocks.MockAvsRegistryReader, mockSubscription *mocks.MockSubscription) {
 				errC := make(chan error)
 				mockSubscription.EXPECT().Err().AnyTimes().Return(errC)
-				mockElSubscriber.EXPECT().SubscribeToNewPubkeyRegistrations().Return(nil, mockSubscription, nil)
+				mockAvsRegistrySubscriber.EXPECT().SubscribeToNewPubkeyRegistrations().Return(nil, mockSubscription, nil)
 				mockElReader.EXPECT().QueryExistingRegisteredOperatorPubKeys(gomock.Any(), nil, nil).Return(nil, nil, nil)
 			},
 			queryOperatorAddr:   testOperator1.operatorAddr,
@@ -64,10 +64,10 @@ func TestGetOperatorPubkeys(t *testing.T) {
 		},
 		{
 			name: "should return operator pubkeys found via query",
-			mocksInitializationFunc: func(mockElSubscriber *mocks.MockELSubscriber, mockElReader *mocks.MockELReader, mockSubscription *mocks.MockSubscription) {
+			mocksInitializationFunc: func(mockAvsRegistrySubscriber *mocks.MockAvsRegistrySubscriber, mockElReader *mocks.MockAvsRegistryReader, mockSubscription *mocks.MockSubscription) {
 				errC := make(chan error)
 				mockSubscription.EXPECT().Err().AnyTimes().Return(errC)
-				mockElSubscriber.EXPECT().SubscribeToNewPubkeyRegistrations().Return(nil, mockSubscription, nil)
+				mockAvsRegistrySubscriber.EXPECT().SubscribeToNewPubkeyRegistrations().Return(nil, mockSubscription, nil)
 				mockElReader.EXPECT().QueryExistingRegisteredOperatorPubKeys(gomock.Any(), nil, nil).
 					Return([]common.Address{testOperator1.operatorAddr}, []types.OperatorPubkeys{testOperator1.pubkeys}, nil)
 			},
@@ -77,10 +77,10 @@ func TestGetOperatorPubkeys(t *testing.T) {
 		},
 		{
 			name: "should return operator pubkeys found via subscription",
-			mocksInitializationFunc: func(mockElSubscriber *mocks.MockELSubscriber, mockElReader *mocks.MockELReader, mockSubscription *mocks.MockSubscription) {
+			mocksInitializationFunc: func(mockAvsRegistrySubscriber *mocks.MockAvsRegistrySubscriber, mockElReader *mocks.MockAvsRegistryReader, mockSubscription *mocks.MockSubscription) {
 				errC := make(chan error)
-				pubkeyRegistrationEventC := make(chan *pubkeycompendiumbindings.ContractBLSPublicKeyCompendiumNewPubkeyRegistration, 1)
-				pubkeyRegistrationEvent := &pubkeycompendiumbindings.ContractBLSPublicKeyCompendiumNewPubkeyRegistration{
+				pubkeyRegistrationEventC := make(chan *apkregistrybindings.ContractBLSApkRegistryNewPubkeyRegistration, 1)
+				pubkeyRegistrationEvent := &apkregistrybindings.ContractBLSApkRegistryNewPubkeyRegistration{
 					Operator: testOperator1.operatorAddr,
 					PubkeyG1: testOperator1.contractG1Pubkey,
 					PubkeyG2: testOperator1.contractG2Pubkey,
@@ -88,7 +88,7 @@ func TestGetOperatorPubkeys(t *testing.T) {
 				}
 				pubkeyRegistrationEventC <- pubkeyRegistrationEvent
 				mockSubscription.EXPECT().Err().AnyTimes().Return(errC)
-				mockElSubscriber.EXPECT().SubscribeToNewPubkeyRegistrations().Return(pubkeyRegistrationEventC, mockSubscription, nil)
+				mockAvsRegistrySubscriber.EXPECT().SubscribeToNewPubkeyRegistrations().Return(pubkeyRegistrationEventC, mockSubscription, nil)
 				mockElReader.EXPECT().QueryExistingRegisteredOperatorPubKeys(gomock.Any(), nil, nil).
 					Return([]common.Address{}, []types.OperatorPubkeys{}, nil)
 			},
@@ -102,15 +102,15 @@ func TestGetOperatorPubkeys(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create mocks
 			mockCtrl := gomock.NewController(t)
-			mockElSubscriber := mocks.NewMockELSubscriber(mockCtrl)
-			mockElReader := mocks.NewMockELReader(mockCtrl)
+			mockAvsRegistrySubscriber := mocks.NewMockAvsRegistrySubscriber(mockCtrl)
+			mockElReader := mocks.NewMockAvsRegistryReader(mockCtrl)
 			mockSubscription := mocks.NewMockSubscription(mockCtrl)
 
 			if tt.mocksInitializationFunc != nil {
-				tt.mocksInitializationFunc(mockElSubscriber, mockElReader, mockSubscription)
+				tt.mocksInitializationFunc(mockAvsRegistrySubscriber, mockElReader, mockSubscription)
 			}
-			// Create a new instance of the pubkeycompendium service
-			service := NewPubkeyCompendiumInMemory(context.Background(), mockElSubscriber, mockElReader, logger)
+			// Create a new instance of the operatorpubkeys service
+			service := NewOperatorPubkeysServiceInMemory(context.Background(), mockAvsRegistrySubscriber, mockElReader, logger)
 
 			// Call the GetOperatorPubkeys method with the test operator address
 			gotOperatorPubkeys, gotOperatorFound := service.GetOperatorPubkeys(context.Background(), tt.queryOperatorAddr)

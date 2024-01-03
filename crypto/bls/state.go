@@ -36,7 +36,7 @@ type OperatorState struct {
 // contracts. Note that
 // this information does not depend on the quorum.
 type IndexedOperatorInfo struct {
-	// PubKeyG1 and PubKeyG2 are the public keys of the operator, which are retrieved from the EigenDAPubKeyCompendium
+	// PubKeyG1 and PubKeyG2 are the public keys of the operator, which are retrieved from the BlsApkRegistry
 	// smart contract
 	PubkeyG1 *G1Point
 	PubkeyG2 *G2Point

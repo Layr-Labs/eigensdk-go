@@ -13,7 +13,6 @@ import (
 	big "math/big"
 	reflect "reflect"
 
-	bls "github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	types "github.com/Layr-Labs/eigensdk-go/types"
 	common "github.com/ethereum/go-ethereum/common"
 	types0 "github.com/ethereum/go-ethereum/core/types"
@@ -58,21 +57,6 @@ func (mr *MockELWriterMockRecorder) DepositERC20IntoStrategy(arg0, arg1, arg2 an
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DepositERC20IntoStrategy", reflect.TypeOf((*MockELWriter)(nil).DepositERC20IntoStrategy), arg0, arg1, arg2)
 }
 
-// OptOperatorIntoSlashing mocks base method.
-func (m *MockELWriter) OptOperatorIntoSlashing(arg0 context.Context, arg1 common.Address) (*types0.Receipt, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "OptOperatorIntoSlashing", arg0, arg1)
-	ret0, _ := ret[0].(*types0.Receipt)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// OptOperatorIntoSlashing indicates an expected call of OptOperatorIntoSlashing.
-func (mr *MockELWriterMockRecorder) OptOperatorIntoSlashing(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OptOperatorIntoSlashing", reflect.TypeOf((*MockELWriter)(nil).OptOperatorIntoSlashing), arg0, arg1)
-}
-
 // RegisterAsOperator mocks base method.
 func (m *MockELWriter) RegisterAsOperator(arg0 context.Context, arg1 types.Operator) (*types0.Receipt, error) {
 	m.ctrl.T.Helper()
@@ -86,21 +70,6 @@ func (m *MockELWriter) RegisterAsOperator(arg0 context.Context, arg1 types.Opera
 func (mr *MockELWriterMockRecorder) RegisterAsOperator(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterAsOperator", reflect.TypeOf((*MockELWriter)(nil).RegisterAsOperator), arg0, arg1)
-}
-
-// RegisterBLSPublicKey mocks base method.
-func (m *MockELWriter) RegisterBLSPublicKey(arg0 context.Context, arg1 *bls.KeyPair, arg2 types.Operator) (*types0.Receipt, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RegisterBLSPublicKey", arg0, arg1, arg2)
-	ret0, _ := ret[0].(*types0.Receipt)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// RegisterBLSPublicKey indicates an expected call of RegisterBLSPublicKey.
-func (mr *MockELWriterMockRecorder) RegisterBLSPublicKey(arg0, arg1, arg2 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterBLSPublicKey", reflect.TypeOf((*MockELWriter)(nil).RegisterBLSPublicKey), arg0, arg1, arg2)
 }
 
 // UpdateOperatorDetails mocks base method.

@@ -11,16 +11,13 @@ import (
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
-	"github.com/Layr-Labs/eigensdk-go/chainio/utils"
 	chainioutils "github.com/Layr-Labs/eigensdk-go/chainio/utils"
-	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/metrics"
 	"github.com/Layr-Labs/eigensdk-go/types"
 
-	blspubkeycompendium "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPublicKeyCompendium"
 	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
-	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/Slasher"
+	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/ISlasher"
 	strategymanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StrategyManager"
 )
 
@@ -29,44 +26,32 @@ type ELWriter interface {
 
 	UpdateOperatorDetails(ctx context.Context, operator types.Operator) (*gethtypes.Receipt, error)
 
-	RegisterBLSPublicKey(
-		ctx context.Context,
-		blsKeyPair *bls.KeyPair,
-		operator types.Operator,
-	) (*gethtypes.Receipt, error)
-
 	// DepositERC20IntoStrategy deposits ERC20 tokens into a strategy contract.
 	DepositERC20IntoStrategy(
 		ctx context.Context,
 		strategyAddr gethcommon.Address,
 		amount *big.Int,
 	) (*gethtypes.Receipt, error)
-
-	OptOperatorIntoSlashing(ctx context.Context, avsServiceManagerAddr gethcommon.Address) (*gethtypes.Receipt, error)
 }
 
 type ELChainWriter struct {
-	slasher                 slasher.ContractSlasherTransacts
-	delegationManager       delegationmanager.ContractDelegationManagerTransacts
-	strategyManager         strategymanager.ContractStrategyManagerTransacts
-	strategyManagerAddr     gethcommon.Address
-	blsPubkeyCompendium     blspubkeycompendium.ContractBLSPublicKeyCompendiumTransacts
-	blsPubkeyCompendiumAddr gethcommon.Address
-	elChainReader           ELReader
-	ethClient               eth.EthClient
-	logger                  logging.Logger
-	txMgr                   txmgr.TxManager
+	slasher             slasher.ContractISlasherTransacts
+	delegationManager   delegationmanager.ContractDelegationManagerTransacts
+	strategyManager     strategymanager.ContractStrategyManagerTransacts
+	strategyManagerAddr gethcommon.Address
+	elChainReader       ELReader
+	ethClient           eth.EthClient
+	logger              logging.Logger
+	txMgr               txmgr.TxManager
 }
 
 var _ ELWriter = (*ELChainWriter)(nil)
 
 func NewELChainWriter(
-	slasher slasher.ContractSlasherTransacts,
+	slasher slasher.ContractISlasherTransacts,
 	delegationManager delegationmanager.ContractDelegationManagerTransacts,
 	strategyManager strategymanager.ContractStrategyManagerTransacts,
 	strategyManagerAddr gethcommon.Address,
-	blsPubkeyCompendium blspubkeycompendium.ContractBLSPublicKeyCompendiumTransacts,
-	blsPubkeyCompendiumAddr gethcommon.Address,
 	elChainReader ELReader,
 	ethClient eth.EthClient,
 	logger logging.Logger,
@@ -74,30 +59,26 @@ func NewELChainWriter(
 	txMgr txmgr.TxManager,
 ) *ELChainWriter {
 	return &ELChainWriter{
-		slasher:                 slasher,
-		delegationManager:       delegationManager,
-		strategyManager:         strategyManager,
-		strategyManagerAddr:     strategyManagerAddr,
-		blsPubkeyCompendium:     blsPubkeyCompendium,
-		blsPubkeyCompendiumAddr: blsPubkeyCompendiumAddr,
-		elChainReader:           elChainReader,
-		logger:                  logger,
-		ethClient:               ethClient,
-		txMgr:                   txMgr,
+		slasher:             slasher,
+		delegationManager:   delegationManager,
+		strategyManager:     strategyManager,
+		strategyManagerAddr: strategyManagerAddr,
+		elChainReader:       elChainReader,
+		logger:              logger,
+		ethClient:           ethClient,
+		txMgr:               txMgr,
 	}
 }
 
 func BuildELChainWriter(
-	slasherAddr gethcommon.Address,
-	blsPubKeyCompendiumAddr gethcommon.Address,
+	delegationManagerAddr gethcommon.Address,
 	ethClient eth.EthClient,
 	logger logging.Logger,
 	eigenMetrics metrics.Metrics,
 	txMgr txmgr.TxManager,
 ) (*ELChainWriter, error) {
 	elContractBindings, err := chainioutils.NewEigenlayerContractBindings(
-		slasherAddr,
-		blsPubKeyCompendiumAddr,
+		delegationManagerAddr,
 		ethClient,
 		logger,
 	)
@@ -108,8 +89,6 @@ func BuildELChainWriter(
 		elContractBindings.Slasher,
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
-		elContractBindings.BlsPubkeyCompendium,
-		blsPubKeyCompendiumAddr,
 		logger,
 		ethClient,
 	)
@@ -118,8 +97,6 @@ func BuildELChainWriter(
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
 		elContractBindings.StrategyManagerAddr,
-		elContractBindings.BlsPubkeyCompendium,
-		blsPubKeyCompendiumAddr,
 		elChainReader,
 		ethClient,
 		logger,
@@ -234,72 +211,5 @@ func (w *ELChainWriter) DepositERC20IntoStrategy(
 	}
 
 	w.logger.Infof("deposited %s into strategy %s", amount.String(), strategyAddr)
-	return receipt, nil
-}
-
-// OptOperatorIntoSlashing operator opting into slashing is the w.signer wallet
-// this is meant to be called by the operator CLI
-func (w *ELChainWriter) OptOperatorIntoSlashing(
-	ctx context.Context,
-	avsServiceManagerAddr gethcommon.Address,
-) (*gethtypes.Receipt, error) {
-	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
-	if err != nil {
-		return nil, err
-	}
-	tx, err := w.slasher.OptIntoSlashing(noSendTxOpts, avsServiceManagerAddr)
-	if err != nil {
-		return nil, err
-	}
-	receipt, err := w.txMgr.Send(ctx, tx)
-	if err != nil {
-		return nil, errors.New("failed to send tx with err: " + err.Error())
-	}
-
-	w.logger.Infof(
-		"Operator %s opted into slashing by service manager contract %s \n",
-		noSendTxOpts.From,
-		avsServiceManagerAddr,
-	)
-	return receipt, nil
-}
-
-func (w *ELChainWriter) RegisterBLSPublicKey(
-	ctx context.Context,
-	blsKeyPair *bls.KeyPair,
-	operator types.Operator,
-) (*gethtypes.Receipt, error) {
-	w.logger.Infof("Registering BLS Public key to eigenlayer for operator %s", operator.Address)
-	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
-	if err != nil {
-		return nil, err
-	}
-	chainID, err := w.ethClient.ChainID(ctx)
-	if err != nil {
-		return nil, err
-	}
-	signedMsgHash := blsKeyPair.MakePubkeyRegistrationData(
-		gethcommon.HexToAddress(operator.Address),
-		w.blsPubkeyCompendiumAddr,
-		chainID,
-	)
-	signedMsgHashBN254 := utils.ConvertToBN254G1Point(signedMsgHash)
-	G1pubkeyBN254 := utils.ConvertToBN254G1Point(blsKeyPair.GetPubKeyG1())
-	G2pubkeyBN254 := utils.ConvertToBN254G2Point(blsKeyPair.GetPubKeyG2())
-	tx, err := w.blsPubkeyCompendium.RegisterBLSPublicKey(
-		noSendTxOpts,
-		signedMsgHashBN254,
-		G1pubkeyBN254,
-		G2pubkeyBN254,
-	)
-	if err != nil {
-		return nil, err
-	}
-	receipt, err := w.txMgr.Send(ctx, tx)
-	if err != nil {
-		return nil, errors.New("failed to send tx with err: " + err.Error())
-	}
-
-	w.logger.Infof("Operator %s has registered BLS public key to EigenLayer \n", operator.Address)
 	return receipt, nil
 }
