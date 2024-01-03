@@ -43,6 +43,21 @@ func (m *MockELReader) EXPECT() *MockELReaderMockRecorder {
 	return m.recorder
 }
 
+// CalculateDelegationApprovalDigestHash mocks base method.
+func (m *MockELReader) CalculateDelegationApprovalDigestHash(arg0 *bind.CallOpts, arg1, arg2 common.Address, arg3 [32]byte, arg4 *big.Int) ([32]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CalculateDelegationApprovalDigestHash", arg0, arg1, arg2, arg3, arg4)
+	ret0, _ := ret[0].([32]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CalculateDelegationApprovalDigestHash indicates an expected call of CalculateDelegationApprovalDigestHash.
+func (mr *MockELReaderMockRecorder) CalculateDelegationApprovalDigestHash(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CalculateDelegationApprovalDigestHash", reflect.TypeOf((*MockELReader)(nil).CalculateDelegationApprovalDigestHash), arg0, arg1, arg2, arg3, arg4)
+}
+
 // GetOperatorDetails mocks base method.
 func (m *MockELReader) GetOperatorDetails(arg0 *bind.CallOpts, arg1 types.Operator) (types.Operator, error) {
 	m.ctrl.T.Helper()

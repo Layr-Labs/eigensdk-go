@@ -48,6 +48,10 @@ type ELReader interface {
 		operatorAddr gethcommon.Address,
 		strategyAddr gethcommon.Address,
 	) (*big.Int, error)
+
+	CalculateDelegationApprovalDigestHash(
+		opts *bind.CallOpts, operator gethcommon.Address, avs gethcommon.Address, salt [32]byte, expiry *big.Int,
+	) ([32]byte, error)
 }
 
 type ELChainReader struct {
@@ -78,12 +82,12 @@ func NewELChainReader(
 }
 
 func BuildELChainReader(
-	slasherAddr gethcommon.Address,
+	delegationManagerAddr gethcommon.Address,
 	ethClient eth.EthClient,
 	logger logging.Logger,
 ) (*ELChainReader, error) {
 	elContractBindings, err := chainioutils.NewEigenlayerContractBindings(
-		slasherAddr,
+		delegationManagerAddr,
 		ethClient,
 		logger,
 	)
@@ -99,7 +103,6 @@ func BuildELChainReader(
 	), nil
 }
 
-// TODO(samlaf): should we just pass the CallOpts directly as argument instead of the context?
 func (r *ELChainReader) IsOperatorRegistered(opts *bind.CallOpts, operator types.Operator) (bool, error) {
 	isOperator, err := r.delegationManager.IsOperator(
 		opts,
@@ -205,4 +208,12 @@ func (r *ELChainReader) GetOperatorSharesInStrategy(
 		return nil, err
 	}
 	return operatorSharesInStrategy, nil
+}
+
+func (r *ELChainReader) CalculateDelegationApprovalDigestHash(
+	opts *bind.CallOpts, operator gethcommon.Address, avs gethcommon.Address, salt [32]byte, expiry *big.Int,
+) ([32]byte, error) {
+	return r.delegationManager.CalculateOperatorAVSRegistrationDigestHash(
+		opts, operator, avs, salt, expiry,
+	)
 }

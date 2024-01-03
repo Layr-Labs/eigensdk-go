@@ -76,6 +76,7 @@ func BuildAll(config BuildAllConfig, signerAddr gethcommon.Address, signerFn sig
 
 	// creating AVS clients: Reader and Writer
 	avsRegistryChainReader, avsRegistryChainSubscriber, avsRegistryChainWriter, err := config.buildAvsClients(
+		elChainReader,
 		ethHttpClient,
 		ethWsClient,
 		txMgr,
@@ -162,6 +163,7 @@ func (config *BuildAllConfig) buildElClients(
 }
 
 func (config *BuildAllConfig) buildAvsClients(
+	elReader elcontracts.ELReader,
 	ethHttpClient eth.EthClient,
 	ethWsClient eth.EthClient,
 	txMgr txmgr.TxManager,
@@ -190,10 +192,12 @@ func (config *BuildAllConfig) buildAvsClients(
 	)
 
 	avsRegistryChainWriter, err := avsregistry.NewAvsRegistryChainWriter(
+		avsRegistryContractBindings.ServiceManagerAddr,
 		avsRegistryContractBindings.RegistryCoordinator,
 		avsRegistryContractBindings.OperatorStateRetriever,
 		avsRegistryContractBindings.StakeRegistry,
 		avsRegistryContractBindings.BlsApkRegistry,
+		elReader,
 		logger,
 		ethHttpClient,
 		txMgr,

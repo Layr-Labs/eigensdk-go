@@ -71,14 +71,14 @@ func NewELChainWriter(
 }
 
 func BuildELChainWriter(
-	slasherAddr gethcommon.Address,
+	delegationManagerAddr gethcommon.Address,
 	ethClient eth.EthClient,
 	logger logging.Logger,
 	eigenMetrics metrics.Metrics,
 	txMgr txmgr.TxManager,
 ) (*ELChainWriter, error) {
 	elContractBindings, err := chainioutils.NewEigenlayerContractBindings(
-		slasherAddr,
+		delegationManagerAddr,
 		ethClient,
 		logger,
 	)

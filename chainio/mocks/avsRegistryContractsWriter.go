@@ -10,6 +10,8 @@ package mocks
 
 import (
 	context "context"
+	ecdsa "crypto/ecdsa"
+	big "math/big"
 	reflect "reflect"
 
 	contractRegistryCoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
@@ -58,18 +60,18 @@ func (mr *MockAvsRegistryWriterMockRecorder) DeregisterOperator(arg0, arg1, arg2
 }
 
 // RegisterOperatorWithAVSRegistryCoordinator mocks base method.
-func (m *MockAvsRegistryWriter) RegisterOperatorWithAVSRegistryCoordinator(arg0 context.Context, arg1 *bls.KeyPair, arg2 common.Address, arg3 []byte, arg4 string) (*types.Receipt, error) {
+func (m *MockAvsRegistryWriter) RegisterOperatorWithAVSRegistryCoordinator(arg0 context.Context, arg1 *ecdsa.PrivateKey, arg2 [32]byte, arg3 *big.Int, arg4 *bls.KeyPair, arg5 []byte, arg6 string) (*types.Receipt, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RegisterOperatorWithAVSRegistryCoordinator", arg0, arg1, arg2, arg3, arg4)
+	ret := m.ctrl.Call(m, "RegisterOperatorWithAVSRegistryCoordinator", arg0, arg1, arg2, arg3, arg4, arg5, arg6)
 	ret0, _ := ret[0].(*types.Receipt)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // RegisterOperatorWithAVSRegistryCoordinator indicates an expected call of RegisterOperatorWithAVSRegistryCoordinator.
-func (mr *MockAvsRegistryWriterMockRecorder) RegisterOperatorWithAVSRegistryCoordinator(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
+func (mr *MockAvsRegistryWriterMockRecorder) RegisterOperatorWithAVSRegistryCoordinator(arg0, arg1, arg2, arg3, arg4, arg5, arg6 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterOperatorWithAVSRegistryCoordinator", reflect.TypeOf((*MockAvsRegistryWriter)(nil).RegisterOperatorWithAVSRegistryCoordinator), arg0, arg1, arg2, arg3, arg4)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterOperatorWithAVSRegistryCoordinator", reflect.TypeOf((*MockAvsRegistryWriter)(nil).RegisterOperatorWithAVSRegistryCoordinator), arg0, arg1, arg2, arg3, arg4, arg5, arg6)
 }
 
 // UpdateOperatorStakes mocks base method.
