@@ -210,7 +210,7 @@ func (config *BuildAllConfig) buildAvsClients(
 	// get the Subscriber for Avs Registry contracts
 	// note that the subscriber needs a ws connection instead of http
 	avsRegistrySubscriber, err := avsregistry.BuildAvsRegistryChainSubscriber(
-		gethcommon.HexToAddress(config.RegistryCoordinatorAddr),
+		avsRegistryContractBindings.BlsApkRegistryAddr,
 		ethWsClient,
 		logger,
 	)
