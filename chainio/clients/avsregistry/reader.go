@@ -300,12 +300,19 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorPubKeys(
 	stopBlock *big.Int,
 ) ([]types.OperatorAddr, []types.OperatorPubkeys, error) {
 
+	blsApkRegistryAbi, err := abi.JSON(bytes.NewReader(eigenabi.BLSApkRegistryAbi))
+	if err != nil {
+		r.logger.Error("Error getting Abi", "err", err)
+		return nil, nil, err
+	}
+
 	query := ethereum.FilterQuery{
 		FromBlock: startBlock,
 		ToBlock:   stopBlock,
 		Addresses: []gethcommon.Address{
 			r.blsApkRegistryAddr,
 		},
+		Topics: [][]gethcommon.Hash{{blsApkRegistryAbi.Events["NewPubkeyRegistration"].ID}},
 	}
 
 	logs, err := r.ethClient.FilterLogs(ctx, query)
@@ -315,18 +322,13 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorPubKeys(
 	}
 	r.logger.Info("logs:", "logs", logs)
 
-	blsApkRegistryAbi, err := abi.JSON(bytes.NewReader(eigenabi.BLSApkRegistryAbi))
-	if err != nil {
-		r.logger.Error("Error getting Abi", "err", err)
-		return nil, nil, err
-	}
-
 	operatorAddresses := make([]types.OperatorAddr, 0)
 	operatorPubkeys := make([]types.OperatorPubkeys, 0)
 
 	for _, vLog := range logs {
 
 		// get the operator address
+		r.logger.Infof("deleteme", "vLog", vLog.Topics)
 		operatorAddr := gethcommon.HexToAddress(vLog.Topics[1].Hex())
 		operatorAddresses = append(operatorAddresses, operatorAddr)
 
