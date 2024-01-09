@@ -26,7 +26,7 @@ import (
 type AvsRegistryWriter interface {
 	RegisterOperatorWithAVSRegistryCoordinator(
 		ctx context.Context,
-		operatorEcdsaKeyPair *ecdsa.PrivateKey,
+		operatorEcdsaPrivateKey *ecdsa.PrivateKey,
 		operatorToAvsRegistrationSigSalt [32]byte,
 		operatorToAvsRegistrationSigExpiry *big.Int,
 		blsKeyPair *bls.KeyPair,
@@ -146,7 +146,7 @@ func BuildAvsRegistryChainWriter(
 // TODO(samlaf): clean up this function
 func (w *AvsRegistryChainWriter) RegisterOperatorWithAVSRegistryCoordinator(
 	ctx context.Context,
-	operatorEcdsaKeyPair *ecdsa.PrivateKey,
+	operatorEcdsaPrivateKey *ecdsa.PrivateKey,
 	operatorToAvsRegistrationSigSalt [32]byte,
 	operatorToAvsRegistrationSigExpiry *big.Int,
 	blsKeyPair *bls.KeyPair,
@@ -155,7 +155,7 @@ func (w *AvsRegistryChainWriter) RegisterOperatorWithAVSRegistryCoordinator(
 ) (*gethtypes.Receipt, error) {
 	w.logger.Info("registering operator with the AVS's registry coordinator")
 	// params to register bls pubkey with bls apk registry
-	operatorAddr := crypto.PubkeyToAddress(operatorEcdsaKeyPair.PublicKey)
+	operatorAddr := crypto.PubkeyToAddress(operatorEcdsaPrivateKey.PublicKey)
 	g1HashedMsgToSign, err := w.registryCoordinator.PubkeyRegistrationMessageHash(&bind.CallOpts{}, operatorAddr)
 	if err != nil {
 		return nil, err
@@ -177,7 +177,7 @@ func (w *AvsRegistryChainWriter) RegisterOperatorWithAVSRegistryCoordinator(
 	if err != nil {
 		return nil, err
 	}
-	operatorSignature, err := crypto.Sign(msgToSign[:], operatorEcdsaKeyPair)
+	operatorSignature, err := crypto.Sign(msgToSign[:], operatorEcdsaPrivateKey)
 	if err != nil {
 		return nil, err
 	}
