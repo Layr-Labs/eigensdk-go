@@ -31,6 +31,11 @@ type AvsRegistryReader interface {
 		blockNumber uint32,
 	) ([][]opstateretriever.OperatorStateRetrieverOperator, error)
 
+	GetOperatorIdsInQuorumsAtCurrentBlock(
+		opts *bind.CallOpts,
+		quorumNumbers []byte,
+	) ([][]bls.OperatorId, error)
+
 	GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(
 		opts *bind.CallOpts,
 		operatorId types.OperatorId,
@@ -160,8 +165,42 @@ func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsAtBlock(
 		r.logger.Error("Failed to get operators state", "err", err)
 		return nil, err
 	}
-
 	return operatorStakes, nil
+}
+
+func (r *AvsRegistryChainReader) GetOperatorIdsInQuorumsAtCurrentBlock(
+	opts *bind.CallOpts,
+	quorumNumbers []byte,
+) ([][]bls.OperatorId, error) {
+	curBlock, err := r.ethClient.BlockNumber(opts.Context)
+	if err != nil {
+		r.logger.Error("Failed to get current block number", "err", err)
+		return nil, err
+	}
+	if curBlock > math.MaxUint32 {
+		r.logger.Error("Current block number is too large to be converted to uint32")
+		return nil, err
+	}
+	operatorStakes, err := r.operatorStateRetriever.GetOperatorState(
+		opts,
+		r.registryCoordinatorAddr,
+		quorumNumbers,
+		uint32(curBlock),
+	)
+	if err != nil {
+		r.logger.Error("Failed to get operators state", "err", err)
+		return nil, err
+	}
+	var quorumOperatorIds [][]bls.OperatorId
+	for _, quorum := range operatorStakes {
+		var operatorIds []bls.OperatorId
+		for _, operator := range quorum {
+			operatorIds = append(operatorIds, operator.OperatorId)
+		}
+		quorumOperatorIds = append(quorumOperatorIds, operatorIds)
+	}
+	return quorumOperatorIds, nil
+
 }
 
 func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsOfOperatorAtBlock(
