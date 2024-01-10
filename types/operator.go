@@ -2,7 +2,6 @@ package types
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"math/big"
@@ -17,9 +16,9 @@ const (
 	ZeroAddress = "0x0000000000000000000000000000000000000000"
 )
 
-// Operator represents Eigenlayer's view of an operator
+// Operator represents EigenLayer's view of an operator
 type Operator struct {
-	// Address address of the operator
+	// Address of the operator
 	Address string `yaml:"address" json:"address"`
 
 	// https://github.com/Layr-Labs/eigenlayer-contracts/blob/delegation-redesign/src/contracts/interfaces/IDelegationManager.sol#L18
@@ -33,23 +32,20 @@ type Operator struct {
 
 func (o Operator) Validate() error {
 	if !utils.IsValidEthereumAddress(o.Address) {
-		return errors.New("invalid operator address")
+		return ErrInvalidOperatorAddress
 	}
 
 	if !utils.IsValidEthereumAddress(o.EarningsReceiverAddress) {
-		return errors.New("invalid EarningsReceiverAddress address")
+		return ErrInvalidEarningsReceiverAddress
 	}
 
 	if o.DelegationApproverAddress != ZeroAddress && !utils.IsValidEthereumAddress(o.DelegationApproverAddress) {
-		return fmt.Errorf(
-			"invalid DelegationApproverAddress address, it should be either %s or a valid non zero ethereum address",
-			ZeroAddress,
-		)
+		return ErrInvalidDelegationApproverAddress
 	}
 
 	err := checkIfUrlIsValid(o.MetadataUrl)
 	if err != nil {
-		return errors.New("invalid metadata url")
+		return wrapError(ErrInvalidMetadataUrl, err)
 	}
 
 	resp, err := http.Get(o.MetadataUrl)
@@ -66,15 +62,13 @@ func (o Operator) Validate() error {
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("error reading metadata url body")
-		return err
+		return wrapError(ErrReadingMetadataUrlResponse, err)
 	}
 
 	operatorMetadata := OperatorMetadata{}
 	err = json.Unmarshal(body, &operatorMetadata)
 	if err != nil {
-		fmt.Println("error unmarshalling operator metadata")
-		return err
+		return ErrUnmarshalOperatorMetadata
 	}
 
 	return operatorMetadata.Validate()
