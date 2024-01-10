@@ -23,6 +23,8 @@ import (
 )
 
 type AvsRegistryReader interface {
+	GetQuorumCount(opts *bind.CallOpts) (uint8, error)
+
 	GetOperatorsStakeInQuorumsAtBlock(
 		opts *bind.CallOpts,
 		quorumNumbers []byte,
@@ -136,6 +138,10 @@ func BuildAvsRegistryChainReader(
 		logger,
 		ethClient,
 	), nil
+}
+
+func (r *AvsRegistryChainReader) GetQuorumCount(opts *bind.CallOpts) (uint8, error) {
+	return r.registryCoordinator.QuorumCount(opts)
 }
 
 // the contract stores historical state, so blockNumber should be the block number of the state you want to query
