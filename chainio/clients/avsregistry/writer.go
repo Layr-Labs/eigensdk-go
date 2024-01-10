@@ -34,7 +34,20 @@ type AvsRegistryWriter interface {
 		socket string,
 	) (*gethtypes.Receipt, error)
 
-	UpdateOperatorStakes(
+	// UpdateStakesOfEntireOperatorSetForQuorums is used by avs teams running https://github.com/Layr-Labs/avs-sync
+	// to updates the stake of their entire operator set.
+	// Because of high gas costs of this operation, it typically needs to be called for every quorum, or perhaps for a small grouping of quorums
+	// (highly dependent on number of operators per quorum)
+	UpdateStakesOfEntireOperatorSetForQuorums(
+		ctx context.Context,
+		operatorsPerQuorum [][]gethcommon.Address,
+		quorumNumbers []byte,
+	) (*gethtypes.Receipt, error)
+
+	// UpdateStakesOfOperatorSubsetForAllQuorums is meant to be used by single operators (or teams of operators, possibly running https://github.com/Layr-Labs/avs-sync)
+	// to update the stake of their own operator(s). This might be needed in the case that they received a lot of new stake delegations, and want this to be reflected
+	// in the AVS's registry coordinator.
+	UpdateStakesOfOperatorSubsetForAllQuorums(
 		ctx context.Context,
 		operators []gethcommon.Address,
 	) (*gethtypes.Receipt, error)
@@ -216,11 +229,35 @@ func (w *AvsRegistryChainWriter) RegisterOperatorWithAVSRegistryCoordinator(
 	return receipt, nil
 }
 
-func (w *AvsRegistryChainWriter) UpdateOperatorStakes(
+func (w *AvsRegistryChainWriter) UpdateStakesOfEntireOperatorSetForQuorums(
+	ctx context.Context,
+	operatorsPerQuorum [][]gethcommon.Address,
+	quorumNumbers []byte,
+) (*gethtypes.Receipt, error) {
+	w.logger.Info("updating stakes for entire operator set", "quorumNumbers", quorumNumbers)
+	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
+	if err != nil {
+		return nil, err
+	}
+	tx, err := w.registryCoordinator.UpdateOperatorsForQuorum(noSendTxOpts, operatorsPerQuorum, quorumNumbers)
+	if err != nil {
+		return nil, err
+	}
+	receipt, err := w.txMgr.Send(ctx, tx)
+	if err != nil {
+		return nil, errors.New("failed to send tx with err: " + err.Error())
+	}
+	w.logger.Infof("tx hash: %s", tx.Hash().String())
+	w.logger.Info("updated stakes for entire operator set", "quorumNumbers", quorumNumbers)
+	return receipt, nil
+
+}
+
+func (w *AvsRegistryChainWriter) UpdateStakesOfOperatorSubsetForAllQuorums(
 	ctx context.Context,
 	operators []gethcommon.Address,
 ) (*gethtypes.Receipt, error) {
-	w.logger.Info("updating stakes")
+	w.logger.Info("updating stakes of operator subset for all quorums", "operators", operators)
 	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
 	if err != nil {
 		return nil, err
@@ -234,7 +271,7 @@ func (w *AvsRegistryChainWriter) UpdateOperatorStakes(
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
 	w.logger.Infof("tx hash: %s", tx.Hash().String())
-	w.logger.Info("updated stakes")
+	w.logger.Info("updated stakes of operator subset for all quorums", "operators", operators)
 	return receipt, nil
 
 }
