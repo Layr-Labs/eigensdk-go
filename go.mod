@@ -8,7 +8,7 @@ require (
 	github.com/google/uuid v1.5.0
 	github.com/prometheus/client_golang v1.18.0
 	github.com/stretchr/testify v1.8.4
-	github.com/testcontainers/testcontainers-go v0.27.0
+	github.com/testcontainers/testcontainers-go v0.26.0
 	github.com/urfave/cli/v2 v2.27.1
 	go.uber.org/mock v0.3.0
 	go.uber.org/zap v1.26.0
