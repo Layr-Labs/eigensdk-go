@@ -1,27 +1,19 @@
 package types
 
 import (
-	"encoding/json"
-	"net/http"
-	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestOperatorValidate(t *testing.T) {
-	metadata := OperatorMetadata{
-		Name:        "test",
-		Description: "test",
-		Logo:        "https://goerli-operator-metadata.s3.amazonaws.com/eigenlayer.png",
-		Twitter:     "https://twitter.com/test",
-		Website:     "https://test.com",
-	}
-
 	var tests = []struct {
 		name                    string
 		operator                Operator
 		metadataURLresponseCode int
 		operatorMetadata        OperatorMetadata
 		wantErr                 bool
+		expectedErr             error
 	}{
 		{
 			name: "successful operator validation",
@@ -30,11 +22,9 @@ func TestOperatorValidate(t *testing.T) {
 				DelegationApproverAddress: "0xd5e099c71b797516c10ed0f0d895f429c2781142",
 				EarningsReceiverAddress:   "0xd5e099c71b797516c10ed0f0d895f429c2781142",
 				StakerOptOutWindowBlocks:  100,
-				MetadataUrl:               "https://localhost",
+				MetadataUrl:               "https://madhur-test-public.s3.us-east-2.amazonaws.com/metadata.json",
 			},
-			metadataURLresponseCode: 200,
-			operatorMetadata:        metadata,
-			wantErr:                 false,
+			wantErr: false,
 		},
 		{
 			name: "valid operator validation - ZeroAddress delegation approver address",
@@ -43,11 +33,45 @@ func TestOperatorValidate(t *testing.T) {
 				DelegationApproverAddress: ZeroAddress,
 				EarningsReceiverAddress:   "0xd5e099c71b797516c10ed0f0d895f429c2781142",
 				StakerOptOutWindowBlocks:  100,
-				MetadataUrl:               "https://localhost",
+				MetadataUrl:               "https://madhur-test-public.s3.us-east-2.amazonaws.com/metadata.json",
 			},
-			metadataURLresponseCode: 200,
-			operatorMetadata:        metadata,
-			wantErr:                 false,
+			wantErr: false,
+		},
+		{
+			name: "failed operator validation - empty metadata url",
+			operator: Operator{
+				Address:                   "0xd5e099c71b797516c10ed0f0d895f429c2781142",
+				DelegationApproverAddress: "0xd5e099c71b797516c10ed0f0d895f429c2781142",
+				EarningsReceiverAddress:   "0xd5e099c71b797516c10ed0f0d895f429c2781142",
+				StakerOptOutWindowBlocks:  100,
+				MetadataUrl:               "",
+			},
+			wantErr:     true,
+			expectedErr: wrapError(ErrInvalidMetadataUrl, ErrEmptyUrl),
+		},
+		{
+			name: "failed operator validation - localhost metadata url",
+			operator: Operator{
+				Address:                   "0xd5e099c71b797516c10ed0f0d895f429c2781142",
+				DelegationApproverAddress: "0xd5e099c71b797516c10ed0f0d895f429c2781142",
+				EarningsReceiverAddress:   "0xd5e099c71b797516c10ed0f0d895f429c2781142",
+				StakerOptOutWindowBlocks:  100,
+				MetadataUrl:               "http://localhost:8080/metadata.json",
+			},
+			wantErr:     true,
+			expectedErr: wrapError(ErrInvalidMetadataUrl, ErrUrlPointingToLocalServer),
+		},
+		{
+			name: "failed operator validation - 127.0.0.1 metadata url",
+			operator: Operator{
+				Address:                   "0xd5e099c71b797516c10ed0f0d895f429c2781142",
+				DelegationApproverAddress: "0xd5e099c71b797516c10ed0f0d895f429c2781142",
+				EarningsReceiverAddress:   "0xd5e099c71b797516c10ed0f0d895f429c2781142",
+				StakerOptOutWindowBlocks:  100,
+				MetadataUrl:               "http://127.0.0.1:8080/metadata.json",
+			},
+			wantErr:     true,
+			expectedErr: wrapError(ErrInvalidMetadataUrl, ErrUrlPointingToLocalServer),
 		},
 		{
 			name: "failed operator validation - bad metadata",
@@ -56,11 +80,10 @@ func TestOperatorValidate(t *testing.T) {
 				DelegationApproverAddress: "0xd5e099c71b797516c10ed0f0d895f429c2781142",
 				EarningsReceiverAddress:   "0xd5e099c71b797516c10ed0f0d895f429c2781142",
 				StakerOptOutWindowBlocks:  100,
-				MetadataUrl:               "https://localhost",
+				MetadataUrl:               "https://example.com/metadata.json",
 			},
-			metadataURLresponseCode: 200,
-			operatorMetadata:        OperatorMetadata{},
-			wantErr:                 true,
+			wantErr:     true,
+			expectedErr: ErrUnmarshalOperatorMetadata,
 		},
 		{
 			name: "failed operator validation - wrong operator address",
@@ -69,11 +92,10 @@ func TestOperatorValidate(t *testing.T) {
 				DelegationApproverAddress: "0xd5e099c71b797516c10ed0f0d895f429c2781142",
 				EarningsReceiverAddress:   "0xd5e099c71b797516c10ed0f0d895f429c2781142",
 				StakerOptOutWindowBlocks:  100,
-				MetadataUrl:               "https://localhost",
+				MetadataUrl:               "https://example.com/metadata.json",
 			},
-			metadataURLresponseCode: 200,
-			operatorMetadata:        OperatorMetadata{},
-			wantErr:                 true,
+			wantErr:     true,
+			expectedErr: ErrInvalidOperatorAddress,
 		},
 		{
 			name: "failed operator validation - wrong earning recievers address address",
@@ -82,11 +104,10 @@ func TestOperatorValidate(t *testing.T) {
 				DelegationApproverAddress: "0xd5e099c71b797516c10ed0f0d895f429c2781142",
 				EarningsReceiverAddress:   "0xasdf",
 				StakerOptOutWindowBlocks:  100,
-				MetadataUrl:               "https://localhost",
+				MetadataUrl:               "https://example.com/metadata.json",
 			},
-			metadataURLresponseCode: 200,
-			operatorMetadata:        OperatorMetadata{},
-			wantErr:                 true,
+			wantErr:     true,
+			expectedErr: ErrInvalidEarningsReceiverAddress,
 		},
 		{
 			name: "failed operator validation - wrong DelegationApproverAddress address",
@@ -95,31 +116,16 @@ func TestOperatorValidate(t *testing.T) {
 				DelegationApproverAddress: "0x12",
 				EarningsReceiverAddress:   "0xd5e099c71b797516c10ed0f0d895f429c2781142",
 				StakerOptOutWindowBlocks:  100,
-				MetadataUrl:               "https://localhost",
+				MetadataUrl:               "https://example.com/metadata.json",
 			},
-			metadataURLresponseCode: 200,
-			operatorMetadata:        OperatorMetadata{},
-			wantErr:                 true,
+			wantErr:     true,
+			expectedErr: ErrInvalidDelegationApproverAddress,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			metadataBytes, err := json.Marshal(tt.operatorMetadata)
-			if err != nil {
-				t.Errorf("Error marshalling metadata: %v", err)
-			}
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(tt.metadataURLresponseCode)
-				_, _ = w.Write(metadataBytes)
-			}))
-			// setmetadata url to the test server
-			tt.operator.MetadataUrl = server.URL
-
-			defer server.Close()
-			if err := tt.operator.Validate(); (err != nil) != tt.wantErr {
-				t.Errorf("Operator.Validate() error = %v, wantErr %v", err, tt.wantErr)
-			}
+			assert.Equal(t, tt.expectedErr, tt.operator.Validate(), "error should be equal")
 		})
 	}
 }
