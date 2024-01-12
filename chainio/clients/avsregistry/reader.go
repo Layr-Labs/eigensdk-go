@@ -26,6 +26,11 @@ import (
 type AvsRegistryReader interface {
 	GetQuorumCount(opts *bind.CallOpts) (uint8, error)
 
+	GetOperatorsStakeInQuorumsAtCurrentBlock(
+		opts *bind.CallOpts,
+		quorumNumbers []byte,
+	) ([][]opstateretriever.OperatorStateRetrieverOperator, error)
+
 	GetOperatorsStakeInQuorumsAtBlock(
 		opts *bind.CallOpts,
 		quorumNumbers []byte,
@@ -37,11 +42,6 @@ type AvsRegistryReader interface {
 		quorumNumbers []byte,
 	) ([][]common.Address, error)
 
-	GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(
-		opts *bind.CallOpts,
-		operatorId types.OperatorId,
-	) (map[types.QuorumNum]types.StakeAmount, error)
-
 	GetOperatorsStakeInQuorumsOfOperatorAtBlock(
 		opts *bind.CallOpts,
 		operatorId types.OperatorId,
@@ -52,6 +52,11 @@ type AvsRegistryReader interface {
 		opts *bind.CallOpts,
 		operatorId types.OperatorId,
 	) ([]types.QuorumNum, [][]opstateretriever.OperatorStateRetrieverOperator, error)
+
+	GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(
+		opts *bind.CallOpts,
+		operatorId types.OperatorId,
+	) (map[types.QuorumNum]types.StakeAmount, error)
 
 	GetCheckSignaturesIndices(
 		opts *bind.CallOpts,
@@ -148,6 +153,25 @@ func BuildAvsRegistryChainReader(
 
 func (r *AvsRegistryChainReader) GetQuorumCount(opts *bind.CallOpts) (uint8, error) {
 	return r.registryCoordinator.QuorumCount(opts)
+}
+
+func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsAtCurrentBlock(
+	opts *bind.CallOpts,
+	quorumNumbers []byte,
+) ([][]opstateretriever.OperatorStateRetrieverOperator, error) {
+	if opts.Context == nil {
+		opts.Context = context.Background()
+	}
+	curBlock, err := r.ethClient.BlockNumber(opts.Context)
+	if err != nil {
+		r.logger.Error("Failed to get current block number", "err", err)
+		return nil, err
+	}
+	if curBlock > math.MaxUint32 {
+		r.logger.Error("Current block number is too large to be converted to uint32")
+		return nil, err
+	}
+	return r.GetOperatorsStakeInQuorumsAtBlock(opts, quorumNumbers, uint32(curBlock))
 }
 
 // the contract stores historical state, so blockNumber should be the block number of the state you want to query
