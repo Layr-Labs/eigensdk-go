@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	contractOperatorStateRetriever "github.com/Layr-Labs/eigensdk-go/contracts/bindings/OperatorStateRetriever"
@@ -31,10 +32,10 @@ type AvsRegistryReader interface {
 		blockNumber uint32,
 	) ([][]opstateretriever.OperatorStateRetrieverOperator, error)
 
-	GetOperatorIdsInQuorumsAtCurrentBlock(
+	GetOperatorAddrsInQuorumsAtCurrentBlock(
 		opts *bind.CallOpts,
 		quorumNumbers []byte,
-	) ([][]bls.OperatorId, error)
+	) ([][]common.Address, error)
 
 	GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(
 		opts *bind.CallOpts,
@@ -168,10 +169,10 @@ func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsAtBlock(
 	return operatorStakes, nil
 }
 
-func (r *AvsRegistryChainReader) GetOperatorIdsInQuorumsAtCurrentBlock(
+func (r *AvsRegistryChainReader) GetOperatorAddrsInQuorumsAtCurrentBlock(
 	opts *bind.CallOpts,
 	quorumNumbers []byte,
-) ([][]bls.OperatorId, error) {
+) ([][]common.Address, error) {
 	if opts.Context == nil {
 		opts.Context = context.Background()
 	}
@@ -194,15 +195,15 @@ func (r *AvsRegistryChainReader) GetOperatorIdsInQuorumsAtCurrentBlock(
 		r.logger.Error("Failed to get operators state", "err", err)
 		return nil, err
 	}
-	var quorumOperatorIds [][]bls.OperatorId
+	var quorumOperatorAddrs [][]common.Address
 	for _, quorum := range operatorStakes {
-		var operatorIds []bls.OperatorId
+		var operatorAddrs []common.Address
 		for _, operator := range quorum {
-			operatorIds = append(operatorIds, operator.OperatorId)
+			operatorAddrs = append(operatorAddrs, operator.Operator)
 		}
-		quorumOperatorIds = append(quorumOperatorIds, operatorIds)
+		quorumOperatorAddrs = append(quorumOperatorAddrs, operatorAddrs)
 	}
-	return quorumOperatorIds, nil
+	return quorumOperatorAddrs, nil
 
 }
 
