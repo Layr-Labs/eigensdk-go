@@ -46,9 +46,8 @@ EIGENLAYER_CONTRACT_PATH=$EIGENLAYER_MIDDLEWARE_PATH/lib/eigenlayer-contracts
 cd $EIGENLAYER_CONTRACT_PATH
 forge build
 
-# No idea why but EigenPod needs to be right before EigenPodManager otherwise there's a bug and
-# abigen fails...
-el_contracts="DelegationManager StrategyManager IStrategy ISlasher EigenPod EigenPodManager IERC20"
+# No idea why but the ordering of the contracts matters, and for some orderings abigen fails...
+el_contracts="DelegationManager ISlasher StrategyManager EigenPod EigenPodManager IStrategy IERC20"
 for contract in $el_contracts; do
     create_binding . $contract ../../../../bindings
 done

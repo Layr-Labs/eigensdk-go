@@ -88,6 +88,21 @@ func (mr *MockAvsRegistryReaderMockRecorder) GetOperatorId(arg0, arg1 any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOperatorId", reflect.TypeOf((*MockAvsRegistryReader)(nil).GetOperatorId), arg0, arg1)
 }
 
+// GetOperatorIdsInQuorumsAtCurrentBlock mocks base method.
+func (m *MockAvsRegistryReader) GetOperatorIdsInQuorumsAtCurrentBlock(arg0 *bind.CallOpts, arg1 []byte) ([][][32]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetOperatorIdsInQuorumsAtCurrentBlock", arg0, arg1)
+	ret0, _ := ret[0].([][][32]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetOperatorIdsInQuorumsAtCurrentBlock indicates an expected call of GetOperatorIdsInQuorumsAtCurrentBlock.
+func (mr *MockAvsRegistryReaderMockRecorder) GetOperatorIdsInQuorumsAtCurrentBlock(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOperatorIdsInQuorumsAtCurrentBlock", reflect.TypeOf((*MockAvsRegistryReader)(nil).GetOperatorIdsInQuorumsAtCurrentBlock), arg0, arg1)
+}
+
 // GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock mocks base method.
 func (m *MockAvsRegistryReader) GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(arg0 *bind.CallOpts, arg1 [32]byte) (map[byte]*big.Int, error) {
 	m.ctrl.T.Helper()
@@ -148,6 +163,21 @@ func (m *MockAvsRegistryReader) GetOperatorsStakeInQuorumsOfOperatorAtCurrentBlo
 func (mr *MockAvsRegistryReaderMockRecorder) GetOperatorsStakeInQuorumsOfOperatorAtCurrentBlock(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOperatorsStakeInQuorumsOfOperatorAtCurrentBlock", reflect.TypeOf((*MockAvsRegistryReader)(nil).GetOperatorsStakeInQuorumsOfOperatorAtCurrentBlock), arg0, arg1)
+}
+
+// GetQuorumCount mocks base method.
+func (m *MockAvsRegistryReader) GetQuorumCount(arg0 *bind.CallOpts) (byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetQuorumCount", arg0)
+	ret0, _ := ret[0].(byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetQuorumCount indicates an expected call of GetQuorumCount.
+func (mr *MockAvsRegistryReaderMockRecorder) GetQuorumCount(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetQuorumCount", reflect.TypeOf((*MockAvsRegistryReader)(nil).GetQuorumCount), arg0)
 }
 
 // IsOperatorRegistered mocks base method.

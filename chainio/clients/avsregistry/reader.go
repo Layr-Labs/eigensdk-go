@@ -172,6 +172,9 @@ func (r *AvsRegistryChainReader) GetOperatorIdsInQuorumsAtCurrentBlock(
 	opts *bind.CallOpts,
 	quorumNumbers []byte,
 ) ([][]bls.OperatorId, error) {
+	if opts.Context == nil {
+		opts.Context = context.Background()
+	}
 	curBlock, err := r.ethClient.BlockNumber(opts.Context)
 	if err != nil {
 		r.logger.Error("Failed to get current block number", "err", err)
@@ -233,6 +236,9 @@ func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsOfOperatorAtCurrentBl
 	opts *bind.CallOpts,
 	operatorId types.OperatorId,
 ) ([]types.QuorumNum, [][]opstateretriever.OperatorStateRetrieverOperator, error) {
+	if opts.Context == nil {
+		opts.Context = context.Background()
+	}
 	curBlock, err := r.ethClient.BlockNumber(opts.Context)
 	if err != nil {
 		r.logger.Error("Failed to get current block number", "err", err)
