@@ -24,6 +24,10 @@ import (
 )
 
 type AvsRegistryWriter interface {
+	// RegisterOperatorWithAVSRegistryCoordinator is used to register a single operator with the AVS's registry coordinator.
+	//  - operatorEcdsaPrivateKey is the operator's ecdsa private key (used to sign a message to register operator in eigenlayer's delegation manager)
+	//  - operatorToAvsRegistrationSigSalt is a random salt used to prevent replay attacks
+	//  - operatorToAvsRegistrationSigExpiry is the expiry time of the signature
 	RegisterOperatorWithAVSRegistryCoordinator(
 		ctx context.Context,
 		operatorEcdsaPrivateKey *ecdsa.PrivateKey,
