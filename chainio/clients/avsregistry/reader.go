@@ -404,7 +404,6 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorPubKeys(
 	for _, vLog := range logs {
 
 		// get the operator address
-		r.logger.Infof("deleteme", "vLog", vLog.Topics)
 		operatorAddr := gethcommon.HexToAddress(vLog.Topics[1].Hex())
 		operatorAddresses = append(operatorAddresses, operatorAddr)
 
