@@ -396,7 +396,7 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorPubKeys(
 		r.logger.Error("Error filtering logs", "err", err)
 		return nil, nil, err
 	}
-	r.logger.Info("logs:", "logs", logs)
+	r.logger.Info("avsRegistryChainReader.QueryExistingRegisteredOperatorPubKeys", "transactionLogs", logs)
 
 	operatorAddresses := make([]types.OperatorAddr, 0)
 	operatorPubkeys := make([]types.OperatorPubkeys, 0)
