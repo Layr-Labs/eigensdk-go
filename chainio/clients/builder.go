@@ -60,7 +60,6 @@ func BuildAll(config BuildAllConfig, signerAddr gethcommon.Address, signerFn sig
 		return nil, err
 	}
 
-	// TODO(madhur): is it fine to not set the sender address?
 	txMgr := txmgr.NewSimpleTxManager(ethHttpClient, logger, signerFn, signerAddr)
 	// creating EL clients: Reader, Writer and Subscriber
 	elChainReader, elChainWriter, err := config.buildElClients(
