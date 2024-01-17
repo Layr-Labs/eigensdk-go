@@ -15,12 +15,12 @@ import (
 )
 
 type BuildAllConfig struct {
-	EthHttpUrl                 string `yaml:"eth_http_url"`
-	EthWsUrl                   string `yaml:"eth_ws_url"`
-	RegistryCoordinatorAddr    string `yaml:"bls_registry_coordinator_address"`
-	OperatorStateRetrieverAddr string `yaml:"bls_operator_state_retriever_address"`
-	AvsName                    string `yaml:"avs_name"`
-	PromMetricsIpPortAddress   string `yaml:"prometheus_metrics_ip_port_address"`
+	EthHttpUrl                 string
+	EthWsUrl                   string
+	RegistryCoordinatorAddr    string
+	OperatorStateRetrieverAddr string
+	AvsName                    string
+	PromMetricsIpPortAddress   string
 }
 
 // TODO: this is confusing right now because clients are not instrumented clients, but
