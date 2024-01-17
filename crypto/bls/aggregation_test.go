@@ -6,12 +6,12 @@ import (
 	"strconv"
 	"testing"
 
-	loggingmock "github.com/Layr-Labs/eigensdk-go/logging/mocks"
+	loggingmock "github.com/Layr-Labs/eigensdk-go-master/logging/mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
-	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
-	"github.com/Layr-Labs/eigensdk-go/crypto/bls/mock"
+	"github.com/Layr-Labs/eigensdk-go-master/crypto/bls"
+	"github.com/Layr-Labs/eigensdk-go-master/crypto/bls/mock"
 )
 
 func TestSignatureAggregation(t *testing.T) {

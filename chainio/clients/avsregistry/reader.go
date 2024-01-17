@@ -4,15 +4,15 @@ import (
 	"math"
 	"math/big"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
-	"github.com/Layr-Labs/eigensdk-go/logging"
-	"github.com/Layr-Labs/eigensdk-go/types"
+	"github.com/Layr-Labs/eigensdk-go-master/chainio/clients/eth"
+	"github.com/Layr-Labs/eigensdk-go-master/logging"
+	"github.com/Layr-Labs/eigensdk-go-master/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
-	blsoperatorstateretriever "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSOperatorStateRetriever"
-	blsregistrycoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSRegistryCoordinatorWithIndices"
-	stakeregistry "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StakeRegistry"
+	blsoperatorstateretriever "github.com/Layr-Labs/eigensdk-go-master/contracts/bindings/BLSOperatorStateRetriever"
+	blsregistrycoordinator "github.com/Layr-Labs/eigensdk-go-master/contracts/bindings/BLSRegistryCoordinatorWithIndices"
+	stakeregistry "github.com/Layr-Labs/eigensdk-go-master/contracts/bindings/StakeRegistry"
 )
 
 type AvsRegistryReader interface {

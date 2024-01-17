@@ -6,9 +6,9 @@ import (
 	"errors"
 	"math/big"
 
-	sdkethclient "github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
-	"github.com/Layr-Labs/eigensdk-go/logging"
-	"github.com/Layr-Labs/eigensdk-go/utils"
+	sdkethclient "github.com/Layr-Labs/eigensdk-go-master/chainio/clients/eth"
+	"github.com/Layr-Labs/eigensdk-go-master/logging"
+	"github.com/Layr-Labs/eigensdk-go-master/utils"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"

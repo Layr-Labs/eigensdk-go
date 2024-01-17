@@ -1,4 +1,4 @@
-module github.com/Layr-Labs/eigensdk-go
+module github.com/Layr-Labs/eigensdk-go-master
 
 go 1.21
 

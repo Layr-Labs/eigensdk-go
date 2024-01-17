@@ -5,8 +5,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/Layr-Labs/eigensdk-go/logging"
-	"github.com/Layr-Labs/eigensdk-go/types"
+	"github.com/Layr-Labs/eigensdk-go-master/logging"
+	"github.com/Layr-Labs/eigensdk-go-master/types"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"

@@ -3,8 +3,8 @@ package utils
 import (
 	"math/big"
 
-	blspubkeycompendium "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPublicKeyCompendium"
-	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
+	blspubkeycompendium "github.com/Layr-Labs/eigensdk-go-master/contracts/bindings/BLSPublicKeyCompendium"
+	"github.com/Layr-Labs/eigensdk-go-master/crypto/bls"
 )
 
 // BINDING UTILS - conversion from contract structs to golang structs

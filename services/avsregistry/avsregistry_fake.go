@@ -5,9 +5,9 @@ import (
 	"errors"
 	"math/big"
 
-	blsoperatorstateretrievar "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSOperatorStateRetriever"
-	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
-	"github.com/Layr-Labs/eigensdk-go/types"
+	blsoperatorstateretrievar "github.com/Layr-Labs/eigensdk-go-master/contracts/bindings/BLSOperatorStateRetriever"
+	"github.com/Layr-Labs/eigensdk-go-master/crypto/bls"
+	"github.com/Layr-Labs/eigensdk-go-master/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 

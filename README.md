@@ -1,19 +1,21 @@
-![Unit Tests](https://github.com/Layr-Labs/eigensdk-go/actions/workflows/unit-tests.yml/badge.svg)
-![Linter](https://github.com/Layr-Labs/eigensdk-go/actions/workflows/golangci-lint.yml/badge.svg)
-![Go Coverage](https://github.com/Layr-Labs/eigensdk-go/wiki/coverage.svg)
+![Unit Tests](https://github.com/Layr-Labs/eigensdk-go-master/actions/workflows/unit-tests.yml/badge.svg)
+![Linter](https://github.com/Layr-Labs/eigensdk-go-master/actions/workflows/golangci-lint.yml/badge.svg)
+![Go Coverage](https://github.com/Layr-Labs/eigensdk-go-master/wiki/coverage.svg)
 
 <p align="center"><b>
-🚧 Under active development. EIGENSDK-GO is rapidly being upgraded, features are being added, interfaces will have breaking changes 🚧
+🚧 Under active development. eigensdk-go-master is rapidly being upgraded, features are being added, interfaces will have breaking changes 🚧
 </b><p>
 
 **Do not use it in Production, testnet only.**
+
+NOTE: THIS BRANCH IS ONLY CREATED TO BE USED FOR EIGENCERT TESTING. DO NOT USE IT FOR ANY OTHER PURPOSE. It's got eigensdk-go replaced with eigensdk-go-master everywhere so as to prevent conflicts.
 
 ## EigenSDK
 This SDK provides a set of primitive Go modules for developing AVSs used in EigenLayer
 
 ## Installation
 ```
-go get github.com/Layr-Labs/eigensdk-go
+go get github.com/Layr-Labs/eigensdk-go-master
 ```
 
 ## Modules
@@ -27,14 +29,14 @@ We support following modules right now.
 ## Development
 Clone the repo
 ```
-git clone https://github.com/Layr-Labs/eigensdk-go.git
+git clone https://github.com/Layr-Labs/eigensdk-go-master.git
 ```
 Initialize git submodules
 ```
 git submodule update --init
 ```
 
-Follow the [contribution guidelines](CONTRIBUTING.md) to contribute to eigensdk-go
+Follow the [contribution guidelines](CONTRIBUTING.md) to contribute to eigensdk-go-master
 
 ## Security Bugs
 Please report security vulnerabilities to security@eigenlabs.org. Do NOT report security bugs via Github Issues.

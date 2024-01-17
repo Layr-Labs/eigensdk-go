@@ -3,19 +3,19 @@
 package utils
 
 import (
-	"github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go-master/logging"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
-	blsoperatorstateretriever "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSOperatorStateRetriever"
-	blspubkeyregistry "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPubkeyRegistry"
-	blspubkeycompendium "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPublicKeyCompendium"
-	blsregistrycoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSRegistryCoordinatorWithIndices"
-	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
-	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/Slasher"
-	stakeregistry "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StakeRegistry"
-	strategymanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StrategyManager"
+	"github.com/Layr-Labs/eigensdk-go-master/chainio/clients/eth"
+	blsoperatorstateretriever "github.com/Layr-Labs/eigensdk-go-master/contracts/bindings/BLSOperatorStateRetriever"
+	blspubkeyregistry "github.com/Layr-Labs/eigensdk-go-master/contracts/bindings/BLSPubkeyRegistry"
+	blspubkeycompendium "github.com/Layr-Labs/eigensdk-go-master/contracts/bindings/BLSPublicKeyCompendium"
+	blsregistrycoordinator "github.com/Layr-Labs/eigensdk-go-master/contracts/bindings/BLSRegistryCoordinatorWithIndices"
+	delegationmanager "github.com/Layr-Labs/eigensdk-go-master/contracts/bindings/DelegationManager"
+	slasher "github.com/Layr-Labs/eigensdk-go-master/contracts/bindings/Slasher"
+	stakeregistry "github.com/Layr-Labs/eigensdk-go-master/contracts/bindings/StakeRegistry"
+	strategymanager "github.com/Layr-Labs/eigensdk-go-master/contracts/bindings/StrategyManager"
 )
 
 // Unclear to me why geth bindings don't store and expose the contract address...

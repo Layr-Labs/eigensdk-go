@@ -7,7 +7,7 @@ Features:
 ### How to install
 #### Install from source
 ```bash
-   go install github.com/Layr-Labs/eigensdk-go/cmd/egnkey@latest
+   go install github.com/Layr-Labs/eigensdk-go-master/cmd/egnkey@latest
 ```
 
 #### Build from source

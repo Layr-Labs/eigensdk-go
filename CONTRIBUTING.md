@@ -1,17 +1,17 @@
-# Contributing to eigensdk-go
+# Contributing to eigensdk-go-master
 
 
 ### Code of Conduct
 
-Have you read the [code of conduct](https://github.com/Layr-Labs/eigensdk-go/blob/main/CODE_OF_CONDUCT.md)?
+Have you read the [code of conduct](https://github.com/Layr-Labs/eigensdk-go-master/blob/main/CODE_OF_CONDUCT.md)?
 
 ## Bugs and Feature Request
 
-Before you make your changes, check to see if an [issue](https://github.com/Layr-Labs/eigensdk-go/issues) exists already for the change you want to make.
+Before you make your changes, check to see if an [issue](https://github.com/Layr-Labs/eigensdk-go-master/issues) exists already for the change you want to make.
 
 ### Don't see your issue? Open one
 
-If you spot something new, open an issue using a [template](https://github.com/Layr-Labs/eigensdk-go/issues/new/choose). We'll use the issue to have a conversation about the problem you want to fix.
+If you spot something new, open an issue using a [template](https://github.com/Layr-Labs/eigensdk-go-master/issues/new/choose). We'll use the issue to have a conversation about the problem you want to fix.
 
 ### Open a Pull Request
 Before making a pull request, please fork the repository and create a new branch.
@@ -34,7 +34,7 @@ Please do:
 
 * **DO** give priority to the current style of the project or file you're changing even if it diverges from the general guidelines.
 * **DO** include tests when adding new features. When fixing bugs, start with adding a test that highlights how the current behavior is broken.
-* **DO** especially follow our rules in the [Contributing](https://github.com/Layr-Labs/eigensdk-go/blob/master/CODE_OF_CONDUCT.md#contributing) section of our code of conduct.
+* **DO** especially follow our rules in the [Contributing](https://github.com/Layr-Labs/eigensdk-go-master/blob/master/CODE_OF_CONDUCT.md#contributing) section of our code of conduct.
 * **DO** write idiomatic golang code 
 
 Please do not:

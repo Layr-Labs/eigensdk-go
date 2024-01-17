@@ -6,15 +6,15 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/mocks"
-	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
-	"github.com/Layr-Labs/eigensdk-go/logging"
-	"github.com/Layr-Labs/eigensdk-go/types"
+	"github.com/Layr-Labs/eigensdk-go-master/chainio/mocks"
+	"github.com/Layr-Labs/eigensdk-go-master/crypto/bls"
+	"github.com/Layr-Labs/eigensdk-go-master/logging"
+	"github.com/Layr-Labs/eigensdk-go-master/types"
 	"github.com/ethereum/go-ethereum/common"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
 	"go.uber.org/mock/gomock"
 
-	pubkeycompendiumbindings "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPublicKeyCompendium"
+	pubkeycompendiumbindings "github.com/Layr-Labs/eigensdk-go-master/contracts/bindings/BLSPublicKeyCompendium"
 )
 
 type testOperator struct {

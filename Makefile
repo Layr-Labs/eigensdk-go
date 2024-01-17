@@ -32,7 +32,7 @@ godoc: ## runs godoc server and opens in browser
 	@echo "Godoc server started!"
 	@echo "Opening localhost page..."
 	@sleep 1 # wait for godoc to start
-	@open http://localhost:$(godoc-port)/pkg/github.com/Layr-Labs/eigensdk-go/ || xdg-open http://localhost:$(godoc-port)/pkg/github.com/Layr-Labs/eigensdk-go/
+	@open http://localhost:$(godoc-port)/pkg/github.com/Layr-Labs/eigensdk-go-master/ || xdg-open http://localhost:$(godoc-port)/pkg/github.com/Layr-Labs/eigensdk-go-master/
 	@echo "Press CTRL+C to stop the godoc server..."
 	@# The trap command ensures that, when the script exits (e.g., due to CTRL+C), it will kill the godoc process using the PID saved in the godoc.pid file.
 	@# The read varname command will keep the make command running (waiting for input) until you press CTRL+C.

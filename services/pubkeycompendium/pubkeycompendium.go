@@ -3,7 +3,7 @@ package pubkeycompendium
 import (
 	"context"
 
-	"github.com/Layr-Labs/eigensdk-go/types"
+	"github.com/Layr-Labs/eigensdk-go-master/types"
 	"github.com/ethereum/go-ethereum/common"
 )
 

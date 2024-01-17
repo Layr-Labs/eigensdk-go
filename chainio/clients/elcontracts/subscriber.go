@@ -4,8 +4,8 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/event"
 
-	pubkeycompendium "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPublicKeyCompendium"
-	"github.com/Layr-Labs/eigensdk-go/logging"
+	pubkeycompendium "github.com/Layr-Labs/eigensdk-go-master/contracts/bindings/BLSPublicKeyCompendium"
+	"github.com/Layr-Labs/eigensdk-go-master/logging"
 )
 
 type ELSubscriber interface {

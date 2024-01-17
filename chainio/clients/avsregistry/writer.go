@@ -4,16 +4,16 @@ import (
 	"context"
 	"errors"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
-	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
-	"github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go-master/chainio/clients/eth"
+	"github.com/Layr-Labs/eigensdk-go-master/chainio/txmgr"
+	"github.com/Layr-Labs/eigensdk-go-master/logging"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 
-	blsoperatorstateretriever "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSOperatorStateRetriever"
-	blspubkeyregistry "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPubkeyRegistry"
-	blsregistrycoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSRegistryCoordinatorWithIndices"
-	stakeregistry "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StakeRegistry"
+	blsoperatorstateretriever "github.com/Layr-Labs/eigensdk-go-master/contracts/bindings/BLSOperatorStateRetriever"
+	blspubkeyregistry "github.com/Layr-Labs/eigensdk-go-master/contracts/bindings/BLSPubkeyRegistry"
+	blsregistrycoordinator "github.com/Layr-Labs/eigensdk-go-master/contracts/bindings/BLSRegistryCoordinatorWithIndices"
+	stakeregistry "github.com/Layr-Labs/eigensdk-go-master/contracts/bindings/StakeRegistry"
 )
 
 type AvsRegistryWriter interface {

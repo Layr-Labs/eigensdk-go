@@ -4,12 +4,12 @@ import (
 	"context"
 	"math/big"
 
-	avsregistry "github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
-	elcontracts "github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
-	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
-	"github.com/Layr-Labs/eigensdk-go/logging"
-	pcservice "github.com/Layr-Labs/eigensdk-go/services/pubkeycompendium"
-	"github.com/Layr-Labs/eigensdk-go/types"
+	avsregistry "github.com/Layr-Labs/eigensdk-go-master/chainio/clients/avsregistry"
+	elcontracts "github.com/Layr-Labs/eigensdk-go-master/chainio/clients/elcontracts"
+	"github.com/Layr-Labs/eigensdk-go-master/crypto/bls"
+	"github.com/Layr-Labs/eigensdk-go-master/logging"
+	pcservice "github.com/Layr-Labs/eigensdk-go-master/services/pubkeycompendium"
+	"github.com/Layr-Labs/eigensdk-go-master/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 

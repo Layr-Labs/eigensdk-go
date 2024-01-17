@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	bn254utils "github.com/Layr-Labs/eigensdk-go/crypto/bn254"
+	bn254utils "github.com/Layr-Labs/eigensdk-go-master/crypto/bn254"
 
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fp"

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/Layr-Labs/eigensdk-go/crypto/ecdsa"
+	"github.com/Layr-Labs/eigensdk-go-master/crypto/ecdsa"
 	"github.com/urfave/cli/v2"
 )
 

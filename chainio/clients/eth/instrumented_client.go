@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"time"
 
-	rpccalls "github.com/Layr-Labs/eigensdk-go/metrics/collectors/rpc_calls"
+	rpccalls "github.com/Layr-Labs/eigensdk-go-master/metrics/collectors/rpc_calls"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"

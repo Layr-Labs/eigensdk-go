@@ -7,8 +7,8 @@ import (
 	"math/big"
 	"net/http"
 
-	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
-	"github.com/Layr-Labs/eigensdk-go/utils"
+	"github.com/Layr-Labs/eigensdk-go-master/crypto/bls"
+	"github.com/Layr-Labs/eigensdk-go-master/utils"
 	"github.com/ethereum/go-ethereum/common"
 )
 

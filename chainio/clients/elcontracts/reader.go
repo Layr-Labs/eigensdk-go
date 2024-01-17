@@ -11,19 +11,19 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
-	chainioutils "github.com/Layr-Labs/eigensdk-go/chainio/utils"
-	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
-	"github.com/Layr-Labs/eigensdk-go/logging"
-	"github.com/Layr-Labs/eigensdk-go/types"
-	eigenabi "github.com/Layr-Labs/eigensdk-go/types/abi"
+	"github.com/Layr-Labs/eigensdk-go-master/chainio/clients/eth"
+	chainioutils "github.com/Layr-Labs/eigensdk-go-master/chainio/utils"
+	"github.com/Layr-Labs/eigensdk-go-master/crypto/bls"
+	"github.com/Layr-Labs/eigensdk-go-master/logging"
+	"github.com/Layr-Labs/eigensdk-go-master/types"
+	eigenabi "github.com/Layr-Labs/eigensdk-go-master/types/abi"
 
-	blspkcompendium "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPublicKeyCompendium"
-	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
-	erc20 "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IERC20"
-	strategy "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IStrategy"
-	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/Slasher"
-	strategymanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StrategyManager"
+	blspkcompendium "github.com/Layr-Labs/eigensdk-go-master/contracts/bindings/BLSPublicKeyCompendium"
+	delegationmanager "github.com/Layr-Labs/eigensdk-go-master/contracts/bindings/DelegationManager"
+	erc20 "github.com/Layr-Labs/eigensdk-go-master/contracts/bindings/IERC20"
+	strategy "github.com/Layr-Labs/eigensdk-go-master/contracts/bindings/IStrategy"
+	slasher "github.com/Layr-Labs/eigensdk-go-master/contracts/bindings/Slasher"
+	strategymanager "github.com/Layr-Labs/eigensdk-go-master/contracts/bindings/StrategyManager"
 )
 
 type ELReader interface {

@@ -52,7 +52,7 @@ runs:
         git diff-index --quiet HEAD && exit
         git config --local user.name  "GitHub Action"
         git config --local user.email "action@github.com"
-        git remote set-url --push origin https://${{ github.token }}@github.com/Layr-Labs/eigensdk-go.wiki.git
+        git remote set-url --push origin https://${{ github.token }}@github.com/Layr-Labs/eigensdk-go-master.wiki.git
         test ${{inputs.amend}} == "true" && \
           git commit --amend --no-edit   && git push --force-with-lease || \
-          git commit -m "Update coverage" && git push https://${{ github.token }}@github.com/Layr-Labs/eigensdk-go.wiki.git
+          git commit -m "Update coverage" && git push https://${{ github.token }}@github.com/Layr-Labs/eigensdk-go-master.wiki.git

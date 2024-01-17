@@ -6,7 +6,7 @@ import (
 	"errors"
 	"math/big"
 
-	sdkEcdsa "github.com/Layr-Labs/eigensdk-go/crypto/ecdsa"
+	sdkEcdsa "github.com/Layr-Labs/eigensdk-go-master/crypto/ecdsa"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"

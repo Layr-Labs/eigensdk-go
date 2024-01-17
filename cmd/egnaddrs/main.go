@@ -13,10 +13,10 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/urfave/cli/v2"
 
-	blspubkeyreg "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPubkeyRegistry"
-	blsregistrycoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSRegistryCoordinatorWithIndices"
-	iblssigchecker "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IBLSSignatureChecker"
-	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/Slasher"
+	blspubkeyreg "github.com/Layr-Labs/eigensdk-go-master/contracts/bindings/BLSPubkeyRegistry"
+	blsregistrycoordinator "github.com/Layr-Labs/eigensdk-go-master/contracts/bindings/BLSRegistryCoordinatorWithIndices"
+	iblssigchecker "github.com/Layr-Labs/eigensdk-go-master/contracts/bindings/IBLSSignatureChecker"
+	slasher "github.com/Layr-Labs/eigensdk-go-master/contracts/bindings/Slasher"
 )
 
 var (
