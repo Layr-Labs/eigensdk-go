@@ -163,6 +163,9 @@ func BuildAvsRegistryChainWriter(
 // TODO(samlaf): clean up this function
 func (w *AvsRegistryChainWriter) RegisterOperatorWithAVSRegistryCoordinator(
 	ctx context.Context,
+	// we need to pass the private key explicitly and can't use the signer because registering requires signing a message which isn't a transaction
+	// and the signer can only signs transactions
+	// see operatorSignature in https://github.com/Layr-Labs/eigenlayer-middleware/blob/m2-mainnet/docs/RegistryCoordinator.md#registeroperator
 	operatorEcdsaPrivateKey *ecdsa.PrivateKey,
 	operatorToAvsRegistrationSigSalt [32]byte,
 	operatorToAvsRegistrationSigExpiry *big.Int,
