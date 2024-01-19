@@ -24,11 +24,13 @@ import (
 )
 
 type AvsRegistryWriter interface {
-	// RegisterOperatorWithAVSRegistryCoordinator is used to register a single operator with the AVS's registry coordinator.
+	// TODO(samlaf): an operator that is already registered in a quorum can register with another quorum without passing signatures
+	//               perhaps we should add another sdk function for this purpose, that just takes in a quorumNumber and socket?
+	// RegisterOperatorInQuorumWithAVSRegistryCoordinator is used to register a single operator with the AVS's registry coordinator.
 	//  - operatorEcdsaPrivateKey is the operator's ecdsa private key (used to sign a message to register operator in eigenlayer's delegation manager)
 	//  - operatorToAvsRegistrationSigSalt is a random salt used to prevent replay attacks
 	//  - operatorToAvsRegistrationSigExpiry is the expiry time of the signature
-	RegisterOperatorWithAVSRegistryCoordinator(
+	RegisterOperatorInQuorumWithAVSRegistryCoordinator(
 		ctx context.Context,
 		operatorEcdsaPrivateKey *ecdsa.PrivateKey,
 		operatorToAvsRegistrationSigSalt [32]byte,
@@ -161,7 +163,7 @@ func BuildAvsRegistryChainWriter(
 }
 
 // TODO(samlaf): clean up this function
-func (w *AvsRegistryChainWriter) RegisterOperatorWithAVSRegistryCoordinator(
+func (w *AvsRegistryChainWriter) RegisterOperatorInQuorumWithAVSRegistryCoordinator(
 	ctx context.Context,
 	// we need to pass the private key explicitly and can't use the signer because registering requires signing a message which isn't a transaction
 	// and the signer can only signs transactions
