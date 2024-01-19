@@ -6,7 +6,6 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	chainioutils "github.com/Layr-Labs/eigensdk-go/chainio/utils"
-	blspubkeycompendium "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPublicKeyCompendium"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/metrics"
 	"github.com/Layr-Labs/eigensdk-go/signerv2"
@@ -16,12 +15,12 @@ import (
 )
 
 type BuildAllConfig struct {
-	EthHttpUrl                    string `yaml:"eth_http_url"`
-	EthWsUrl                      string `yaml:"eth_ws_url"`
-	BlsRegistryCoordinatorAddr    string `yaml:"bls_registry_coordinator_address"`
-	BlsOperatorStateRetrieverAddr string `yaml:"bls_operator_state_retriever_address"`
-	AvsName                       string `yaml:"avs_name"`
-	PromMetricsIpPortAddress      string `yaml:"prometheus_metrics_ip_port_address"`
+	EthHttpUrl                 string
+	EthWsUrl                   string
+	RegistryCoordinatorAddr    string
+	OperatorStateRetrieverAddr string
+	AvsName                    string
+	PromMetricsIpPortAddress   string
 }
 
 // TODO: this is confusing right now because clients are not instrumented clients, but
@@ -30,18 +29,18 @@ type BuildAllConfig struct {
 // for non-instrumented clients that doesn't return metrics/reg, and another instrumented-constructor
 // that returns instrumented clients and the metrics/reg.
 type Clients struct {
-	AvsRegistryChainReader avsregistry.AvsRegistryReader
-	AvsRegistryChainWriter avsregistry.AvsRegistryWriter
-	ElChainReader          elcontracts.ELReader
-	ElChainSubscriber      elcontracts.ELSubscriber
-	ElChainWriter          elcontracts.ELWriter
-	EthHttpClient          *eth.Client
-	EthWsClient            *eth.Client
-	Metrics                *metrics.EigenMetrics // exposes main avs node spec metrics that need to be incremented by avs code and used to start the metrics server
-	PrometheusRegistry     *prometheus.Registry  // Used if avs teams need to register avs-specific metrics
+	AvsRegistryChainReader     *avsregistry.AvsRegistryChainReader
+	AvsRegistryChainSubscriber *avsregistry.AvsRegistryChainSubscriber
+	AvsRegistryChainWriter     *avsregistry.AvsRegistryChainWriter
+	ElChainReader              *elcontracts.ELChainReader
+	ElChainWriter              *elcontracts.ELChainWriter
+	EthHttpClient              *eth.Client
+	EthWsClient                *eth.Client
+	Metrics                    *metrics.EigenMetrics // exposes main avs node spec metrics that need to be incremented by avs code and used to start the metrics server
+	PrometheusRegistry         *prometheus.Registry  // Used if avs teams need to register avs-specific metrics
 }
 
-func BuildAll(config BuildAllConfig, signer signerv2.SignerFn, logger logging.Logger) (*Clients, error) {
+func BuildAll(config BuildAllConfig, signerAddr gethcommon.Address, signerFn signerv2.SignerFn, logger logging.Logger) (*Clients, error) {
 	config.validate(logger)
 
 	// Create the metrics server
@@ -61,11 +60,10 @@ func BuildAll(config BuildAllConfig, signer signerv2.SignerFn, logger logging.Lo
 		return nil, err
 	}
 
-	txMgr := txmgr.NewSimpleTxManager(ethHttpClient, logger, signer, gethcommon.Address{})
+	txMgr := txmgr.NewSimpleTxManager(ethHttpClient, logger, signerFn, signerAddr)
 	// creating EL clients: Reader, Writer and Subscriber
-	elChainReader, elChainWriter, elChainSubscriber, err := config.buildElClients(
+	elChainReader, elChainWriter, err := config.buildElClients(
 		ethHttpClient,
-		ethWsClient,
 		txMgr,
 		logger,
 		eigenMetrics,
@@ -76,8 +74,10 @@ func BuildAll(config BuildAllConfig, signer signerv2.SignerFn, logger logging.Lo
 	}
 
 	// creating AVS clients: Reader and Writer
-	avsRegistryChainReader, avsRegistryChainWriter, err := config.buildAvsClients(
+	avsRegistryChainReader, avsRegistryChainSubscriber, avsRegistryChainWriter, err := config.buildAvsClients(
+		elChainReader,
 		ethHttpClient,
+		ethWsClient,
 		txMgr,
 		logger,
 	)
@@ -87,52 +87,50 @@ func BuildAll(config BuildAllConfig, signer signerv2.SignerFn, logger logging.Lo
 	}
 
 	return &Clients{
-		ElChainReader:          elChainReader,
-		ElChainSubscriber:      elChainSubscriber,
-		ElChainWriter:          elChainWriter,
-		AvsRegistryChainReader: avsRegistryChainReader,
-		AvsRegistryChainWriter: avsRegistryChainWriter,
-		EthHttpClient:          ethHttpClient,
-		EthWsClient:            ethWsClient,
-		Metrics:                eigenMetrics,
-		PrometheusRegistry:     promReg,
+		ElChainReader:              elChainReader,
+		ElChainWriter:              elChainWriter,
+		AvsRegistryChainReader:     avsRegistryChainReader,
+		AvsRegistryChainSubscriber: avsRegistryChainSubscriber,
+		AvsRegistryChainWriter:     avsRegistryChainWriter,
+		EthHttpClient:              ethHttpClient,
+		EthWsClient:                ethWsClient,
+		Metrics:                    eigenMetrics,
+		PrometheusRegistry:         promReg,
 	}, nil
 
 }
 
 func (config *BuildAllConfig) buildElClients(
 	ethHttpClient eth.EthClient,
-	ethWsClient eth.EthClient,
 	txMgr txmgr.TxManager,
 	logger logging.Logger,
 	eigenMetrics *metrics.EigenMetrics,
-) (elcontracts.ELReader, elcontracts.ELWriter, elcontracts.ELSubscriber, error) {
+) (*elcontracts.ELChainReader, *elcontracts.ELChainWriter, error) {
 
 	avsRegistryContractBindings, err := chainioutils.NewAVSRegistryContractBindings(
-		gethcommon.HexToAddress(config.BlsRegistryCoordinatorAddr),
-		gethcommon.HexToAddress(config.BlsOperatorStateRetrieverAddr),
+		gethcommon.HexToAddress(config.RegistryCoordinatorAddr),
+		gethcommon.HexToAddress(config.OperatorStateRetrieverAddr),
 		ethHttpClient,
 		logger,
 	)
 	if err != nil {
 		logger.Error("Failed to create AVSRegistryContractBindings", "err", err)
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
-	slasherAddr, err := avsRegistryContractBindings.RegistryCoordinator.Slasher(&bind.CallOpts{})
+	delegationManagerAddr, err := avsRegistryContractBindings.StakeRegistry.Delegation(&bind.CallOpts{})
 	if err != nil {
 		logger.Fatal("Failed to fetch Slasher contract", "err", err)
 	}
 
 	elContractBindings, err := chainioutils.NewEigenlayerContractBindings(
-		slasherAddr,
-		avsRegistryContractBindings.BlsPubkeyCompendiumAddr,
+		delegationManagerAddr,
 		ethHttpClient,
 		logger,
 	)
 	if err != nil {
 		logger.Error("Failed to create EigenlayerContractBindings", "err", err)
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
 	// get the Reader for the EL contracts
@@ -140,36 +138,15 @@ func (config *BuildAllConfig) buildElClients(
 		elContractBindings.Slasher,
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
-		elContractBindings.BlsPubkeyCompendium,
-		elContractBindings.BlspubkeyCompendiumAddr,
 		logger,
 		ethHttpClient,
 	)
-
-	// get the Subscriber for the EL contracts
-	contractBlsPubkeyCompendiumWs, err := blspubkeycompendium.NewContractBLSPublicKeyCompendium(
-		elContractBindings.BlspubkeyCompendiumAddr,
-		ethWsClient,
-	)
-	if err != nil {
-		logger.Fatal("Failed to fetch BLSPublicKeyCompendium contract", "err", err)
-	}
-	elChainSubscriber, err := elcontracts.NewELChainSubscriber(
-		contractBlsPubkeyCompendiumWs,
-		logger,
-	)
-	if err != nil {
-		logger.Error("Failed to create ELChainSubscriber", "err", err)
-		return nil, nil, nil, err
-	}
 
 	elChainWriter := elcontracts.NewELChainWriter(
 		elContractBindings.Slasher,
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
 		elContractBindings.StrategyManagerAddr,
-		elContractBindings.BlsPubkeyCompendium,
-		elContractBindings.BlspubkeyCompendiumAddr,
 		elChainReader,
 		ethHttpClient,
 		logger,
@@ -178,57 +155,70 @@ func (config *BuildAllConfig) buildElClients(
 	)
 	if err != nil {
 		logger.Error("Failed to create ELChainWriter", "err", err)
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 
-	return elChainReader, elChainWriter, elChainSubscriber, nil
+	return elChainReader, elChainWriter, nil
 }
 
 func (config *BuildAllConfig) buildAvsClients(
+	elReader elcontracts.ELReader,
 	ethHttpClient eth.EthClient,
+	ethWsClient eth.EthClient,
 	txMgr txmgr.TxManager,
 	logger logging.Logger,
-) (avsregistry.AvsRegistryReader, avsregistry.AvsRegistryWriter, error) {
+) (*avsregistry.AvsRegistryChainReader, *avsregistry.AvsRegistryChainSubscriber, *avsregistry.AvsRegistryChainWriter, error) {
 
 	avsRegistryContractBindings, err := chainioutils.NewAVSRegistryContractBindings(
-		gethcommon.HexToAddress(config.BlsRegistryCoordinatorAddr),
-		gethcommon.HexToAddress(config.BlsOperatorStateRetrieverAddr),
+		gethcommon.HexToAddress(config.RegistryCoordinatorAddr),
+		gethcommon.HexToAddress(config.OperatorStateRetrieverAddr),
 		ethHttpClient,
 		logger,
 	)
 	if err != nil {
 		logger.Error("Failed to create AVSRegistryContractBindings", "err", err)
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
-	avsRegistryChainReader, err := avsregistry.NewAvsRegistryReader(
+	avsRegistryChainReader := avsregistry.NewAvsRegistryChainReader(
 		avsRegistryContractBindings.RegistryCoordinatorAddr,
+		avsRegistryContractBindings.BlsApkRegistryAddr,
 		avsRegistryContractBindings.RegistryCoordinator,
-		avsRegistryContractBindings.BlsOperatorStateRetriever,
+		avsRegistryContractBindings.OperatorStateRetriever,
 		avsRegistryContractBindings.StakeRegistry,
 		logger,
 		ethHttpClient,
 	)
-	if err != nil {
-		logger.Error("Failed to create AVSRegistryChainReader", "err", err)
-		return nil, nil, err
-	}
 
-	avsRegistryChainWriter, err := avsregistry.NewAvsRegistryWriter(
+	avsRegistryChainWriter, err := avsregistry.NewAvsRegistryChainWriter(
+		avsRegistryContractBindings.ServiceManagerAddr,
 		avsRegistryContractBindings.RegistryCoordinator,
-		avsRegistryContractBindings.BlsOperatorStateRetriever,
+		avsRegistryContractBindings.OperatorStateRetriever,
 		avsRegistryContractBindings.StakeRegistry,
-		avsRegistryContractBindings.BlsPubkeyRegistry,
+		avsRegistryContractBindings.BlsApkRegistry,
+		elReader,
 		logger,
 		ethHttpClient,
 		txMgr,
 	)
 	if err != nil {
 		logger.Error("Failed to create AVSRegistryChainWriter", "err", err)
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
-	return avsRegistryChainReader, avsRegistryChainWriter, nil
+	// get the Subscriber for Avs Registry contracts
+	// note that the subscriber needs a ws connection instead of http
+	avsRegistrySubscriber, err := avsregistry.BuildAvsRegistryChainSubscriber(
+		avsRegistryContractBindings.BlsApkRegistryAddr,
+		ethWsClient,
+		logger,
+	)
+	if err != nil {
+		logger.Error("Failed to create ELChainSubscriber", "err", err)
+		return nil, nil, nil, err
+	}
+
+	return avsRegistryChainReader, avsRegistrySubscriber, avsRegistryChainWriter, nil
 }
 
 // Very basic validation that makes sure all fields are nonempty
@@ -241,10 +231,10 @@ func (config *BuildAllConfig) validate(logger logging.Logger) {
 	if config.EthWsUrl == "" {
 		logger.Fatalf("BuildAllConfig.validate: Missing eth ws url")
 	}
-	if config.BlsRegistryCoordinatorAddr == "" {
+	if config.RegistryCoordinatorAddr == "" {
 		logger.Fatalf("BuildAllConfig.validate: Missing bls registry coordinator address")
 	}
-	if config.BlsOperatorStateRetrieverAddr == "" {
+	if config.OperatorStateRetrieverAddr == "" {
 		logger.Fatalf("BuildAllConfig.validate: Missing bls operator state retriever address")
 	}
 	if config.AvsName == "" {

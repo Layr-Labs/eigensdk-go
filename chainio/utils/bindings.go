@@ -8,12 +8,12 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
-	blsoperatorstateretriever "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSOperatorStateRetriever"
-	blspubkeyregistry "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPubkeyRegistry"
-	blspubkeycompendium "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSPublicKeyCompendium"
-	blsregistrycoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSRegistryCoordinatorWithIndices"
+	blsapkregistry "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSApkRegistry"
 	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
-	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/Slasher"
+	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/ISlasher"
+	opstateretriever "github.com/Layr-Labs/eigensdk-go/contracts/bindings/OperatorStateRetriever"
+	regcoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
+	servicemanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/ServiceManagerBase"
 	stakeregistry "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StakeRegistry"
 	strategymanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StrategyManager"
 )
@@ -21,30 +21,37 @@ import (
 // Unclear to me why geth bindings don't store and expose the contract address...
 // so we also store them here in case the different constructors that use this struct need them
 type EigenlayerContractBindings struct {
-	SlasherAddr             gethcommon.Address
-	StrategyManagerAddr     gethcommon.Address
-	DelegationManagerAddr   gethcommon.Address
-	BlspubkeyCompendiumAddr gethcommon.Address
-	Slasher                 *slasher.ContractSlasher
-	DelegationManager       *delegationmanager.ContractDelegationManager
-	StrategyManager         *strategymanager.ContractStrategyManager
-	// TODO: should this really be here? or moved to avs bindings
-	BlsPubkeyCompendium *blspubkeycompendium.ContractBLSPublicKeyCompendium
+	SlasherAddr           gethcommon.Address
+	StrategyManagerAddr   gethcommon.Address
+	DelegationManagerAddr gethcommon.Address
+	Slasher               *slasher.ContractISlasher
+	DelegationManager     *delegationmanager.ContractDelegationManager
+	StrategyManager       *strategymanager.ContractStrategyManager
 }
 
 func NewEigenlayerContractBindings(
-	slasherAddr gethcommon.Address,
-	blsPubKeyCompendiumAddr gethcommon.Address,
+	delegationManagerAddr gethcommon.Address,
 	ethclient eth.EthClient,
 	logger logging.Logger,
 ) (*EigenlayerContractBindings, error) {
-	contractSlasher, err := slasher.NewContractSlasher(slasherAddr, ethclient)
+	contractDelegationManager, err := delegationmanager.NewContractDelegationManager(delegationManagerAddr, ethclient)
+	if err != nil {
+		logger.Error("Failed to fetch DelegationManager contract", "err", err)
+		return nil, err
+	}
+
+	slasherAddr, err := contractDelegationManager.Slasher(&bind.CallOpts{})
+	if err != nil {
+		logger.Error("Failed to fetch Slasher address", "err", err)
+		return nil, err
+	}
+	contractSlasher, err := slasher.NewContractISlasher(slasherAddr, ethclient)
 	if err != nil {
 		logger.Error("Failed to fetch Slasher contract", "err", err)
 		return nil, err
 	}
 
-	strategyManagerAddr, err := contractSlasher.StrategyManager(&bind.CallOpts{})
+	strategyManagerAddr, err := contractDelegationManager.StrategyManager(&bind.CallOpts{})
 	if err != nil {
 		logger.Error("Failed to fetch StrategyManager address", "err", err)
 		return nil, err
@@ -54,35 +61,14 @@ func NewEigenlayerContractBindings(
 		logger.Error("Failed to fetch StrategyManager contract", "err", err)
 		return nil, err
 	}
-	delegationManagerAddr, err := contractSlasher.Delegation(&bind.CallOpts{})
-	if err != nil {
-		logger.Error("Failed to fetch DelegationManager address", "err", err)
-		return nil, err
-	}
-	contractDelegationManager, err := delegationmanager.NewContractDelegationManager(delegationManagerAddr, ethclient)
-	if err != nil {
-		logger.Error("Failed to fetch DelegationManager contract", "err", err)
-		return nil, err
-	}
-
-	contractBlsCompendium, err := blspubkeycompendium.NewContractBLSPublicKeyCompendium(
-		blsPubKeyCompendiumAddr,
-		ethclient,
-	)
-	if err != nil {
-		logger.Error("Failed to fetch BLSPublicKeyCompendium contract", "err", err)
-		return nil, err
-	}
 
 	return &EigenlayerContractBindings{
-		SlasherAddr:             slasherAddr,
-		StrategyManagerAddr:     strategyManagerAddr,
-		DelegationManagerAddr:   delegationManagerAddr,
-		BlspubkeyCompendiumAddr: blsPubKeyCompendiumAddr,
-		Slasher:                 contractSlasher,
-		StrategyManager:         contractStrategyManager,
-		DelegationManager:       contractDelegationManager,
-		BlsPubkeyCompendium:     contractBlsCompendium,
+		SlasherAddr:           slasherAddr,
+		StrategyManagerAddr:   strategyManagerAddr,
+		DelegationManagerAddr: delegationManagerAddr,
+		Slasher:               contractSlasher,
+		StrategyManager:       contractStrategyManager,
+		DelegationManager:     contractDelegationManager,
 	}, nil
 }
 
@@ -90,31 +76,45 @@ func NewEigenlayerContractBindings(
 // so we also store them here in case the different constructors that use this struct need them
 type AvsRegistryContractBindings struct {
 	// contract addresses
-	RegistryCoordinatorAddr gethcommon.Address
-	StakeRegistryAddr       gethcommon.Address
-	BlsPubkeyRegistryAddr   gethcommon.Address
-	BlsPubkeyCompendiumAddr gethcommon.Address
-	OperatorStateRetriever  gethcommon.Address
+	ServiceManagerAddr         gethcommon.Address
+	RegistryCoordinatorAddr    gethcommon.Address
+	StakeRegistryAddr          gethcommon.Address
+	BlsApkRegistryAddr         gethcommon.Address
+	OperatorStateRetrieverAddr gethcommon.Address
 	// contract bindings
-	RegistryCoordinator       *blsregistrycoordinator.ContractBLSRegistryCoordinatorWithIndices
-	StakeRegistry             *stakeregistry.ContractStakeRegistry
-	BlsPubkeyRegistry         *blspubkeyregistry.ContractBLSPubkeyRegistry
-	BlsPubkeyCompendium       *blspubkeycompendium.ContractBLSPublicKeyCompendium
-	BlsOperatorStateRetriever *blsoperatorstateretriever.ContractBLSOperatorStateRetriever
+	ServiceManager         *servicemanager.ContractServiceManagerBase
+	RegistryCoordinator    *regcoordinator.ContractRegistryCoordinator
+	StakeRegistry          *stakeregistry.ContractStakeRegistry
+	BlsApkRegistry         *blsapkregistry.ContractBLSApkRegistry
+	OperatorStateRetriever *opstateretriever.ContractOperatorStateRetriever
 }
 
 func NewAVSRegistryContractBindings(
-	blsRegistryCoordinatorAddr gethcommon.Address,
-	blsOperatorStateRetrieverAddr gethcommon.Address,
+	registryCoordinatorAddr gethcommon.Address,
+	operatorStateRetrieverAddr gethcommon.Address,
 	ethclient eth.EthClient,
 	logger logging.Logger,
 ) (*AvsRegistryContractBindings, error) {
-	contractBlsRegistryCoordinator, err := blsregistrycoordinator.NewContractBLSRegistryCoordinatorWithIndices(
-		blsRegistryCoordinatorAddr,
+	contractBlsRegistryCoordinator, err := regcoordinator.NewContractRegistryCoordinator(
+		registryCoordinatorAddr,
 		ethclient,
 	)
 	if err != nil {
 		logger.Error("Failed to fetch BLSRegistryCoordinator contract", "err", err)
+		return nil, err
+	}
+
+	serviceManagerAddr, err := contractBlsRegistryCoordinator.ServiceManager(&bind.CallOpts{})
+	if err != nil {
+		logger.Error("Failed to fetch ServiceManager address", "err", err)
+		return nil, err
+	}
+	contractServiceManager, err := servicemanager.NewContractServiceManagerBase(
+		serviceManagerAddr,
+		ethclient,
+	)
+	if err != nil {
+		logger.Error("Failed to fetch ServiceManager contract", "err", err)
 		return nil, err
 	}
 
@@ -132,13 +132,13 @@ func NewAVSRegistryContractBindings(
 		return nil, err
 	}
 
-	blsPubkeyRegistryAddr, err := contractBlsRegistryCoordinator.BlsPubkeyRegistry(&bind.CallOpts{})
+	blsApkRegistryAddr, err := contractBlsRegistryCoordinator.BlsApkRegistry(&bind.CallOpts{})
 	if err != nil {
 		logger.Error("Failed to fetch BLSPubkeyRegistry address", "err", err)
 		return nil, err
 	}
-	contractBlsPubkeyRegistry, err := blspubkeyregistry.NewContractBLSPubkeyRegistry(
-		blsPubkeyRegistryAddr,
+	contractBlsApkRegistry, err := blsapkregistry.NewContractBLSApkRegistry(
+		blsApkRegistryAddr,
 		ethclient,
 	)
 	if err != nil {
@@ -146,22 +146,8 @@ func NewAVSRegistryContractBindings(
 		return nil, err
 	}
 
-	blsPubkeyCompendiumAddr, err := contractBlsPubkeyRegistry.PubkeyCompendium(&bind.CallOpts{})
-	if err != nil {
-		logger.Error("Failed to fetch BLSPublicKeyCompendium address", "err", err)
-		return nil, err
-	}
-	contractBlsPubkeyCompendium, err := blspubkeycompendium.NewContractBLSPublicKeyCompendium(
-		blsPubkeyCompendiumAddr,
-		ethclient,
-	)
-	if err != nil {
-		logger.Error("Failed to fetch BLSPublicKeyCompendium contract", "err", err)
-		return nil, err
-	}
-
-	contractBlsOperatorStateRetriever, err := blsoperatorstateretriever.NewContractBLSOperatorStateRetriever(
-		blsOperatorStateRetrieverAddr,
+	contractOperatorStateRetriever, err := opstateretriever.NewContractOperatorStateRetriever(
+		operatorStateRetrieverAddr,
 		ethclient,
 	)
 	if err != nil {
@@ -170,15 +156,15 @@ func NewAVSRegistryContractBindings(
 	}
 
 	return &AvsRegistryContractBindings{
-		RegistryCoordinatorAddr:   blsRegistryCoordinatorAddr,
-		StakeRegistryAddr:         stakeregistryAddr,
-		BlsPubkeyRegistryAddr:     blsPubkeyRegistryAddr,
-		BlsPubkeyCompendiumAddr:   blsPubkeyCompendiumAddr,
-		OperatorStateRetriever:    blsOperatorStateRetrieverAddr,
-		RegistryCoordinator:       contractBlsRegistryCoordinator,
-		StakeRegistry:             contractStakeRegistry,
-		BlsPubkeyRegistry:         contractBlsPubkeyRegistry,
-		BlsPubkeyCompendium:       contractBlsPubkeyCompendium,
-		BlsOperatorStateRetriever: contractBlsOperatorStateRetriever,
+		ServiceManagerAddr:         serviceManagerAddr,
+		RegistryCoordinatorAddr:    registryCoordinatorAddr,
+		StakeRegistryAddr:          stakeregistryAddr,
+		BlsApkRegistryAddr:         blsApkRegistryAddr,
+		OperatorStateRetrieverAddr: operatorStateRetrieverAddr,
+		ServiceManager:             contractServiceManager,
+		RegistryCoordinator:        contractBlsRegistryCoordinator,
+		StakeRegistry:              contractStakeRegistry,
+		BlsApkRegistry:             contractBlsApkRegistry,
+		OperatorStateRetriever:     contractOperatorStateRetriever,
 	}, nil
 }

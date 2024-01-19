@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	chainiomocks "github.com/Layr-Labs/eigensdk-go/chainio/mocks"
-	blsoperatorstateretrievar "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSOperatorStateRetriever"
+	opstateretrievar "github.com/Layr-Labs/eigensdk-go/contracts/bindings/OperatorStateRetriever"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	servicemocks "github.com/Layr-Labs/eigensdk-go/services/mocks"
@@ -36,16 +36,16 @@ func TestAvsRegistryServiceChainCaller_getOperatorPubkeys(t *testing.T) {
 	// TODO(samlaf): add error test cases
 	var tests = []struct {
 		name                    string
-		mocksInitializationFunc func(*chainiomocks.MockAvsRegistryReader, *chainiomocks.MockELReader, *servicemocks.MockPubkeyCompendiumService)
+		mocksInitializationFunc func(*chainiomocks.MockAvsRegistryReader, *servicemocks.MockOperatorPubkeysService)
 		queryOperatorId         types.OperatorId
 		wantErr                 error
 		wantOperatorPubkeys     types.OperatorPubkeys
 	}{
 		{
 			name: "should return operatorpubkeys",
-			mocksInitializationFunc: func(mockAvsRegistryReader *chainiomocks.MockAvsRegistryReader, mockElReader *chainiomocks.MockELReader, mockPubkeyCompendiumService *servicemocks.MockPubkeyCompendiumService) {
-				mockElReader.EXPECT().GetOperatorAddressFromPubkeyHash(gomock.Any(), testOperator.operatorId).Return(testOperator.operatorAddr, nil)
-				mockPubkeyCompendiumService.EXPECT().GetOperatorPubkeys(gomock.Any(), testOperator.operatorAddr).Return(testOperator.pubkeys, true)
+			mocksInitializationFunc: func(mockAvsRegistryReader *chainiomocks.MockAvsRegistryReader, mockOperatorPubkeysService *servicemocks.MockOperatorPubkeysService) {
+				mockAvsRegistryReader.EXPECT().GetOperatorFromId(gomock.Any(), testOperator.operatorId).Return(testOperator.operatorAddr, nil)
+				mockOperatorPubkeysService.EXPECT().GetOperatorPubkeys(gomock.Any(), testOperator.operatorAddr).Return(testOperator.pubkeys, true)
 			},
 			queryOperatorId:     testOperator.operatorId,
 			wantErr:             nil,
@@ -58,14 +58,13 @@ func TestAvsRegistryServiceChainCaller_getOperatorPubkeys(t *testing.T) {
 			// Create mocks
 			mockCtrl := gomock.NewController(t)
 			mockAvsRegistryReader := chainiomocks.NewMockAvsRegistryReader(mockCtrl)
-			mockElReader := chainiomocks.NewMockELReader(mockCtrl)
-			mockPubkeyCompendium := servicemocks.NewMockPubkeyCompendiumService(mockCtrl)
+			mockOperatorPubkeysService := servicemocks.NewMockOperatorPubkeysService(mockCtrl)
 
 			if tt.mocksInitializationFunc != nil {
-				tt.mocksInitializationFunc(mockAvsRegistryReader, mockElReader, mockPubkeyCompendium)
+				tt.mocksInitializationFunc(mockAvsRegistryReader, mockOperatorPubkeysService)
 			}
 			// Create a new instance of the avsregistry service
-			service := NewAvsRegistryServiceChainCaller(mockAvsRegistryReader, mockElReader, mockPubkeyCompendium, logger)
+			service := NewAvsRegistryServiceChainCaller(mockAvsRegistryReader, mockOperatorPubkeysService, logger)
 
 			// Call the GetOperatorPubkeys method with the test operator address
 			gotOperatorPubkeys, gotErr := service.getOperatorPubkeys(context.Background(), tt.queryOperatorId)
@@ -92,7 +91,7 @@ func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
 
 	var tests = []struct {
 		name                      string
-		mocksInitializationFunc   func(*chainiomocks.MockAvsRegistryReader, *chainiomocks.MockELReader, *servicemocks.MockPubkeyCompendiumService)
+		mocksInitializationFunc   func(*chainiomocks.MockAvsRegistryReader, *servicemocks.MockOperatorPubkeysService)
 		queryQuorumNumbers        []types.QuorumNum
 		queryBlockNum             types.BlockNum
 		wantErr                   error
@@ -100,8 +99,8 @@ func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
 	}{
 		{
 			name: "should return operatorsAvsState",
-			mocksInitializationFunc: func(mockAvsRegistryReader *chainiomocks.MockAvsRegistryReader, mockElReader *chainiomocks.MockELReader, mockPubkeyCompendiumService *servicemocks.MockPubkeyCompendiumService) {
-				mockAvsRegistryReader.EXPECT().GetOperatorsStakeInQuorumsAtBlock(gomock.Any(), []types.QuorumNum{1}, types.BlockNum(1)).Return([][]blsoperatorstateretrievar.BLSOperatorStateRetrieverOperator{
+			mocksInitializationFunc: func(mockAvsRegistryReader *chainiomocks.MockAvsRegistryReader, mockOperatorPubkeysService *servicemocks.MockOperatorPubkeysService) {
+				mockAvsRegistryReader.EXPECT().GetOperatorsStakeInQuorumsAtBlock(gomock.Any(), []types.QuorumNum{1}, types.BlockNum(1)).Return([][]opstateretrievar.OperatorStateRetrieverOperator{
 					{
 						{
 							OperatorId: testOperator.operatorId,
@@ -109,8 +108,8 @@ func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
 						},
 					},
 				}, nil)
-				mockElReader.EXPECT().GetOperatorAddressFromPubkeyHash(gomock.Any(), testOperator.operatorId).Return(testOperator.operatorAddr, nil)
-				mockPubkeyCompendiumService.EXPECT().GetOperatorPubkeys(gomock.Any(), testOperator.operatorAddr).Return(testOperator.pubkeys, true)
+				mockAvsRegistryReader.EXPECT().GetOperatorFromId(gomock.Any(), testOperator.operatorId).Return(testOperator.operatorAddr, nil)
+				mockOperatorPubkeysService.EXPECT().GetOperatorPubkeys(gomock.Any(), testOperator.operatorAddr).Return(testOperator.pubkeys, true)
 			},
 			queryQuorumNumbers: []types.QuorumNum{1},
 			queryBlockNum:      1,
@@ -131,14 +130,13 @@ func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
 			// Create mocks
 			mockCtrl := gomock.NewController(t)
 			mockAvsRegistryReader := chainiomocks.NewMockAvsRegistryReader(mockCtrl)
-			mockElReader := chainiomocks.NewMockELReader(mockCtrl)
-			mockPubkeyCompendium := servicemocks.NewMockPubkeyCompendiumService(mockCtrl)
+			mockOperatorPubkeysService := servicemocks.NewMockOperatorPubkeysService(mockCtrl)
 
 			if tt.mocksInitializationFunc != nil {
-				tt.mocksInitializationFunc(mockAvsRegistryReader, mockElReader, mockPubkeyCompendium)
+				tt.mocksInitializationFunc(mockAvsRegistryReader, mockOperatorPubkeysService)
 			}
 			// Create a new instance of the avsregistry service
-			service := NewAvsRegistryServiceChainCaller(mockAvsRegistryReader, mockElReader, mockPubkeyCompendium, logger)
+			service := NewAvsRegistryServiceChainCaller(mockAvsRegistryReader, mockOperatorPubkeysService, logger)
 
 			// Call the GetOperatorPubkeys method with the test operator address
 			gotOperatorsAvsStateDict, gotErr := service.GetOperatorsAvsStateAtBlock(context.Background(), tt.queryQuorumNumbers, tt.queryBlockNum)
@@ -165,7 +163,7 @@ func TestAvsRegistryServiceChainCaller_GetQuorumsAvsState(t *testing.T) {
 
 	var tests = []struct {
 		name                    string
-		mocksInitializationFunc func(*chainiomocks.MockAvsRegistryReader, *chainiomocks.MockELReader, *servicemocks.MockPubkeyCompendiumService)
+		mocksInitializationFunc func(*chainiomocks.MockAvsRegistryReader, *servicemocks.MockOperatorPubkeysService)
 		queryQuorumNumbers      []types.QuorumNum
 		queryBlockNum           types.BlockNum
 		wantErr                 error
@@ -173,8 +171,8 @@ func TestAvsRegistryServiceChainCaller_GetQuorumsAvsState(t *testing.T) {
 	}{
 		{
 			name: "should return operatorsAvsState",
-			mocksInitializationFunc: func(mockAvsRegistryReader *chainiomocks.MockAvsRegistryReader, mockElReader *chainiomocks.MockELReader, mockPubkeyCompendiumService *servicemocks.MockPubkeyCompendiumService) {
-				mockAvsRegistryReader.EXPECT().GetOperatorsStakeInQuorumsAtBlock(gomock.Any(), []types.QuorumNum{1}, types.BlockNum(1)).Return([][]blsoperatorstateretrievar.BLSOperatorStateRetrieverOperator{
+			mocksInitializationFunc: func(mockAvsRegistryReader *chainiomocks.MockAvsRegistryReader, mockOperatorPubkeysService *servicemocks.MockOperatorPubkeysService) {
+				mockAvsRegistryReader.EXPECT().GetOperatorsStakeInQuorumsAtBlock(gomock.Any(), []types.QuorumNum{1}, types.BlockNum(1)).Return([][]opstateretrievar.OperatorStateRetrieverOperator{
 					{
 						{
 							OperatorId: testOperator.operatorId,
@@ -182,8 +180,8 @@ func TestAvsRegistryServiceChainCaller_GetQuorumsAvsState(t *testing.T) {
 						},
 					},
 				}, nil)
-				mockElReader.EXPECT().GetOperatorAddressFromPubkeyHash(gomock.Any(), testOperator.operatorId).Return(testOperator.operatorAddr, nil)
-				mockPubkeyCompendiumService.EXPECT().GetOperatorPubkeys(gomock.Any(), testOperator.operatorAddr).Return(testOperator.pubkeys, true)
+				mockAvsRegistryReader.EXPECT().GetOperatorFromId(gomock.Any(), testOperator.operatorId).Return(testOperator.operatorAddr, nil)
+				mockOperatorPubkeysService.EXPECT().GetOperatorPubkeys(gomock.Any(), testOperator.operatorAddr).Return(testOperator.pubkeys, true)
 			},
 			queryQuorumNumbers: []types.QuorumNum{1},
 			queryBlockNum:      1,
@@ -204,14 +202,13 @@ func TestAvsRegistryServiceChainCaller_GetQuorumsAvsState(t *testing.T) {
 			// Create mocks
 			mockCtrl := gomock.NewController(t)
 			mockAvsRegistryReader := chainiomocks.NewMockAvsRegistryReader(mockCtrl)
-			mockElReader := chainiomocks.NewMockELReader(mockCtrl)
-			mockPubkeyCompendium := servicemocks.NewMockPubkeyCompendiumService(mockCtrl)
+			mockOperatorPubkeysService := servicemocks.NewMockOperatorPubkeysService(mockCtrl)
 
 			if tt.mocksInitializationFunc != nil {
-				tt.mocksInitializationFunc(mockAvsRegistryReader, mockElReader, mockPubkeyCompendium)
+				tt.mocksInitializationFunc(mockAvsRegistryReader, mockOperatorPubkeysService)
 			}
 			// Create a new instance of the avsregistry service
-			service := NewAvsRegistryServiceChainCaller(mockAvsRegistryReader, mockElReader, mockPubkeyCompendium, logger)
+			service := NewAvsRegistryServiceChainCaller(mockAvsRegistryReader, mockOperatorPubkeysService, logger)
 
 			// Call the GetOperatorPubkeys method with the test operator address
 			aggG1PubkeyPerQuorum, gotErr := service.GetQuorumsAvsStateAtBlock(context.Background(), tt.queryQuorumNumbers, tt.queryBlockNum)

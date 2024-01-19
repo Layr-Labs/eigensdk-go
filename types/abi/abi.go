@@ -4,5 +4,5 @@ import (
 	_ "embed"
 )
 
-//go:embed BLSPublicKeyCompendium.json
-var BLSPublicKeyCompendiumAbi []byte
+//go:embed BLSApkRegistry.json
+var BLSApkRegistryAbi []byte

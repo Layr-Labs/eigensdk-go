@@ -9,7 +9,6 @@
 package mocks
 
 import (
-	context "context"
 	big "math/big"
 	reflect "reflect"
 
@@ -44,19 +43,19 @@ func (m *MockELReader) EXPECT() *MockELReaderMockRecorder {
 	return m.recorder
 }
 
-// GetOperatorAddressFromPubkeyHash mocks base method.
-func (m *MockELReader) GetOperatorAddressFromPubkeyHash(arg0 *bind.CallOpts, arg1 [32]byte) (common.Address, error) {
+// CalculateDelegationApprovalDigestHash mocks base method.
+func (m *MockELReader) CalculateDelegationApprovalDigestHash(arg0 *bind.CallOpts, arg1, arg2 common.Address, arg3 [32]byte, arg4 *big.Int) ([32]byte, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOperatorAddressFromPubkeyHash", arg0, arg1)
-	ret0, _ := ret[0].(common.Address)
+	ret := m.ctrl.Call(m, "CalculateDelegationApprovalDigestHash", arg0, arg1, arg2, arg3, arg4)
+	ret0, _ := ret[0].([32]byte)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetOperatorAddressFromPubkeyHash indicates an expected call of GetOperatorAddressFromPubkeyHash.
-func (mr *MockELReaderMockRecorder) GetOperatorAddressFromPubkeyHash(arg0, arg1 any) *gomock.Call {
+// CalculateDelegationApprovalDigestHash indicates an expected call of CalculateDelegationApprovalDigestHash.
+func (mr *MockELReaderMockRecorder) CalculateDelegationApprovalDigestHash(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOperatorAddressFromPubkeyHash", reflect.TypeOf((*MockELReader)(nil).GetOperatorAddressFromPubkeyHash), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CalculateDelegationApprovalDigestHash", reflect.TypeOf((*MockELReader)(nil).CalculateDelegationApprovalDigestHash), arg0, arg1, arg2, arg3, arg4)
 }
 
 // GetOperatorDetails mocks base method.
@@ -72,21 +71,6 @@ func (m *MockELReader) GetOperatorDetails(arg0 *bind.CallOpts, arg1 types.Operat
 func (mr *MockELReaderMockRecorder) GetOperatorDetails(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOperatorDetails", reflect.TypeOf((*MockELReader)(nil).GetOperatorDetails), arg0, arg1)
-}
-
-// GetOperatorPubkeyHash mocks base method.
-func (m *MockELReader) GetOperatorPubkeyHash(arg0 *bind.CallOpts, arg1 types.Operator) ([32]byte, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetOperatorPubkeyHash", arg0, arg1)
-	ret0, _ := ret[0].([32]byte)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetOperatorPubkeyHash indicates an expected call of GetOperatorPubkeyHash.
-func (mr *MockELReaderMockRecorder) GetOperatorPubkeyHash(arg0, arg1 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOperatorPubkeyHash", reflect.TypeOf((*MockELReader)(nil).GetOperatorPubkeyHash), arg0, arg1)
 }
 
 // GetOperatorSharesInStrategy mocks base method.
@@ -165,22 +149,6 @@ func (m *MockELReader) OperatorIsFrozen(arg0 *bind.CallOpts, arg1 common.Address
 func (mr *MockELReaderMockRecorder) OperatorIsFrozen(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OperatorIsFrozen", reflect.TypeOf((*MockELReader)(nil).OperatorIsFrozen), arg0, arg1)
-}
-
-// QueryExistingRegisteredOperatorPubKeys mocks base method.
-func (m *MockELReader) QueryExistingRegisteredOperatorPubKeys(arg0 context.Context, arg1, arg2 *big.Int) ([]common.Address, []types.OperatorPubkeys, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "QueryExistingRegisteredOperatorPubKeys", arg0, arg1, arg2)
-	ret0, _ := ret[0].([]common.Address)
-	ret1, _ := ret[1].([]types.OperatorPubkeys)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// QueryExistingRegisteredOperatorPubKeys indicates an expected call of QueryExistingRegisteredOperatorPubKeys.
-func (mr *MockELReaderMockRecorder) QueryExistingRegisteredOperatorPubKeys(arg0, arg1, arg2 any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryExistingRegisteredOperatorPubKeys", reflect.TypeOf((*MockELReader)(nil).QueryExistingRegisteredOperatorPubKeys), arg0, arg1, arg2)
 }
 
 // ServiceManagerCanSlashOperatorUntilBlock mocks base method.
