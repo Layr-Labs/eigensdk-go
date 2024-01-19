@@ -36,6 +36,7 @@ type Clients struct {
 	ElChainWriter              *elcontracts.ELChainWriter
 	EthHttpClient              *eth.Client
 	EthWsClient                *eth.Client
+	txMgr                      txmgr.TxManager
 	Metrics                    *metrics.EigenMetrics // exposes main avs node spec metrics that need to be incremented by avs code and used to start the metrics server
 	PrometheusRegistry         *prometheus.Registry  // Used if avs teams need to register avs-specific metrics
 }
@@ -94,6 +95,7 @@ func BuildAll(config BuildAllConfig, signerAddr gethcommon.Address, signerFn sig
 		AvsRegistryChainWriter:     avsRegistryChainWriter,
 		EthHttpClient:              ethHttpClient,
 		EthWsClient:                ethWsClient,
+		txMgr:                      txMgr,
 		Metrics:                    eigenMetrics,
 		PrometheusRegistry:         promReg,
 	}, nil
