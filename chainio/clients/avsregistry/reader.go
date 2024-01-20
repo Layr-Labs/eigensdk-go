@@ -360,13 +360,14 @@ func (r *AvsRegistryChainReader) IsOperatorRegistered(
 	opts *bind.CallOpts,
 	operatorAddress gethcommon.Address,
 ) (bool, error) {
-	operatorId, err := r.registryCoordinator.GetOperatorId(opts, operatorAddress)
+	operatorStatus, err := r.registryCoordinator.GetOperatorStatus(opts, operatorAddress)
 	if err != nil {
-		r.logger.Error("Cannot get operator id", "err", err)
+		r.logger.Error("Cannot get operator status", "err", err)
 		return false, err
 	}
-	// OperatorId is set in contract during registration, so if it is not set, the operator is not registered
-	registeredWithAvs := operatorId != [32]byte{}
+
+	// 0 = NEVER_REGISTERED, 1 = REGISTERED, 2 = DEREGISTERED
+	registeredWithAvs := operatorStatus == 1
 	return registeredWithAvs, nil
 }
 
