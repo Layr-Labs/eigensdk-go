@@ -86,17 +86,24 @@ type OperatorPubkeys struct {
 type OperatorAddr = common.Address
 type StakeAmount = *big.Int
 
-// OperatorId is the ID of an operator, defined by the AVS registry
+// BlsOperatorId is the ID of an operator, defined by the AVS registry
 // It is currently the hash of the operator's G1 pubkey (in the bls pubkey registry)
-type OperatorId = [32]byte
+type BlsOperatorId = [32]byte
+type EcdsaOperatorId = common.Address
 type QuorumNum = uint8
 type QuorumThresholdPercentage = uint32
 type BlockNum = uint32
 
 // AvsOperator represents the operator state in AVS registries
-type OperatorAvsState struct {
-	OperatorId OperatorId
+type OperatorBlsAvsState struct {
+	OperatorId BlsOperatorId
 	Pubkeys    OperatorPubkeys
+	// Stake of the operator for each quorum
+	StakePerQuorum map[QuorumNum]StakeAmount
+	BlockNumber    BlockNum
+}
+type OperatorEcdsaAvsState struct {
+	OperatorId EcdsaOperatorId
 	// Stake of the operator for each quorum
 	StakePerQuorum map[QuorumNum]StakeAmount
 	BlockNumber    BlockNum
@@ -117,9 +124,18 @@ func BitmapToQuorumIds(bitmap *big.Int) []QuorumNum {
 	return quorumIds
 }
 
-type QuorumAvsState struct {
+type QuorumBlsAvsState struct {
 	QuorumNumber QuorumNum
 	TotalStake   StakeAmount
 	AggPubkeyG1  *bls.G1Point
+	BlockNumber  BlockNum
+}
+type QuorumEcdsaAvsState struct {
+	QuorumNumber QuorumNum
+	TotalStake   StakeAmount
+	// Note that operatorId is not the same as operatorAddr!
+	// one is the address of the ecdsa wallet that controls the operator, the other one is the address of the ecdsa
+	// private key that the operator uses to sign messages (these could and should be different)
+	OperatorIds  []common.Address
 	BlockNumber  BlockNum
 }

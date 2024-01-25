@@ -2,7 +2,7 @@
 
 eigensdk services are high level APIs that provide backend like functionality for avs nodes and aggregators processes. We provide the following suite of services as soon as possible:
 
-- [operator pubkeys service](./operatorpubkeys/)
+- [operator pubkeys service](./bls/operatorpubkeys/)
   - this service simply indexes the [NewPubkeyRegistration](https://github.com/Layr-Labs/eigenlayer-middleware/blob/9aa6eb543fe38db6e41516f89f15b654ad4d6bf4/src/interfaces/IBLSApkRegistry.sol#L38) events and provides a single endpoint to query for the registered G1 and G2 pubkeys of a given operator address.
   - this service is needed for aggregators to get the pubkey of their registered operators so as to verify their signatures
 - Registry service

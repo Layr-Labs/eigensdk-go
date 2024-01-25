@@ -1,4 +1,4 @@
-package blsagg
+package aggregation
 
 import (
 	"context"
@@ -8,11 +8,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
+	"github.com/Layr-Labs/eigensdk-go/crypto/ecdsa"
 	"github.com/Layr-Labs/eigensdk-go/logging"
-	"github.com/Layr-Labs/eigensdk-go/services/avsregistry"
+	"github.com/Layr-Labs/eigensdk-go/services/ecdsa/avsregistry"
 	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 var (
@@ -23,7 +24,7 @@ var (
 	TaskNotFoundErrorFn = func(taskIndex types.TaskIndex) error {
 		return fmt.Errorf("task %d not initialized or already completed", taskIndex)
 	}
-	OperatorNotPartOfTaskQuorumErrorFn = func(operatorId types.OperatorId, taskIndex types.TaskIndex) error {
+	OperatorNotPartOfTaskQuorumErrorFn = func(operatorId types.EcdsaOperatorId, taskIndex types.TaskIndex) error {
 		return fmt.Errorf("operator %x not part of task %d's quorum", operatorId, taskIndex)
 	}
 	SignatureVerificationError = func(err error) error {
@@ -32,38 +33,32 @@ var (
 	IncorrectSignatureError = errors.New("Signature verification failed. Incorrect Signature.")
 )
 
-// BlsAggregationServiceResponse is the response from the bls aggregation service
-// it's half of the data needed to build the NonSignerStakesAndSignature struct
-type BlsAggregationServiceResponse struct {
-	Err                          error
-	TaskIndex                    types.TaskIndex
-	TaskResponseDigest           types.TaskResponseDigest
-	NonSignersPubkeysG1          []*bls.G1Point
-	QuorumApksG1                 []*bls.G1Point
-	SignersApkG2                 *bls.G2Point
-	SignersAggSigG1              *bls.Signature
-	NonSignerQuorumBitmapIndices []uint32
-	QuorumApkIndices             []uint32
-	TotalStakeIndices            []uint32
-	NonSignerStakeIndices        [][]uint32
+// EcdsaAggregationServiceResponse is the response from the ecdsa aggregation service
+type EcdsaAggregationServiceResponse struct {
+	Err                       error
+	TaskIndex                 types.TaskIndex
+	TaskResponseDigest        types.TaskResponseDigest
+	SignerIds                 []common.Address
+	Signatures                [][]byte
+	SignerQuorumBitmapIndices []uint32
+	TotalStakeIndices         []uint32
+	SignerStakeIndices        [][]uint32
 }
 
 // aggregatedOperators is meant to be used as a value in a map
 // map[taskResponseDigest]aggregatedOperators
 type aggregatedOperators struct {
-	// aggregate g2 pubkey of all operatos who signed on this taskResponseDigest
-	signersApkG2 *bls.G2Point
-	// aggregate signature of all operators who signed on this taskResponseDigest
-	signersAggSigG1 *bls.Signature
+	// address of all operators who signed on this taskResponseDigest
+	signersIds []common.Address
+	// signatures of all operators who signed on this taskResponseDigest
+	signatures [][]byte
 	// aggregate stake of all operators who signed on this header for each quorum
 	signersTotalStakePerQuorum map[types.QuorumNum]*big.Int
-	// set of OperatorId of operators who signed on this header
-	signersOperatorIdsSet map[types.OperatorId]bool
 }
 
-// BlsAggregationService is the interface provided to avs aggregator code for doing bls aggregation
-// Currently its only implementation is the BlsAggregatorService, so see the comment there for more details
-type BlsAggregationService interface {
+// EcdsaAggregationService is the interface provided to avs aggregator code for doing ecdsa aggregation
+// Currently its only implementation is the EcdsaAggregatorService, so see the comment there for more details
+type EcdsaAggregationService interface {
 	// InitializeNewTask should be called whenever a new task is created. ProcessNewSignature will return an error
 	// if the task it is trying to process has not been initialized yet.
 	// quorumNumbers and quorumThresholdPercentages set the requirements for this task to be considered complete, which happens
@@ -81,40 +76,40 @@ type BlsAggregationService interface {
 	// It verifies that the signature is correct and returns an error if it is not, and then aggregates the signature and stake of
 	// the operator with all other signatures for the same taskIndex and taskResponseDigest pair.
 	// Note: This function currently only verifies signatures over the taskResponseDigest directly, so avs code needs to verify that the digest
-	// passed to ProcessNewSignature is indeed the digest of a valid taskResponse (that is, BlsAggregationService does not verify semantic integrity of the taskResponses)
+	// passed to ProcessNewSignature is indeed the digest of a valid taskResponse (that is, EcdsaAggregationService does not verify semantic integrity of the taskResponses)
 	ProcessNewSignature(
 		ctx context.Context,
 		taskIndex types.TaskIndex,
 		taskResponseDigest types.TaskResponseDigest,
-		blsSignature *bls.Signature,
-		operatorId bls.OperatorId,
+		ecdsaSignature []byte,
+		operatorId common.Address,
 	) error
 
 	// GetResponseChannel returns the single channel that meant to be used as the response channel
 	// Any task that is completed (see the completion criterion in the comment above InitializeNewTask)
-	// will be sent on this channel along with all the necessary information to call BLSSignatureChecker onchain
-	GetResponseChannel() <-chan BlsAggregationServiceResponse
+	// will be sent on this channel along with all the necessary information to call ECDSASignatureChecker onchain
+	GetResponseChannel() <-chan EcdsaAggregationServiceResponse
 }
 
-// BlsAggregatorService is a service that performs BLS signature aggregation for an AVS' tasks
+// EcdsaAggregatorService is a service that performs Ecdsa signature aggregation for an AVS' tasks
 // Assumptions:
-//  1. BlsAggregatorService only verifies digest signatures, so avs code needs to verify that the digest
+//  1. EcdsaAggregatorService only verifies digest signatures, so avs code needs to verify that the digest
 //     passed to ProcessNewSignature is indeed the digest of a valid taskResponse
 //     (see the comment above checkSignature for more details)
-//  2. BlsAggregatorService is VERY generic and makes very few assumptions about the tasks structure or
+//  2. EcdsaAggregatorService is VERY generic and makes very few assumptions about the tasks structure or
 //     the time at which operators will send their signatures. It is mostly suitable for offchain computation
 //     oracle (a la truebit) type of AVS, where tasks are sent onchain by users sporadically, and where
 //     new tasks can start even before the previous ones have finished aggregation.
 //     AVSs like eigenDA that have a much more controlled task submission schedule and where new tasks are
 //     only submitted after the previous one's response has been aggregated and responded onchain, could have
 //     a much simpler AggregationService without all the complicated parallel goroutines.
-type BlsAggregatorService struct {
+type EcdsaAggregatorService struct {
 	// aggregatedResponsesC is the channel which all goroutines share to send their responses back to the
 	// main thread after they are done aggregating (either they reached the threshold, or timeout expired)
-	aggregatedResponsesC chan BlsAggregationServiceResponse
+	aggregatedResponsesC chan EcdsaAggregationServiceResponse
 	// signedTaskRespsCs are the channels to send the signed task responses to the goroutines processing them
 	// each new task is assigned a new goroutine and a new channel
-	signedTaskRespsCs map[types.TaskIndex]chan types.SignedTaskResponseDigest
+	signedTaskRespsCs map[types.TaskIndex]chan types.SignedEcdsaTaskResponseDigest
 	// we add chans to taskChans from the main thread (InitializeNewTask) when we create new tasks,
 	// we read them in ProcessNewSignature from the main thread when we receive new signed tasks,
 	// and remove them from its respective goroutine when the task is completed or reached timeout
@@ -124,19 +119,19 @@ type BlsAggregatorService struct {
 	logger             logging.Logger
 }
 
-var _ BlsAggregationService = (*BlsAggregatorService)(nil)
+var _ EcdsaAggregationService = (*EcdsaAggregatorService)(nil)
 
-func NewBlsAggregatorService(avsRegistryService avsregistry.AvsRegistryService, logger logging.Logger) *BlsAggregatorService {
-	return &BlsAggregatorService{
-		aggregatedResponsesC: make(chan BlsAggregationServiceResponse),
-		signedTaskRespsCs:    make(map[types.TaskIndex]chan types.SignedTaskResponseDigest),
+func NewEcdsaAggregatorService(avsRegistryService avsregistry.AvsRegistryService, logger logging.Logger) *EcdsaAggregatorService {
+	return &EcdsaAggregatorService{
+		aggregatedResponsesC: make(chan EcdsaAggregationServiceResponse),
+		signedTaskRespsCs:    make(map[types.TaskIndex]chan types.SignedEcdsaTaskResponseDigest),
 		taskChansMutex:       sync.RWMutex{},
 		avsRegistryService:   avsRegistryService,
 		logger:               logger,
 	}
 }
 
-func (a *BlsAggregatorService) GetResponseChannel() <-chan BlsAggregationServiceResponse {
+func (a *EcdsaAggregatorService) GetResponseChannel() <-chan EcdsaAggregationServiceResponse {
 	return a.aggregatedResponsesC
 }
 
@@ -145,7 +140,7 @@ func (a *BlsAggregatorService) GetResponseChannel() <-chan BlsAggregationService
 // quorumNumbers and quorumThresholdPercentages set the requirements for this task to be considered complete, which happens
 // when a particular TaskResponseDigest (received via the a.taskChans[taskIndex]) has been signed by signers whose stake
 // in each of the listed quorums adds up to at least quorumThresholdPercentages[i] of the total stake in that quorum
-func (a *BlsAggregatorService) InitializeNewTask(
+func (a *EcdsaAggregatorService) InitializeNewTask(
 	taskIndex types.TaskIndex,
 	taskCreatedBlock uint32,
 	quorumNumbers []types.QuorumNum,
@@ -155,7 +150,7 @@ func (a *BlsAggregatorService) InitializeNewTask(
 	if _, taskExists := a.signedTaskRespsCs[taskIndex]; taskExists {
 		return TaskAlreadyInitializedErrorFn(taskIndex)
 	}
-	signedTaskRespsC := make(chan types.SignedTaskResponseDigest)
+	signedTaskRespsC := make(chan types.SignedEcdsaTaskResponseDigest)
 	a.taskChansMutex.Lock()
 	a.signedTaskRespsCs[taskIndex] = signedTaskRespsC
 	a.taskChansMutex.Unlock()
@@ -163,12 +158,12 @@ func (a *BlsAggregatorService) InitializeNewTask(
 	return nil
 }
 
-func (a *BlsAggregatorService) ProcessNewSignature(
+func (a *EcdsaAggregatorService) ProcessNewSignature(
 	ctx context.Context,
 	taskIndex types.TaskIndex,
 	taskResponseDigest types.TaskResponseDigest,
-	blsSignature *bls.Signature,
-	operatorId bls.OperatorId,
+	ecdsaSignature []byte,
+	operatorId common.Address,
 ) error {
 	a.taskChansMutex.Lock()
 	taskC, taskInitialized := a.signedTaskRespsCs[taskIndex]
@@ -182,9 +177,9 @@ func (a *BlsAggregatorService) ProcessNewSignature(
 	select {
 	// we need to send this as part of select because if the goroutine is processing another SignedTaskResponseDigest
 	// and cannot receive this one, we want the context to be able to cancel the request
-	case taskC <- types.SignedTaskResponseDigest{
+	case taskC <- types.SignedEcdsaTaskResponseDigest{
 		TaskResponseDigest:          taskResponseDigest,
-		BlsSignature:                blsSignature,
+		EcdsaSignature:              ecdsaSignature,
 		OperatorId:                  operatorId,
 		SignatureVerificationErrorC: signatureVerificationErrorC,
 	}:
@@ -196,13 +191,13 @@ func (a *BlsAggregatorService) ProcessNewSignature(
 	}
 }
 
-func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
+func (a *EcdsaAggregatorService) singleTaskAggregatorGoroutineFunc(
 	taskIndex types.TaskIndex,
 	taskCreatedBlock uint32,
 	quorumNumbers []types.QuorumNum,
 	quorumThresholdPercentages []types.QuorumThresholdPercentage,
 	timeToExpiry time.Duration,
-	signedTaskRespsC <-chan types.SignedTaskResponseDigest,
+	signedTaskRespsC <-chan types.SignedEcdsaTaskResponseDigest,
 ) {
 	defer a.closeTaskGoroutine(taskIndex)
 
@@ -223,10 +218,6 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 	for quorumNum, quorumAvsState := range quorumsAvsStakeDict {
 		totalStakePerQuorum[quorumNum] = quorumAvsState.TotalStake
 	}
-	quorumApksG1 := []*bls.G1Point{}
-	for _, quorumNumber := range quorumNumbers {
-		quorumApksG1 = append(quorumApksG1, quorumsAvsStakeDict[quorumNumber].AggPubkeyG1)
-	}
 
 	// TODO(samlaf): instead of taking a TTE, we should take a block as input
 	// and monitor the chain and only close the task goroutine when that block is reached
@@ -236,7 +227,10 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 	for {
 		select {
 		case signedTaskResponseDigest := <-signedTaskRespsC:
-			a.logger.Debug("Task goroutine received new signed task response digest", "taskIndex", taskIndex, "signedTaskResponseDigest", signedTaskResponseDigest)
+			a.logger.Debug("Task goroutine received new signed task response digest",
+				"taskIndex", taskIndex, "TaskResponseDigest", signedTaskResponseDigest.TaskResponseDigest,
+				"OperatorId", signedTaskResponseDigest.OperatorId, "ecdsaSignature", signedTaskResponseDigest.EcdsaSignature,
+			)
 			signedTaskResponseDigest.SignatureVerificationErrorC <- a.verifySignature(taskIndex, signedTaskResponseDigest, operatorsAvsStateDict)
 			// after verifying signature we aggregate its sig and pubkey, and update the signed stake amount
 			digestAggregatedOperators, ok := aggregatedOperatorsDict[signedTaskResponseDigest.TaskResponseDigest]
@@ -244,15 +238,13 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 				// first operator to sign on this digest
 				digestAggregatedOperators = aggregatedOperators{
 					// we've already verified that the operator is part of the task's quorum, so we don't need checks here
-					signersApkG2:               bls.NewZeroG2Point().Add(operatorsAvsStateDict[signedTaskResponseDigest.OperatorId].Pubkeys.G2Pubkey),
-					signersAggSigG1:            signedTaskResponseDigest.BlsSignature,
-					signersOperatorIdsSet:      map[types.OperatorId]bool{signedTaskResponseDigest.OperatorId: true},
+					signersIds:                 []common.Address{signedTaskResponseDigest.OperatorId},
+					signatures:                 [][]byte{signedTaskResponseDigest.EcdsaSignature},
 					signersTotalStakePerQuorum: operatorsAvsStateDict[signedTaskResponseDigest.OperatorId].StakePerQuorum,
 				}
 			} else {
-				digestAggregatedOperators.signersAggSigG1.Add(signedTaskResponseDigest.BlsSignature)
-				digestAggregatedOperators.signersApkG2.Add(operatorsAvsStateDict[signedTaskResponseDigest.OperatorId].Pubkeys.G2Pubkey)
-				digestAggregatedOperators.signersOperatorIdsSet[signedTaskResponseDigest.OperatorId] = true
+				digestAggregatedOperators.signersIds = append(digestAggregatedOperators.signersIds, signedTaskResponseDigest.OperatorId)
+				digestAggregatedOperators.signatures = append(digestAggregatedOperators.signatures, signedTaskResponseDigest.EcdsaSignature)
 				for quorumNum, stake := range operatorsAvsStateDict[signedTaskResponseDigest.OperatorId].StakePerQuorum {
 					if _, ok := digestAggregatedOperators.signersTotalStakePerQuorum[quorumNum]; !ok {
 						// if we haven't seen this quorum before, initialize its signed stake to 0
@@ -267,38 +259,30 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 			aggregatedOperatorsDict[signedTaskResponseDigest.TaskResponseDigest] = digestAggregatedOperators
 
 			if checkIfStakeThresholdsMet(digestAggregatedOperators.signersTotalStakePerQuorum, totalStakePerQuorum, quorumThresholdPercentagesMap) {
-				nonSignersOperatorIds := []types.OperatorId{}
-				for operatorId := range operatorsAvsStateDict {
-					if _, operatorSigned := digestAggregatedOperators.signersOperatorIdsSet[operatorId]; !operatorSigned {
-						nonSignersOperatorIds = append(nonSignersOperatorIds, operatorId)
-					}
-				}
-				indices, err := a.avsRegistryService.GetCheckSignaturesIndices(&bind.CallOpts{}, taskCreatedBlock, quorumNumbers, nonSignersOperatorIds)
+				indices, err := a.avsRegistryService.GetCheckSignaturesIndices(&bind.CallOpts{}, taskCreatedBlock, quorumNumbers, digestAggregatedOperators.signersIds)
 				if err != nil {
 					a.logger.Error("Failed to get check signatures indices", "err", err)
-					a.aggregatedResponsesC <- BlsAggregationServiceResponse{
+					a.aggregatedResponsesC <- EcdsaAggregationServiceResponse{
 						Err: err,
 					}
 					return
 				}
-				blsAggregationServiceResponse := BlsAggregationServiceResponse{
-					Err:                          nil,
-					TaskIndex:                    taskIndex,
-					TaskResponseDigest:           signedTaskResponseDigest.TaskResponseDigest,
-					NonSignersPubkeysG1:          getG1PubkeysOfNonSigners(digestAggregatedOperators.signersOperatorIdsSet, operatorsAvsStateDict),
-					QuorumApksG1:                 quorumApksG1,
-					SignersApkG2:                 digestAggregatedOperators.signersApkG2,
-					SignersAggSigG1:              digestAggregatedOperators.signersAggSigG1,
-					NonSignerQuorumBitmapIndices: indices.NonSignerQuorumBitmapIndices,
-					QuorumApkIndices:             indices.QuorumApkIndices,
-					TotalStakeIndices:            indices.TotalStakeIndices,
-					NonSignerStakeIndices:        indices.NonSignerStakeIndices,
+				ecdsaAggregationServiceResponse := EcdsaAggregationServiceResponse{
+					Err:                nil,
+					TaskIndex:          taskIndex,
+					TaskResponseDigest: signedTaskResponseDigest.TaskResponseDigest,
+					// TODO(samlaf): I think we'll have to order these by operatorId to pass the require in the contract iirc
+					SignerIds:                 digestAggregatedOperators.signersIds,
+					Signatures:                digestAggregatedOperators.signatures,
+					SignerQuorumBitmapIndices: indices.SignerQuorumBitmapIndices,
+					TotalStakeIndices:         indices.TotalStakeIndices,
+					SignerStakeIndices:        indices.SignerStakeIndices,
 				}
-				a.aggregatedResponsesC <- blsAggregationServiceResponse
+				a.aggregatedResponsesC <- ecdsaAggregationServiceResponse
 				return
 			}
 		case <-taskExpiredTimer.C:
-			a.aggregatedResponsesC <- BlsAggregationServiceResponse{
+			a.aggregatedResponsesC <- EcdsaAggregationServiceResponse{
 				Err: TaskExpiredError,
 			}
 			return
@@ -311,7 +295,7 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 // it deletes the response channel for taskIndex from a.taskChans
 // so that the main thread knows that this task goroutine is no longer running
 // and doesn't try to send new signatures to it
-func (a *BlsAggregatorService) closeTaskGoroutine(taskIndex types.TaskIndex) {
+func (a *EcdsaAggregatorService) closeTaskGoroutine(taskIndex types.TaskIndex) {
 	a.taskChansMutex.Lock()
 	delete(a.signedTaskRespsCs, taskIndex)
 	a.taskChansMutex.Unlock()
@@ -324,10 +308,10 @@ func (a *BlsAggregatorService) closeTaskGoroutine(taskIndex types.TaskIndex) {
 // this forces the avs code to verify that the digest is indeed the digest of a valid taskResponse
 // we could take taskResponse as an interface{} and have avs code pass us a taskResponseHashFunction
 // that we could use to hash and verify the taskResponse itself
-func (a *BlsAggregatorService) verifySignature(
+func (a *EcdsaAggregatorService) verifySignature(
 	taskIndex types.TaskIndex,
-	signedTaskResponseDigest types.SignedTaskResponseDigest,
-	operatorsAvsStateDict map[types.OperatorId]types.OperatorAvsState,
+	signedTaskResponseDigest types.SignedEcdsaTaskResponseDigest,
+	operatorsAvsStateDict map[types.EcdsaOperatorId]types.OperatorEcdsaAvsState,
 ) error {
 	_, ok := operatorsAvsStateDict[signedTaskResponseDigest.OperatorId]
 	if !ok {
@@ -336,16 +320,12 @@ func (a *BlsAggregatorService) verifySignature(
 	}
 
 	// 0. verify that the msg actually came from the correct operator
-	operatorG2Pubkey := operatorsAvsStateDict[signedTaskResponseDigest.OperatorId].Pubkeys.G2Pubkey
-	if operatorG2Pubkey == nil {
-		a.logger.Fatal("Operator G2 pubkey not found")
-	}
 	a.logger.Debug("Verifying signed task response digest signature",
-		"operatorG2Pubkey", operatorG2Pubkey,
 		"taskResponseDigest", signedTaskResponseDigest.TaskResponseDigest,
-		"blsSignature", signedTaskResponseDigest.BlsSignature,
+		"operatorId", signedTaskResponseDigest.OperatorId,
+		"ecdsaSignature", signedTaskResponseDigest.EcdsaSignature,
 	)
-	signatureVerified, err := signedTaskResponseDigest.BlsSignature.Verify(operatorG2Pubkey, signedTaskResponseDigest.TaskResponseDigest)
+	signatureVerified, err := ecdsa.VerifySignature(signedTaskResponseDigest.TaskResponseDigest[:], signedTaskResponseDigest.EcdsaSignature, signedTaskResponseDigest.OperatorId)
 	if err != nil {
 		a.logger.Error(SignatureVerificationError(err).Error())
 		return SignatureVerificationError(err)
@@ -375,14 +355,4 @@ func checkIfStakeThresholdsMet(
 		}
 	}
 	return true
-}
-
-func getG1PubkeysOfNonSigners(signersOperatorIdsSet map[types.OperatorId]bool, operatorAvsStateDict map[[32]byte]types.OperatorAvsState) []*bls.G1Point {
-	nonSignersG1Pubkeys := []*bls.G1Point{}
-	for operatorId, operator := range operatorAvsStateDict {
-		if _, operatorSigned := signersOperatorIdsSet[operatorId]; !operatorSigned {
-			nonSignersG1Pubkeys = append(nonSignersG1Pubkeys, operator.Pubkeys.G1Pubkey)
-		}
-	}
-	return nonSignersG1Pubkeys
 }

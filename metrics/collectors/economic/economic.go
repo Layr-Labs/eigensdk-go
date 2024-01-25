@@ -5,7 +5,7 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry/bls"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/types"
@@ -25,11 +25,11 @@ import (
 type Collector struct {
 	// TODO(samlaf): we use a chain as the backend for now, but should eventually move to a subgraph
 	elReader          elcontracts.ELReader
-	avsRegistryReader avsregistry.AvsRegistryReader
+	avsRegistryReader avsblsregistry.AvsRegistryReader
 	logger            logging.Logger
 	// params to query the metrics for
 	operatorAddr common.Address
-	operatorId   types.OperatorId
+	operatorId   types.BlsOperatorId
 	quorumNames  map[types.QuorumNum]string
 	// metrics
 	// TODO(samlaf): I feel like eigenlayer-core metrics like slashingStatus and delegatedShares, which are not avs specific,
@@ -61,7 +61,7 @@ type Collector struct {
 var _ prometheus.Collector = (*Collector)(nil)
 
 func NewCollector(
-	elReader elcontracts.ELReader, avsRegistryReader avsregistry.AvsRegistryReader,
+	elReader elcontracts.ELReader, avsRegistryReader avsblsregistry.AvsRegistryReader,
 	avsName string, logger logging.Logger,
 	operatorAddr common.Address, quorumNames map[types.QuorumNum]string,
 ) *Collector {

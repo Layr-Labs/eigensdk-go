@@ -16,7 +16,7 @@ import (
 
 func TestEconomicCollector(t *testing.T) {
 	operatorAddr := common.HexToAddress("0x0")
-	operatorId := types.OperatorId{1}
+	operatorId := types.BlsOperatorId{1}
 	quorumNames := map[types.QuorumNum]string{
 		0: "ethQuorum",
 		1: "someOtherTokenQuorum",

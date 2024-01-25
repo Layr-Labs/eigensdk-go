@@ -1,4 +1,4 @@
-package avsregistry
+package avsblsregistry
 
 import (
 	"context"

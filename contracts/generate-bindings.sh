@@ -37,8 +37,12 @@ cd $EIGENLAYER_MIDDLEWARE_PATH
 forge build
 
 # No idea why but ordering of the contracts matters here... when I move them around sometimes bindings fail
-avs_contracts="RegistryCoordinator OperatorStateRetriever StakeRegistry BLSApkRegistry IBLSSignatureChecker ServiceManagerBase"
-for contract in $avs_contracts; do
+avs_bls_contracts="RegistryCoordinator OperatorStateRetriever StakeRegistry BLSApkRegistry IBLSSignatureChecker ServiceManagerBase"
+for contract in $avs_bls_contracts; do
+    create_binding . $contract ../../bindings
+done
+avs_ecdsa_contracts="ECDSASignatureChecker ECDSAOperatorStateRetriever"
+for contract in $avs_ecdsa_contracts; do
     create_binding . $contract ../../bindings
 done
 

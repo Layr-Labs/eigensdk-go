@@ -1,4 +1,4 @@
-package avsregistry
+package avsblsregistry
 
 import (
 	"bytes"
@@ -44,18 +44,18 @@ type AvsRegistryReader interface {
 
 	GetOperatorsStakeInQuorumsOfOperatorAtBlock(
 		opts *bind.CallOpts,
-		operatorId types.OperatorId,
+		operatorId types.BlsOperatorId,
 		blockNumber uint32,
 	) ([]types.QuorumNum, [][]opstateretriever.OperatorStateRetrieverOperator, error)
 
 	GetOperatorsStakeInQuorumsOfOperatorAtCurrentBlock(
 		opts *bind.CallOpts,
-		operatorId types.OperatorId,
+		operatorId types.BlsOperatorId,
 	) ([]types.QuorumNum, [][]opstateretriever.OperatorStateRetrieverOperator, error)
 
 	GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(
 		opts *bind.CallOpts,
-		operatorId types.OperatorId,
+		operatorId types.BlsOperatorId,
 	) (map[types.QuorumNum]types.StakeAmount, error)
 
 	GetCheckSignaturesIndices(
@@ -67,7 +67,7 @@ type AvsRegistryReader interface {
 
 	GetOperatorId(opts *bind.CallOpts, operatorAddress gethcommon.Address) ([32]byte, error)
 
-	GetOperatorFromId(opts *bind.CallOpts, operatorId types.OperatorId) (gethcommon.Address, error)
+	GetOperatorFromId(opts *bind.CallOpts, operatorId types.BlsOperatorId) (gethcommon.Address, error)
 
 	IsOperatorRegistered(opts *bind.CallOpts, operatorAddress gethcommon.Address) (bool, error)
 
@@ -233,7 +233,7 @@ func (r *AvsRegistryChainReader) GetOperatorAddrsInQuorumsAtCurrentBlock(
 
 func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsOfOperatorAtBlock(
 	opts *bind.CallOpts,
-	operatorId types.OperatorId,
+	operatorId types.BlsOperatorId,
 	blockNumber uint32,
 ) ([]types.QuorumNum, [][]opstateretriever.OperatorStateRetrieverOperator, error) {
 	quorumBitmap, operatorStakes, err := r.operatorStateRetriever.GetOperatorState0(
@@ -259,7 +259,7 @@ func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsOfOperatorAtBlock(
 // blockNumber in opts will be ignored, and the chain will be queried to get the latest blockNumber
 func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsOfOperatorAtCurrentBlock(
 	opts *bind.CallOpts,
-	operatorId types.OperatorId,
+	operatorId types.BlsOperatorId,
 ) ([]types.QuorumNum, [][]opstateretriever.OperatorStateRetrieverOperator, error) {
 	if opts.Context == nil {
 		opts.Context = context.Background()
@@ -282,7 +282,7 @@ func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsOfOperatorAtCurrentBl
 // so some of them could actually return information from different blocks
 func (r *AvsRegistryChainReader) GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(
 	opts *bind.CallOpts,
-	operatorId types.OperatorId,
+	operatorId types.BlsOperatorId,
 ) (map[types.QuorumNum]types.StakeAmount, error) {
 	quorumBitmap, err := r.registryCoordinator.GetCurrentQuorumBitmap(opts, operatorId)
 	if err != nil {
@@ -343,7 +343,7 @@ func (r *AvsRegistryChainReader) GetOperatorId(
 
 func (r *AvsRegistryChainReader) GetOperatorFromId(
 	opts *bind.CallOpts,
-	operatorId types.OperatorId,
+	operatorId types.BlsOperatorId,
 ) (gethcommon.Address, error) {
 	operatorAddress, err := r.registryCoordinator.GetOperatorFromId(
 		opts,
