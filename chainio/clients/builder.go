@@ -40,7 +40,12 @@ type Clients struct {
 	PrometheusRegistry         *prometheus.Registry  // Used if avs teams need to register avs-specific metrics
 }
 
-func BuildAll(config BuildAllConfig, signerAddr gethcommon.Address, signerFn signerv2.SignerFn, logger logging.Logger) (*Clients, error) {
+func BuildAll(
+	config BuildAllConfig,
+	signerAddr gethcommon.Address,
+	signerFn signerv2.SignerFn,
+	logger logging.Logger,
+) (*Clients, error) {
 	config.validate(logger)
 
 	// Create the metrics server

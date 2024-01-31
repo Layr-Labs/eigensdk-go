@@ -20,7 +20,9 @@ var (
 	ErrInvalidUrl               = errors.New("invalid url")
 
 	ErrInvalidImageMimeType  = errors.New("invalid image mime-type. only png is supported")
-	ErrInvalidImageExtension = errors.New("invalid image extension. only " + strings.Join(ImageExtensions, ",") + "is supported")
+	ErrInvalidImageExtension = errors.New(
+		"invalid image extension. only " + strings.Join(ImageExtensions, ",") + "is supported",
+	)
 
 	// Metadata Errors
 	ErrNameRequired        = errors.New("name is required")
