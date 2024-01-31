@@ -14,12 +14,16 @@ var _ Logger = (*SLogger)(nil)
 
 func NewSlogLogger(env LogLevel) Logger {
 	if env == Production {
-		logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+		logHandler := slog.NewJSONHandler(os.Stdout, nil).WithAttrs([]slog.Attr{slog.String("env", string(env))})
+		logger := slog.New(logHandler)
 		return &SLogger{
 			logger: logger,
 		}
 	} else if env == Development {
-		logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+		// Even though code is same for both environments, we are keeping it separate to show that we can have different
+		// implementations for different environments. For example, we can have log levels set differently
+		logHandler := slog.NewJSONHandler(os.Stdout, nil).WithAttrs([]slog.Attr{slog.String("env", string(env))})
+		logger := slog.New(logHandler)
 		return &SLogger{
 			logger: logger,
 		}
