@@ -10,4 +10,4 @@ package services
 // TODO: are there better ways to organize these dependencies? Maybe by using ben johnson
 // and having the avs registry interface be in the /avsregistry dir but the avsregistry_chaincaller
 // and its test in a subdir?
-//go:generate mockgen -destination=./mocks/blsagg/blsaggregation.go -package=mocks github.com/Layr-Labs/eigensdk-go/services/bls/aggregation BlsAggregationService
+//go:generate mockgen -destination=./mocks/blsagg/aggregation.go -package=mocks github.com/Layr-Labs/eigensdk-go/services/bls/aggregation BlsAggregationService

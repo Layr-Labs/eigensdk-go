@@ -206,6 +206,7 @@ func (a *EcdsaAggregatorService) singleTaskAggregatorGoroutineFunc(
 		quorumThresholdPercentagesMap[quorumNumber] = quorumThresholdPercentages[i]
 	}
 	operatorsAvsStateDict, err := a.avsRegistryService.GetOperatorsAvsStateAtBlock(context.Background(), quorumNumbers, taskCreatedBlock)
+	a.logger.Debug("Aggregator received operators state from avs registry", "operatorsAvsStateDict", operatorsAvsStateDict)
 	if err != nil {
 		// TODO: how should we handle such an error?
 		a.logger.Fatal("Aggregator failed to get operators state from avs registry", "err", err)
@@ -231,7 +232,12 @@ func (a *EcdsaAggregatorService) singleTaskAggregatorGoroutineFunc(
 				"taskIndex", taskIndex, "TaskResponseDigest", signedTaskResponseDigest.TaskResponseDigest,
 				"OperatorId", signedTaskResponseDigest.OperatorId, "ecdsaSignature", signedTaskResponseDigest.EcdsaSignature,
 			)
-			signedTaskResponseDigest.SignatureVerificationErrorC <- a.verifySignature(taskIndex, signedTaskResponseDigest, operatorsAvsStateDict)
+			err := a.verifySignature(taskIndex, signedTaskResponseDigest, operatorsAvsStateDict)
+			signedTaskResponseDigest.SignatureVerificationErrorC <- err
+			if err != nil {
+				// if the signature is invalid, we skip this message
+				continue
+			}
 			// after verifying signature we aggregate its sig and pubkey, and update the signed stake amount
 			digestAggregatedOperators, ok := aggregatedOperatorsDict[signedTaskResponseDigest.TaskResponseDigest]
 			if !ok {

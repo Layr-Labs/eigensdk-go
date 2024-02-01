@@ -8,12 +8,28 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/Layr-Labs/eigensdk-go/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/uuid"
 )
+
+// GeneratePrivateKey generates a new ecdsa private key
+// it just wraps geth's crypto.GenerateKey so that users
+// of the sdk have everything they need in the same package
+func GeneratePrivateKey() (*ecdsa.PrivateKey, error) {
+	return crypto.GenerateKey()
+}
+
+func NewPrivateKeyFromHex(hexKey string) (*ecdsa.PrivateKey, error) {
+	return crypto.HexToECDSA(hexKey)
+}
+
+func PrivateKeyToOperatorId(privateKey *ecdsa.PrivateKey) types.EcdsaOperatorId {
+	return crypto.PubkeyToAddress(privateKey.PublicKey)
+}
 
 func WriteKeyFromHex(path, privateKeyHex, password string) error {
 	privateKey, err := crypto.HexToECDSA(privateKeyHex)

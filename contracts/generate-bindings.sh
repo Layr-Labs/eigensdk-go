@@ -7,7 +7,7 @@ script_path=$(
 )
 
 # build abigen-with-interfaces docker image if it doesn't exist
-if [[ "$(docker images -q abigen-with-interfaces 2> /dev/null)" == "" ]]; then
+if [[ "$(docker images -q abigen-with-interfaces 2>/dev/null)" == "" ]]; then
     docker build -t abigen-with-interfaces -f abigen-with-interfaces.Dockerfile $script_path
 fi
 
@@ -41,7 +41,7 @@ avs_bls_contracts="RegistryCoordinator OperatorStateRetriever StakeRegistry BLSA
 for contract in $avs_bls_contracts; do
     create_binding . $contract ../../bindings
 done
-avs_ecdsa_contracts="ECDSASignatureChecker ECDSAOperatorStateRetriever"
+avs_ecdsa_contracts="ECDSASignatureChecker ECDSAOperatorStateRetriever ECDSAStakeRegistry ECDSARegistryCoordinator"
 for contract in $avs_ecdsa_contracts; do
     create_binding . $contract ../../bindings
 done

@@ -69,3 +69,18 @@ func (mr *MockAvsEcdsaRegistryReaderMockRecorder) GetOperatorsStakeInQuorumsAtBl
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOperatorsStakeInQuorumsAtBlock", reflect.TypeOf((*MockAvsEcdsaRegistryReader)(nil).GetOperatorsStakeInQuorumsAtBlock), arg0, arg1, arg2)
 }
+
+// IsOperatorRegistered mocks base method.
+func (m *MockAvsEcdsaRegistryReader) IsOperatorRegistered(arg0 *bind.CallOpts, arg1 common.Address) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsOperatorRegistered", arg0, arg1)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsOperatorRegistered indicates an expected call of IsOperatorRegistered.
+func (mr *MockAvsEcdsaRegistryReaderMockRecorder) IsOperatorRegistered(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsOperatorRegistered", reflect.TypeOf((*MockAvsEcdsaRegistryReader)(nil).IsOperatorRegistered), arg0, arg1)
+}

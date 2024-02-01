@@ -418,11 +418,11 @@ func TestEcdsaAgg(t *testing.T) {
 }
 
 func newEcdsaPrivKeyPanics(hexKey string) *ecdsa.PrivateKey {
-	keypair, err := crypto.GenerateKey()
+	privateKey, err := sdkecdsa.GeneratePrivateKey()
 	if err != nil {
 		panic(err)
 	}
-	return keypair
+	return privateKey
 }
 
 func newTestOperator(ecdsaPrivKey *ecdsa.PrivateKey, stakePerQuorum map[types.QuorumNum]types.StakeAmount) types.TestEcdsaOperator {
