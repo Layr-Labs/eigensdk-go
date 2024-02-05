@@ -20,15 +20,15 @@ go install
 
 To create in a random folder
 ```bash
-   egnkey generate --key-type ecdsa --num-keys <num_key>
+egnkey generate --key-type ecdsa --num-keys <num_key>
 ```
 
-To create  in specific folder
+To create in specific folder
 ```bash
-   egnkey generate --key-type ecdsa --num-keys <num_key> --output-dir <path_to_folder>
+egnkey generate --key-type ecdsa --num-keys <num_key> --output-dir <path_to_folder>
 ```
 
 To create `ECDSA` and `BLS` keys in a random folder
 ```bash
-   egnkey generate --key-type both --num-keys <num_key>
+egnkey generate --key-type both --num-keys <num_key>
 ```
