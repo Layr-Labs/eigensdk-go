@@ -7,13 +7,13 @@ Features:
 ### How to install
 #### Install from source
 ```bash
-   go install github.com/Layr-Labs/eigensdk-go/cmd/egnkey@latest
+go install github.com/Layr-Labs/eigensdk-go/cmd/egnkey@latest
 ```
 
 #### Build from source
 Navigate to [egnkey](../egnkey/) directory and run
 ```bash
-   go install
+go install
 ```
 
 ### Generate ecdsa or bls key in batches
