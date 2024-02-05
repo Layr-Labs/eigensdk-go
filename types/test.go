@@ -1,9 +1,18 @@
 package types
 
-import "github.com/Layr-Labs/eigensdk-go/crypto/bls"
+import (
+	"crypto/ecdsa"
 
-type TestOperator struct {
-	OperatorId     OperatorId
+	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
+)
+
+type TestBlsOperator struct {
+	OperatorId     BlsOperatorId
 	StakePerQuorum map[QuorumNum]StakeAmount
 	BlsKeypair     *bls.KeyPair
+}
+type TestEcdsaOperator struct {
+	OperatorId     EcdsaOperatorId
+	StakePerQuorum map[QuorumNum]StakeAmount
+	EcdsaPrivKey   *ecdsa.PrivateKey
 }

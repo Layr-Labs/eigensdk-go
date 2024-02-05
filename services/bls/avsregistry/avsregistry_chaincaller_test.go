@@ -10,7 +10,7 @@ import (
 	opstateretrievar "github.com/Layr-Labs/eigensdk-go/contracts/bindings/OperatorStateRetriever"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
-	servicemocks "github.com/Layr-Labs/eigensdk-go/services/mocks"
+	servicemocks "github.com/Layr-Labs/eigensdk-go/services/bls/mocks"
 	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum/common"
 	"go.uber.org/mock/gomock"
@@ -18,7 +18,7 @@ import (
 
 type testOperator struct {
 	operatorAddr common.Address
-	operatorId   types.OperatorId
+	operatorId   types.BlsOperatorId
 	pubkeys      types.OperatorPubkeys
 }
 
@@ -26,7 +26,7 @@ func TestAvsRegistryServiceChainCaller_getOperatorPubkeys(t *testing.T) {
 	logger := logging.NewNoopLogger()
 	testOperator := testOperator{
 		operatorAddr: common.HexToAddress("0x1"),
-		operatorId:   types.OperatorId{1},
+		operatorId:   types.BlsOperatorId{1},
 		pubkeys: types.OperatorPubkeys{
 			G1Pubkey: bls.NewG1Point(big.NewInt(1), big.NewInt(1)),
 			G2Pubkey: bls.NewG2Point([2]*big.Int{big.NewInt(1), big.NewInt(1)}, [2]*big.Int{big.NewInt(1), big.NewInt(1)}),
@@ -37,7 +37,7 @@ func TestAvsRegistryServiceChainCaller_getOperatorPubkeys(t *testing.T) {
 	var tests = []struct {
 		name                    string
 		mocksInitializationFunc func(*chainiomocks.MockAvsRegistryReader, *servicemocks.MockOperatorPubkeysService)
-		queryOperatorId         types.OperatorId
+		queryOperatorId         types.BlsOperatorId
 		wantErr                 error
 		wantOperatorPubkeys     types.OperatorPubkeys
 	}{
@@ -82,7 +82,7 @@ func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
 	logger := logging.NewNoopLogger()
 	testOperator := testOperator{
 		operatorAddr: common.HexToAddress("0x1"),
-		operatorId:   types.OperatorId{1},
+		operatorId:   types.BlsOperatorId{1},
 		pubkeys: types.OperatorPubkeys{
 			G1Pubkey: bls.NewG1Point(big.NewInt(1), big.NewInt(1)),
 			G2Pubkey: bls.NewG2Point([2]*big.Int{big.NewInt(1), big.NewInt(1)}, [2]*big.Int{big.NewInt(1), big.NewInt(1)}),
@@ -95,7 +95,7 @@ func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
 		queryQuorumNumbers        []types.QuorumNum
 		queryBlockNum             types.BlockNum
 		wantErr                   error
-		wantOperatorsAvsStateDict map[types.OperatorId]types.OperatorAvsState
+		wantOperatorsAvsStateDict map[types.BlsOperatorId]types.OperatorBlsAvsState
 	}{
 		{
 			name: "should return operatorsAvsState",
@@ -114,7 +114,7 @@ func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
 			queryQuorumNumbers: []types.QuorumNum{1},
 			queryBlockNum:      1,
 			wantErr:            nil,
-			wantOperatorsAvsStateDict: map[types.OperatorId]types.OperatorAvsState{
+			wantOperatorsAvsStateDict: map[types.BlsOperatorId]types.OperatorBlsAvsState{
 				testOperator.operatorId: {
 					OperatorId:     testOperator.operatorId,
 					Pubkeys:        testOperator.pubkeys,
@@ -154,7 +154,7 @@ func TestAvsRegistryServiceChainCaller_GetQuorumsAvsState(t *testing.T) {
 	logger := logging.NewNoopLogger()
 	testOperator := testOperator{
 		operatorAddr: common.HexToAddress("0x1"),
-		operatorId:   types.OperatorId{1},
+		operatorId:   types.BlsOperatorId{1},
 		pubkeys: types.OperatorPubkeys{
 			G1Pubkey: bls.NewG1Point(big.NewInt(1), big.NewInt(1)),
 			G2Pubkey: bls.NewG2Point([2]*big.Int{big.NewInt(1), big.NewInt(1)}, [2]*big.Int{big.NewInt(1), big.NewInt(1)}),
@@ -167,7 +167,7 @@ func TestAvsRegistryServiceChainCaller_GetQuorumsAvsState(t *testing.T) {
 		queryQuorumNumbers      []types.QuorumNum
 		queryBlockNum           types.BlockNum
 		wantErr                 error
-		wantQuorumsAvsStateDict map[types.QuorumNum]types.QuorumAvsState
+		wantQuorumsAvsStateDict map[types.QuorumNum]types.QuorumBlsAvsState
 	}{
 		{
 			name: "should return operatorsAvsState",
@@ -186,8 +186,8 @@ func TestAvsRegistryServiceChainCaller_GetQuorumsAvsState(t *testing.T) {
 			queryQuorumNumbers: []types.QuorumNum{1},
 			queryBlockNum:      1,
 			wantErr:            nil,
-			wantQuorumsAvsStateDict: map[types.QuorumNum]types.QuorumAvsState{
-				1: types.QuorumAvsState{
+			wantQuorumsAvsStateDict: map[types.QuorumNum]types.QuorumBlsAvsState{
+				1: types.QuorumBlsAvsState{
 					QuorumNumber: types.QuorumNum(1),
 					TotalStake:   big.NewInt(123),
 					AggPubkeyG1:  bls.NewG1Point(big.NewInt(1), big.NewInt(1)),

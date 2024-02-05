@@ -134,7 +134,7 @@ func NewAVSRegistryContractBindings(
 
 	blsApkRegistryAddr, err := contractBlsRegistryCoordinator.BlsApkRegistry(&bind.CallOpts{})
 	if err != nil {
-		logger.Error("Failed to fetch BLSPubkeyRegistry address", "err", err)
+		logger.Error("Failed to fetch BLSApkRegistry address", "err", err)
 		return nil, err
 	}
 	contractBlsApkRegistry, err := blsapkregistry.NewContractBLSApkRegistry(
@@ -142,7 +142,7 @@ func NewAVSRegistryContractBindings(
 		ethclient,
 	)
 	if err != nil {
-		logger.Error("Failed to fetch BLSPubkeyRegistry contract", "err", err)
+		logger.Error("Failed to fetch BLSApkRegistry contract", "err", err)
 		return nil, err
 	}
 

@@ -1,4 +1,4 @@
-package avsregistry
+package avsblsregistry
 
 import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"

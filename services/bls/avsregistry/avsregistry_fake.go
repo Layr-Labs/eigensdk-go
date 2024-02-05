@@ -12,17 +12,17 @@ import (
 )
 
 type FakeAvsRegistryService struct {
-	operators map[types.BlockNum]map[types.OperatorId]types.OperatorAvsState
+	operators map[types.BlockNum]map[types.BlsOperatorId]types.OperatorBlsAvsState
 }
 
-func NewFakeAvsRegistryService(blockNum types.BlockNum, operators []types.TestOperator) *FakeAvsRegistryService {
+func NewFakeAvsRegistryService(blockNum types.BlockNum, operators []types.TestBlsOperator) *FakeAvsRegistryService {
 	fakeAvsRegistryService := &FakeAvsRegistryService{
-		operators: map[types.BlockNum]map[types.OperatorId]types.OperatorAvsState{
+		operators: map[types.BlockNum]map[types.BlsOperatorId]types.OperatorBlsAvsState{
 			blockNum: {},
 		},
 	}
 	for _, operator := range operators {
-		fakeAvsRegistryService.operators[blockNum][operator.OperatorId] = types.OperatorAvsState{
+		fakeAvsRegistryService.operators[blockNum][operator.OperatorId] = types.OperatorBlsAvsState{
 			OperatorId:     operator.OperatorId,
 			Pubkeys:        types.OperatorPubkeys{G1Pubkey: operator.BlsKeypair.GetPubKeyG1(), G2Pubkey: operator.BlsKeypair.GetPubKeyG2()},
 			StakePerQuorum: operator.StakePerQuorum,
@@ -34,7 +34,7 @@ func NewFakeAvsRegistryService(blockNum types.BlockNum, operators []types.TestOp
 
 var _ AvsRegistryService = (*FakeAvsRegistryService)(nil)
 
-func (f *FakeAvsRegistryService) GetOperatorsAvsStateAtBlock(ctx context.Context, quorumNumbers []types.QuorumNum, blockNumber types.BlockNum) (map[types.OperatorId]types.OperatorAvsState, error) {
+func (f *FakeAvsRegistryService) GetOperatorsAvsStateAtBlock(ctx context.Context, quorumNumbers []types.QuorumNum, blockNumber types.BlockNum) (map[types.BlsOperatorId]types.OperatorBlsAvsState, error) {
 	operatorsAvsState, ok := f.operators[blockNumber]
 	if !ok {
 		return nil, errors.New("block number not found")
@@ -42,12 +42,12 @@ func (f *FakeAvsRegistryService) GetOperatorsAvsStateAtBlock(ctx context.Context
 	return operatorsAvsState, nil
 }
 
-func (f *FakeAvsRegistryService) GetQuorumsAvsStateAtBlock(ctx context.Context, quorumNumbers []types.QuorumNum, blockNumber types.BlockNum) (map[types.QuorumNum]types.QuorumAvsState, error) {
+func (f *FakeAvsRegistryService) GetQuorumsAvsStateAtBlock(ctx context.Context, quorumNumbers []types.QuorumNum, blockNumber types.BlockNum) (map[types.QuorumNum]types.QuorumBlsAvsState, error) {
 	operatorsAvsState, ok := f.operators[blockNumber]
 	if !ok {
 		return nil, errors.New("block number not found")
 	}
-	quorumsAvsState := make(map[types.QuorumNum]types.QuorumAvsState)
+	quorumsAvsState := make(map[types.QuorumNum]types.QuorumBlsAvsState)
 	for _, quorumNum := range quorumNumbers {
 		aggPubkeyG1 := bls.NewG1Point(big.NewInt(0), big.NewInt(0))
 		totalStake := big.NewInt(0)
@@ -58,7 +58,7 @@ func (f *FakeAvsRegistryService) GetQuorumsAvsStateAtBlock(ctx context.Context, 
 				totalStake.Add(totalStake, stake)
 			}
 		}
-		quorumsAvsState[quorumNum] = types.QuorumAvsState{
+		quorumsAvsState[quorumNum] = types.QuorumBlsAvsState{
 			QuorumNumber: quorumNum,
 			AggPubkeyG1:  aggPubkeyG1,
 			TotalStake:   totalStake,
@@ -70,7 +70,7 @@ func (f *FakeAvsRegistryService) GetQuorumsAvsStateAtBlock(ctx context.Context, 
 
 func (f *FakeAvsRegistryService) GetCheckSignaturesIndices(
 	opts *bind.CallOpts, referenceBlockNumber types.BlockNum,
-	quorumNumbers []types.QuorumNum, nonSignerOperatorIds []types.OperatorId,
+	quorumNumbers []types.QuorumNum, nonSignerOperatorIds []types.BlsOperatorId,
 ) (opstateretriever.OperatorStateRetrieverCheckSignaturesIndices, error) {
 	return opstateretriever.OperatorStateRetrieverCheckSignaturesIndices{}, nil
 }

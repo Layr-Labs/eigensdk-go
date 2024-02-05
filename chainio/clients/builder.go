@@ -1,7 +1,7 @@
 package clients
 
 import (
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry/bls"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
@@ -29,9 +29,9 @@ type BuildAllConfig struct {
 // for non-instrumented clients that doesn't return metrics/reg, and another instrumented-constructor
 // that returns instrumented clients and the metrics/reg.
 type Clients struct {
-	AvsRegistryChainReader     *avsregistry.AvsRegistryChainReader
-	AvsRegistryChainSubscriber *avsregistry.AvsRegistryChainSubscriber
-	AvsRegistryChainWriter     *avsregistry.AvsRegistryChainWriter
+	AvsRegistryChainReader     *avsblsregistry.AvsRegistryChainReader
+	AvsRegistryChainSubscriber *avsblsregistry.AvsRegistryChainSubscriber
+	AvsRegistryChainWriter     *avsblsregistry.AvsRegistryChainWriter
 	ElChainReader              *elcontracts.ELChainReader
 	ElChainWriter              *elcontracts.ELChainWriter
 	EthHttpClient              *eth.Client
@@ -167,7 +167,7 @@ func (config *BuildAllConfig) buildAvsClients(
 	ethWsClient eth.EthClient,
 	txMgr txmgr.TxManager,
 	logger logging.Logger,
-) (*avsregistry.AvsRegistryChainReader, *avsregistry.AvsRegistryChainSubscriber, *avsregistry.AvsRegistryChainWriter, error) {
+) (*avsblsregistry.AvsRegistryChainReader, *avsblsregistry.AvsRegistryChainSubscriber, *avsblsregistry.AvsRegistryChainWriter, error) {
 
 	avsRegistryContractBindings, err := chainioutils.NewAVSRegistryContractBindings(
 		gethcommon.HexToAddress(config.RegistryCoordinatorAddr),
@@ -180,7 +180,7 @@ func (config *BuildAllConfig) buildAvsClients(
 		return nil, nil, nil, err
 	}
 
-	avsRegistryChainReader := avsregistry.NewAvsRegistryChainReader(
+	avsRegistryChainReader := avsblsregistry.NewAvsRegistryChainReader(
 		avsRegistryContractBindings.RegistryCoordinatorAddr,
 		avsRegistryContractBindings.BlsApkRegistryAddr,
 		avsRegistryContractBindings.RegistryCoordinator,
@@ -190,7 +190,7 @@ func (config *BuildAllConfig) buildAvsClients(
 		ethHttpClient,
 	)
 
-	avsRegistryChainWriter, err := avsregistry.NewAvsRegistryChainWriter(
+	avsRegistryChainWriter, err := avsblsregistry.NewAvsRegistryChainWriter(
 		avsRegistryContractBindings.ServiceManagerAddr,
 		avsRegistryContractBindings.RegistryCoordinator,
 		avsRegistryContractBindings.OperatorStateRetriever,
@@ -208,7 +208,7 @@ func (config *BuildAllConfig) buildAvsClients(
 
 	// get the Subscriber for Avs Registry contracts
 	// note that the subscriber needs a ws connection instead of http
-	avsRegistrySubscriber, err := avsregistry.BuildAvsRegistryChainSubscriber(
+	avsRegistrySubscriber, err := avsblsregistry.BuildAvsRegistryChainSubscriber(
 		avsRegistryContractBindings.BlsApkRegistryAddr,
 		ethWsClient,
 		logger,

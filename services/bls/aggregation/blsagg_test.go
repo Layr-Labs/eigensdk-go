@@ -8,7 +8,7 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
-	"github.com/Layr-Labs/eigensdk-go/services/avsregistry"
+	"github.com/Layr-Labs/eigensdk-go/services/bls/avsregistry"
 	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/stretchr/testify/require"
 )
@@ -24,8 +24,8 @@ func TestBlsAgg(t *testing.T) {
 	tasksTimeToExpiry := 1 * time.Second
 
 	t.Run("1 quorum 1 operator 1 correct signature", func(t *testing.T) {
-		testOperator1 := types.TestOperator{
-			OperatorId:     types.OperatorId{1},
+		testOperator1 := types.TestBlsOperator{
+			OperatorId:     types.BlsOperatorId{1},
 			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100), 1: big.NewInt(200)},
 			BlsKeypair:     newBlsKeyPairPanics("0x1"),
 		}
@@ -36,7 +36,7 @@ func TestBlsAgg(t *testing.T) {
 		taskResponseDigest := types.TaskResponseDigest{123}
 		blsSig := testOperator1.BlsKeypair.SignMessage(taskResponseDigest)
 
-		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1})
+		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestBlsOperator{testOperator1})
 		noopLogger := logging.NewNoopLogger()
 		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
 
@@ -58,18 +58,18 @@ func TestBlsAgg(t *testing.T) {
 	})
 
 	t.Run("1 quorum 3 operator 3 correct signatures", func(t *testing.T) {
-		testOperator1 := types.TestOperator{
-			OperatorId:     types.OperatorId{1},
+		testOperator1 := types.TestBlsOperator{
+			OperatorId:     types.BlsOperatorId{1},
 			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100), 1: big.NewInt(200)},
 			BlsKeypair:     newBlsKeyPairPanics("0x1"),
 		}
-		testOperator2 := types.TestOperator{
-			OperatorId:     types.OperatorId{2},
+		testOperator2 := types.TestBlsOperator{
+			OperatorId:     types.BlsOperatorId{2},
 			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100), 1: big.NewInt(200)},
 			BlsKeypair:     newBlsKeyPairPanics("0x2"),
 		}
-		testOperator3 := types.TestOperator{
-			OperatorId:     types.OperatorId{3},
+		testOperator3 := types.TestBlsOperator{
+			OperatorId:     types.BlsOperatorId{3},
 			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(300), 1: big.NewInt(100)},
 			BlsKeypair:     newBlsKeyPairPanics("0x3"),
 		}
@@ -79,7 +79,7 @@ func TestBlsAgg(t *testing.T) {
 		taskResponseDigest := types.TaskResponseDigest{123}
 		blockNum := uint32(1)
 
-		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1, testOperator2, testOperator3})
+		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestBlsOperator{testOperator1, testOperator2, testOperator3})
 		noopLogger := logging.NewNoopLogger()
 		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
 
@@ -116,13 +116,13 @@ func TestBlsAgg(t *testing.T) {
 	})
 
 	t.Run("2 quorums 2 operators 2 correct signatures", func(t *testing.T) {
-		testOperator1 := types.TestOperator{
-			OperatorId:     types.OperatorId{1},
+		testOperator1 := types.TestBlsOperator{
+			OperatorId:     types.BlsOperatorId{1},
 			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100), 1: big.NewInt(200)},
 			BlsKeypair:     newBlsKeyPairPanics("0x1"),
 		}
-		testOperator2 := types.TestOperator{
-			OperatorId:     types.OperatorId{2},
+		testOperator2 := types.TestBlsOperator{
+			OperatorId:     types.BlsOperatorId{2},
 			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100), 1: big.NewInt(200)},
 			BlsKeypair:     newBlsKeyPairPanics("0x2"),
 		}
@@ -132,7 +132,7 @@ func TestBlsAgg(t *testing.T) {
 		taskResponseDigest := types.TaskResponseDigest{123}
 		blockNum := uint32(1)
 
-		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1, testOperator2})
+		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestBlsOperator{testOperator1, testOperator2})
 		noopLogger := logging.NewNoopLogger()
 		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
 
@@ -162,13 +162,13 @@ func TestBlsAgg(t *testing.T) {
 	})
 
 	t.Run("2 concurrent tasks 2 quorums 2 operators 2 correct signatures", func(t *testing.T) {
-		testOperator1 := types.TestOperator{
-			OperatorId:     types.OperatorId{1},
+		testOperator1 := types.TestBlsOperator{
+			OperatorId:     types.BlsOperatorId{1},
 			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100), 1: big.NewInt(200)},
 			BlsKeypair:     newBlsKeyPairPanics("0x1"),
 		}
-		testOperator2 := types.TestOperator{
-			OperatorId:     types.OperatorId{2},
+		testOperator2 := types.TestBlsOperator{
+			OperatorId:     types.BlsOperatorId{2},
 			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100), 1: big.NewInt(200)},
 			BlsKeypair:     newBlsKeyPairPanics("0x2"),
 		}
@@ -176,7 +176,7 @@ func TestBlsAgg(t *testing.T) {
 		quorumThresholdPercentages := []types.QuorumThresholdPercentage{100, 100}
 		blockNum := uint32(1)
 
-		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1, testOperator2})
+		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestBlsOperator{testOperator1, testOperator2})
 		noopLogger := logging.NewNoopLogger()
 		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
 
@@ -242,8 +242,8 @@ func TestBlsAgg(t *testing.T) {
 	})
 
 	t.Run("1 quorum 1 operator 0 signatures - task expired", func(t *testing.T) {
-		testOperator1 := types.TestOperator{
-			OperatorId:     types.OperatorId{1},
+		testOperator1 := types.TestBlsOperator{
+			OperatorId:     types.BlsOperatorId{1},
 			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100), 1: big.NewInt(200)},
 			BlsKeypair:     newBlsKeyPairPanics("0x1"),
 		}
@@ -252,7 +252,7 @@ func TestBlsAgg(t *testing.T) {
 		quorumThresholdPercentages := []types.QuorumThresholdPercentage{100}
 		blockNum := uint32(1)
 
-		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1})
+		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestBlsOperator{testOperator1})
 		noopLogger := logging.NewNoopLogger()
 		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
 
@@ -266,13 +266,13 @@ func TestBlsAgg(t *testing.T) {
 	})
 
 	t.Run("1 quorum 2 operator 1 correct signature quorumThreshold 50% - verified", func(t *testing.T) {
-		testOperator1 := types.TestOperator{
-			OperatorId:     types.OperatorId{1},
+		testOperator1 := types.TestBlsOperator{
+			OperatorId:     types.BlsOperatorId{1},
 			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100), 1: big.NewInt(200)},
 			BlsKeypair:     newBlsKeyPairPanics("0x1"),
 		}
-		testOperator2 := types.TestOperator{
-			OperatorId:     types.OperatorId{2},
+		testOperator2 := types.TestBlsOperator{
+			OperatorId:     types.BlsOperatorId{2},
 			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100), 1: big.NewInt(200)},
 			BlsKeypair:     newBlsKeyPairPanics("0x2"),
 		}
@@ -283,7 +283,7 @@ func TestBlsAgg(t *testing.T) {
 		blsSig := testOperator1.BlsKeypair.SignMessage(taskResponseDigest)
 		blockNum := uint32(1)
 
-		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1, testOperator2})
+		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestBlsOperator{testOperator1, testOperator2})
 		noopLogger := logging.NewNoopLogger()
 		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
 
@@ -305,13 +305,13 @@ func TestBlsAgg(t *testing.T) {
 	})
 
 	t.Run("1 quorum 2 operator 1 correct signature quorumThreshold 60% - task expired", func(t *testing.T) {
-		testOperator1 := types.TestOperator{
-			OperatorId:     types.OperatorId{1},
+		testOperator1 := types.TestBlsOperator{
+			OperatorId:     types.BlsOperatorId{1},
 			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100), 1: big.NewInt(200)},
 			BlsKeypair:     newBlsKeyPairPanics("0x1"),
 		}
-		testOperator2 := types.TestOperator{
-			OperatorId:     types.OperatorId{2},
+		testOperator2 := types.TestBlsOperator{
+			OperatorId:     types.BlsOperatorId{2},
 			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100), 1: big.NewInt(200)},
 			BlsKeypair:     newBlsKeyPairPanics("0x2"),
 		}
@@ -322,7 +322,7 @@ func TestBlsAgg(t *testing.T) {
 		taskResponseDigest := types.TaskResponseDigest{123}
 		blsSig := testOperator1.BlsKeypair.SignMessage(taskResponseDigest)
 
-		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1, testOperator2})
+		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestBlsOperator{testOperator1, testOperator2})
 		noopLogger := logging.NewNoopLogger()
 		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
 
@@ -338,8 +338,8 @@ func TestBlsAgg(t *testing.T) {
 	})
 
 	t.Run("send signature of task that isn't initialized - task not found error", func(t *testing.T) {
-		testOperator1 := types.TestOperator{
-			OperatorId:     types.OperatorId{1},
+		testOperator1 := types.TestBlsOperator{
+			OperatorId:     types.BlsOperatorId{1},
 			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100), 1: big.NewInt(200)},
 			BlsKeypair:     newBlsKeyPairPanics("0x1"),
 		}
@@ -348,7 +348,7 @@ func TestBlsAgg(t *testing.T) {
 		taskResponseDigest := types.TaskResponseDigest{123}
 		blsSig := testOperator1.BlsKeypair.SignMessage(taskResponseDigest)
 
-		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1})
+		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestBlsOperator{testOperator1})
 		noopLogger := logging.NewNoopLogger()
 		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
 
@@ -359,13 +359,13 @@ func TestBlsAgg(t *testing.T) {
 	// this is an edge case as typically we would send new tasks and listen for task responses in a for select loop
 	// but this test makes sure the context deadline exceeded can get us out of a deadlock
 	t.Run("send new signedTaskDigest before listen on responseChan - context timeout cancels the request to prevent deadlock", func(t *testing.T) {
-		testOperator1 := types.TestOperator{
-			OperatorId:     types.OperatorId{1},
+		testOperator1 := types.TestBlsOperator{
+			OperatorId:     types.BlsOperatorId{1},
 			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100), 1: big.NewInt(200)},
 			BlsKeypair:     newBlsKeyPairPanics("0x1"),
 		}
-		testOperator2 := types.TestOperator{
-			OperatorId:     types.OperatorId{2},
+		testOperator2 := types.TestBlsOperator{
+			OperatorId:     types.BlsOperatorId{2},
 			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100), 1: big.NewInt(200)},
 			BlsKeypair:     newBlsKeyPairPanics("0x2"),
 		}
@@ -374,7 +374,7 @@ func TestBlsAgg(t *testing.T) {
 		quorumNumbers := []types.QuorumNum{0}
 		quorumThresholdPercentages := []types.QuorumThresholdPercentage{100}
 
-		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1})
+		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestBlsOperator{testOperator1})
 		noopLogger := logging.NewNoopLogger()
 		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
 
@@ -407,13 +407,13 @@ func TestBlsAgg(t *testing.T) {
 	})
 
 	t.Run("1 quorum 2 operator 2 signatures on 2 different msgs - task expired", func(t *testing.T) {
-		testOperator1 := types.TestOperator{
-			OperatorId:     types.OperatorId{1},
+		testOperator1 := types.TestBlsOperator{
+			OperatorId:     types.BlsOperatorId{1},
 			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100), 1: big.NewInt(200)},
 			BlsKeypair:     newBlsKeyPairPanics("0x1"),
 		}
-		testOperator2 := types.TestOperator{
-			OperatorId:     types.OperatorId{2},
+		testOperator2 := types.TestBlsOperator{
+			OperatorId:     types.BlsOperatorId{2},
 			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100), 1: big.NewInt(200)},
 			BlsKeypair:     newBlsKeyPairPanics("0x2"),
 		}
@@ -422,7 +422,7 @@ func TestBlsAgg(t *testing.T) {
 		quorumNumbers := []types.QuorumNum{0}
 		quorumThresholdPercentages := []types.QuorumThresholdPercentage{100}
 
-		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1, testOperator2})
+		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestBlsOperator{testOperator1, testOperator2})
 		noopLogger := logging.NewNoopLogger()
 		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
 

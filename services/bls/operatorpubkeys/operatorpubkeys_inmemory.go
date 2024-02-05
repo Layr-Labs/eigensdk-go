@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry/bls"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/types"
@@ -23,8 +23,8 @@ import (
 // better than silently failing, since it will be easier to debug. Naturally, this means that this aggregator using this service needs
 // to be replicated and load-balanced, so that when it fails traffic can be switched to the other aggregator.
 type OperatorPubkeysServiceInMemory struct {
-	avsRegistrySubscriber avsregistry.AvsRegistrySubscriber
-	avsRegistryReader     avsregistry.AvsRegistryReader
+	avsRegistrySubscriber avsblsregistry.AvsRegistrySubscriber
+	avsRegistryReader     avsblsregistry.AvsRegistryReader
 	logger                logging.Logger
 	queryC                chan<- query
 }
@@ -48,8 +48,8 @@ var _ OperatorPubkeysService = (*OperatorPubkeysServiceInMemory)(nil)
 // Using a separate initialize() function might lead to some users forgetting to call it and the service not behaving properly.
 func NewOperatorPubkeysServiceInMemory(
 	ctx context.Context,
-	avsRegistrySubscriber avsregistry.AvsRegistrySubscriber,
-	avsRegistryReader avsregistry.AvsRegistryReader,
+	avsRegistrySubscriber avsblsregistry.AvsRegistrySubscriber,
+	avsRegistryReader avsblsregistry.AvsRegistryReader,
 	logger logging.Logger,
 ) *OperatorPubkeysServiceInMemory {
 	queryC := make(chan query)
