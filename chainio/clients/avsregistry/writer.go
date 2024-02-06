@@ -24,10 +24,11 @@ import (
 )
 
 type AvsRegistryWriter interface {
-	// TODO(samlaf): an operator that is already registered in a quorum can register with another quorum without passing signatures
-	//               perhaps we should add another sdk function for this purpose, that just takes in a quorumNumber and socket?
-	// RegisterOperatorInQuorumWithAVSRegistryCoordinator is used to register a single operator with the AVS's registry coordinator.
-	//  - operatorEcdsaPrivateKey is the operator's ecdsa private key (used to sign a message to register operator in eigenlayer's delegation manager)
+	// TODO(samlaf): an operator that is already registered in a quorum can register with another quorum without passing
+	// signatures perhaps we should add another sdk function for this purpose, that just takes in a quorumNumber and
+	// socket? RegisterOperatorInQuorumWithAVSRegistryCoordinator is used to register a single operator with the AVS's
+	// registry coordinator. - operatorEcdsaPrivateKey is the operator's ecdsa private key (used to sign a message to
+	// register operator in eigenlayer's delegation manager)
 	//  - operatorToAvsRegistrationSigSalt is a random salt used to prevent replay attacks
 	//  - operatorToAvsRegistrationSigExpiry is the expiry time of the signature
 	RegisterOperatorInQuorumWithAVSRegistryCoordinator(
@@ -42,7 +43,8 @@ type AvsRegistryWriter interface {
 
 	// UpdateStakesOfEntireOperatorSetForQuorums is used by avs teams running https://github.com/Layr-Labs/avs-sync
 	// to updates the stake of their entire operator set.
-	// Because of high gas costs of this operation, it typically needs to be called for every quorum, or perhaps for a small grouping of quorums
+	// Because of high gas costs of this operation, it typically needs to be called for every quorum, or perhaps for a
+	// small grouping of quorums
 	// (highly dependent on number of operators per quorum)
 	UpdateStakesOfEntireOperatorSetForQuorums(
 		ctx context.Context,
@@ -50,8 +52,9 @@ type AvsRegistryWriter interface {
 		quorumNumbers []byte,
 	) (*gethtypes.Receipt, error)
 
-	// UpdateStakesOfOperatorSubsetForAllQuorums is meant to be used by single operators (or teams of operators, possibly running https://github.com/Layr-Labs/avs-sync)
-	// to update the stake of their own operator(s). This might be needed in the case that they received a lot of new stake delegations, and want this to be reflected
+	// UpdateStakesOfOperatorSubsetForAllQuorums is meant to be used by single operators (or teams of operators,
+	// possibly running https://github.com/Layr-Labs/avs-sync) to update the stake of their own operator(s). This might
+	// be needed in the case that they received a lot of new stake delegations, and want this to be reflected
 	// in the AVS's registry coordinator.
 	UpdateStakesOfOperatorSubsetForAllQuorums(
 		ctx context.Context,
@@ -165,10 +168,13 @@ func BuildAvsRegistryChainWriter(
 // TODO(samlaf): clean up this function
 func (w *AvsRegistryChainWriter) RegisterOperatorInQuorumWithAVSRegistryCoordinator(
 	ctx context.Context,
-	// we need to pass the private key explicitly and can't use the signer because registering requires signing a message which isn't a transaction
+	// we need to pass the private key explicitly and can't use the signer because registering requires signing a
+	// message which isn't a transaction
 	// and the signer can only signs transactions
-	// see operatorSignature in https://github.com/Layr-Labs/eigenlayer-middleware/blob/m2-mainnet/docs/RegistryCoordinator.md#registeroperator
-	// TODO(madhur): check to see if we can make the signer and txmgr more flexible so we can use them (and remote signers) to sign non txs
+	// see operatorSignature in
+	// https://github.com/Layr-Labs/eigenlayer-middleware/blob/m2-mainnet/docs/RegistryCoordinator.md#registeroperator
+	// TODO(madhur): check to see if we can make the signer and txmgr more flexible so we can use them (and remote
+	// signers) to sign non txs
 	operatorEcdsaPrivateKey *ecdsa.PrivateKey,
 	operatorToAvsRegistrationSigSalt [32]byte,
 	operatorToAvsRegistrationSigExpiry *big.Int,
@@ -196,7 +202,12 @@ func (w *AvsRegistryChainWriter) RegisterOperatorInQuorumWithAVSRegistryCoordina
 
 	// params to register operator in delegation manager's operator-avs mapping
 	msgToSign, err := w.elReader.CalculateDelegationApprovalDigestHash(
-		&bind.CallOpts{}, operatorAddr, w.serviceManagerAddr, operatorToAvsRegistrationSigSalt, operatorToAvsRegistrationSigExpiry)
+		&bind.CallOpts{},
+		operatorAddr,
+		w.serviceManagerAddr,
+		operatorToAvsRegistrationSigSalt,
+		operatorToAvsRegistrationSigExpiry,
+	)
 	if err != nil {
 		return nil, err
 	}

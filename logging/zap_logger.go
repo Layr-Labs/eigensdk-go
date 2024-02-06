@@ -61,26 +61,6 @@ func (z *ZapLogger) Fatal(msg string, tags ...any) {
 	z.logger.Sugar().Fatalw(msg, tags...)
 }
 
-func (z *ZapLogger) Debugm(msg string, tags map[string]any) {
-	z.logger.Debug(msg, convertTagsToZapFields(tags)...)
-}
-
-func (z *ZapLogger) Infom(msg string, tags map[string]any) {
-	z.logger.Info(msg, convertTagsToZapFields(tags)...)
-}
-
-func (z *ZapLogger) Warnm(msg string, tags map[string]any) {
-	z.logger.Warn(msg, convertTagsToZapFields(tags)...)
-}
-
-func (z *ZapLogger) Errorm(msg string, tags map[string]any) {
-	z.logger.Error(msg, convertTagsToZapFields(tags)...)
-}
-
-func (z *ZapLogger) Fatalm(msg string, tags map[string]any) {
-	z.logger.Fatal(msg, convertTagsToZapFields(tags)...)
-}
-
 func (z *ZapLogger) Debugf(template string, args ...interface{}) {
 	z.logger.Sugar().Debugf(template, args...)
 }
@@ -99,12 +79,4 @@ func (z *ZapLogger) Errorf(template string, args ...interface{}) {
 
 func (z *ZapLogger) Fatalf(template string, args ...interface{}) {
 	z.logger.Sugar().Fatalf(template, args...)
-}
-
-func convertTagsToZapFields(tags map[string]any) []zap.Field {
-	zapFields := make([]zap.Field, 0)
-	for k, v := range tags {
-		zapFields = append(zapFields, zap.Any(k, v))
-	}
-	return zapFields
 }
