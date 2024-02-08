@@ -12,6 +12,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/types"
 
+	avsdirectory "github.com/Layr-Labs/eigensdk-go/contracts/bindings/AVSDirectory"
 	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
 	erc20 "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IERC20"
 	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/ISlasher"
@@ -53,6 +54,10 @@ type ELReader interface {
 		opts *bind.CallOpts, staker gethcommon.Address, operator gethcommon.Address,
 		delegationApprover gethcommon.Address, approverSalt [32]byte, expiry *big.Int,
 	) ([32]byte, error)
+
+	CalculateOperatorAVSRegistrationDigestHash(
+		opts *bind.CallOpts, operator gethcommon.Address, avs gethcommon.Address, salt [32]byte, expiry *big.Int,
+	) ([32]byte, error)
 }
 
 type ELChainReader struct {
@@ -60,6 +65,7 @@ type ELChainReader struct {
 	slasher           slasher.ContractISlasherCalls
 	delegationManager delegationmanager.ContractDelegationManagerCalls
 	strategyManager   strategymanager.ContractStrategyManagerCalls
+	avsDirectory      avsdirectory.ContractAVSDirectoryCalls
 	ethClient         eth.EthClient
 }
 
@@ -70,6 +76,7 @@ func NewELChainReader(
 	slasher slasher.ContractISlasherCalls,
 	delegationManager delegationmanager.ContractDelegationManagerCalls,
 	strategyManager strategymanager.ContractStrategyManagerCalls,
+	avsDirectory avsdirectory.ContractAVSDirectoryCalls,
 	logger logging.Logger,
 	ethClient eth.EthClient,
 ) *ELChainReader {
@@ -77,6 +84,7 @@ func NewELChainReader(
 		slasher:           slasher,
 		delegationManager: delegationManager,
 		strategyManager:   strategyManager,
+		avsDirectory:      avsDirectory,
 		logger:            logger,
 		ethClient:         ethClient,
 	}
@@ -84,11 +92,13 @@ func NewELChainReader(
 
 func BuildELChainReader(
 	delegationManagerAddr gethcommon.Address,
+	avsDirectoryAddr gethcommon.Address,
 	ethClient eth.EthClient,
 	logger logging.Logger,
 ) (*ELChainReader, error) {
 	elContractBindings, err := chainioutils.NewEigenlayerContractBindings(
 		delegationManagerAddr,
+		avsDirectoryAddr,
 		ethClient,
 		logger,
 	)
@@ -99,6 +109,7 @@ func BuildELChainReader(
 		elContractBindings.Slasher,
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
+		elContractBindings.AvsDirectory,
 		logger,
 		ethClient,
 	), nil
@@ -217,5 +228,13 @@ func (r *ELChainReader) CalculateDelegationApprovalDigestHash(
 ) ([32]byte, error) {
 	return r.delegationManager.CalculateDelegationApprovalDigestHash(
 		opts, staker, operator, delegationApprover, approverSalt, expiry,
+	)
+}
+
+func (r *ELChainReader) CalculateOperatorAVSRegistrationDigestHash(
+	opts *bind.CallOpts, operator gethcommon.Address, avs gethcommon.Address, salt [32]byte, expiry *big.Int,
+) ([32]byte, error) {
+	return r.avsDirectory.CalculateOperatorAVSRegistrationDigestHash(
+		opts, operator, avs, salt, expiry,
 	)
 }

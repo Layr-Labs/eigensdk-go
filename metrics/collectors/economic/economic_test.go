@@ -25,8 +25,8 @@ func TestEconomicCollector(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	ethReader := mocks.NewMockELReader(mockCtrl)
-	ethReader.EXPECT().OperatorIsFrozen(gomock.Any(), operatorAddr).Return(false, nil)
+	elReader := mocks.NewMockELReader(mockCtrl)
+	elReader.EXPECT().OperatorIsFrozen(gomock.Any(), operatorAddr).Return(false, nil)
 
 	avsRegistryReader := mocks.NewMockAvsRegistryReader(mockCtrl)
 	avsRegistryReader.EXPECT().GetOperatorId(gomock.Any(), operatorAddr).Return(operatorId, nil)
@@ -39,7 +39,7 @@ func TestEconomicCollector(t *testing.T) {
 	)
 
 	logger := logging.NewNoopLogger()
-	economicCollector := NewCollector(ethReader, avsRegistryReader, "testavs", logger, operatorAddr, quorumNames)
+	economicCollector := NewCollector(elReader, avsRegistryReader, "testavs", logger, operatorAddr, quorumNames)
 
 	count := testutil.CollectAndCount(economicCollector, "eigen_slashing_status", "eigen_registered_stakes")
 	// 1 for eigen_slashing_status, and 2 for eigen_registered_stakes (1 per quorum)
