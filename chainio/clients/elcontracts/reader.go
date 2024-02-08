@@ -50,7 +50,8 @@ type ELReader interface {
 	) (*big.Int, error)
 
 	CalculateDelegationApprovalDigestHash(
-		opts *bind.CallOpts, operator gethcommon.Address, avs gethcommon.Address, salt [32]byte, expiry *big.Int,
+		opts *bind.CallOpts, staker gethcommon.Address, operator gethcommon.Address,
+		delegationApprover gethcommon.Address, approverSalt [32]byte, expiry *big.Int,
 	) ([32]byte, error)
 }
 
@@ -211,9 +212,10 @@ func (r *ELChainReader) GetOperatorSharesInStrategy(
 }
 
 func (r *ELChainReader) CalculateDelegationApprovalDigestHash(
-	opts *bind.CallOpts, operator gethcommon.Address, avs gethcommon.Address, salt [32]byte, expiry *big.Int,
+	opts *bind.CallOpts, staker gethcommon.Address, operator gethcommon.Address,
+	delegationApprover gethcommon.Address, approverSalt [32]byte, expiry *big.Int,
 ) ([32]byte, error) {
-	return r.delegationManager.CalculateOperatorAVSRegistrationDigestHash(
-		opts, operator, avs, salt, expiry,
+	return r.delegationManager.CalculateDelegationApprovalDigestHash(
+		opts, staker, operator, delegationApprover, approverSalt, expiry,
 	)
 }
