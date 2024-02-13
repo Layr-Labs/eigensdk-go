@@ -119,18 +119,22 @@ func BuildAvsRegistryChainReader(
 ) (*AvsRegistryChainReader, error) {
 	contractRegistryCoordinator, err := regcoord.NewContractRegistryCoordinator(registryCoordinatorAddr, ethClient)
 	if err != nil {
+		logger.Error("Failed to create contractRegistryCoordinator", "err", err)
 		return nil, err
 	}
 	blsApkRegistryAddr, err := contractRegistryCoordinator.BlsApkRegistry(&bind.CallOpts{})
 	if err != nil {
+		logger.Error("Failed to get blsApkRegistryAddr", "err", err)
 		return nil, err
 	}
 	stakeRegistryAddr, err := contractRegistryCoordinator.StakeRegistry(&bind.CallOpts{})
 	if err != nil {
+		logger.Error("Failed to get stakeRegistryAddr", "err", err)
 		return nil, err
 	}
 	contractStakeRegistry, err := stakeregistry.NewContractStakeRegistry(stakeRegistryAddr, ethClient)
 	if err != nil {
+		logger.Error("Failed to create contractStakeRegistry", "err", err)
 		return nil, err
 	}
 	contractOperatorStateRetriever, err := contractOperatorStateRetriever.NewContractOperatorStateRetriever(
@@ -138,6 +142,7 @@ func BuildAvsRegistryChainReader(
 		ethClient,
 	)
 	if err != nil {
+		logger.Error("Failed to create contractOperatorStateRetriever", "err", err)
 		return nil, err
 	}
 	return NewAvsRegistryChainReader(

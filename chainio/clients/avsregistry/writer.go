@@ -116,6 +116,7 @@ func BuildAvsRegistryChainWriter(
 ) (*AvsRegistryChainWriter, error) {
 	registryCoordinator, err := regcoord.NewContractRegistryCoordinator(registryCoordinatorAddr, ethClient)
 	if err != nil {
+		logger.Error("Failed to create RegistryCoordinator contract", "err", err)
 		return nil, err
 	}
 	operatorStateRetriever, err := opstateretriever.NewContractOperatorStateRetriever(
@@ -123,42 +124,52 @@ func BuildAvsRegistryChainWriter(
 		ethClient,
 	)
 	if err != nil {
+		logger.Error("Failed to create OperatorStateRetriever contract", "err", err)
 		return nil, err
 	}
 	serviceManagerAddr, err := registryCoordinator.ServiceManager(&bind.CallOpts{})
 	if err != nil {
+		logger.Error("Failed to get ServiceManager address", "err", err)
 		return nil, err
 	}
 	serviceManager, err := smbase.NewContractServiceManagerBase(serviceManagerAddr, ethClient)
 	if err != nil {
+		logger.Error("Failed to create ServiceManager contract", "err", err)
 		return nil, err
 	}
 	blsApkRegistryAddr, err := registryCoordinator.BlsApkRegistry(&bind.CallOpts{})
 	if err != nil {
+		logger.Error("Failed to get BLSApkRegistry address", "err", err)
 		return nil, err
 	}
 	blsApkRegistry, err := blsapkregistry.NewContractBLSApkRegistry(blsApkRegistryAddr, ethClient)
 	if err != nil {
+		logger.Error("Failed to create BLSApkRegistry contract", "err", err)
 		return nil, err
 	}
 	stakeRegistryAddr, err := registryCoordinator.StakeRegistry(&bind.CallOpts{})
 	if err != nil {
+		logger.Error("Failed to get StakeRegistry address", "err", err)
 		return nil, err
 	}
 	stakeRegistry, err := stakeregistry.NewContractStakeRegistry(stakeRegistryAddr, ethClient)
 	if err != nil {
+		logger.Error("Failed to create StakeRegistry contract", "err", err)
 		return nil, err
 	}
 	delegationManagerAddr, err := stakeRegistry.Delegation(&bind.CallOpts{})
 	if err != nil {
+		logger.Error("Failed to get DelegationManager address", "err", err)
 		return nil, err
 	}
 	avsDirectoryAddr, err := serviceManager.AvsDirectory(&bind.CallOpts{})
 	if err != nil {
+		logger.Error("Failed to get AvsDirectory address", "err", err)
 		return nil, err
 	}
 	elReader, err := elcontracts.BuildELChainReader(delegationManagerAddr, avsDirectoryAddr, ethClient, logger)
 	if err != nil {
+		logger.Error("Failed to create ELChainReader", "err", err)
 		return nil, err
 	}
 	return NewAvsRegistryChainWriter(
