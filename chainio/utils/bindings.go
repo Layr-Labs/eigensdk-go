@@ -8,6 +8,7 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
+	avsdirectory "github.com/Layr-Labs/eigensdk-go/contracts/bindings/AVSDirectory"
 	blsapkregistry "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSApkRegistry"
 	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
 	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/ISlasher"
@@ -24,13 +25,16 @@ type EigenlayerContractBindings struct {
 	SlasherAddr           gethcommon.Address
 	StrategyManagerAddr   gethcommon.Address
 	DelegationManagerAddr gethcommon.Address
+	AvsDirectoryAddr      gethcommon.Address
 	Slasher               *slasher.ContractISlasher
 	DelegationManager     *delegationmanager.ContractDelegationManager
 	StrategyManager       *strategymanager.ContractStrategyManager
+	AvsDirectory          *avsdirectory.ContractAVSDirectory
 }
 
 func NewEigenlayerContractBindings(
 	delegationManagerAddr gethcommon.Address,
+	avsDirectoryAddr gethcommon.Address,
 	ethclient eth.EthClient,
 	logger logging.Logger,
 ) (*EigenlayerContractBindings, error) {
@@ -62,13 +66,21 @@ func NewEigenlayerContractBindings(
 		return nil, err
 	}
 
+	avsDirectory, err := avsdirectory.NewContractAVSDirectory(avsDirectoryAddr, ethclient)
+	if err != nil {
+		logger.Error("Failed to fetch AVSDirectory contract", "err", err)
+		return nil, err
+	}
+
 	return &EigenlayerContractBindings{
 		SlasherAddr:           slasherAddr,
 		StrategyManagerAddr:   strategyManagerAddr,
 		DelegationManagerAddr: delegationManagerAddr,
+		AvsDirectoryAddr:      avsDirectoryAddr,
 		Slasher:               contractSlasher,
 		StrategyManager:       contractStrategyManager,
 		DelegationManager:     contractDelegationManager,
+		AvsDirectory:          avsDirectory,
 	}, nil
 }
 

@@ -72,6 +72,7 @@ func NewELChainWriter(
 
 func BuildELChainWriter(
 	delegationManagerAddr gethcommon.Address,
+	avsDirectoryAddr gethcommon.Address,
 	ethClient eth.EthClient,
 	logger logging.Logger,
 	eigenMetrics metrics.Metrics,
@@ -79,6 +80,7 @@ func BuildELChainWriter(
 ) (*ELChainWriter, error) {
 	elContractBindings, err := chainioutils.NewEigenlayerContractBindings(
 		delegationManagerAddr,
+		avsDirectoryAddr,
 		ethClient,
 		logger,
 	)
@@ -89,6 +91,7 @@ func BuildELChainWriter(
 		elContractBindings.Slasher,
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
+		elContractBindings.AvsDirectory,
 		logger,
 		ethClient,
 	)

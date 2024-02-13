@@ -20,6 +20,7 @@ import (
 	blsapkregistry "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSApkRegistry"
 	opstateretriever "github.com/Layr-Labs/eigensdk-go/contracts/bindings/OperatorStateRetriever"
 	regcoord "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
+	smbase "github.com/Layr-Labs/eigensdk-go/contracts/bindings/ServiceManagerBase"
 	stakeregistry "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StakeRegistry"
 )
 
@@ -128,6 +129,10 @@ func BuildAvsRegistryChainWriter(
 	if err != nil {
 		return nil, err
 	}
+	serviceManager, err := smbase.NewContractServiceManagerBase(serviceManagerAddr, ethClient)
+	if err != nil {
+		return nil, err
+	}
 	blsApkRegistryAddr, err := registryCoordinator.BlsApkRegistry(&bind.CallOpts{})
 	if err != nil {
 		return nil, err
@@ -148,7 +153,11 @@ func BuildAvsRegistryChainWriter(
 	if err != nil {
 		return nil, err
 	}
-	elReader, err := elcontracts.BuildELChainReader(delegationManagerAddr, ethClient, logger)
+	avsDirectoryAddr, err := serviceManager.AvsDirectory(&bind.CallOpts{})
+	if err != nil {
+		return nil, err
+	}
+	elReader, err := elcontracts.BuildELChainReader(delegationManagerAddr, avsDirectoryAddr, ethClient, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +210,7 @@ func (w *AvsRegistryChainWriter) RegisterOperatorInQuorumWithAVSRegistryCoordina
 	}
 
 	// params to register operator in delegation manager's operator-avs mapping
-	msgToSign, err := w.elReader.CalculateDelegationApprovalDigestHash(
+	msgToSign, err := w.elReader.CalculateOperatorAVSRegistrationDigestHash(
 		&bind.CallOpts{},
 		operatorAddr,
 		w.serviceManagerAddr,
