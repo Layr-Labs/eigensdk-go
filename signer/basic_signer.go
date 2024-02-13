@@ -9,8 +9,8 @@ import (
 
 	sdkethclient "github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/logging"
-	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/Layr-Labs/eigensdk-go/types"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -165,7 +165,7 @@ func (s *BasicSigner) EnsureTransactionEvaled(tx *gethtypes.Transaction, tag str
 		return nil, fmt.Errorf("Transaction failed (tag: %v, txHash: %v, status: %v, gasUsed: %v)", tag, tx.Hash().Hex(), receipt.Status, receipt.GasUsed)
 	}
 	s.logger.Debug("successfully submitted transaction",
-		"txHash", tx.Hash().Hex(),
+		"txHash", receipt.TxHash.Hex(),
 		"tag", tag,
 		"gasUsed", receipt.GasUsed,
 	)

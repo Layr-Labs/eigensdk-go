@@ -130,7 +130,7 @@ func (w *ELChainWriter) RegisterAsOperator(ctx context.Context, operator types.O
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
-	w.logger.Infof("tx hash: %s", tx.Hash().String())
+	w.logger.Info("tx succesfully included", "tx hash", receipt.TxHash.String())
 
 	return receipt, nil
 }
@@ -156,24 +156,21 @@ func (w *ELChainWriter) UpdateOperatorDetails(
 	if err != nil {
 		return nil, err
 	}
-	_, err = w.txMgr.Send(ctx, tx)
+	receipt, err := w.txMgr.Send(ctx, tx)
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
-	w.logger.Infof("tx hash: %s", tx.Hash().String())
-	w.logger.Infof("updated operator metadata URI for operator %s to EigenLayer", operator.Address)
+	w.logger.Info("succesfully updated operator metadata URI", "tx hash", receipt.TxHash.String(), "operator", operator.Address)
 
 	tx, err = w.delegationManager.UpdateOperatorMetadataURI(noSendTxOpts, operator.MetadataUrl)
 	if err != nil {
 		return nil, err
 	}
-	receipt, err := w.txMgr.Send(ctx, tx)
+	receipt, err = w.txMgr.Send(ctx, tx)
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
-	w.logger.Infof("tx hash: %s", tx.Hash().String())
-
-	w.logger.Infof("updated operator details of operator %s to EigenLayer", operator.Address)
+	w.logger.Info("succesfully updated operator details", "tx hash", receipt.TxHash.String(), "operator", operator.Address)
 	return receipt, nil
 }
 

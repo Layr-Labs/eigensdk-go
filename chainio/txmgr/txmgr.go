@@ -9,6 +9,7 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/signerv2"
+	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -82,19 +83,21 @@ func NewSimpleTxManager(
 func (m *SimpleTxManager) Send(ctx context.Context, tx *types.Transaction) (*types.Receipt, error) {
 
 	// Estimate gas and nonce
-	m.log.Debug("Estimating gas and nonce", "tx", tx.Hash().Hex())
+	// can't print tx hash in logs because the tx changes below when we complete and sign it
+	// so the txHash is meaningless at this point
+	m.log.Debug("Estimating gas and nonce")
 	tx, err := m.estimateGasAndNonce(ctx, tx)
 	if err != nil {
 		return nil, err
 	}
 
-	m.log.Debug("Getting signer for tx", "tx", tx.Hash().Hex())
+	m.log.Debug("Getting signer for tx")
 	signer, err := m.signerFn(ctx, m.sender)
 	if err != nil {
 		return nil, err
 	}
 
-	m.log.Debug("Sending transaction", "tx", tx.Hash().Hex())
+	m.log.Debug("Sending transaction")
 	opts := &bind.TransactOpts{
 		From:      m.sender,
 		Nonce:     new(big.Int).SetUint64(tx.Nonce()),
@@ -117,10 +120,7 @@ func (m *SimpleTxManager) Send(ctx context.Context, tx *types.Transaction) (*typ
 
 	tx, err = contract.RawTransact(opts, tx.Data())
 	if err != nil {
-		return nil, fmt.Errorf("send: failed to send txn: %w", err)
-	}
-	if err != nil {
-		return nil, err
+		return nil, sdktypes.WrapError(fmt.Errorf("send: tx %v failed.", tx.Hash().String()), err)
 	}
 
 	receipt := m.waitForTx(ctx, tx)
