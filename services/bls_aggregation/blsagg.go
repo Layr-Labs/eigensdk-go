@@ -275,9 +275,8 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 				}
 				indices, err := a.avsRegistryService.GetCheckSignaturesIndices(&bind.CallOpts{}, taskCreatedBlock, quorumNumbers, nonSignersOperatorIds)
 				if err != nil {
-					a.logger.Error("Failed to get check signatures indices", "err", err)
 					a.aggregatedResponsesC <- BlsAggregationServiceResponse{
-						Err: err,
+						Err: errors.Join(errors.New("Failed to get check signatures indices"), err),
 					}
 					return
 				}
@@ -347,11 +346,9 @@ func (a *BlsAggregatorService) verifySignature(
 	)
 	signatureVerified, err := signedTaskResponseDigest.BlsSignature.Verify(operatorG2Pubkey, signedTaskResponseDigest.TaskResponseDigest)
 	if err != nil {
-		a.logger.Error(SignatureVerificationError(err).Error())
 		return SignatureVerificationError(err)
 	}
 	if !signatureVerified {
-		a.logger.Error(IncorrectSignatureError.Error())
 		return IncorrectSignatureError
 	}
 	return nil

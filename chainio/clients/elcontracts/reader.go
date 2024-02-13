@@ -1,6 +1,7 @@
 package elcontracts
 
 import (
+	"errors"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -150,13 +151,11 @@ func (r *ELChainReader) GetStrategyAndUnderlyingToken(
 ) (*strategy.ContractIStrategy, gethcommon.Address, error) {
 	contractStrategy, err := strategy.NewContractIStrategy(strategyAddr, r.ethClient)
 	if err != nil {
-		r.logger.Error("Failed to fetch strategy contract", "err", err)
-		return nil, common.Address{}, err
+		return nil, common.Address{}, errors.Join(errors.New("Failed to fetch strategy contract"), err)
 	}
 	underlyingTokenAddr, err := contractStrategy.UnderlyingToken(opts)
 	if err != nil {
-		r.logger.Error("Failed to fetch token contract", "err", err)
-		return nil, common.Address{}, err
+		return nil, common.Address{}, errors.Join(errors.New("Failed to fetch token contract"), err)
 	}
 	return contractStrategy, underlyingTokenAddr, nil
 }
@@ -168,18 +167,15 @@ func (r *ELChainReader) GetStrategyAndUnderlyingERC20Token(
 ) (*strategy.ContractIStrategy, erc20.ContractIERC20Methods, gethcommon.Address, error) {
 	contractStrategy, err := strategy.NewContractIStrategy(strategyAddr, r.ethClient)
 	if err != nil {
-		r.logger.Error("Failed to fetch strategy contract", "err", err)
-		return nil, nil, common.Address{}, err
+		return nil, nil, common.Address{}, errors.Join(errors.New("Failed to fetch strategy contract"), err)
 	}
 	underlyingTokenAddr, err := contractStrategy.UnderlyingToken(opts)
 	if err != nil {
-		r.logger.Error("Failed to fetch token contract", "err", err)
-		return nil, nil, common.Address{}, err
+		return nil, nil, common.Address{}, errors.Join(errors.New("Failed to fetch token contract"), err)
 	}
 	contractUnderlyingToken, err := erc20.NewContractIERC20(underlyingTokenAddr, r.ethClient)
 	if err != nil {
-		r.logger.Error("Failed to fetch token contract", "err", err)
-		return nil, nil, common.Address{}, err
+		return nil, nil, common.Address{}, errors.Join(errors.New("Failed to fetch token contract"), err)
 	}
 	return contractStrategy, contractUnderlyingToken, underlyingTokenAddr, nil
 }

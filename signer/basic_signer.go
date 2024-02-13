@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"errors"
+	"fmt"
 	"math/big"
 
 	sdkethclient "github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
@@ -38,8 +39,7 @@ func NewBasicSigner(
 
 	accountAddress, err := utils.EcdsaPrivateKeyToAddress(privateKey)
 	if err != nil {
-		logger.Errorf("Cannot get account address: %#v", err)
-		return nil, err
+		return nil, errors.Join(errors.New("Cannot get account address"), err)
 	}
 
 	return &BasicSigner{
@@ -59,13 +59,11 @@ func NewBasicSigner(
 func (s *BasicSigner) GetNoSendTransactOpts() (*bind.TransactOpts, error) {
 	chainIDBigInt, err := s.ethClient.ChainID(context.Background())
 	if err != nil {
-		s.logger.Error("Cannot get chainId", "err", err)
-		return nil, err
+		return nil, errors.Join(errors.New("Cannot get chainId"), err)
 	}
 	opts, err := bind.NewKeyedTransactorWithChainID(s.privateKey, chainIDBigInt)
 	if err != nil {
-		s.logger.Error("Cannot create NoSendTransactOpts", "err", err)
-		return nil, err
+		return nil, errors.Join(errors.New("Cannot create NoSendTransactOpts"), err)
 	}
 	opts.NoSend = true
 	return opts, nil
@@ -124,8 +122,7 @@ func (s *BasicSigner) EstimateGasPriceAndLimitAndSendTx(
 
 	opts, err := bind.NewKeyedTransactorWithChainID(s.privateKey, tx.ChainId())
 	if err != nil {
-		s.logger.Error("Cannot create transactOpts", "err", err)
-		return nil, err
+		return nil, errors.Join(errors.New("Cannot create transactOpts"), err)
 	}
 	opts.Context = ctx
 	opts.Nonce = new(big.Int).SetUint64(tx.Nonce())
@@ -144,8 +141,7 @@ func (s *BasicSigner) EstimateGasPriceAndLimitAndSendTx(
 
 	tx, err = contract.RawTransact(opts, tx.Data())
 	if err != nil {
-		s.logger.Error("Error sending tx", "tag", tag, "err", err)
-		return nil, err
+		return nil, errors.Join(fmt.Errorf("Failed to send transaction with tag: %v", tag), err)
 	}
 
 	receipt, err := s.EnsureTransactionEvaled(
@@ -162,18 +158,10 @@ func (s *BasicSigner) EstimateGasPriceAndLimitAndSendTx(
 func (s *BasicSigner) EnsureTransactionEvaled(tx *types.Transaction, tag string) (*types.Receipt, error) {
 	receipt, err := bind.WaitMined(context.Background(), s.ethClient, tx)
 	if err != nil {
-		s.logger.Error("Error waiting for transaction to mine", "tag", tag, "err", err.Error())
-		return nil, err
+		return nil, errors.Join(fmt.Errorf("Failed to wait for transaction to mine with tag: %v", tag), err)
 	}
 	if receipt.Status != 1 {
-		s.logger.Error("Transaction Failed",
-			"tag", tag,
-			"txHash", tx.Hash().Hex(),
-			"status", receipt.Status,
-			"GasUsed", receipt.GasUsed,
-		)
-
-		return nil, errors.New("ErrTransactionFailed")
+		return nil, fmt.Errorf("Transaction failed (tag: %v, txHash: %v, status: %v, gasUsed: %v)", tag, tx.Hash().Hex(), receipt.Status, receipt.GasUsed)
 	}
 	s.logger.Debug("successfully submitted transaction",
 		"txHash", tx.Hash().Hex(),
