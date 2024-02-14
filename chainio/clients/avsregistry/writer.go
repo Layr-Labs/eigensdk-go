@@ -13,6 +13,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/types"
+	sdkutils "github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
@@ -255,8 +256,7 @@ func (w *AvsRegistryChainWriter) RegisterOperatorInQuorumWithAVSRegistryCoordina
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
-	w.logger.Infof("tx hash: %s", tx.Hash().String())
-	w.logger.Info("registered operator with the AVS's registry coordinator")
+	w.logger.Info("succesfully registered operator with AVS registry coordinator", "tx hash", receipt.TxHash.String())
 	return receipt, nil
 }
 
@@ -265,7 +265,7 @@ func (w *AvsRegistryChainWriter) UpdateStakesOfEntireOperatorSetForQuorums(
 	operatorsPerQuorum [][]gethcommon.Address,
 	quorumNumbers []byte,
 ) (*gethtypes.Receipt, error) {
-	w.logger.Info("updating stakes for entire operator set", "quorumNumbers", quorumNumbers)
+	w.logger.Info("updating stakes for entire operator set", "quorumNumbers", sdkutils.ConvertQuorumsBytesToInts(quorumNumbers))
 	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
 	if err != nil {
 		return nil, err
@@ -278,8 +278,7 @@ func (w *AvsRegistryChainWriter) UpdateStakesOfEntireOperatorSetForQuorums(
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
-	w.logger.Infof("tx hash: %s", tx.Hash().String())
-	w.logger.Info("updated stakes for entire operator set", "quorumNumbers", quorumNumbers)
+	w.logger.Info("succesfully updated stakes for entire operator set", "tx hash", receipt.TxHash.String(), "quorumNumbers", sdkutils.ConvertQuorumsBytesToInts(quorumNumbers))
 	return receipt, nil
 
 }
@@ -301,8 +300,7 @@ func (w *AvsRegistryChainWriter) UpdateStakesOfOperatorSubsetForAllQuorums(
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
-	w.logger.Infof("tx hash: %s", tx.Hash().String())
-	w.logger.Info("updated stakes of operator subset for all quorums", "operators", operators)
+	w.logger.Info("succesfully updated stakes of operator subset for all quorums", "tx hash", receipt.TxHash.String(), "operators", operators)
 	return receipt, nil
 
 }
@@ -325,7 +323,6 @@ func (w *AvsRegistryChainWriter) DeregisterOperator(
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
-	w.logger.Infof("tx hash: %s", tx.Hash().String())
-	w.logger.Info("deregistered operator with the AVS's registry coordinator")
+	w.logger.Info("succesfully deregistered operator with the AVS's registry coordinator", "tx hash", receipt.TxHash.String())
 	return receipt, nil
 }
