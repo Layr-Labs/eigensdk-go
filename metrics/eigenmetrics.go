@@ -87,7 +87,7 @@ func (m *EigenMetrics) Start(ctx context.Context, reg prometheus.Gatherer) <-cha
 		))
 		err := http.ListenAndServe(m.ipPortAddress, nil)
 		if err != nil {
-			errC <- errors.Join(errors.New("Prometheus server failed"), err)
+			errC <- types.WrapError(errors.New("Prometheus server failed"), err)
 		} else {
 			errC <- nil
 		}

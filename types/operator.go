@@ -45,7 +45,7 @@ func (o Operator) Validate() error {
 
 	err := checkIfUrlIsValid(o.MetadataUrl)
 	if err != nil {
-		return wrapError(ErrInvalidMetadataUrl, err)
+		return WrapError(ErrInvalidMetadataUrl, err)
 	}
 
 	resp, err := http.Get(o.MetadataUrl)
@@ -62,7 +62,7 @@ func (o Operator) Validate() error {
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return wrapError(ErrReadingMetadataUrlResponse, err)
+		return WrapError(ErrReadingMetadataUrlResponse, err)
 	}
 
 	operatorMetadata := OperatorMetadata{}

@@ -10,6 +10,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	blsapkreg "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSApkRegistry"
 	"github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/types"
 )
 
 type AvsRegistrySubscriber interface {
@@ -41,7 +42,7 @@ func BuildAvsRegistryChainSubscriber(
 ) (*AvsRegistryChainSubscriber, error) {
 	blsapkreg, err := blsapkreg.NewContractBLSApkRegistry(blsApkRegistryAddr, ethWsClient)
 	if err != nil {
-		return nil, errors.Join(errors.New("Failed to create BLSApkRegistry contract"), err)
+		return nil, types.WrapError(errors.New("Failed to create BLSApkRegistry contract"), err)
 	}
 	return NewAvsRegistryChainSubscriber(blsapkreg, logger)
 }
@@ -52,7 +53,7 @@ func (s *AvsRegistryChainSubscriber) SubscribeToNewPubkeyRegistrations() (chan *
 		&bind.WatchOpts{}, newPubkeyRegistrationChan, nil,
 	)
 	if err != nil {
-		return nil, nil, errors.Join(errors.New("Failed to subscribe to NewPubkeyRegistration events"), err)
+		return nil, nil, types.WrapError(errors.New("Failed to subscribe to NewPubkeyRegistration events"), err)
 	}
 	return newPubkeyRegistrationChan, sub, nil
 }

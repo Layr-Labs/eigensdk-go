@@ -10,12 +10,13 @@ import (
 	sdkethclient "github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/utils"
+	"github.com/Layr-Labs/eigensdk-go/types"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	gethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
+	gethtypes "github.com/ethereum/go-ethereum/core/types"
 )
 
 // exported as the default so that users can call NewBasicSigner with it if they don't know any better
@@ -39,7 +40,7 @@ func NewBasicSigner(
 
 	accountAddress, err := utils.EcdsaPrivateKeyToAddress(privateKey)
 	if err != nil {
-		return nil, errors.Join(errors.New("Cannot get account address"), err)
+		return nil, types.WrapError(errors.New("Cannot get account address"), err)
 	}
 
 	return &BasicSigner{
@@ -59,11 +60,11 @@ func NewBasicSigner(
 func (s *BasicSigner) GetNoSendTransactOpts() (*bind.TransactOpts, error) {
 	chainIDBigInt, err := s.ethClient.ChainID(context.Background())
 	if err != nil {
-		return nil, errors.Join(errors.New("Cannot get chainId"), err)
+		return nil, types.WrapError(errors.New("Cannot get chainId"), err)
 	}
 	opts, err := bind.NewKeyedTransactorWithChainID(s.privateKey, chainIDBigInt)
 	if err != nil {
-		return nil, errors.Join(errors.New("Cannot create NoSendTransactOpts"), err)
+		return nil, types.WrapError(errors.New("Cannot create NoSendTransactOpts"), err)
 	}
 	opts.NoSend = true
 	return opts, nil
@@ -79,9 +80,9 @@ func (s *BasicSigner) GetNoSendTransactOpts() (*bind.TransactOpts, error) {
 // https://github.com/ethereum-optimism/optimism/blob/ec266098641820c50c39c31048aa4e953bece464/batch-submitter/drivers/sequencer/driver.go#L314
 func (s *BasicSigner) EstimateGasPriceAndLimitAndSendTx(
 	ctx context.Context,
-	tx *types.Transaction,
+	tx *gethtypes.Transaction,
 	tag string,
-) (*types.Receipt, error) {
+) (*gethtypes.Receipt, error) {
 	s.logger.Debug("Entering EstimateGasPriceAndLimitAndSendTx function...")
 	defer s.logger.Debug("Exiting EstimateGasPriceAndLimitAndSendTx function...")
 
@@ -122,7 +123,7 @@ func (s *BasicSigner) EstimateGasPriceAndLimitAndSendTx(
 
 	opts, err := bind.NewKeyedTransactorWithChainID(s.privateKey, tx.ChainId())
 	if err != nil {
-		return nil, errors.Join(errors.New("Cannot create transactOpts"), err)
+		return nil, types.WrapError(errors.New("Cannot create transactOpts"), err)
 	}
 	opts.Context = ctx
 	opts.Nonce = new(big.Int).SetUint64(tx.Nonce())
@@ -141,7 +142,7 @@ func (s *BasicSigner) EstimateGasPriceAndLimitAndSendTx(
 
 	tx, err = contract.RawTransact(opts, tx.Data())
 	if err != nil {
-		return nil, errors.Join(fmt.Errorf("Failed to send transaction with tag: %v", tag), err)
+		return nil, types.WrapError(fmt.Errorf("Failed to send transaction with tag: %v", tag), err)
 	}
 
 	receipt, err := s.EnsureTransactionEvaled(
@@ -155,10 +156,10 @@ func (s *BasicSigner) EstimateGasPriceAndLimitAndSendTx(
 	return receipt, err
 }
 
-func (s *BasicSigner) EnsureTransactionEvaled(tx *types.Transaction, tag string) (*types.Receipt, error) {
+func (s *BasicSigner) EnsureTransactionEvaled(tx *gethtypes.Transaction, tag string) (*gethtypes.Receipt, error) {
 	receipt, err := bind.WaitMined(context.Background(), s.ethClient, tx)
 	if err != nil {
-		return nil, errors.Join(fmt.Errorf("Failed to wait for transaction to mine with tag: %v", tag), err)
+		return nil, types.WrapError(fmt.Errorf("Failed to wait for transaction to mine with tag: %v", tag), err)
 	}
 	if receipt.Status != 1 {
 		return nil, fmt.Errorf("Transaction failed (tag: %v, txHash: %v, status: %v, gasUsed: %v)", tag, tx.Hash().Hex(), receipt.Status, receipt.GasUsed)
