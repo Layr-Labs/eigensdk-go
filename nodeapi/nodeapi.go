@@ -5,7 +5,7 @@ package nodeapi
 import (
 	"context"
 	"encoding/json"
-	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -86,8 +86,7 @@ func (api *NodeApi) UpdateServiceStatus(serviceId string, serviceStatus ServiceS
 			return nil
 		}
 	}
-	api.logger.Error("Service not found", "serviceId", serviceId)
-	return errors.New("service not found")
+	return fmt.Errorf("Service with serviceId %v not found", serviceId)
 }
 
 func (api *NodeApi) DeregisterService(serviceId string) error {
@@ -97,8 +96,7 @@ func (api *NodeApi) DeregisterService(serviceId string) error {
 			return nil
 		}
 	}
-	api.logger.Error("Service not found", "serviceId", serviceId)
-	return errors.New("service not found")
+	return fmt.Errorf("Service with serviceId %v not found", serviceId)
 }
 
 // Start starts the node api server in a goroutine

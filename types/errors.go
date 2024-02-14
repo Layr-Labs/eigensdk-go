@@ -37,6 +37,6 @@ var (
 	ErrReadingMetadataUrlResponse = errors.New("error reading metadata url body")
 )
 
-func wrapError(mainErr error, subErr error) error {
+func WrapError(mainErr error, subErr error) error {
 	return fmt.Errorf("%s: %s", mainErr.Error(), subErr.Error())
 }

@@ -108,7 +108,7 @@ func TestOperatorMetadata(t *testing.T) {
 				Twitter:     "https://twitter.com/test",
 				Website:     "https",
 			},
-			expectedError: wrapError(ErrInvalidWebsiteUrl, ErrInvalidUrl),
+			expectedError: WrapError(ErrInvalidWebsiteUrl, ErrInvalidUrl),
 		},
 		{
 			name: "Invalid metadata - invalid website url #2",
@@ -119,7 +119,7 @@ func TestOperatorMetadata(t *testing.T) {
 				Twitter:     "https://twitter.com/test",
 				Website:     "https:/test.com",
 			},
-			expectedError: wrapError(ErrInvalidWebsiteUrl, ErrInvalidUrl),
+			expectedError: WrapError(ErrInvalidWebsiteUrl, ErrInvalidUrl),
 		},
 		{
 			name: "Invalid metadata - invalid website url #3",
@@ -130,7 +130,7 @@ func TestOperatorMetadata(t *testing.T) {
 				Twitter:     "https://twitter.com/test",
 				Website:     "ps://test.com",
 			},
-			expectedError: wrapError(ErrInvalidWebsiteUrl, ErrInvalidUrl),
+			expectedError: WrapError(ErrInvalidWebsiteUrl, ErrInvalidUrl),
 		},
 		{
 			name: "Invalid metadata - invalid twitter url #1",
@@ -141,7 +141,7 @@ func TestOperatorMetadata(t *testing.T) {
 				Twitter:     "http",
 				Website:     "https://test.com",
 			},
-			expectedError: wrapError(ErrInvalidTwitterUrl, ErrInvalidUrl),
+			expectedError: WrapError(ErrInvalidTwitterUrl, ErrInvalidUrl),
 		},
 		{
 			name: "Invalid metadata - invalid twitter url #2",
@@ -152,7 +152,7 @@ func TestOperatorMetadata(t *testing.T) {
 				Twitter:     "ht://twitter.com/test",
 				Website:     "https://test.com",
 			},
-			expectedError: wrapError(ErrInvalidTwitterUrl, ErrInvalidUrl),
+			expectedError: WrapError(ErrInvalidTwitterUrl, ErrInvalidUrl),
 		},
 		{
 			name: "Invalid metadata - invalid twitter url #3",
@@ -163,7 +163,7 @@ func TestOperatorMetadata(t *testing.T) {
 				Twitter:     "https:/twitt",
 				Website:     "https://test.com",
 			},
-			expectedError: wrapError(ErrInvalidTwitterUrl, ErrInvalidUrl),
+			expectedError: WrapError(ErrInvalidTwitterUrl, ErrInvalidUrl),
 		},
 	}
 

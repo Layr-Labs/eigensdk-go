@@ -3,6 +3,7 @@ package metrics
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
@@ -86,9 +87,10 @@ func (m *EigenMetrics) Start(ctx context.Context, reg prometheus.Gatherer) <-cha
 		))
 		err := http.ListenAndServe(m.ipPortAddress, nil)
 		if err != nil {
-			m.logger.Error("Prometheus server failed", "err", err)
+			errC <- types.WrapError(errors.New("Prometheus server failed"), err)
+		} else {
+			errC <- nil
 		}
-		errC <- err
 	}()
 	return errC
 }

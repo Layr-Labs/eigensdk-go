@@ -2,6 +2,8 @@ package avsregistry
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"math/big"
 
 	avsregistry "github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
@@ -35,8 +37,7 @@ func (ar *AvsRegistryServiceChainCaller) GetOperatorsAvsStateAtBlock(ctx context
 	// Get operator state for each quorum by querying BLSOperatorStateRetriever (this call is why this service implementation is called ChainCaller)
 	operatorsStakesInQuorums, err := ar.AvsRegistryReader.GetOperatorsStakeInQuorumsAtBlock(&bind.CallOpts{Context: ctx}, quorumNumbers, blockNumber)
 	if err != nil {
-		ar.logger.Error("Failed to get operator state", "err", err, "service", "AvsRegistryServiceChainCaller")
-		return nil, err
+		return nil, types.WrapError(errors.New("Failed to get operator state"), err)
 	}
 	numquorums := len(quorumNumbers)
 	if len(operatorsStakesInQuorums) != numquorums {
@@ -47,8 +48,7 @@ func (ar *AvsRegistryServiceChainCaller) GetOperatorsAvsStateAtBlock(ctx context
 		for _, operator := range operatorsStakesInQuorums[quorumIdx] {
 			pubkeys, err := ar.getOperatorPubkeys(ctx, operator.OperatorId)
 			if err != nil {
-				ar.logger.Error("Failed find pubkeys for operator while building operatorsAvsState", "err", err, "service", "AvsRegistryServiceChainCaller")
-				return nil, err
+				return nil, types.WrapError(errors.New("Failed to find pubkeys for operator while building operatorsAvsState"), err)
 			}
 			if operatorAvsState, ok := operatorsAvsState[operator.OperatorId]; ok {
 				operatorAvsState.StakePerQuorum[quorumNum] = operator.Stake
@@ -72,8 +72,7 @@ func (ar *AvsRegistryServiceChainCaller) GetOperatorsAvsStateAtBlock(ctx context
 func (ar *AvsRegistryServiceChainCaller) GetQuorumsAvsStateAtBlock(ctx context.Context, quorumNumbers []types.QuorumNum, blockNumber types.BlockNum) (map[types.QuorumNum]types.QuorumAvsState, error) {
 	operatorsAvsState, err := ar.GetOperatorsAvsStateAtBlock(ctx, quorumNumbers, blockNumber)
 	if err != nil {
-		ar.logger.Error("Failed to get quorum state", "err", err, "service", "AvsRegistryServiceChainCaller")
-		return nil, err
+		return nil, types.WrapError(errors.New("Failed to get quorum state"), err)
 	}
 	quorumsAvsState := make(map[types.QuorumNum]types.QuorumAvsState)
 	for _, quorumNum := range quorumNumbers {
@@ -106,13 +105,11 @@ func (ar *AvsRegistryServiceChainCaller) GetQuorumsAvsStateAtBlock(ctx context.C
 func (ar *AvsRegistryServiceChainCaller) getOperatorPubkeys(ctx context.Context, operatorId types.OperatorId) (types.OperatorPubkeys, error) {
 	operatorAddr, err := ar.AvsRegistryReader.GetOperatorFromId(&bind.CallOpts{Context: ctx}, operatorId)
 	if err != nil {
-		ar.logger.Error("Failed to get operator address from pubkey hash", "err", err, "service", "AvsRegistryServiceChainCaller")
-		return types.OperatorPubkeys{}, err
+		return types.OperatorPubkeys{}, types.WrapError(errors.New("Failed to get operator address from pubkey hash"), err)
 	}
 	pubkeys, ok := ar.operatorPubkeysService.GetOperatorPubkeys(ctx, operatorAddr)
 	if !ok {
-		ar.logger.Error("Failed to get operator pubkeys from pubkey compendium service", "service", "AvsRegistryServiceChainCaller", "operatorAddr", operatorAddr, "operatorId", operatorId)
-		return types.OperatorPubkeys{}, err
+		return types.OperatorPubkeys{}, types.WrapError(fmt.Errorf("Failed to get operator pubkeys from pubkey compendium service (operatorAddr: %v, operatorId: %v)", operatorAddr, operatorId), err)
 	}
 	return pubkeys, nil
 }

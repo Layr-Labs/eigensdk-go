@@ -71,14 +71,14 @@ func (om *OperatorMetadata) Validate() error {
 	if len(om.Website) != 0 {
 		err := checkIfUrlIsValid(om.Website)
 		if err != nil {
-			return wrapError(ErrInvalidWebsiteUrl, err)
+			return WrapError(ErrInvalidWebsiteUrl, err)
 		}
 	}
 
 	if len(om.Twitter) != 0 {
 		err := checkIfUrlIsValid(om.Twitter)
 		if err != nil {
-			return wrapError(ErrInvalidTwitterUrl, err)
+			return WrapError(ErrInvalidTwitterUrl, err)
 		}
 	}
 
