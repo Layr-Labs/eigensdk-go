@@ -33,11 +33,14 @@ var (
 )
 
 // BlsAggregationServiceResponse is the response from the bls aggregation service
-// it's half of the data needed to build the NonSignerStakesAndSignature struct
 type BlsAggregationServiceResponse struct {
-	Err                          error
-	TaskIndex                    types.TaskIndex
-	TaskResponseDigest           types.TaskResponseDigest
+	Err                error                    // if Err is not nil, the other fields are not valid
+	TaskIndex          types.TaskIndex          // unique identifier of the task
+	TaskResponseDigest types.TaskResponseDigest // digest of the task response that was signed
+	// The below 8 fields are the data needed to build the IBLSSignatureChecker.NonSignerStakesAndSignature struct
+	// users of this service will need to build the struct themselves by converting the bls points
+	// into the BN254.G1/G2Point structs that the IBLSSignatureChecker expects
+	// given that those are different for each AVS service manager that individually inherits BLSSignatureChecker
 	NonSignersPubkeysG1          []*bls.G1Point
 	QuorumApksG1                 []*bls.G1Point
 	SignersApkG2                 *bls.G2Point
