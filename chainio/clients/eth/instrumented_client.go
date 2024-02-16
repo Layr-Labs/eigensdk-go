@@ -42,6 +42,15 @@ func NewInstrumentedClient(rpcAddress string, rpcCallsCollector *rpccalls.Collec
 	}, nil
 }
 
+func NewInstrumentedClientFromClient(client *ethclient.Client, rpcCallsCollector *rpccalls.Collector) *InstrumentedClient {
+	clientAndVersion := getClientAndVersion(client)
+	return &InstrumentedClient{
+		client:            client,
+		rpcCallsCollector: rpcCallsCollector,
+		clientAndVersion:  clientAndVersion,
+	}
+}
+
 // gethClient interface methods
 
 func (iec *InstrumentedClient) ChainID(ctx context.Context) (*big.Int, error) {

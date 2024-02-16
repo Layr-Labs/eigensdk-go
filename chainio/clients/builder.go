@@ -86,7 +86,7 @@ func BuildAll(
 	}
 	txMgr := txmgr.NewSimpleTxManager(pkWallet, ethHttpClient, logger, addr)
 	// creating EL clients: Reader, Writer and Subscriber
-	elChainReader, elChainWriter, err := config.buildElClients(
+	elChainReader, elChainWriter, err := config.BuildElClients(
 		ethHttpClient,
 		txMgr,
 		logger,
@@ -97,7 +97,7 @@ func BuildAll(
 	}
 
 	// creating AVS clients: Reader and Writer
-	avsRegistryChainReader, avsRegistryChainSubscriber, avsRegistryChainWriter, err := config.buildAvsClients(
+	avsRegistryChainReader, avsRegistryChainSubscriber, avsRegistryChainWriter, err := config.BuildAvsClients(
 		elChainReader,
 		ethHttpClient,
 		ethWsClient,
@@ -122,7 +122,7 @@ func BuildAll(
 
 }
 
-func (config *BuildAllConfig) buildElClients(
+func (config *BuildAllConfig) BuildElClients(
 	ethHttpClient eth.Client,
 	txMgr txmgr.TxManager,
 	logger logging.Logger,
@@ -183,7 +183,7 @@ func (config *BuildAllConfig) buildElClients(
 	return elChainReader, elChainWriter, nil
 }
 
-func (config *BuildAllConfig) buildAvsClients(
+func (config *BuildAllConfig) BuildAvsClients(
 	elReader elcontracts.ELReader,
 	ethHttpClient eth.Client,
 	ethWsClient eth.Client,
