@@ -7,3 +7,4 @@ package chainio
 //go:generate mockgen -destination=./mocks/elContractsWriter.go -package=mocks github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts ELWriter
 //go:generate mockgen -destination=./mocks/ethclient.go -package=mocks github.com/Layr-Labs/eigensdk-go/chainio/clients/eth EthClient
 //go:generate mockgen -destination=./mocks/eventSubscription.go -package=mocks github.com/ethereum/go-ethereum/event Subscription
+//go:generate mockgen -destination=./clients/mocks/fireblocks.go -package=mocks github.com/Layr-Labs/eigensdk-go/chainio/clients/fireblocks FireblocksClient
