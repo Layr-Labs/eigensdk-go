@@ -1,11 +1,14 @@
 package clients
 
 import (
+	"crypto/ecdsa"
 	"errors"
+	"math/big"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/txsender"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	chainioutils "github.com/Layr-Labs/eigensdk-go/chainio/utils"
 	"github.com/Layr-Labs/eigensdk-go/logging"
@@ -45,8 +48,7 @@ type Clients struct {
 
 func BuildAll(
 	config BuildAllConfig,
-	signerAddr gethcommon.Address,
-	signerFn signerv2.SignerFn,
+	ecdsaPrivateKey *ecdsa.PrivateKey,
 	logger logging.Logger,
 ) (*Clients, error) {
 	config.validate(logger)
@@ -66,7 +68,17 @@ func BuildAll(
 		return nil, types.WrapError(errors.New("Failed to create Eth WS client"), err)
 	}
 
-	txMgr := txmgr.NewSimpleTxManager(ethHttpClient, logger, signerFn, signerAddr)
+	txSender, err := txsender.NewPrivateKeyTxSender(config.EthHttpUrl, big.NewInt(1), ecdsaPrivateKey, logger)
+	if err != nil {
+		return nil, types.WrapError(errors.New("Failed to create transaction sender"), err)
+	}
+
+	signerV2, addr, err := signerv2.SignerFromConfig(signerv2.Config{PrivateKey: ecdsaPrivateKey}, big.NewInt(1))
+	if err != nil {
+		panic(err)
+	}
+
+	txMgr := txmgr.NewSimpleTxManager(txSender, ethHttpClient, logger, signerV2, addr)
 	// creating EL clients: Reader, Writer and Subscriber
 	elChainReader, elChainWriter, err := config.buildElClients(
 		ethHttpClient,
