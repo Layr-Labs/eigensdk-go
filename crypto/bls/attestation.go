@@ -281,3 +281,7 @@ func (k *KeyPair) GetPubKeyG2() *G2Point {
 func (k *KeyPair) GetPubKeyG1() *G1Point {
 	return k.PubKey
 }
+
+func (k *KeyPair) GetOperatorID() OperatorId {
+	return k.PubKey.GetOperatorID()
+}
