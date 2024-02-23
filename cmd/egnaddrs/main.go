@@ -47,8 +47,8 @@ func run(args []string) {
 	app := cli.NewApp()
 	app.Name = "egnaddrs"
 	app.Usage = "Used to help debug and test deployments and contract setups."
-	// TODO: add a much more descriptive description
-	app.Description = "Prints all reachable Eigenlayer and AVS contract addresses starting from any one contract."
+	app.Description = "This utility facilitates the debugging and testing of Eigenlayer and AVS contract deployments by retrieving and displaying a comprehensive list of contract addresses. Starting from an initial contract address provided, it recursively identifies and prints addresses for all relevant Eigenlayer and AVS contracts within the network. This includes service managers, registry coordinators, and various registries, thus providing a view of the deployment's structure within the network."
+
 	app.Action = printAddrs
 	app.Flags = []cli.Flag{
 		ServiceManagerAddrFlag,
