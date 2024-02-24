@@ -17,12 +17,12 @@ const (
 )
 
 type SLogger struct {
-	logger *slog.Logger
+	*slog.Logger
 }
 
 var _ Logger = (*SLogger)(nil)
 
-func NewSlogTextLogger(env LogLevel) Logger {
+func NewSlogTextLogger(env LogLevel) *SLogger {
 	var handler slog.Handler
 	if env == Production {
 		handler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
@@ -40,11 +40,11 @@ func NewSlogTextLogger(env LogLevel) Logger {
 	}
 	logger := slog.New(handler)
 	return &SLogger{
-		logger: logger,
+		logger,
 	}
 }
 
-func NewSlogJsonLogger(env LogLevel) Logger {
+func NewSlogJsonLogger(env LogLevel) *SLogger {
 	var handler slog.Handler
 	if env == Production {
 		handler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
@@ -62,7 +62,7 @@ func NewSlogJsonLogger(env LogLevel) Logger {
 	}
 	logger := slog.New(handler)
 	return &SLogger{
-		logger: logger,
+		logger,
 	}
 }
 
@@ -94,7 +94,7 @@ func (s SLogger) logCorrectSource(level slog.Level, msg string, tags ...any) {
 	runtime.Callers(3, pcs[:]) // skip [Callers, logCorrectSource, Info/Debug/Warn/Error/Fatal]
 	r := slog.NewRecord(time.Now(), level, msg, pcs[0])
 	r.Add(tags...)
-	_ = s.logger.Handler().Handle(context.Background(), r)
+	_ = s.Handler().Handle(context.Background(), r)
 }
 
 func (s SLogger) Debugf(template string, args ...interface{}) {
@@ -124,5 +124,5 @@ func (s SLogger) logfCorrectSource(level slog.Level, template string, args ...in
 	var pcs [1]uintptr
 	runtime.Callers(3, pcs[:]) // skip [Callers, logfCorrectSource, Info/Debug/Warn/Error/Fatal]
 	r := slog.NewRecord(time.Now(), level, fmt.Sprintf(template, args...), pcs[0])
-	_ = s.logger.Handler().Handle(context.Background(), r)
+	_ = s.Handler().Handle(context.Background(), r)
 }
