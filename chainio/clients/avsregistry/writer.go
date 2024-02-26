@@ -79,7 +79,7 @@ type AvsRegistryChainWriter struct {
 	blsApkRegistry         *blsapkregistry.ContractBLSApkRegistry
 	elReader               elcontracts.ELReader
 	logger                 logging.Logger
-	ethClient              eth.EthClient
+	ethClient              eth.Client
 	txMgr                  txmgr.TxManager
 }
 
@@ -93,7 +93,7 @@ func NewAvsRegistryChainWriter(
 	blsApkRegistry *blsapkregistry.ContractBLSApkRegistry,
 	elReader elcontracts.ELReader,
 	logger logging.Logger,
-	ethClient eth.EthClient,
+	ethClient eth.Client,
 	txMgr txmgr.TxManager,
 ) (*AvsRegistryChainWriter, error) {
 	return &AvsRegistryChainWriter{
@@ -113,7 +113,7 @@ func BuildAvsRegistryChainWriter(
 	registryCoordinatorAddr gethcommon.Address,
 	operatorStateRetrieverAddr gethcommon.Address,
 	logger logging.Logger,
-	ethClient eth.EthClient,
+	ethClient eth.Client,
 	txMgr txmgr.TxManager,
 ) (*AvsRegistryChainWriter, error) {
 	registryCoordinator, err := regcoord.NewContractRegistryCoordinator(registryCoordinatorAddr, ethClient)

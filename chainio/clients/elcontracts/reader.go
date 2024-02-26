@@ -67,7 +67,7 @@ type ELChainReader struct {
 	delegationManager delegationmanager.ContractDelegationManagerCalls
 	strategyManager   strategymanager.ContractStrategyManagerCalls
 	avsDirectory      avsdirectory.ContractAVSDirectoryCalls
-	ethClient         eth.EthClient
+	ethClient         eth.Client
 }
 
 // forces EthReader to implement the chainio.Reader interface
@@ -79,7 +79,7 @@ func NewELChainReader(
 	strategyManager strategymanager.ContractStrategyManagerCalls,
 	avsDirectory avsdirectory.ContractAVSDirectoryCalls,
 	logger logging.Logger,
-	ethClient eth.EthClient,
+	ethClient eth.Client,
 ) *ELChainReader {
 	return &ELChainReader{
 		slasher:           slasher,
@@ -94,7 +94,7 @@ func NewELChainReader(
 func BuildELChainReader(
 	delegationManagerAddr gethcommon.Address,
 	avsDirectoryAddr gethcommon.Address,
-	ethClient eth.EthClient,
+	ethClient eth.Client,
 	logger logging.Logger,
 ) (*ELChainReader, error) {
 	elContractBindings, err := chainioutils.NewEigenlayerContractBindings(

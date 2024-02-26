@@ -40,8 +40,8 @@ type Clients struct {
 	AvsRegistryChainWriter     *avsregistry.AvsRegistryChainWriter
 	ElChainReader              *elcontracts.ELChainReader
 	ElChainWriter              *elcontracts.ELChainWriter
-	EthHttpClient              *eth.Client
-	EthWsClient                *eth.Client
+	EthHttpClient              eth.Client
+	EthWsClient                eth.Client
 	Metrics                    *metrics.EigenMetrics // exposes main avs node spec metrics that need to be incremented by avs code and used to start the metrics server
 	PrometheusRegistry         *prometheus.Registry  // Used if avs teams need to register avs-specific metrics
 }
@@ -68,7 +68,7 @@ func BuildAll(
 		return nil, types.WrapError(errors.New("Failed to create Eth WS client"), err)
 	}
 
-	txSender, err := txsender.NewPrivateKeyTxSender(config.EthHttpUrl, big.NewInt(1), ecdsaPrivateKey, logger)
+	txSender, err := txsender.NewPrivateKeyTxSender(ethHttpClient, big.NewInt(1), ecdsaPrivateKey, logger)
 	if err != nil {
 		return nil, types.WrapError(errors.New("Failed to create transaction sender"), err)
 	}
@@ -117,7 +117,7 @@ func BuildAll(
 }
 
 func (config *BuildAllConfig) buildElClients(
-	ethHttpClient eth.EthClient,
+	ethHttpClient eth.Client,
 	txMgr txmgr.TxManager,
 	logger logging.Logger,
 	eigenMetrics *metrics.EigenMetrics,
@@ -182,8 +182,8 @@ func (config *BuildAllConfig) buildElClients(
 
 func (config *BuildAllConfig) buildAvsClients(
 	elReader elcontracts.ELReader,
-	ethHttpClient eth.EthClient,
-	ethWsClient eth.EthClient,
+	ethHttpClient eth.Client,
+	ethWsClient eth.Client,
 	txMgr txmgr.TxManager,
 	logger logging.Logger,
 ) (*avsregistry.AvsRegistryChainReader, *avsregistry.AvsRegistryChainSubscriber, *avsregistry.AvsRegistryChainWriter, error) {

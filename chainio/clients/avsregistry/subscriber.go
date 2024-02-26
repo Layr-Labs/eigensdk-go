@@ -37,7 +37,7 @@ func NewAvsRegistryChainSubscriber(
 
 func BuildAvsRegistryChainSubscriber(
 	blsApkRegistryAddr common.Address,
-	ethWsClient eth.EthClient,
+	ethWsClient eth.Client,
 	logger logging.Logger,
 ) (*AvsRegistryChainSubscriber, error) {
 	blsapkreg, err := blsapkreg.NewContractBLSApkRegistry(blsApkRegistryAddr, ethWsClient)
