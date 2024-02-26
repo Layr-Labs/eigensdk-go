@@ -3,6 +3,7 @@ package logging
 import (
 	"context"
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 	"runtime"
@@ -22,44 +23,34 @@ type SLogger struct {
 
 var _ Logger = (*SLogger)(nil)
 
-func NewSlogTextLogger(env LogLevel) *SLogger {
-	var handler slog.Handler
-	if env == Production {
-		handler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo, // prints info and above (default behavior but we add to be explicit)
-		}).
-			WithAttrs([]slog.Attr{slog.String("env", string(env))}) // add a default tag with env name
-	} else if env == Development {
-		handler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			AddSource: true,            // we add source information in development mode only
-			Level:     slog.LevelDebug, // prints debug and above
-		}).
-			WithAttrs([]slog.Attr{slog.String("env", string(env))}) // add a default tag with env name
-	} else {
-		panic(fmt.Sprintf("Unknown environment. Expected %s or %s. Received %s.", Development, Production, env))
-	}
+// NewSlogTextLogger creates a new SLogger with a text handler
+//
+//	outputWriter is the writer to write the logs to (typically os.Stdout,
+//	  but can also use a io.MultiWriter(os.Stdout, file) to write to multiple outputs)
+//	logLevel is the minimum level to log
+//	logSource if true, adds source information to the log
+func NewSlogTextLogger(outputWriter io.Writer, logLevel slog.Level, logSource bool) *SLogger {
+	handler := slog.NewTextHandler(outputWriter, &slog.HandlerOptions{
+		Level:     logLevel, // prints debug and above
+		AddSource: logSource,
+	})
 	logger := slog.New(handler)
 	return &SLogger{
 		logger,
 	}
 }
 
-func NewSlogJsonLogger(env LogLevel) *SLogger {
-	var handler slog.Handler
-	if env == Production {
-		handler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			Level: slog.LevelInfo, // prints info and above (default behavior but we add to be explicit)
-		}).
-			WithAttrs([]slog.Attr{slog.String("env", string(env))}) // add a default tag with env name
-	} else if env == Development {
-		handler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-			AddSource: true,            // we add source information in development mode only
-			Level:     slog.LevelDebug, // prints debug and above
-		}).
-			WithAttrs([]slog.Attr{slog.String("env", string(env))}) // add a default tag with env name
-	} else {
-		panic(fmt.Sprintf("Unknown environment. Expected %s or %s. Received %s.", Development, Production, env))
-	}
+// NewSlogJsonLogger creates a new SLogger with a Json handler
+//
+//	outputWriter is the writer to write the logs to (typically os.Stdout,
+//	  but can also use a io.MultiWriter(os.Stdout, file) to write to multiple outputs)
+//	logLevel is the minimum level to log
+//	logSource if true, adds source information to the log
+func NewSlogJsonLogger(outputWriter io.Writer, logLevel slog.Level, logSource bool) *SLogger {
+	handler := slog.NewJSONHandler(outputWriter, &slog.HandlerOptions{
+		Level:     logLevel, // prints debug and above
+		AddSource: logSource,
+	})
 	logger := slog.New(handler)
 	return &SLogger{
 		logger,
