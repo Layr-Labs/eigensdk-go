@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/consensys/gnark-crypto v0.12.1
-	github.com/ethereum/go-ethereum v1.13.12
+	github.com/ethereum/go-ethereum v1.13.13
 	github.com/google/uuid v1.6.0
 	github.com/prometheus/client_golang v1.18.0
 	github.com/stretchr/testify v1.8.4
@@ -14,8 +14,6 @@ require (
 	go.uber.org/zap v1.26.0
 	gopkg.in/yaml.v3 v3.0.1
 )
-
-require github.com/stretchr/objx v0.5.0 // indirect
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
