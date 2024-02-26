@@ -5,6 +5,7 @@
 //
 //	mockgen -destination=./mocks/avsRegistryContractsWriter.go -package=mocks github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry AvsRegistryWriter
 //
+
 // Package mocks is a generated GoMock package.
 package mocks
 
