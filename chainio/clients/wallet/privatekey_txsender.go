@@ -1,4 +1,4 @@
-package txsender
+package wallet
 
 import (
 	"context"
@@ -20,9 +20,9 @@ var (
 	FallbackGasTipCap = big.NewInt(15_000_000_000)
 )
 
-var _ TxSender = (*privateKeyTxSender)(nil)
+var _ Wallet = (*privateKeyWallet)(nil)
 
-type privateKeyTxSender struct {
+type privateKeyWallet struct {
 	ethClient eth.Client
 	address   common.Address
 	signerFn  signerv2.SignerFn
@@ -32,8 +32,8 @@ type privateKeyTxSender struct {
 	contracts map[common.Address]*bind.BoundContract
 }
 
-func NewPrivateKeyTxSender(ethClient eth.Client, signer signerv2.SignerFn, signerAddress common.Address, logger logging.Logger) (TxSender, error) {
-	return &privateKeyTxSender{
+func NewPrivateKeyWallet(ethClient eth.Client, signer signerv2.SignerFn, signerAddress common.Address, logger logging.Logger) (Wallet, error) {
+	return &privateKeyWallet{
 		ethClient: ethClient,
 		address:   signerAddress,
 		signerFn:  signer,
@@ -41,7 +41,7 @@ func NewPrivateKeyTxSender(ethClient eth.Client, signer signerv2.SignerFn, signe
 	}, nil
 }
 
-func (t *privateKeyTxSender) SendTransaction(ctx context.Context, tx *types.Transaction) (TxID, error) {
+func (t *privateKeyWallet) SendTransaction(ctx context.Context, tx *types.Transaction) (TxID, error) {
 	// Estimate gas and nonce
 	// can't print tx hash in logs because the tx changes below when we complete and sign it
 	// so the txHash is meaningless at this point
@@ -86,7 +86,7 @@ func (t *privateKeyTxSender) SendTransaction(ctx context.Context, tx *types.Tran
 	return tx.Hash().Hex(), nil
 }
 
-func (t *privateKeyTxSender) GetTransactionReceipt(ctx context.Context, txID TxID) (*types.Receipt, error) {
+func (t *privateKeyWallet) GetTransactionReceipt(ctx context.Context, txID TxID) (*types.Receipt, error) {
 	txHash := common.HexToHash(txID)
 	return t.ethClient.TransactionReceipt(ctx, txHash)
 }
@@ -94,7 +94,7 @@ func (t *privateKeyTxSender) GetTransactionReceipt(ctx context.Context, txID TxI
 // estimateGasAndNonce we are explicitly implementing this because
 // * We want to support legacy transactions (i.e. not dynamic fee)
 // * We want to support gas management, i.e. add buffer to gas limit
-func (t *privateKeyTxSender) estimateGasAndNonce(ctx context.Context, tx *types.Transaction) (*types.Transaction, error) {
+func (t *privateKeyWallet) estimateGasAndNonce(ctx context.Context, tx *types.Transaction) (*types.Transaction, error) {
 	gasTipCap, err := t.ethClient.SuggestGasTipCap(ctx)
 	if err != nil {
 		// If the transaction failed because the backend does not support
