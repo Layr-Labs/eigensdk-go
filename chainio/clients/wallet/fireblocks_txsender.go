@@ -1,4 +1,4 @@
-package txsender
+package wallet
 
 import (
 	"context"
@@ -15,9 +15,9 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-var _ TxSender = (*fireblocksTxSender)(nil)
+var _ Wallet = (*fireblocksWallet)(nil)
 
-type fireblocksTxSender struct {
+type fireblocksWallet struct {
 	fireblocksClient fireblocks.Client
 	ethClient        eth.Client
 	vaultAccountName string
@@ -29,12 +29,12 @@ type fireblocksTxSender struct {
 	whitelistedContracts map[common.Address]*fireblocks.WhitelistedContract
 }
 
-func NewFireblocksTxSender(fireblocksClient fireblocks.Client, ethClient eth.Client, vaultAccountName string, logger logging.Logger) (TxSender, error) {
+func NewFireblocksWallet(fireblocksClient fireblocks.Client, ethClient eth.Client, vaultAccountName string, logger logging.Logger) (Wallet, error) {
 	chainID, err := ethClient.ChainID(context.Background())
 	if err != nil {
 		return nil, fmt.Errorf("error getting chain ID: %w", err)
 	}
-	return &fireblocksTxSender{
+	return &fireblocksWallet{
 		fireblocksClient: fireblocksClient,
 		ethClient:        ethClient,
 		vaultAccountName: vaultAccountName,
@@ -47,7 +47,7 @@ func NewFireblocksTxSender(fireblocksClient fireblocks.Client, ethClient eth.Cli
 	}, nil
 }
 
-func (t *fireblocksTxSender) getAccount(ctx context.Context) (*fireblocks.VaultAccount, error) {
+func (t *fireblocksWallet) getAccount(ctx context.Context) (*fireblocks.VaultAccount, error) {
 	if t.account == nil {
 		accounts, err := t.fireblocksClient.ListVaultAccounts(ctx)
 		if err != nil {
@@ -63,7 +63,7 @@ func (t *fireblocksTxSender) getAccount(ctx context.Context) (*fireblocks.VaultA
 	return t.account, nil
 }
 
-func (t *fireblocksTxSender) getWhitelistedContract(ctx context.Context, address common.Address) (*fireblocks.WhitelistedContract, error) {
+func (t *fireblocksWallet) getWhitelistedContract(ctx context.Context, address common.Address) (*fireblocks.WhitelistedContract, error) {
 	assetID, ok := fireblocks.AssetIDByChain[t.chainID.Uint64()]
 	if !ok {
 		return nil, fmt.Errorf("unsupported chain %d", t.chainID.Uint64())
@@ -91,7 +91,7 @@ func (t *fireblocksTxSender) getWhitelistedContract(ctx context.Context, address
 	return contract, nil
 }
 
-func (t *fireblocksTxSender) SendTransaction(ctx context.Context, tx *types.Transaction) (TxID, error) {
+func (t *fireblocksWallet) SendTransaction(ctx context.Context, tx *types.Transaction) (TxID, error) {
 	assetID, ok := fireblocks.AssetIDByChain[t.chainID.Uint64()]
 	if !ok {
 		return "", fmt.Errorf("unsupported chain %d", t.chainID.Uint64())
@@ -134,7 +134,7 @@ func (t *fireblocksTxSender) SendTransaction(ctx context.Context, tx *types.Tran
 	return res.ID, nil
 }
 
-func (t *fireblocksTxSender) GetTransactionReceipt(ctx context.Context, txID TxID) (*types.Receipt, error) {
+func (t *fireblocksWallet) GetTransactionReceipt(ctx context.Context, txID TxID) (*types.Receipt, error) {
 	fireblockTx, err := t.fireblocksClient.GetTransaction(ctx, txID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting fireblocks transaction %s: %w", txID, err)

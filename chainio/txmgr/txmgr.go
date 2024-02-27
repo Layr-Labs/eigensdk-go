@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/txsender"
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/signerv2"
 	"github.com/ethereum/go-ethereum"
@@ -42,7 +42,7 @@ type EthBackend interface {
 }
 
 type SimpleTxManager struct {
-	txSender txsender.TxSender
+	wallet   wallet.Wallet
 	backend  EthBackend
 	signerFn signerv2.SignerFn
 	log      logging.Logger
@@ -54,7 +54,7 @@ var _ TxManager = (*SimpleTxManager)(nil)
 // NewSimpleTxManager creates a new simpleTxManager which can be used
 // to send a transaction to smart contracts on the Ethereum node
 func NewSimpleTxManager(
-	txSender txsender.TxSender,
+	wallet wallet.Wallet,
 	// TODO: replace EthBackend with eth.Client
 	backend EthBackend,
 	log logging.Logger,
@@ -62,7 +62,7 @@ func NewSimpleTxManager(
 	sender common.Address,
 ) *SimpleTxManager {
 	return &SimpleTxManager{
-		txSender: txSender,
+		wallet:   wallet,
 		backend:  backend,
 		log:      log,
 		signerFn: signerFn,
@@ -77,7 +77,7 @@ func NewSimpleTxManager(
 // and resign the transaction after adding the nonce and gas limit.
 // To check out the whole flow on how this works, check out the README.md in this folder
 func (m *SimpleTxManager) Send(ctx context.Context, tx *types.Transaction) (*types.Receipt, error) {
-	txID, err := m.txSender.SendTransaction(ctx, tx)
+	txID, err := m.wallet.SendTransaction(ctx, tx)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +106,7 @@ func (m *SimpleTxManager) GetNoSendTxOpts() (*bind.TransactOpts, error) {
 	return noSendTxOpts, nil
 }
 
-func (m *SimpleTxManager) waitForReceipt(ctx context.Context, txID txsender.TxID) (*types.Receipt, error) {
+func (m *SimpleTxManager) waitForReceipt(ctx context.Context, txID wallet.TxID) (*types.Receipt, error) {
 	// TODO: make this ticker adjustable
 	queryTicker := time.NewTicker(2 * time.Second)
 	defer queryTicker.Stop()
@@ -122,9 +122,9 @@ func (m *SimpleTxManager) waitForReceipt(ctx context.Context, txID txsender.TxID
 	}
 }
 
-func (m *SimpleTxManager) queryReceipt(ctx context.Context, txID txsender.TxID) *types.Receipt {
+func (m *SimpleTxManager) queryReceipt(ctx context.Context, txID wallet.TxID) *types.Receipt {
 	txHash := common.HexToHash(txID)
-	receipt, err := m.txSender.GetTransactionReceipt(ctx, txHash.Hex())
+	receipt, err := m.wallet.GetTransactionReceipt(ctx, txHash.Hex())
 	if errors.Is(err, ethereum.NotFound) {
 		m.log.Info("Transaction not yet mined", "hash", txHash)
 		return nil

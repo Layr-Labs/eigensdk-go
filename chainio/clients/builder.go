@@ -8,7 +8,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/txsender"
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	chainioutils "github.com/Layr-Labs/eigensdk-go/chainio/utils"
 	"github.com/Layr-Labs/eigensdk-go/logging"
@@ -73,7 +73,7 @@ func BuildAll(
 		panic(err)
 	}
 
-	txSender, err := txsender.NewPrivateKeyTxSender(ethHttpClient, signerV2, addr, logger)
+	txSender, err := wallet.NewPrivateKeyWallet(ethHttpClient, signerV2, addr, logger)
 	if err != nil {
 		return nil, types.WrapError(errors.New("Failed to create transaction sender"), err)
 	}
