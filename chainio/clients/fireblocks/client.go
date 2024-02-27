@@ -14,14 +14,25 @@ import (
 	"time"
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 )
 
+type AssetID string
+
+const (
+	AssetIDETH       AssetID = "ETH"
+	AssetIDGoerliETH AssetID = "ETH_TEST3"
+)
+
+var AssetIDByChain = map[uint64]AssetID{
+	1: AssetIDETH,       // mainnet
+	5: AssetIDGoerliETH, // goerli
+}
+
 type FireblocksTxID string
 
-type FireblocksClient interface {
+type Client interface {
 	// ContractCall makes a ContractCall request to the Fireblocks API.
 	// It signs and broadcasts a transaction and returns the transaction ID and status.
 	// ref: https://developers.fireblocks.com/reference/post_transactions
@@ -31,9 +42,15 @@ type FireblocksClient interface {
 	// This call is used to get the contract ID for a whitelisted contract, which is needed as destination account ID by NewContractCallRequest in a ContractCall
 	// ref: https://developers.fireblocks.com/reference/get_contracts
 	ListContracts(ctx context.Context) ([]WhitelistedContract, error)
+	// ListVaultAccounts makes a ListVaultAccounts request to the Fireblocks API
+	// It returns a list of vault accounts for the account.
+	ListVaultAccounts(ctx context.Context) ([]VaultAccount, error)
+	// GetTransaction makes a GetTransaction request to the Fireblocks API
+	// It returns the transaction details for the given transaction ID.
+	GetTransaction(ctx context.Context, txID string) (*Transaction, error)
 }
 
-type fireblocksClient struct {
+type client struct {
 	apiKey     string
 	privateKey *rsa.PrivateKey
 	baseURL    string
@@ -42,32 +59,19 @@ type fireblocksClient struct {
 	logger     logging.Logger
 }
 
-type Asset struct {
-	ID      string         `json:"id"`
-	Status  string         `json:"status"`
-	Address common.Address `json:"address"`
-	Tag     string         `json:"tag"`
-}
-
 type ErrorResponse struct {
 	Message string `json:"message"`
 	Code    int    `json:"code"`
 }
 
-type WhitelistedContract struct {
-	ID     string  `json:"id"`
-	Name   string  `json:"name"`
-	Assets []Asset `json:"assets"`
-}
-
-func NewFireblocksClient(apiKey string, secretKey []byte, baseURL string, timeout time.Duration, logger logging.Logger) (FireblocksClient, error) {
+func NewClient(apiKey string, secretKey []byte, baseURL string, timeout time.Duration, logger logging.Logger) (Client, error) {
 	c := http.Client{Timeout: timeout}
 	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(secretKey)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing RSA private key: %w", err)
 	}
 
-	return &fireblocksClient{
+	return &client{
 		apiKey:     apiKey,
 		privateKey: privateKey,
 		baseURL:    baseURL,
@@ -79,7 +83,7 @@ func NewFireblocksClient(apiKey string, secretKey []byte, baseURL string, timeou
 
 // signJwt signs a JWT token for the Fireblocks API
 // mostly copied from the Fireblocks example: https://github.com/fireblocks/developers-hub/blob/main/authentication_examples/go/test.go
-func (f *fireblocksClient) signJwt(path string, bodyJson interface{}, durationSeconds int64) (string, error) {
+func (f *client) signJwt(path string, bodyJson interface{}, durationSeconds int64) (string, error) {
 	nonce := uuid.New().String()
 	now := time.Now().Unix()
 	expiration := now + durationSeconds
@@ -113,12 +117,25 @@ func (f *fireblocksClient) signJwt(path string, bodyJson interface{}, durationSe
 
 // makeRequest makes a request to the Fireblocks API
 // mostly copied from the Fireblocks example: https://github.com/fireblocks/developers-hub/blob/main/authentication_examples/go/test.go
-func (f *fireblocksClient) makeRequest(ctx context.Context, method, path string, body interface{}) ([]byte, error) {
-	url, err := url.JoinPath(f.baseURL, path)
+func (f *client) makeRequest(ctx context.Context, method, path string, body interface{}) ([]byte, error) {
+	// remove query parameters from path and join with baseURL
+	pathURI, err := url.Parse(path)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing URL: %w", err)
+	}
+	query := pathURI.Query()
+	pathURI.RawQuery = ""
+	urlStr, err := url.JoinPath(f.baseURL, pathURI.String())
 	if err != nil {
 		return nil, fmt.Errorf("error joining URL path with %s and %s: %w", f.baseURL, path, err)
 	}
-	f.logger.Debug("making request to Fireblocks", "method", method, "url", url)
+	url, err := url.Parse(urlStr)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing URL: %w", err)
+	}
+	// add query parameters back to path
+	url.RawQuery = query.Encode()
+	f.logger.Debug("making request to Fireblocks", "method", method, "url", url.String())
 	var reqBodyBytes []byte
 	if body != nil {
 		var err error
@@ -133,7 +150,7 @@ func (f *fireblocksClient) makeRequest(ctx context.Context, method, path string,
 		return nil, fmt.Errorf("error signing JWT: %w", err)
 	}
 
-	req, err := http.NewRequest(method, url, bytes.NewBuffer(reqBodyBytes))
+	req, err := http.NewRequest(method, url.String(), bytes.NewBuffer(reqBodyBytes))
 	if err != nil {
 		return nil, fmt.Errorf("error creating HTTP request: %w", err)
 	}

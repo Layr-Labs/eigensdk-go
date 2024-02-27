@@ -27,7 +27,7 @@ type InstrumentedClient struct {
 	clientAndVersion string
 }
 
-var _ EthClient = (*InstrumentedClient)(nil)
+var _ Client = (*InstrumentedClient)(nil)
 
 func NewInstrumentedClient(rpcAddress string, rpcCallsCollector *rpccalls.Collector) (*InstrumentedClient, error) {
 	client, err := ethclient.Dial(rpcAddress)

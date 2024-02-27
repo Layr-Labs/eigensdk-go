@@ -86,7 +86,7 @@ type AvsRegistryChainReader struct {
 	registryCoordinator     *regcoord.ContractRegistryCoordinator
 	operatorStateRetriever  *opstateretriever.ContractOperatorStateRetriever
 	stakeRegistry           *stakeregistry.ContractStakeRegistry
-	ethClient               eth.EthClient
+	ethClient               eth.Client
 }
 
 // forces AvsReader to implement the clients.ReaderInterface interface
@@ -99,7 +99,7 @@ func NewAvsRegistryChainReader(
 	operatorStateRetriever *opstateretriever.ContractOperatorStateRetriever,
 	stakeRegistry *stakeregistry.ContractStakeRegistry,
 	logger logging.Logger,
-	ethClient eth.EthClient,
+	ethClient eth.Client,
 ) *AvsRegistryChainReader {
 	return &AvsRegistryChainReader{
 		blsApkRegistryAddr:      blsApkRegistryAddr,
@@ -115,7 +115,7 @@ func NewAvsRegistryChainReader(
 func BuildAvsRegistryChainReader(
 	registryCoordinatorAddr gethcommon.Address,
 	operatorStateRetrieverAddr gethcommon.Address,
-	ethClient eth.EthClient,
+	ethClient eth.Client,
 	logger logging.Logger,
 ) (*AvsRegistryChainReader, error) {
 	contractRegistryCoordinator, err := regcoord.NewContractRegistryCoordinator(registryCoordinatorAddr, ethClient)

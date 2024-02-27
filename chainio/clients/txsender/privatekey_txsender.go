@@ -24,7 +24,7 @@ var (
 var _ TxSender = (*privateKeyTxSender)(nil)
 
 type privateKeyTxSender struct {
-	ethClient eth.EthClient
+	ethClient eth.Client
 	address   common.Address
 	signerFn  signerv2.SignerFn
 	logger    logging.Logger
@@ -33,16 +33,12 @@ type privateKeyTxSender struct {
 	contracts map[common.Address]*bind.BoundContract
 }
 
-func NewPrivateKeyTxSender(ethRPCURL string, chainID *big.Int, ecdsaPrivateKey *ecdsa.PrivateKey, logger logging.Logger) (TxSender, error) {
+func NewPrivateKeyTxSender(ethClient eth.Client, chainID *big.Int, ecdsaPrivateKey *ecdsa.PrivateKey, logger logging.Logger) (TxSender, error) {
 	if chainID == nil {
 		return nil, fmt.Errorf("chainID cannot be nil")
 	}
 	if ecdsaPrivateKey == nil {
 		return nil, fmt.Errorf("ecdsaPrivateKey cannot be nil")
-	}
-	ethClient, err := eth.NewClient(ethRPCURL)
-	if err != nil {
-		return nil, err
 	}
 	signer, addr, err := signerv2.SignerFromConfig(signerv2.Config{PrivateKey: ecdsaPrivateKey}, chainID)
 	if err != nil {

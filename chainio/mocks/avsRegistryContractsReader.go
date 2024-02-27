@@ -5,6 +5,7 @@
 //
 //	mockgen -destination=./mocks/avsRegistryContractsReader.go -package=mocks github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry AvsRegistryReader
 //
+
 // Package mocks is a generated GoMock package.
 package mocks
 
