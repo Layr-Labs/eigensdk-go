@@ -17,15 +17,21 @@ const (
 	apiKey        = "FILL_ME_IN"
 )
 
-func TestListContracts(t *testing.T) {
-	t.Skip("skipping test as it's meant for manual runs only")
-
+func newFireblocksClient(t *testing.T) fireblocks.Client {
 	secretKey, err := os.ReadFile(secretKeyPath)
 	assert.NoError(t, err)
 	logger, err := logging.NewZapLogger(logging.Development)
 	assert.NoError(t, err)
-	c, err := fireblocks.NewFireblocksClient(apiKey, secretKey, sandboxAPI, 5*time.Second, logger)
+	c, err := fireblocks.NewClient(apiKey, secretKey, sandboxAPI, 5*time.Second, logger)
 	assert.NoError(t, err)
+	return c
+
+}
+
+func TestListContracts(t *testing.T) {
+	t.Skip("skipping test as it's meant for manual runs only")
+
+	c := newFireblocksClient(t)
 	contracts, err := c.ListContracts(context.Background())
 	assert.NoError(t, err)
 	for _, contract := range contracts {
@@ -36,14 +42,7 @@ func TestListContracts(t *testing.T) {
 func TestContractCall(t *testing.T) {
 	t.Skip("skipping test as it's meant for manual runs only")
 
-	secretKey, err := os.ReadFile(secretKeyPath)
-	assert.NoError(t, err)
-
-	logger, err := logging.NewZapLogger(logging.Development)
-	assert.NoError(t, err)
-
-	c, err := fireblocks.NewFireblocksClient(apiKey, secretKey, sandboxAPI, 5*time.Second, logger)
-	assert.NoError(t, err)
+	c := newFireblocksClient(t)
 	destinationAccountID := "FILL_ME_IN"
 	idempotenceKey := "FILL_ME_IN"
 	// Tests the contract call against this contract:
@@ -59,4 +58,25 @@ func TestContractCall(t *testing.T) {
 	resp, err := c.ContractCall(context.Background(), req)
 	assert.NoError(t, err)
 	t.Logf("txID: %s, status: %s", resp.ID, resp.Status)
+}
+
+func TestListVaultAccounts(t *testing.T) {
+	t.Skip("skipping test as it's meant for manual runs only")
+
+	c := newFireblocksClient(t)
+	accounts, err := c.ListVaultAccounts(context.Background())
+	assert.NoError(t, err)
+	for _, account := range accounts {
+		t.Logf("Account: %+v", account)
+	}
+}
+
+func TestGetTransaction(t *testing.T) {
+	t.Skip("skipping test as it's meant for manual runs only")
+
+	c := newFireblocksClient(t)
+	txID := "FILL_ME_IN"
+	tx, err := c.GetTransaction(context.Background(), txID)
+	assert.NoError(t, err)
+	t.Logf("Transaction: %+v", tx)
 }

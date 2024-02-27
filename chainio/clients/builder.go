@@ -1,11 +1,14 @@
 package clients
 
 import (
+	"crypto/ecdsa"
 	"errors"
+	"math/big"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/txsender"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	chainioutils "github.com/Layr-Labs/eigensdk-go/chainio/utils"
 	"github.com/Layr-Labs/eigensdk-go/logging"
@@ -37,16 +40,15 @@ type Clients struct {
 	AvsRegistryChainWriter     *avsregistry.AvsRegistryChainWriter
 	ElChainReader              *elcontracts.ELChainReader
 	ElChainWriter              *elcontracts.ELChainWriter
-	EthHttpClient              *eth.Client
-	EthWsClient                *eth.Client
+	EthHttpClient              eth.Client
+	EthWsClient                eth.Client
 	Metrics                    *metrics.EigenMetrics // exposes main avs node spec metrics that need to be incremented by avs code and used to start the metrics server
 	PrometheusRegistry         *prometheus.Registry  // Used if avs teams need to register avs-specific metrics
 }
 
 func BuildAll(
 	config BuildAllConfig,
-	signerAddr gethcommon.Address,
-	signerFn signerv2.SignerFn,
+	ecdsaPrivateKey *ecdsa.PrivateKey,
 	logger logging.Logger,
 ) (*Clients, error) {
 	config.validate(logger)
@@ -66,7 +68,16 @@ func BuildAll(
 		return nil, types.WrapError(errors.New("Failed to create Eth WS client"), err)
 	}
 
-	txMgr := txmgr.NewSimpleTxManager(ethHttpClient, logger, signerFn, signerAddr)
+	signerV2, addr, err := signerv2.SignerFromConfig(signerv2.Config{PrivateKey: ecdsaPrivateKey}, big.NewInt(1))
+	if err != nil {
+		panic(err)
+	}
+
+	txSender, err := txsender.NewPrivateKeyTxSender(ethHttpClient, signerV2, addr, logger)
+	if err != nil {
+		return nil, types.WrapError(errors.New("Failed to create transaction sender"), err)
+	}
+	txMgr := txmgr.NewSimpleTxManager(txSender, ethHttpClient, logger, signerV2, addr)
 	// creating EL clients: Reader, Writer and Subscriber
 	elChainReader, elChainWriter, err := config.buildElClients(
 		ethHttpClient,
@@ -105,7 +116,7 @@ func BuildAll(
 }
 
 func (config *BuildAllConfig) buildElClients(
-	ethHttpClient eth.EthClient,
+	ethHttpClient eth.Client,
 	txMgr txmgr.TxManager,
 	logger logging.Logger,
 	eigenMetrics *metrics.EigenMetrics,
@@ -170,8 +181,8 @@ func (config *BuildAllConfig) buildElClients(
 
 func (config *BuildAllConfig) buildAvsClients(
 	elReader elcontracts.ELReader,
-	ethHttpClient eth.EthClient,
-	ethWsClient eth.EthClient,
+	ethHttpClient eth.Client,
+	ethWsClient eth.Client,
 	txMgr txmgr.TxManager,
 	logger logging.Logger,
 ) (*avsregistry.AvsRegistryChainReader, *avsregistry.AvsRegistryChainSubscriber, *avsregistry.AvsRegistryChainWriter, error) {

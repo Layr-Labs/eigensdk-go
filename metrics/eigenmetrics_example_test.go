@@ -6,7 +6,6 @@ package metrics_test
 
 import (
 	"context"
-	"math/big"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
@@ -14,7 +13,6 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/metrics"
 	"github.com/Layr-Labs/eigensdk-go/metrics/collectors/economic"
 	rpccalls "github.com/Layr-Labs/eigensdk-go/metrics/collectors/rpc_calls"
-	"github.com/Layr-Labs/eigensdk-go/signerv2"
 	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/prometheus/client_golang/prometheus"
@@ -38,11 +36,6 @@ func ExampleEigenMetrics() {
 	}
 	operatorEcdsaAddr := crypto.PubkeyToAddress(ecdsaPrivateKey.PublicKey)
 
-	signerV2, _, err := signerv2.SignerFromConfig(signerv2.Config{PrivateKey: ecdsaPrivateKey}, big.NewInt(1))
-	if err != nil {
-		panic(err)
-	}
-
 	chainioConfig := clients.BuildAllConfig{
 		EthHttpUrl:                 "http://localhost:8545",
 		EthWsUrl:                   "ws://localhost:8545",
@@ -51,7 +44,7 @@ func ExampleEigenMetrics() {
 		AvsName:                    "exampleAvs",
 		PromMetricsIpPortAddress:   ":9090",
 	}
-	clients, err := clients.BuildAll(chainioConfig, operatorEcdsaAddr, signerV2, logger)
+	clients, err := clients.BuildAll(chainioConfig, ecdsaPrivateKey, logger)
 	if err != nil {
 		panic(err)
 	}

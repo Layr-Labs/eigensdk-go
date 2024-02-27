@@ -24,7 +24,7 @@ var FallbackGasTipCap = big.NewInt(15000000000)
 
 type BasicSigner struct {
 	logger            logging.Logger
-	ethClient         sdkethclient.EthClient
+	ethClient         sdkethclient.Client
 	privateKey        *ecdsa.PrivateKey
 	accountAddress    gethcommon.Address
 	contracts         map[gethcommon.Address]*bind.BoundContract
@@ -33,7 +33,7 @@ type BasicSigner struct {
 
 func NewBasicSigner(
 	privateKey *ecdsa.PrivateKey,
-	ethClient sdkethclient.EthClient,
+	ethClient sdkethclient.Client,
 	logger logging.Logger,
 	fallbackGasTipCap *big.Int,
 ) (*BasicSigner, error) {

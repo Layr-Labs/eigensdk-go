@@ -5,6 +5,7 @@
 //
 //	mockgen -destination=./mocks/elContractsWriter.go -package=mocks github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts ELWriter
 //
+
 // Package mocks is a generated GoMock package.
 package mocks
 

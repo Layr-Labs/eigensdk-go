@@ -5,6 +5,7 @@
 //
 //	mockgen -destination=./mocks/eventSubscription.go -package=mocks github.com/ethereum/go-ethereum/event Subscription
 //
+
 // Package mocks is a generated GoMock package.
 package mocks
 

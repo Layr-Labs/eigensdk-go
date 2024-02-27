@@ -40,7 +40,7 @@ type ELChainWriter struct {
 	strategyManager     strategymanager.ContractStrategyManagerTransacts
 	strategyManagerAddr gethcommon.Address
 	elChainReader       ELReader
-	ethClient           eth.EthClient
+	ethClient           eth.Client
 	logger              logging.Logger
 	txMgr               txmgr.TxManager
 }
@@ -53,7 +53,7 @@ func NewELChainWriter(
 	strategyManager strategymanager.ContractStrategyManagerTransacts,
 	strategyManagerAddr gethcommon.Address,
 	elChainReader ELReader,
-	ethClient eth.EthClient,
+	ethClient eth.Client,
 	logger logging.Logger,
 	eigenMetrics metrics.Metrics,
 	txMgr txmgr.TxManager,
@@ -73,7 +73,7 @@ func NewELChainWriter(
 func BuildELChainWriter(
 	delegationManagerAddr gethcommon.Address,
 	avsDirectoryAddr gethcommon.Address,
-	ethClient eth.EthClient,
+	ethClient eth.Client,
 	logger logging.Logger,
 	eigenMetrics metrics.Metrics,
 	txMgr txmgr.TxManager,

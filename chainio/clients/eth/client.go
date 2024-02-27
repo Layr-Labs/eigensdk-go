@@ -3,7 +3,6 @@ package eth
 import (
 	"context"
 	"math/big"
-	"time"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
@@ -11,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-type gethClient interface {
+type Client interface {
 	ChainID(ctx context.Context) (*big.Int, error)
 	BalanceAt(ctx context.Context, account common.Address, blockNumber *big.Int) (*big.Int, error)
 	BlockByHash(ctx context.Context, hash common.Hash) (*types.Block, error)
@@ -53,42 +52,6 @@ type gethClient interface {
 	TransactionSender(ctx context.Context, tx *types.Transaction, block common.Hash, index uint) (common.Address, error)
 }
 
-// EthClient is modified interface with additional custom methods
-type EthClient interface {
-	gethClient
-
-	WaitForTransactionReceipt(
-		ctx context.Context,
-		txHash common.Hash,
-	) *types.Receipt
-}
-
-// Client is a wrapper around geth's ethclient.Client struct, that adds a WaitForTransactionReceipt convenience method.
-type Client struct {
-	*ethclient.Client
-}
-
-var _ EthClient = (*Client)(nil)
-
-func NewClient(rpcAddress string) (*Client, error) {
-	client, err := ethclient.Dial(rpcAddress)
-	if err != nil {
-		return nil, err
-	}
-	return &Client{client}, nil
-}
-
-func (e *Client) WaitForTransactionReceipt(
-	ctx context.Context,
-	txHash common.Hash,
-) *types.Receipt {
-	for {
-		// verifying transaction receipt
-		receipt, err := e.Client.TransactionReceipt(ctx, txHash)
-		if err != nil {
-			time.Sleep(2 * time.Second)
-		} else {
-			return receipt
-		}
-	}
+func NewClient(rpcAddress string) (Client, error) {
+	return ethclient.Dial(rpcAddress)
 }
