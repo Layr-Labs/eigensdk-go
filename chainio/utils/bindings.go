@@ -38,7 +38,7 @@ type EigenlayerContractBindings struct {
 func NewEigenlayerContractBindings(
 	delegationManagerAddr gethcommon.Address,
 	avsDirectoryAddr gethcommon.Address,
-	ethclient eth.EthClient,
+	ethclient eth.Client,
 	logger logging.Logger,
 ) (*EigenlayerContractBindings, error) {
 	contractDelegationManager, err := delegationmanager.NewContractDelegationManager(delegationManagerAddr, ethclient)
@@ -101,7 +101,7 @@ type AvsRegistryContractBindings struct {
 func NewAVSRegistryContractBindings(
 	registryCoordinatorAddr gethcommon.Address,
 	operatorStateRetrieverAddr gethcommon.Address,
-	ethclient eth.EthClient,
+	ethclient eth.Client,
 	logger logging.Logger,
 ) (*AvsRegistryContractBindings, error) {
 	contractBlsRegistryCoordinator, err := regcoordinator.NewContractRegistryCoordinator(

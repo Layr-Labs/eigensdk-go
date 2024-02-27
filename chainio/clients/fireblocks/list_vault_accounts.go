@@ -8,15 +8,17 @@ import (
 	"strings"
 )
 
+type Asset struct {
+	ID        AssetID `json:"id"`
+	Total     string  `json:"total"`
+	Balance   string  `json:"balance"`
+	Available string  `json:"available"`
+}
+
 type VaultAccount struct {
-	ID     string `json:"id"`
-	Name   string `json:"name"`
-	Assets []struct {
-		ID        AssetID `json:"id"`
-		Total     string  `json:"total"`
-		Balance   string  `json:"balance"`
-		Available string  `json:"available"`
-	} `json:"assets"`
+	ID     string  `json:"id"`
+	Name   string  `json:"name"`
+	Assets []Asset `json:"assets"`
 }
 
 func (f *client) ListVaultAccounts(ctx context.Context) ([]VaultAccount, error) {
