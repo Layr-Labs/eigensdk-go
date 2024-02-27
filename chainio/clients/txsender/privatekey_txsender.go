@@ -2,7 +2,6 @@ package txsender
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"fmt"
 	"math/big"
 
@@ -33,21 +32,10 @@ type privateKeyTxSender struct {
 	contracts map[common.Address]*bind.BoundContract
 }
 
-func NewPrivateKeyTxSender(ethClient eth.Client, chainID *big.Int, ecdsaPrivateKey *ecdsa.PrivateKey, logger logging.Logger) (TxSender, error) {
-	if chainID == nil {
-		return nil, fmt.Errorf("chainID cannot be nil")
-	}
-	if ecdsaPrivateKey == nil {
-		return nil, fmt.Errorf("ecdsaPrivateKey cannot be nil")
-	}
-	signer, addr, err := signerv2.SignerFromConfig(signerv2.Config{PrivateKey: ecdsaPrivateKey}, chainID)
-	if err != nil {
-		return nil, err
-	}
-
+func NewPrivateKeyTxSender(ethClient eth.Client, signer signerv2.SignerFn, signerAddress common.Address, logger logging.Logger) (TxSender, error) {
 	return &privateKeyTxSender{
 		ethClient: ethClient,
-		address:   addr,
+		address:   signerAddress,
 		signerFn:  signer,
 		logger:    logger,
 	}, nil

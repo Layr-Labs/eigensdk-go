@@ -68,16 +68,15 @@ func BuildAll(
 		return nil, types.WrapError(errors.New("Failed to create Eth WS client"), err)
 	}
 
-	txSender, err := txsender.NewPrivateKeyTxSender(ethHttpClient, big.NewInt(1), ecdsaPrivateKey, logger)
-	if err != nil {
-		return nil, types.WrapError(errors.New("Failed to create transaction sender"), err)
-	}
-
 	signerV2, addr, err := signerv2.SignerFromConfig(signerv2.Config{PrivateKey: ecdsaPrivateKey}, big.NewInt(1))
 	if err != nil {
 		panic(err)
 	}
 
+	txSender, err := txsender.NewPrivateKeyTxSender(ethHttpClient, signerV2, addr, logger)
+	if err != nil {
+		return nil, types.WrapError(errors.New("Failed to create transaction sender"), err)
+	}
 	txMgr := txmgr.NewSimpleTxManager(txSender, ethHttpClient, logger, signerV2, addr)
 	// creating EL clients: Reader, Writer and Subscriber
 	elChainReader, elChainWriter, err := config.buildElClients(

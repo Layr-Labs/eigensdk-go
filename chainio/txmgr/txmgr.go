@@ -55,6 +55,7 @@ var _ TxManager = (*SimpleTxManager)(nil)
 // to send a transaction to smart contracts on the Ethereum node
 func NewSimpleTxManager(
 	txSender txsender.TxSender,
+	// TODO: replace EthBackend with eth.Client
 	backend EthBackend,
 	log logging.Logger,
 	signerFn signerv2.SignerFn,
