@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"sync"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/fireblocks"
@@ -18,11 +19,19 @@ import (
 var _ Wallet = (*fireblocksWallet)(nil)
 
 type fireblocksWallet struct {
+	mu sync.Mutex
+
 	fireblocksClient fireblocks.Client
 	ethClient        eth.Client
 	vaultAccountName string
 	logger           logging.Logger
 	chainID          *big.Int
+
+	// nonceToTx keeps track of the transaction ID for each nonce
+	// this is used to retrieve the transaction hash for a given nonce
+	// when a replacement transaction is submitted.
+	nonceToTxID map[uint64]TxID
+	txIDToNonce map[TxID]uint64
 
 	// caches
 	account              *fireblocks.VaultAccount
@@ -40,6 +49,9 @@ func NewFireblocksWallet(fireblocksClient fireblocks.Client, ethClient eth.Clien
 		vaultAccountName: vaultAccountName,
 		logger:           logger,
 		chainID:          chainID,
+
+		nonceToTxID: make(map[uint64]TxID),
+		txIDToNonce: make(map[TxID]uint64),
 
 		// caches
 		account:              nil,
@@ -118,18 +130,40 @@ func (t *fireblocksWallet) SendTransaction(ctx context.Context, tx *types.Transa
 	if err != nil {
 		return "", fmt.Errorf("error getting whitelisted contract %s: %w", tx.To().Hex(), err)
 	}
+
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	// if the nonce is already in the map, it means that the transaction was already submitted
+	// we need to get the replacement transaction hash and use it as the replaceTxByHash parameter
+	replaceTxByHash := ""
+	nonce := tx.Nonce()
+	if txID, ok := t.nonceToTxID[nonce]; ok {
+		fireblockTx, err := t.fireblocksClient.GetTransaction(ctx, txID)
+		if err != nil {
+			return "", fmt.Errorf("error getting fireblocks transaction %s: %w", txID, err)
+		}
+		if fireblockTx.TxHash != "" {
+			replaceTxByHash = fireblockTx.TxHash
+		} else {
+			return "", fmt.Errorf("failed to get transaction hash with nonce %d", nonce)
+		}
+	}
+
 	req := fireblocks.NewContractCallRequest(
-		tx.To().Hex(),
+		tx.Hash().Hex(),
 		assetID,
 		account.ID,                // source account ID
 		contract.ID,               // destination account ID
 		tx.Value().String(),       // amount
 		hexutil.Encode(tx.Data()), // calldata
+		replaceTxByHash,           // replaceTxByHash
 	)
 	res, err := t.fireblocksClient.ContractCall(ctx, req)
 	if err != nil {
 		return "", fmt.Errorf("error calling contract %s: %w", tx.To().Hex(), err)
 	}
+	t.nonceToTxID[nonce] = res.ID
+	t.txIDToNonce[res.ID] = nonce
 
 	return res.ID, nil
 }
@@ -143,6 +177,13 @@ func (t *fireblocksWallet) GetTransactionReceipt(ctx context.Context, txID TxID)
 		txHash := common.HexToHash(fireblockTx.TxHash)
 		receipt, err := t.ethClient.TransactionReceipt(ctx, txHash)
 		if err == nil {
+			t.mu.Lock()
+			defer t.mu.Unlock()
+			if nonce, ok := t.txIDToNonce[txID]; ok {
+				delete(t.nonceToTxID, nonce)
+				delete(t.txIDToNonce, txID)
+			}
+
 			return receipt, nil
 		}
 		if errors.Is(err, ethereum.NotFound) {
