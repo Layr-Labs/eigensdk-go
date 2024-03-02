@@ -19,6 +19,8 @@ import (
 var _ Wallet = (*fireblocksWallet)(nil)
 
 type fireblocksWallet struct {
+	// mu protects access to nonceToTxID and txIDToNonce which can be
+	// accessed concurrently by SendTransaction and GetTransactionReceipt
 	mu sync.Mutex
 
 	fireblocksClient fireblocks.Client
