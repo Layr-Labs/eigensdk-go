@@ -38,6 +38,7 @@ func NewPrivateKeyWallet(ethClient eth.Client, signer signerv2.SignerFn, signerA
 		address:   signerAddress,
 		signerFn:  signer,
 		logger:    logger,
+		contracts: make(map[common.Address]*bind.BoundContract, 0),
 	}, nil
 }
 
