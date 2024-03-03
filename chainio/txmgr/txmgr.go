@@ -3,9 +3,9 @@ package txmgr
 import (
 	"context"
 	"errors"
-	"math/big"
 	"time"
 
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/signerv2"
@@ -30,20 +30,9 @@ type TxManager interface {
 	GetNoSendTxOpts() (*bind.TransactOpts, error)
 }
 
-type EthBackend interface {
-	bind.ContractBackend
-
-	// TransactionReceipt queries the backend for a receipt associated with
-	// txHash. If lookup does not fail, but the transaction is not found,
-	// nil should be returned for both values.
-	TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error)
-
-	ChainID(ctx context.Context) (*big.Int, error)
-}
-
 type SimpleTxManager struct {
 	wallet   wallet.Wallet
-	backend  EthBackend
+	client   eth.Client
 	signerFn signerv2.SignerFn
 	log      logging.Logger
 	sender   common.Address
@@ -55,15 +44,14 @@ var _ TxManager = (*SimpleTxManager)(nil)
 // to send a transaction to smart contracts on the Ethereum node
 func NewSimpleTxManager(
 	wallet wallet.Wallet,
-	// TODO: replace EthBackend with eth.Client
-	backend EthBackend,
+	client eth.Client,
 	log logging.Logger,
 	signerFn signerv2.SignerFn,
 	sender common.Address,
 ) *SimpleTxManager {
 	return &SimpleTxManager{
 		wallet:   wallet,
-		backend:  backend,
+		client:   client,
 		log:      log,
 		signerFn: signerFn,
 		sender:   sender,
