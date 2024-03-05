@@ -35,6 +35,9 @@ type ContractCallRequest struct {
 	Destination     account              `json:"destination"`
 	Amount          string               `json:"amount"`
 	ExtraParameters extraParams          `json:"extraParameters"`
+	// In case a transaction is stuck, specify the hash of the stuck transaction to replace it
+	// by this transaction with a higher fee, or to replace it with this transaction with a zero fee and drop it from the blockchain.
+	ReplaceTxByHash string `json:"replaceTxByHash"`
 }
 
 type ContractCallResponse struct {
@@ -49,6 +52,7 @@ func NewContractCallRequest(
 	destinationAccountID string,
 	amount string,
 	calldata string,
+	replaceTxByHash string,
 ) *ContractCallRequest {
 	return &ContractCallRequest{
 		Operation:    ContractCall,
@@ -67,6 +71,7 @@ func NewContractCallRequest(
 		ExtraParameters: extraParams{
 			Calldata: calldata,
 		},
+		ReplaceTxByHash: replaceTxByHash,
 	}
 }
 

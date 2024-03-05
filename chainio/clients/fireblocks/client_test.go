@@ -54,6 +54,7 @@ func TestContractCall(t *testing.T) {
 		destinationAccountID,
 		"0",
 		"0x6057361d00000000000000000000000000000000000000000000000000000000000f4240",
+		"",
 	)
 	resp, err := c.ContractCall(context.Background(), req)
 	assert.NoError(t, err)
