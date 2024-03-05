@@ -79,12 +79,12 @@ func (t *privateKeyWallet) SendTransaction(ctx context.Context, tx *types.Transa
 		t.contracts[*tx.To()] = contract
 	}
 
-	sendingTx, err = contract.RawTransact(opts, tx.Data())
+	sendingTx, err := contract.RawTransact(opts, tx.Data())
 	if err != nil {
 		return "", sdktypes.WrapError(fmt.Errorf("send: tx %v failed.", tx.Hash().String()), err)
 	}
 
-	return sending.Hash().Hex(), nil
+	return sendingTx.Hash().Hex(), nil
 }
 
 func (t *privateKeyWallet) GetTransactionReceipt(ctx context.Context, txID TxID) (*types.Receipt, error) {
