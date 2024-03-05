@@ -10,13 +10,6 @@ import (
 	"time"
 )
 
-type SlogHandlerType string
-
-const (
-	SLogHandlerTypeJson     SlogHandlerType = "json" // prints debug and above
-	SLogHandlerTypeJsonText SlogHandlerType = "text" // prints info and above
-)
-
 type SLogger struct {
 	*slog.Logger
 }
