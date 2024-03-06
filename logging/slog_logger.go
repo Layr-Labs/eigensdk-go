@@ -24,7 +24,7 @@ var _ Logger = (*SLogger)(nil)
 //	logSource if true, adds source information to the log
 func NewSlogTextLogger(outputWriter io.Writer, logLevel slog.Level, logSource bool) *SLogger {
 	handler := slog.NewTextHandler(outputWriter, &slog.HandlerOptions{
-		Level:     logLevel, // prints debug and above
+		Level:     logLevel, // prints logLevel and above
 		AddSource: logSource,
 	})
 	logger := slog.New(handler)
@@ -41,7 +41,7 @@ func NewSlogTextLogger(outputWriter io.Writer, logLevel slog.Level, logSource bo
 //	logSource if true, adds source information to the log
 func NewSlogJsonLogger(outputWriter io.Writer, logLevel slog.Level, logSource bool) *SLogger {
 	handler := slog.NewJSONHandler(outputWriter, &slog.HandlerOptions{
-		Level:     logLevel, // prints debug and above
+		Level:     logLevel, // prints logLevel and above
 		AddSource: logSource,
 	})
 	logger := slog.New(handler)
