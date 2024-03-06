@@ -18,15 +18,13 @@ var _ Logger = (*SLogger)(nil)
 
 // NewSlogTextLogger creates a new SLogger with a text handler
 //
-//	outputWriter is the writer to write the logs to (typically os.Stdout,
-//	  but can also use a io.MultiWriter(os.Stdout, file) to write to multiple outputs)
-//	logLevel is the minimum level to log
-//	logSource if true, adds source information to the log
-func NewSlogTextLogger(outputWriter io.Writer, logLevel slog.Level, logSource bool) *SLogger {
-	handler := slog.NewTextHandler(outputWriter, &slog.HandlerOptions{
-		Level:     logLevel, // prints logLevel and above
-		AddSource: logSource,
-	})
+//		outputWriter is the writer to write the logs to (typically os.Stdout,
+//		  but can also use a io.MultiWriter(os.Stdout, file) to write to multiple outputs)
+//	 	handlerOptions is the options for the handler, such as
+//		Level is the minimum level to log
+//		AddSource if true, adds source information to the log
+func NewSlogTextLogger(outputWriter io.Writer, handlerOpts *slog.HandlerOptions) *SLogger {
+	handler := slog.NewTextHandler(outputWriter, handlerOpts)
 	logger := slog.New(handler)
 	return &SLogger{
 		logger,
@@ -35,15 +33,13 @@ func NewSlogTextLogger(outputWriter io.Writer, logLevel slog.Level, logSource bo
 
 // NewSlogJsonLogger creates a new SLogger with a Json handler
 //
-//	outputWriter is the writer to write the logs to (typically os.Stdout,
-//	  but can also use a io.MultiWriter(os.Stdout, file) to write to multiple outputs)
-//	logLevel is the minimum level to log
-//	logSource if true, adds source information to the log
-func NewSlogJsonLogger(outputWriter io.Writer, logLevel slog.Level, logSource bool) *SLogger {
-	handler := slog.NewJSONHandler(outputWriter, &slog.HandlerOptions{
-		Level:     logLevel, // prints logLevel and above
-		AddSource: logSource,
-	})
+//		outputWriter is the writer to write the logs to (typically os.Stdout,
+//		  but can also use a io.MultiWriter(os.Stdout, file) to write to multiple outputs)
+//	 	handlerOptions is the options for the handler, such as
+//		Level is the minimum level to log
+//		AddSource if true, adds source information to the log
+func NewSlogJsonLogger(outputWriter io.Writer, handlerOpts *slog.HandlerOptions) *SLogger {
+	handler := slog.NewJSONHandler(outputWriter, handlerOpts)
 	logger := slog.New(handler)
 	return &SLogger{
 		logger,
