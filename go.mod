@@ -11,11 +11,9 @@ require (
 	github.com/testcontainers/testcontainers-go v0.26.0
 	github.com/urfave/cli/v2 v2.27.1
 	go.uber.org/mock v0.3.0
-	go.uber.org/zap v1.26.0
+	go.uber.org/zap v1.27.0
 	gopkg.in/yaml.v3 v3.0.1
 )
-
-require github.com/stretchr/objx v0.5.0 // indirect
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
