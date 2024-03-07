@@ -65,11 +65,13 @@ func (a *StdSignatureAggregator) AggregateSignatures(
 ) (*SignatureAggregation, error) {
 
 	// TODO: Add logging
+	a.Logger.Info("Aggregating signatures started", "message", hexutil.Encode(message[:]))
 
 	// Ensure all quorums are found in state
 	for _, quorum := range quorumParams {
 		_, found := state.Operators[quorum.QuorumID]
 		if !found {
+			a.Logger.Error("Quorum not found in state", "quorum", quorum.QuorumID)
 			return nil, errors.New("quorum not found")
 		}
 	}
@@ -162,6 +164,7 @@ func (a *StdSignatureAggregator) AggregateSignatures(
 		// Check that quorum has sufficient stake
 		threshold := GetStakeThreshold(state.OperatorState, quorum.QuorumID, quorum.QuorumThreshold)
 		if stakeSigned[ind].Cmp(threshold) == -1 {
+			a.Logger.Error("Insufficient stake for quorum", "quorum", quorum.QuorumID)
 			return nil, ErrInsufficientEthSigs
 		}
 
@@ -179,23 +182,28 @@ func (a *StdSignatureAggregator) AggregateSignatures(
 		}
 
 		if aggPubKeys[ind] == nil {
+			a.Logger.Error("Invalid aggregated public key", "quorum", quorum.QuorumID)
 			return nil, ErrAggSigNotValid
 		}
 
 		ok, err := signersAggKey.VerifyEquivalence(aggPubKeys[ind])
 		if err != nil {
+			a.Logger.Error("Error verifying aggregated public key equivalence", "err", err)
 			return nil, err
 		}
 		if !ok {
+			a.Logger.Error("Public keys are not equal", "quorum", quorum.QuorumID)
 			return nil, ErrPubKeysNotEqual
 		}
 
 		// Verify the aggregated signature for the quorum
 		ok, err = aggSigs[ind].Verify(aggPubKeys[ind], message)
 		if err != nil {
+			a.Logger.Error("Error verifying aggregated signature", "err", err)
 			return nil, err
 		}
 		if !ok {
+			a.Logger.Error("Aggregated signature is not valid", "quorum", quorum.QuorumID)
 			return nil, ErrAggSigNotValid
 		}
 
@@ -210,6 +218,9 @@ func (a *StdSignatureAggregator) AggregateSignatures(
 	for i := 1; i < len(aggPubKeys); i++ {
 		aggPubKeys[0].Add(aggPubKeys[i])
 	}
+
+	// TODO: Add more logging if needed
+	a.Logger.Info("Aggregating signatures completed", "message", hexutil.Encode(message[:]))
 
 	return &SignatureAggregation{
 		NonSigners:       nonSignerKeys,
