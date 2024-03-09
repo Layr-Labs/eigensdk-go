@@ -1,9 +1,10 @@
 package clients
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"errors"
-	"math/big"
+	"time"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
@@ -68,7 +69,13 @@ func BuildAll(
 		return nil, types.WrapError(errors.New("Failed to create Eth WS client"), err)
 	}
 
-	signerV2, addr, err := signerv2.SignerFromConfig(signerv2.Config{PrivateKey: ecdsaPrivateKey}, big.NewInt(1))
+	rpcCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	chainid, err := ethHttpClient.ChainID(rpcCtx)
+	if err != nil {
+		logger.Fatal("Cannot get chain id", "err", err)
+	}
+	signerV2, addr, err := signerv2.SignerFromConfig(signerv2.Config{PrivateKey: ecdsaPrivateKey}, chainid)
 	if err != nil {
 		panic(err)
 	}
