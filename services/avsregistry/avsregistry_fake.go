@@ -34,7 +34,7 @@ func NewFakeAvsRegistryService(blockNum types.BlockNum, operators []types.TestOp
 
 var _ AvsRegistryService = (*FakeAvsRegistryService)(nil)
 
-func (f *FakeAvsRegistryService) GetOperatorsAvsStateAtBlock(ctx context.Context, quorumNumbers []types.QuorumNum, blockNumber types.BlockNum) (map[types.OperatorId]types.OperatorAvsState, error) {
+func (f *FakeAvsRegistryService) GetOperatorsAvsStateAtBlock(ctx context.Context, quorumNumbers types.QuorumNums, blockNumber types.BlockNum) (map[types.OperatorId]types.OperatorAvsState, error) {
 	operatorsAvsState, ok := f.operators[blockNumber]
 	if !ok {
 		return nil, errors.New("block number not found")
@@ -42,7 +42,7 @@ func (f *FakeAvsRegistryService) GetOperatorsAvsStateAtBlock(ctx context.Context
 	return operatorsAvsState, nil
 }
 
-func (f *FakeAvsRegistryService) GetQuorumsAvsStateAtBlock(ctx context.Context, quorumNumbers []types.QuorumNum, blockNumber types.BlockNum) (map[types.QuorumNum]types.QuorumAvsState, error) {
+func (f *FakeAvsRegistryService) GetQuorumsAvsStateAtBlock(ctx context.Context, quorumNumbers types.QuorumNums, blockNumber types.BlockNum) (map[types.QuorumNum]types.QuorumAvsState, error) {
 	operatorsAvsState, ok := f.operators[blockNumber]
 	if !ok {
 		return nil, errors.New("block number not found")
@@ -70,7 +70,7 @@ func (f *FakeAvsRegistryService) GetQuorumsAvsStateAtBlock(ctx context.Context, 
 
 func (f *FakeAvsRegistryService) GetCheckSignaturesIndices(
 	opts *bind.CallOpts, referenceBlockNumber types.BlockNum,
-	quorumNumbers []types.QuorumNum, nonSignerOperatorIds []types.OperatorId,
+	quorumNumbers types.QuorumNums, nonSignerOperatorIds []types.OperatorId,
 ) (opstateretriever.OperatorStateRetrieverCheckSignaturesIndices, error) {
 	return opstateretriever.OperatorStateRetrieverCheckSignaturesIndices{}, nil
 }

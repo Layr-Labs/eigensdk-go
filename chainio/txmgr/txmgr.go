@@ -67,7 +67,7 @@ func NewSimpleTxManager(
 func (m *SimpleTxManager) Send(ctx context.Context, tx *types.Transaction) (*types.Receipt, error) {
 	txID, err := m.wallet.SendTransaction(ctx, tx)
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(errors.New("send: failed to estimate gas and nonce"), err)
 	}
 
 	receipt, err := m.waitForReceipt(ctx, txID)

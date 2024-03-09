@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"math/big"
 	"net/http"
 
@@ -88,9 +89,50 @@ type StakeAmount = *big.Int
 
 // OperatorId is the ID of an operator, defined by the AVS registry
 // It is currently the hash of the operator's G1 pubkey (in the bls pubkey registry)
-type OperatorId = [32]byte
-type QuorumNum = uint8
-type QuorumThresholdPercentage = uint32
+type OperatorId = Bytes32
+type QuorumNums []QuorumNum
+
+func (q QuorumNums) LogValue() slog.Value {
+	return slog.StringValue(fmt.Sprintf("%v", q))
+}
+
+func (q QuorumNums) Underlying() []uint8 {
+	underlying := make([]uint8, len(q))
+	for i, v := range q {
+		underlying[i] = v.Underlying()
+	}
+	return underlying
+}
+
+type QuorumNum uint8
+
+func (q QuorumNum) LogValue() slog.Value {
+	return slog.StringValue(fmt.Sprintf("%d", q))
+}
+func (q QuorumNum) Underlying() uint8 {
+	return uint8(q)
+}
+
+type QuorumThresholdPercentages []QuorumThresholdPercentage
+
+func (q QuorumThresholdPercentages) LogValue() slog.Value {
+	return slog.StringValue(fmt.Sprintf("%v", q))
+}
+
+func (q QuorumThresholdPercentages) Underlying() []uint8 {
+	underlying := make([]uint8, len(q))
+	for i, v := range q {
+		underlying[i] = uint8(v)
+	}
+	return underlying
+}
+
+type QuorumThresholdPercentage uint8
+
+func (q QuorumThresholdPercentage) LogValue() slog.Value {
+	return slog.StringValue(fmt.Sprintf("%d", q))
+}
+
 type BlockNum = uint32
 
 // AvsOperator represents the operator state in AVS registries

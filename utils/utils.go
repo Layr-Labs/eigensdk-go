@@ -76,11 +76,3 @@ func IsValidEthereumAddress(address string) bool {
 	re := regexp.MustCompile("^0x[0-9a-fA-F]{40}$")
 	return re.MatchString(address)
 }
-
-func ConvertQuorumsBytesToInts(quorums []byte) []int {
-	var quorumsInts []int
-	for _, quorum := range quorums {
-		quorumsInts = append(quorumsInts, int(quorum))
-	}
-	return quorumsInts
-}

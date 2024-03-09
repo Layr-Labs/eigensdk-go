@@ -75,8 +75,8 @@ type BlsAggregationService interface {
 	InitializeNewTask(
 		taskIndex types.TaskIndex,
 		taskCreatedBlock uint32,
-		quorumNumbers []types.QuorumNum,
-		quorumThresholdPercentages []types.QuorumThresholdPercentage,
+		quorumNumbers types.QuorumNums,
+		quorumThresholdPercentages types.QuorumThresholdPercentages,
 		timeToExpiry time.Duration,
 	) error
 
@@ -151,10 +151,11 @@ func (a *BlsAggregatorService) GetResponseChannel() <-chan BlsAggregationService
 func (a *BlsAggregatorService) InitializeNewTask(
 	taskIndex types.TaskIndex,
 	taskCreatedBlock uint32,
-	quorumNumbers []types.QuorumNum,
-	quorumThresholdPercentages []types.QuorumThresholdPercentage,
+	quorumNumbers types.QuorumNums,
+	quorumThresholdPercentages types.QuorumThresholdPercentages,
 	timeToExpiry time.Duration,
 ) error {
+	a.logger.Debug("AggregatorService initializing new task", "taskIndex", taskIndex, "taskCreatedBlock", taskCreatedBlock, "quorumNumbers", quorumNumbers, "quorumThresholdPercentages", quorumThresholdPercentages, "timeToExpiry", timeToExpiry)
 	if _, taskExists := a.signedTaskRespsCs[taskIndex]; taskExists {
 		return TaskAlreadyInitializedErrorFn(taskIndex)
 	}
@@ -202,7 +203,7 @@ func (a *BlsAggregatorService) ProcessNewSignature(
 func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 	taskIndex types.TaskIndex,
 	taskCreatedBlock uint32,
-	quorumNumbers []types.QuorumNum,
+	quorumNumbers types.QuorumNums,
 	quorumThresholdPercentages []types.QuorumThresholdPercentage,
 	timeToExpiry time.Duration,
 	signedTaskRespsC <-chan types.SignedTaskResponseDigest,
@@ -216,7 +217,7 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 	operatorsAvsStateDict, err := a.avsRegistryService.GetOperatorsAvsStateAtBlock(context.Background(), quorumNumbers, taskCreatedBlock)
 	if err != nil {
 		// TODO: how should we handle such an error?
-		a.logger.Fatal("Aggregator failed to get operators state from avs registry", "err", err)
+		a.logger.Fatal("AggregatorService failed to get operators state from avs registry", "err", err, "blockNumber", taskCreatedBlock)
 	}
 	quorumsAvsStakeDict, err := a.avsRegistryService.GetQuorumsAvsStateAtBlock(context.Background(), quorumNumbers, taskCreatedBlock)
 	if err != nil {
@@ -240,7 +241,11 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 		select {
 		case signedTaskResponseDigest := <-signedTaskRespsC:
 			a.logger.Debug("Task goroutine received new signed task response digest", "taskIndex", taskIndex, "signedTaskResponseDigest", signedTaskResponseDigest)
-			signedTaskResponseDigest.SignatureVerificationErrorC <- a.verifySignature(taskIndex, signedTaskResponseDigest, operatorsAvsStateDict)
+			err := a.verifySignature(taskIndex, signedTaskResponseDigest, operatorsAvsStateDict)
+			signedTaskResponseDigest.SignatureVerificationErrorC <- err
+			if err != nil {
+				continue
+			}
 			// after verifying signature we aggregate its sig and pubkey, and update the signed stake amount
 			digestAggregatedOperators, ok := aggregatedOperatorsDict[signedTaskResponseDigest.TaskResponseDigest]
 			if !ok {
@@ -377,7 +382,7 @@ func checkIfStakeThresholdsMet(
 	return true
 }
 
-func getG1PubkeysOfNonSigners(signersOperatorIdsSet map[types.OperatorId]bool, operatorAvsStateDict map[[32]byte]types.OperatorAvsState) []*bls.G1Point {
+func getG1PubkeysOfNonSigners(signersOperatorIdsSet map[types.OperatorId]bool, operatorAvsStateDict map[types.OperatorId]types.OperatorAvsState) []*bls.G1Point {
 	nonSignersG1Pubkeys := []*bls.G1Point{}
 	for operatorId, operator := range operatorAvsStateDict {
 		if _, operatorSigned := signersOperatorIdsSet[operatorId]; !operatorSigned {
