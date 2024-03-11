@@ -7,7 +7,7 @@ require (
 	github.com/ethereum/go-ethereum v1.13.12
 	github.com/google/uuid v1.6.0
 	github.com/prometheus/client_golang v1.19.0
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	github.com/testcontainers/testcontainers-go v0.26.0
 	github.com/urfave/cli/v2 v2.27.1
 	go.uber.org/mock v0.4.0
