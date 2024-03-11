@@ -243,7 +243,7 @@ func (w *AvsRegistryChainWriter) RegisterOperatorInQuorumWithAVSRegistryCoordina
 	// in that case, need to call churner to kick out another operator. See eigenDA's node/operator.go implementation
 	tx, err := w.registryCoordinator.RegisterOperator(
 		noSendTxOpts,
-		quorumNumbers.Underlying(),
+		quorumNumbers.UnderlyingType(),
 		socket,
 		pubkeyRegParams,
 		operatorSignatureWithSaltAndExpiry,
@@ -269,7 +269,7 @@ func (w *AvsRegistryChainWriter) UpdateStakesOfEntireOperatorSetForQuorums(
 	if err != nil {
 		return nil, err
 	}
-	tx, err := w.registryCoordinator.UpdateOperatorsForQuorum(noSendTxOpts, operatorsPerQuorum, quorumNumbers.Underlying())
+	tx, err := w.registryCoordinator.UpdateOperatorsForQuorum(noSendTxOpts, operatorsPerQuorum, quorumNumbers.UnderlyingType())
 	if err != nil {
 		return nil, err
 	}
@@ -314,7 +314,7 @@ func (w *AvsRegistryChainWriter) DeregisterOperator(
 	if err != nil {
 		return nil, err
 	}
-	tx, err := w.registryCoordinator.DeregisterOperator(noSendTxOpts, quorumNumbers.Underlying())
+	tx, err := w.registryCoordinator.DeregisterOperator(noSendTxOpts, quorumNumbers.UnderlyingType())
 	if err != nil {
 		return nil, err
 	}

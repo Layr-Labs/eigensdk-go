@@ -183,7 +183,7 @@ func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsAtBlock(
 	operatorStakes, err := r.operatorStateRetriever.GetOperatorState(
 		opts,
 		r.registryCoordinatorAddr,
-		quorumNumbers.Underlying(),
+		quorumNumbers.UnderlyingType(),
 		blockNumber)
 	if err != nil {
 		return nil, types.WrapError(errors.New("Failed to get operators state"), err)
@@ -208,7 +208,7 @@ func (r *AvsRegistryChainReader) GetOperatorAddrsInQuorumsAtCurrentBlock(
 	operatorStakes, err := r.operatorStateRetriever.GetOperatorState(
 		opts,
 		r.registryCoordinatorAddr,
-		quorumNumbers.Underlying(),
+		quorumNumbers.UnderlyingType(),
 		uint32(curBlock),
 	)
 	if err != nil {
@@ -304,7 +304,7 @@ func (r *AvsRegistryChainReader) GetCheckSignaturesIndices(
 		opts,
 		r.registryCoordinatorAddr,
 		referenceBlockNumber,
-		quorumNumbers.Underlying(),
+		quorumNumbers.UnderlyingType(),
 		nonSignerOperatorIdsBytes,
 	)
 	if err != nil {

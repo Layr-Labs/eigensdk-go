@@ -14,6 +14,6 @@ func (m Bytes32) LogValue() slog.Value {
 	return slog.StringValue(hex.EncodeToString(m[:]))
 }
 
-func (m *Bytes32) GetUnderlyingBytes() []byte {
-	return m[:]
+func (m *Bytes32) UnderlyingType() [32]byte {
+	return *m
 }

@@ -96,10 +96,10 @@ func (q QuorumNums) LogValue() slog.Value {
 	return slog.StringValue(fmt.Sprintf("%v", q))
 }
 
-func (q QuorumNums) Underlying() []uint8 {
+func (q QuorumNums) UnderlyingType() []uint8 {
 	underlying := make([]uint8, len(q))
 	for i, v := range q {
-		underlying[i] = v.Underlying()
+		underlying[i] = v.UnderlyingType()
 	}
 	return underlying
 }
@@ -109,7 +109,7 @@ type QuorumNum uint8
 func (q QuorumNum) LogValue() slog.Value {
 	return slog.StringValue(fmt.Sprintf("%d", q))
 }
-func (q QuorumNum) Underlying() uint8 {
+func (q QuorumNum) UnderlyingType() uint8 {
 	return uint8(q)
 }
 
@@ -119,7 +119,7 @@ func (q QuorumThresholdPercentages) LogValue() slog.Value {
 	return slog.StringValue(fmt.Sprintf("%v", q))
 }
 
-func (q QuorumThresholdPercentages) Underlying() []uint8 {
+func (q QuorumThresholdPercentages) UnderlyingType() []uint8 {
 	underlying := make([]uint8, len(q))
 	for i, v := range q {
 		underlying[i] = uint8(v)
