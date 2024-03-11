@@ -57,16 +57,11 @@ func startAnvilTestContainer() testcontainers.Container {
 	ctx := context.Background()
 	req := testcontainers.ContainerRequest{
 		Image: "ghcr.io/foundry-rs/foundry:latest",
-		Mounts: testcontainers.ContainerMounts{
-			testcontainers.ContainerMount{
-				Source: testcontainers.GenericBindMountSource{
-					HostPath: filepath.Join(
-						integrationDir,
-						"test_data",
-						anvilStateFileName,
-					),
-				},
-				Target: "/root/.anvil/state.json",
+		Files: []testcontainers.ContainerFile{
+			{
+				HostFilePath:      filepath.Join(integrationDir, "test_data", anvilStateFileName),
+				ContainerFilePath: "/root/.anvil/state.json",
+				FileMode:          0644, // Adjust the FileMode according to your requirements
 			},
 		},
 		Entrypoint:   []string{"anvil"},
