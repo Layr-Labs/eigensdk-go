@@ -13,7 +13,6 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/types"
-	sdkutils "github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
@@ -40,7 +39,7 @@ type AvsRegistryWriter interface {
 		operatorToAvsRegistrationSigSalt [32]byte,
 		operatorToAvsRegistrationSigExpiry *big.Int,
 		blsKeyPair *bls.KeyPair,
-		quorumNumbers []byte,
+		quorumNumbers types.QuorumNums,
 		socket string,
 	) (*gethtypes.Receipt, error)
 
@@ -52,7 +51,7 @@ type AvsRegistryWriter interface {
 	UpdateStakesOfEntireOperatorSetForQuorums(
 		ctx context.Context,
 		operatorsPerQuorum [][]gethcommon.Address,
-		quorumNumbers []byte,
+		quorumNumbers types.QuorumNums,
 	) (*gethtypes.Receipt, error)
 
 	// UpdateStakesOfOperatorSubsetForAllQuorums is meant to be used by single operators (or teams of operators,
@@ -66,7 +65,7 @@ type AvsRegistryWriter interface {
 
 	DeregisterOperator(
 		ctx context.Context,
-		quorumNumbers []byte,
+		quorumNumbers types.QuorumNums,
 		pubkey regcoord.BN254G1Point,
 	) (*gethtypes.Receipt, error)
 }
@@ -190,12 +189,12 @@ func (w *AvsRegistryChainWriter) RegisterOperatorInQuorumWithAVSRegistryCoordina
 	operatorToAvsRegistrationSigSalt [32]byte,
 	operatorToAvsRegistrationSigExpiry *big.Int,
 	blsKeyPair *bls.KeyPair,
-	quorumNumbers []byte,
+	quorumNumbers types.QuorumNums,
 	socket string,
 ) (*gethtypes.Receipt, error) {
-	w.logger.Info("registering operator with the AVS's registry coordinator")
-	// params to register bls pubkey with bls apk registry
 	operatorAddr := crypto.PubkeyToAddress(operatorEcdsaPrivateKey.PublicKey)
+	w.logger.Info("registering operator with the AVS's registry coordinator", "avs-service-manager", w.serviceManagerAddr, "operator", operatorAddr, "quorumNumbers", quorumNumbers)
+	// params to register bls pubkey with bls apk registry
 	g1HashedMsgToSign, err := w.registryCoordinator.PubkeyRegistrationMessageHash(&bind.CallOpts{}, operatorAddr)
 	if err != nil {
 		return nil, err
@@ -244,7 +243,7 @@ func (w *AvsRegistryChainWriter) RegisterOperatorInQuorumWithAVSRegistryCoordina
 	// in that case, need to call churner to kick out another operator. See eigenDA's node/operator.go implementation
 	tx, err := w.registryCoordinator.RegisterOperator(
 		noSendTxOpts,
-		quorumNumbers,
+		quorumNumbers.UnderlyingType(),
 		socket,
 		pubkeyRegParams,
 		operatorSignatureWithSaltAndExpiry,
@@ -256,21 +255,21 @@ func (w *AvsRegistryChainWriter) RegisterOperatorInQuorumWithAVSRegistryCoordina
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
-	w.logger.Info("succesfully registered operator with AVS registry coordinator", "tx hash", receipt.TxHash.String())
+	w.logger.Info("successfully registered operator with AVS registry coordinator", "tx hash", receipt.TxHash.String(), "avs-service-manager", w.serviceManagerAddr, "operator", operatorAddr, "quorumNumbers", quorumNumbers)
 	return receipt, nil
 }
 
 func (w *AvsRegistryChainWriter) UpdateStakesOfEntireOperatorSetForQuorums(
 	ctx context.Context,
 	operatorsPerQuorum [][]gethcommon.Address,
-	quorumNumbers []byte,
+	quorumNumbers types.QuorumNums,
 ) (*gethtypes.Receipt, error) {
-	w.logger.Info("updating stakes for entire operator set", "quorumNumbers", sdkutils.ConvertQuorumsBytesToInts(quorumNumbers))
+	w.logger.Info("updating stakes for entire operator set", "quorumNumbers", quorumNumbers)
 	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
 	if err != nil {
 		return nil, err
 	}
-	tx, err := w.registryCoordinator.UpdateOperatorsForQuorum(noSendTxOpts, operatorsPerQuorum, quorumNumbers)
+	tx, err := w.registryCoordinator.UpdateOperatorsForQuorum(noSendTxOpts, operatorsPerQuorum, quorumNumbers.UnderlyingType())
 	if err != nil {
 		return nil, err
 	}
@@ -278,7 +277,7 @@ func (w *AvsRegistryChainWriter) UpdateStakesOfEntireOperatorSetForQuorums(
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
-	w.logger.Info("succesfully updated stakes for entire operator set", "tx hash", receipt.TxHash.String(), "quorumNumbers", sdkutils.ConvertQuorumsBytesToInts(quorumNumbers))
+	w.logger.Info("succesfully updated stakes for entire operator set", "tx hash", receipt.TxHash.String(), "quorumNumbers", quorumNumbers)
 	return receipt, nil
 
 }
@@ -307,7 +306,7 @@ func (w *AvsRegistryChainWriter) UpdateStakesOfOperatorSubsetForAllQuorums(
 
 func (w *AvsRegistryChainWriter) DeregisterOperator(
 	ctx context.Context,
-	quorumNumbers []byte,
+	quorumNumbers types.QuorumNums,
 	pubkey regcoord.BN254G1Point,
 ) (*gethtypes.Receipt, error) {
 	w.logger.Info("deregistering operator with the AVS's registry coordinator")
@@ -315,7 +314,7 @@ func (w *AvsRegistryChainWriter) DeregisterOperator(
 	if err != nil {
 		return nil, err
 	}
-	tx, err := w.registryCoordinator.DeregisterOperator(noSendTxOpts, quorumNumbers)
+	tx, err := w.registryCoordinator.DeregisterOperator(noSendTxOpts, quorumNumbers.UnderlyingType())
 	if err != nil {
 		return nil, err
 	}

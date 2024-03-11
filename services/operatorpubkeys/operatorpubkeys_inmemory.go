@@ -106,7 +106,7 @@ func (ops *OperatorPubkeysServiceInMemory) startServiceInGoroutine(ctx context.C
 					G2Pubkey: bls.NewG2Point(newPubkeyRegistrationEvent.PubkeyG2.X, newPubkeyRegistrationEvent.PubkeyG2.Y),
 				}
 				ops.logger.Debug("Added operator pubkeys to pubkey dict",
-					"service", "OperatorPubkeysServiceInMemory", "operatorAddr", operatorAddr,
+					"service", "OperatorPubkeysServiceInMemory", "block", newPubkeyRegistrationEvent.Raw.BlockNumber, "operatorAddr", operatorAddr,
 					"G1pubkey", pubkeyDict[operatorAddr].G1Pubkey, "G2pubkey", pubkeyDict[operatorAddr].G2Pubkey,
 				)
 			// Receive a query from GetOperatorPubkeys

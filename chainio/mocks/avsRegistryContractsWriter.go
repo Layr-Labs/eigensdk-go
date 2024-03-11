@@ -17,8 +17,9 @@ import (
 
 	contractRegistryCoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
 	bls "github.com/Layr-Labs/eigensdk-go/crypto/bls"
+	types "github.com/Layr-Labs/eigensdk-go/types"
 	common "github.com/ethereum/go-ethereum/common"
-	types "github.com/ethereum/go-ethereum/core/types"
+	types0 "github.com/ethereum/go-ethereum/core/types"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -46,10 +47,10 @@ func (m *MockAvsRegistryWriter) EXPECT() *MockAvsRegistryWriterMockRecorder {
 }
 
 // DeregisterOperator mocks base method.
-func (m *MockAvsRegistryWriter) DeregisterOperator(arg0 context.Context, arg1 []byte, arg2 contractRegistryCoordinator.BN254G1Point) (*types.Receipt, error) {
+func (m *MockAvsRegistryWriter) DeregisterOperator(arg0 context.Context, arg1 types.QuorumNums, arg2 contractRegistryCoordinator.BN254G1Point) (*types0.Receipt, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeregisterOperator", arg0, arg1, arg2)
-	ret0, _ := ret[0].(*types.Receipt)
+	ret0, _ := ret[0].(*types0.Receipt)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -61,10 +62,10 @@ func (mr *MockAvsRegistryWriterMockRecorder) DeregisterOperator(arg0, arg1, arg2
 }
 
 // RegisterOperatorInQuorumWithAVSRegistryCoordinator mocks base method.
-func (m *MockAvsRegistryWriter) RegisterOperatorInQuorumWithAVSRegistryCoordinator(arg0 context.Context, arg1 *ecdsa.PrivateKey, arg2 [32]byte, arg3 *big.Int, arg4 *bls.KeyPair, arg5 []byte, arg6 string) (*types.Receipt, error) {
+func (m *MockAvsRegistryWriter) RegisterOperatorInQuorumWithAVSRegistryCoordinator(arg0 context.Context, arg1 *ecdsa.PrivateKey, arg2 [32]byte, arg3 *big.Int, arg4 *bls.KeyPair, arg5 types.QuorumNums, arg6 string) (*types0.Receipt, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RegisterOperatorInQuorumWithAVSRegistryCoordinator", arg0, arg1, arg2, arg3, arg4, arg5, arg6)
-	ret0, _ := ret[0].(*types.Receipt)
+	ret0, _ := ret[0].(*types0.Receipt)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -76,10 +77,10 @@ func (mr *MockAvsRegistryWriterMockRecorder) RegisterOperatorInQuorumWithAVSRegi
 }
 
 // UpdateStakesOfEntireOperatorSetForQuorums mocks base method.
-func (m *MockAvsRegistryWriter) UpdateStakesOfEntireOperatorSetForQuorums(arg0 context.Context, arg1 [][]common.Address, arg2 []byte) (*types.Receipt, error) {
+func (m *MockAvsRegistryWriter) UpdateStakesOfEntireOperatorSetForQuorums(arg0 context.Context, arg1 [][]common.Address, arg2 types.QuorumNums) (*types0.Receipt, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateStakesOfEntireOperatorSetForQuorums", arg0, arg1, arg2)
-	ret0, _ := ret[0].(*types.Receipt)
+	ret0, _ := ret[0].(*types0.Receipt)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -91,10 +92,10 @@ func (mr *MockAvsRegistryWriterMockRecorder) UpdateStakesOfEntireOperatorSetForQ
 }
 
 // UpdateStakesOfOperatorSubsetForAllQuorums mocks base method.
-func (m *MockAvsRegistryWriter) UpdateStakesOfOperatorSubsetForAllQuorums(arg0 context.Context, arg1 []common.Address) (*types.Receipt, error) {
+func (m *MockAvsRegistryWriter) UpdateStakesOfOperatorSubsetForAllQuorums(arg0 context.Context, arg1 []common.Address) (*types0.Receipt, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateStakesOfOperatorSubsetForAllQuorums", arg0, arg1)
-	ret0, _ := ret[0].(*types.Receipt)
+	ret0, _ := ret[0].(*types0.Receipt)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

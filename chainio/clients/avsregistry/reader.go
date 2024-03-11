@@ -29,30 +29,30 @@ type AvsRegistryReader interface {
 
 	GetOperatorsStakeInQuorumsAtCurrentBlock(
 		opts *bind.CallOpts,
-		quorumNumbers []byte,
+		quorumNumbers types.QuorumNums,
 	) ([][]opstateretriever.OperatorStateRetrieverOperator, error)
 
 	GetOperatorsStakeInQuorumsAtBlock(
 		opts *bind.CallOpts,
-		quorumNumbers []byte,
+		quorumNumbers types.QuorumNums,
 		blockNumber uint32,
 	) ([][]opstateretriever.OperatorStateRetrieverOperator, error)
 
 	GetOperatorAddrsInQuorumsAtCurrentBlock(
 		opts *bind.CallOpts,
-		quorumNumbers []byte,
+		quorumNumbers types.QuorumNums,
 	) ([][]common.Address, error)
 
 	GetOperatorsStakeInQuorumsOfOperatorAtBlock(
 		opts *bind.CallOpts,
 		operatorId types.OperatorId,
 		blockNumber uint32,
-	) ([]types.QuorumNum, [][]opstateretriever.OperatorStateRetrieverOperator, error)
+	) (types.QuorumNums, [][]opstateretriever.OperatorStateRetrieverOperator, error)
 
 	GetOperatorsStakeInQuorumsOfOperatorAtCurrentBlock(
 		opts *bind.CallOpts,
 		operatorId types.OperatorId,
-	) ([]types.QuorumNum, [][]opstateretriever.OperatorStateRetrieverOperator, error)
+	) (types.QuorumNums, [][]opstateretriever.OperatorStateRetrieverOperator, error)
 
 	GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(
 		opts *bind.CallOpts,
@@ -62,8 +62,8 @@ type AvsRegistryReader interface {
 	GetCheckSignaturesIndices(
 		opts *bind.CallOpts,
 		referenceBlockNumber uint32,
-		quorumNumbers []byte,
-		nonSignerOperatorIds [][32]byte,
+		quorumNumbers types.QuorumNums,
+		nonSignerOperatorIds []types.OperatorId,
 	) (opstateretriever.OperatorStateRetrieverCheckSignaturesIndices, error)
 
 	GetOperatorId(opts *bind.CallOpts, operatorAddress gethcommon.Address) ([32]byte, error)
@@ -158,7 +158,7 @@ func (r *AvsRegistryChainReader) GetQuorumCount(opts *bind.CallOpts) (uint8, err
 
 func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsAtCurrentBlock(
 	opts *bind.CallOpts,
-	quorumNumbers []byte,
+	quorumNumbers types.QuorumNums,
 ) ([][]opstateretriever.OperatorStateRetrieverOperator, error) {
 	if opts.Context == nil {
 		opts.Context = context.Background()
@@ -177,13 +177,13 @@ func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsAtCurrentBlock(
 // and the blockNumber in opts should be the block number of the latest block (or set to nil, which is equivalent)
 func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsAtBlock(
 	opts *bind.CallOpts,
-	quorumNumbers []byte,
+	quorumNumbers types.QuorumNums,
 	blockNumber uint32,
 ) ([][]opstateretriever.OperatorStateRetrieverOperator, error) {
 	operatorStakes, err := r.operatorStateRetriever.GetOperatorState(
 		opts,
 		r.registryCoordinatorAddr,
-		quorumNumbers,
+		quorumNumbers.UnderlyingType(),
 		blockNumber)
 	if err != nil {
 		return nil, types.WrapError(errors.New("Failed to get operators state"), err)
@@ -193,7 +193,7 @@ func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsAtBlock(
 
 func (r *AvsRegistryChainReader) GetOperatorAddrsInQuorumsAtCurrentBlock(
 	opts *bind.CallOpts,
-	quorumNumbers []byte,
+	quorumNumbers types.QuorumNums,
 ) ([][]common.Address, error) {
 	if opts.Context == nil {
 		opts.Context = context.Background()
@@ -208,7 +208,7 @@ func (r *AvsRegistryChainReader) GetOperatorAddrsInQuorumsAtCurrentBlock(
 	operatorStakes, err := r.operatorStateRetriever.GetOperatorState(
 		opts,
 		r.registryCoordinatorAddr,
-		quorumNumbers,
+		quorumNumbers.UnderlyingType(),
 		uint32(curBlock),
 	)
 	if err != nil {
@@ -230,7 +230,7 @@ func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsOfOperatorAtBlock(
 	opts *bind.CallOpts,
 	operatorId types.OperatorId,
 	blockNumber uint32,
-) ([]types.QuorumNum, [][]opstateretriever.OperatorStateRetrieverOperator, error) {
+) (types.QuorumNums, [][]opstateretriever.OperatorStateRetrieverOperator, error) {
 	quorumBitmap, operatorStakes, err := r.operatorStateRetriever.GetOperatorState0(
 		opts,
 		r.registryCoordinatorAddr,
@@ -248,7 +248,7 @@ func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsOfOperatorAtBlock(
 func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsOfOperatorAtCurrentBlock(
 	opts *bind.CallOpts,
 	operatorId types.OperatorId,
-) ([]types.QuorumNum, [][]opstateretriever.OperatorStateRetrieverOperator, error) {
+) (types.QuorumNums, [][]opstateretriever.OperatorStateRetrieverOperator, error) {
 	if opts.Context == nil {
 		opts.Context = context.Background()
 	}
@@ -280,7 +280,7 @@ func (r *AvsRegistryChainReader) GetOperatorStakeInQuorumsOfOperatorAtCurrentBlo
 		stake, err := r.stakeRegistry.GetCurrentStake(
 			&bind.CallOpts{},
 			operatorId,
-			quorum,
+			uint8(quorum),
 		)
 		if err != nil {
 			return nil, types.WrapError(errors.New("Failed to get operator stake"), err)
@@ -293,15 +293,19 @@ func (r *AvsRegistryChainReader) GetOperatorStakeInQuorumsOfOperatorAtCurrentBlo
 func (r *AvsRegistryChainReader) GetCheckSignaturesIndices(
 	opts *bind.CallOpts,
 	referenceBlockNumber uint32,
-	quorumNumbers []byte,
-	nonSignerOperatorIds [][32]byte,
+	quorumNumbers types.QuorumNums,
+	nonSignerOperatorIds []types.OperatorId,
 ) (opstateretriever.OperatorStateRetrieverCheckSignaturesIndices, error) {
+	nonSignerOperatorIdsBytes := make([][32]byte, len(nonSignerOperatorIds))
+	for i, id := range nonSignerOperatorIds {
+		nonSignerOperatorIdsBytes[i] = id
+	}
 	checkSignatureIndices, err := r.operatorStateRetriever.GetCheckSignaturesIndices(
 		opts,
 		r.registryCoordinatorAddr,
 		referenceBlockNumber,
-		quorumNumbers,
-		nonSignerOperatorIds,
+		quorumNumbers.UnderlyingType(),
+		nonSignerOperatorIdsBytes,
 	)
 	if err != nil {
 		return opstateretriever.OperatorStateRetrieverCheckSignaturesIndices{}, types.WrapError(errors.New("Failed to get check signatures indices"), err)
@@ -375,7 +379,7 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorPubKeys(
 	if err != nil {
 		return nil, nil, types.WrapError(errors.New("Cannot filter logs"), err)
 	}
-	r.logger.Info("avsRegistryChainReader.QueryExistingRegisteredOperatorPubKeys", "transactionLogs", logs)
+	r.logger.Debug("avsRegistryChainReader.QueryExistingRegisteredOperatorPubKeys", "transactionLogs", logs)
 
 	operatorAddresses := make([]types.OperatorAddr, 0)
 	operatorPubkeys := make([]types.OperatorPubkeys, 0)

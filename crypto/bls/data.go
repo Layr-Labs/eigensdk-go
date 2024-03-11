@@ -3,6 +3,9 @@ package bls
 // TODO: move these somewhere more appropriate.
 //
 //	these are avs types, nothing to do with bls
+//
+// also there's already an OperatorId in types, but we can't use it here because it would form a circular import
+// since types using bls.Signature.. we prob just need to move all of these types to types/avs.go or something
 type OperatorId = [32]byte
 type OperatorIndex uint
 

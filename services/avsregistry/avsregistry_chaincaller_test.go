@@ -92,7 +92,7 @@ func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
 	var tests = []struct {
 		name                      string
 		mocksInitializationFunc   func(*chainiomocks.MockAvsRegistryReader, *servicemocks.MockOperatorPubkeysService)
-		queryQuorumNumbers        []types.QuorumNum
+		queryQuorumNumbers        types.QuorumNums
 		queryBlockNum             types.BlockNum
 		wantErr                   error
 		wantOperatorsAvsStateDict map[types.OperatorId]types.OperatorAvsState
@@ -100,7 +100,7 @@ func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
 		{
 			name: "should return operatorsAvsState",
 			mocksInitializationFunc: func(mockAvsRegistryReader *chainiomocks.MockAvsRegistryReader, mockOperatorPubkeysService *servicemocks.MockOperatorPubkeysService) {
-				mockAvsRegistryReader.EXPECT().GetOperatorsStakeInQuorumsAtBlock(gomock.Any(), []types.QuorumNum{1}, types.BlockNum(1)).Return([][]opstateretrievar.OperatorStateRetrieverOperator{
+				mockAvsRegistryReader.EXPECT().GetOperatorsStakeInQuorumsAtBlock(gomock.Any(), types.QuorumNums{1}, types.BlockNum(1)).Return([][]opstateretrievar.OperatorStateRetrieverOperator{
 					{
 						{
 							OperatorId: testOperator.operatorId,
@@ -111,7 +111,7 @@ func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
 				mockAvsRegistryReader.EXPECT().GetOperatorFromId(gomock.Any(), testOperator.operatorId).Return(testOperator.operatorAddr, nil)
 				mockOperatorPubkeysService.EXPECT().GetOperatorPubkeys(gomock.Any(), testOperator.operatorAddr).Return(testOperator.pubkeys, true)
 			},
-			queryQuorumNumbers: []types.QuorumNum{1},
+			queryQuorumNumbers: types.QuorumNums{1},
 			queryBlockNum:      1,
 			wantErr:            nil,
 			wantOperatorsAvsStateDict: map[types.OperatorId]types.OperatorAvsState{
@@ -164,7 +164,7 @@ func TestAvsRegistryServiceChainCaller_GetQuorumsAvsState(t *testing.T) {
 	var tests = []struct {
 		name                    string
 		mocksInitializationFunc func(*chainiomocks.MockAvsRegistryReader, *servicemocks.MockOperatorPubkeysService)
-		queryQuorumNumbers      []types.QuorumNum
+		queryQuorumNumbers      types.QuorumNums
 		queryBlockNum           types.BlockNum
 		wantErr                 error
 		wantQuorumsAvsStateDict map[types.QuorumNum]types.QuorumAvsState
@@ -172,7 +172,7 @@ func TestAvsRegistryServiceChainCaller_GetQuorumsAvsState(t *testing.T) {
 		{
 			name: "should return operatorsAvsState",
 			mocksInitializationFunc: func(mockAvsRegistryReader *chainiomocks.MockAvsRegistryReader, mockOperatorPubkeysService *servicemocks.MockOperatorPubkeysService) {
-				mockAvsRegistryReader.EXPECT().GetOperatorsStakeInQuorumsAtBlock(gomock.Any(), []types.QuorumNum{1}, types.BlockNum(1)).Return([][]opstateretrievar.OperatorStateRetrieverOperator{
+				mockAvsRegistryReader.EXPECT().GetOperatorsStakeInQuorumsAtBlock(gomock.Any(), types.QuorumNums{1}, types.BlockNum(1)).Return([][]opstateretrievar.OperatorStateRetrieverOperator{
 					{
 						{
 							OperatorId: testOperator.operatorId,
@@ -183,7 +183,7 @@ func TestAvsRegistryServiceChainCaller_GetQuorumsAvsState(t *testing.T) {
 				mockAvsRegistryReader.EXPECT().GetOperatorFromId(gomock.Any(), testOperator.operatorId).Return(testOperator.operatorAddr, nil)
 				mockOperatorPubkeysService.EXPECT().GetOperatorPubkeys(gomock.Any(), testOperator.operatorAddr).Return(testOperator.pubkeys, true)
 			},
-			queryQuorumNumbers: []types.QuorumNum{1},
+			queryQuorumNumbers: types.QuorumNums{1},
 			queryBlockNum:      1,
 			wantErr:            nil,
 			wantQuorumsAvsStateDict: map[types.QuorumNum]types.QuorumAvsState{

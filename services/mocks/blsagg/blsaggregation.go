@@ -57,7 +57,7 @@ func (mr *MockBlsAggregationServiceMockRecorder) GetResponseChannel() *gomock.Ca
 }
 
 // InitializeNewTask mocks base method.
-func (m *MockBlsAggregationService) InitializeNewTask(arg0, arg1 uint32, arg2 []byte, arg3 []uint32, arg4 time.Duration) error {
+func (m *MockBlsAggregationService) InitializeNewTask(arg0, arg1 uint32, arg2 types.QuorumNums, arg3 types.QuorumThresholdPercentages, arg4 time.Duration) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "InitializeNewTask", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(error)
@@ -71,7 +71,7 @@ func (mr *MockBlsAggregationServiceMockRecorder) InitializeNewTask(arg0, arg1, a
 }
 
 // ProcessNewSignature mocks base method.
-func (m *MockBlsAggregationService) ProcessNewSignature(arg0 context.Context, arg1 uint32, arg2 types.TaskResponseDigest, arg3 *bls.Signature, arg4 [32]byte) error {
+func (m *MockBlsAggregationService) ProcessNewSignature(arg0 context.Context, arg1 uint32, arg2 types.Bytes32, arg3 *bls.Signature, arg4 [32]byte) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ProcessNewSignature", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(error)
