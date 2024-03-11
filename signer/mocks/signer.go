@@ -5,6 +5,7 @@
 //
 //	mockgen -destination=./mocks/signer.go -package=mocks github.com/Layr-Labs/eigensdk-go/signer Signer
 //
+
 // Package mocks is a generated GoMock package.
 package mocks
 

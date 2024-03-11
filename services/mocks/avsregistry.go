@@ -5,6 +5,7 @@
 //
 //	mockgen -destination=./mocks/avsregistry.go -package=mocks github.com/Layr-Labs/eigensdk-go/services/avsregistry AvsRegistryService
 //
+
 // Package mocks is a generated GoMock package.
 package mocks
 
