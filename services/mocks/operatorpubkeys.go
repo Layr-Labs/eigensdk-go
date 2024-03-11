@@ -5,6 +5,7 @@
 //
 //	mockgen -destination=./mocks/operatorpubkeys.go -package=mocks github.com/Layr-Labs/eigensdk-go/services/operatorpubkeys OperatorPubkeysService
 //
+
 // Package mocks is a generated GoMock package.
 package mocks
 

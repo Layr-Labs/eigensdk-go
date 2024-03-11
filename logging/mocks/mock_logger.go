@@ -5,6 +5,7 @@
 //
 //	mockgen -destination=mocks/mock_logger.go -package=mocks github.com/Layr-Labs/eigensdk-go/logging Logger
 //
+
 // Package mocks is a generated GoMock package.
 package mocks
 
