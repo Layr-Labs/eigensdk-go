@@ -21,7 +21,7 @@ var (
 
 	ErrInvalidImageMimeType  = errors.New("invalid image mime-type. only png is supported")
 	ErrInvalidImageExtension = errors.New(
-		"invalid image extension. only " + strings.Join(ImageExtensions, ",") + "is supported",
+		"invalid image extension. only " + strings.Join(ImageExtensions, ",") + " is supported",
 	)
 
 	// Metadata Errors
