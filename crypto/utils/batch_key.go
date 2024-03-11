@@ -8,8 +8,7 @@ import (
 )
 
 const (
-	// TODO: move to a common constants file which
-	// can be used by utils and cmd
+	// DefaultKeyFolder is the default folder for storing keys.
 	DefaultKeyFolder  = "keys"
 	PasswordFile      = "password.txt"
 	PrivateKeyHexFile = "private_key_hex.txt"
@@ -26,7 +25,7 @@ func ReadBatchKeys(folder string, isECDSA bool) ([]BatchKey, error) {
 	}
 
 	// read the private key file
-	privateKeyFile, err := os.Open(filepath.Clean(absFolder + "/" + PrivateKeyHexFile))
+	privateKeyFile, err := os.Open(filepath.Clean(filepath.Join(absFolder, PrivateKeyHexFile)))
 	if err != nil {
 		fmt.Println("Error opening the file:", err)
 		return nil, err
@@ -40,7 +39,7 @@ func ReadBatchKeys(folder string, isECDSA bool) ([]BatchKey, error) {
 	}(privateKeyFile)
 
 	// read the password file
-	passwordFile, err := os.Open(filepath.Clean(absFolder + "/" + PasswordFile))
+	passwordFile, err := os.Open(filepath.Clean(filepath.Join(absFolder, PasswordFile)))
 	if err != nil {
 		fmt.Println("Error opening the file:", err)
 		return nil, err
@@ -66,8 +65,8 @@ func ReadBatchKeys(folder string, isECDSA bool) ([]BatchKey, error) {
 		privateKey := privateKeyScanner.Text()
 		password := passwordScanner.Text()
 		fileName := fmt.Sprintf("%d.%s.key.json", fileCtr, keyType)
-		filePath := fmt.Sprintf("%s/%s/%s", absFolder, DefaultKeyFolder, fileName)
-		// Since a last line with empty string is also read
+		filePath := filepath.Join(absFolder, DefaultKeyFolder, fileName)
+		// Since a last line with an empty string is also read
 		// I need to break here
 		// TODO(madhur): remove empty string when it gets created
 		if privateKey == "" {
