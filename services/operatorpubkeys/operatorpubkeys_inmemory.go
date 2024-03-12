@@ -73,7 +73,7 @@ func (ops *OperatorPubkeysServiceInMemory) startServiceInGoroutine(ctx context.C
 		pubkeyDict := make(map[common.Address]types.OperatorPubkeys)
 
 		// TODO(samlaf): we should probably save the service in the logger itself and add it automatically to all logs
-		ops.logger.Debug("Subscribing to new pubkey registration event on pubkey compendium contract", "service", "OperatorPubkeysServiceInMemory")
+		ops.logger.Debug("Subscribing to new pubkey registration events on blsApkRegistry contract", "service", "OperatorPubkeysServiceInMemory")
 		newPubkeyRegistrationC, newPubkeyRegistrationSub, err := ops.avsRegistrySubscriber.SubscribeToNewPubkeyRegistrations()
 		if err != nil {
 			ops.logger.Error("Fatal error opening websocket subscription for new pubkey registrations", "err", err, "service", "OperatorPubkeysServiceInMemory")
@@ -81,7 +81,7 @@ func (ops *OperatorPubkeysServiceInMemory) startServiceInGoroutine(ctx context.C
 			panic(err)
 		}
 		ops.queryPastRegisteredOperatorEventsAndFillDb(ctx, pubkeyDict)
-		// The constructor can return after we have backfilled the db by querying the events of operators that have registered with the pubkey compendium
+		// The constructor can return after we have backfilled the db by querying the events of operators that have registered with the blsApkRegistry
 		// before the block at which we started the ws subscription above
 		wg.Done()
 		for {
@@ -126,7 +126,7 @@ func (pkcs *OperatorPubkeysServiceInMemory) queryPastRegisteredOperatorEventsAnd
 		pkcs.logger.Error("Fatal error querying existing registered operators", "err", err, "service", "OperatorPubkeysServiceInMemory")
 		panic(err)
 	}
-	pkcs.logger.Debug("List of queried operator registration events in pubkey compendium", "alreadyRegisteredOperatorAddr", alreadyRegisteredOperatorAddrs, "service", "OperatorPubkeysServiceInMemory")
+	pkcs.logger.Debug("List of queried operator registration events in blsApkRegistry", "alreadyRegisteredOperatorAddr", alreadyRegisteredOperatorAddrs, "service", "OperatorPubkeysServiceInMemory")
 
 	// Fill the pubkeydict db with the operators and pubkeys found
 	for i, operatorAddr := range alreadyRegisteredOperatorAddrs {
