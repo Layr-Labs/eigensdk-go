@@ -75,11 +75,17 @@ func (m *SimpleTxManager) Send(ctx context.Context, tx *types.Transaction) (*typ
 	return receipt, nil
 }
 
+func NoopSigner(addr common.Address, tx *types.Transaction) (*types.Transaction, error) {
+	return tx, nil
+}
+
 // GetNoSendTxOpts This generates a noSend TransactOpts so that we can use
 // this to generate the transaction without actually sending it
 func (m *SimpleTxManager) GetNoSendTxOpts() (*bind.TransactOpts, error) {
 	return &bind.TransactOpts{
+		From:   m.sender,
 		NoSend: true,
+		Signer: NoopSigner,
 	}, nil
 }
 
