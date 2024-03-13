@@ -90,7 +90,7 @@ type BlsAggregationService interface {
 		taskIndex types.TaskIndex,
 		taskResponseDigest types.TaskResponseDigest,
 		blsSignature *bls.Signature,
-		operatorId bls.OperatorId,
+		operatorId types.OperatorId,
 	) error
 
 	// GetResponseChannel returns the single channel that meant to be used as the response channel
@@ -172,7 +172,7 @@ func (a *BlsAggregatorService) ProcessNewSignature(
 	taskIndex types.TaskIndex,
 	taskResponseDigest types.TaskResponseDigest,
 	blsSignature *bls.Signature,
-	operatorId bls.OperatorId,
+	operatorId types.OperatorId,
 ) error {
 	a.taskChansMutex.Lock()
 	taskC, taskInitialized := a.signedTaskRespsCs[taskIndex]

@@ -11,6 +11,8 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/math"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 const (
@@ -88,8 +90,19 @@ type OperatorAddr = common.Address
 type StakeAmount = *big.Int
 
 // OperatorId is the ID of an operator, defined by the AVS registry
-// It is currently the hash of the operator's G1 pubkey (in the bls pubkey registry)
+// It is the hash of the operator's G1 pubkey
 type OperatorId = Bytes32
+
+func OperatorIdFromPubkey(pubkey *bls.G1Point) OperatorId {
+	x := pubkey.X.BigInt(new(big.Int))
+	y := pubkey.Y.BigInt(new(big.Int))
+	return OperatorId(crypto.Keccak256Hash(append(math.U256Bytes(x), math.U256Bytes(y)...)))
+}
+
+func OperatorIdFromKeyPair(keyPair *bls.KeyPair) OperatorId {
+	return OperatorIdFromPubkey(keyPair.GetPubKeyG1())
+}
+
 type QuorumNums []QuorumNum
 
 func (q QuorumNums) LogValue() slog.Value {

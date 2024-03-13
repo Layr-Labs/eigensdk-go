@@ -14,7 +14,6 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254/fp"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
-	"github.com/ethereum/go-ethereum/crypto"
 )
 
 // We are using similar structure for saving bls keys as ethereum keystore
@@ -139,12 +138,6 @@ func (s *Signature) Verify(pubkey *G2Point, message [32]byte) (bool, error) {
 		return false, err
 	}
 	return ok, nil
-}
-
-func (p *G1Point) GetOperatorID() OperatorId {
-	x := p.X.BigInt(new(big.Int))
-	y := p.Y.BigInt(new(big.Int))
-	return crypto.Keccak256Hash(append(x.Bytes(), y.Bytes()...))
 }
 
 type PrivateKey = fr.Element
@@ -280,8 +273,4 @@ func (k *KeyPair) GetPubKeyG2() *G2Point {
 
 func (k *KeyPair) GetPubKeyG1() *G1Point {
 	return k.PubKey
-}
-
-func (k *KeyPair) GetOperatorID() OperatorId {
-	return k.PubKey.GetOperatorID()
 }
