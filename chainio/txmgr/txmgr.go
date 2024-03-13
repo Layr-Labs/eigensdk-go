@@ -8,7 +8,6 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
 	"github.com/Layr-Labs/eigensdk-go/logging"
-	"github.com/Layr-Labs/eigensdk-go/signerv2"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -31,11 +30,10 @@ type TxManager interface {
 }
 
 type SimpleTxManager struct {
-	wallet   wallet.Wallet
-	client   eth.Client
-	signerFn signerv2.SignerFn
-	log      logging.Logger
-	sender   common.Address
+	wallet wallet.Wallet
+	client eth.Client
+	log    logging.Logger
+	sender common.Address
 }
 
 var _ TxManager = (*SimpleTxManager)(nil)
@@ -46,15 +44,13 @@ func NewSimpleTxManager(
 	wallet wallet.Wallet,
 	client eth.Client,
 	log logging.Logger,
-	signerFn signerv2.SignerFn,
 	sender common.Address,
 ) *SimpleTxManager {
 	return &SimpleTxManager{
-		wallet:   wallet,
-		client:   client,
-		log:      log,
-		signerFn: signerFn,
-		sender:   sender,
+		wallet: wallet,
+		client: client,
+		log:    log,
+		sender: sender,
 	}
 }
 
@@ -82,16 +78,9 @@ func (m *SimpleTxManager) Send(ctx context.Context, tx *types.Transaction) (*typ
 // GetNoSendTxOpts This generates a noSend TransactOpts so that we can use
 // this to generate the transaction without actually sending it
 func (m *SimpleTxManager) GetNoSendTxOpts() (*bind.TransactOpts, error) {
-	signer, err := m.signerFn(context.Background(), m.sender)
-	if err != nil {
-		return nil, err
-	}
-	noSendTxOpts := &bind.TransactOpts{
-		From:   m.sender,
-		Signer: signer,
+	return &bind.TransactOpts{
 		NoSend: true,
-	}
-	return noSendTxOpts, nil
+	}, nil
 }
 
 func (m *SimpleTxManager) waitForReceipt(ctx context.Context, txID wallet.TxID) (*types.Receipt, error) {

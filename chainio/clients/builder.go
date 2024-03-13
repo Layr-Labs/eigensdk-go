@@ -80,11 +80,11 @@ func BuildAll(
 		panic(err)
 	}
 
-	txSender, err := wallet.NewPrivateKeyWallet(ethHttpClient, signerV2, addr, logger)
+	pkWallet, err := wallet.NewPrivateKeyWallet(ethHttpClient, signerV2, addr, logger)
 	if err != nil {
 		return nil, types.WrapError(errors.New("Failed to create transaction sender"), err)
 	}
-	txMgr := txmgr.NewSimpleTxManager(txSender, ethHttpClient, logger, signerV2, addr)
+	txMgr := txmgr.NewSimpleTxManager(pkWallet, ethHttpClient, logger, addr)
 	// creating EL clients: Reader, Writer and Subscriber
 	elChainReader, elChainWriter, err := config.buildElClients(
 		ethHttpClient,
