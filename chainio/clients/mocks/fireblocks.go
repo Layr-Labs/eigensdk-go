@@ -55,6 +55,21 @@ func (mr *MockFireblocksClientMockRecorder) ContractCall(arg0, arg1 any) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ContractCall", reflect.TypeOf((*MockFireblocksClient)(nil).ContractCall), arg0, arg1)
 }
 
+// GetAssetAddresses mocks base method.
+func (m *MockFireblocksClient) GetAssetAddresses(arg0 context.Context, arg1 string, arg2 fireblocks.AssetID) ([]fireblocks.AssetAddress, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAssetAddresses", arg0, arg1, arg2)
+	ret0, _ := ret[0].([]fireblocks.AssetAddress)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAssetAddresses indicates an expected call of GetAssetAddresses.
+func (mr *MockFireblocksClientMockRecorder) GetAssetAddresses(arg0, arg1, arg2 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAssetAddresses", reflect.TypeOf((*MockFireblocksClient)(nil).GetAssetAddresses), arg0, arg1, arg2)
+}
+
 // GetTransaction mocks base method.
 func (m *MockFireblocksClient) GetTransaction(arg0 context.Context, arg1 string) (*fireblocks.Transaction, error) {
 	m.ctrl.T.Helper()

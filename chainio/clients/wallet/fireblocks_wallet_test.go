@@ -257,6 +257,7 @@ func TestSendTransactionReplaceTx(t *testing.T) {
 		"0",
 		"0x",
 		expectedTxHash,
+		fireblocks.FeeLevelHigh,
 	)).Return(&fireblocks.ContractCallResponse{
 		ID:     "5678",
 		Status: fireblocks.Confirming,
@@ -340,4 +341,42 @@ func TestWaitForTransactionReceiptFailFromChain(t *testing.T) {
 	receipt, err := sender.GetTransactionReceipt(context.Background(), expectedTxHash)
 	assert.Error(t, err)
 	assert.Nil(t, receipt)
+}
+
+func TestSenderAddress(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	fireblocksClient := cmocks.NewMockFireblocksClient(ctrl)
+	ethClient := mocks.NewMockEthClient(ctrl)
+	logger, err := logging.NewZapLogger(logging.Development)
+	assert.NoError(t, err)
+	ethClient.EXPECT().ChainID(gomock.Any()).Return(big.NewInt(5), nil)
+	w, err := wallet.NewFireblocksWallet(fireblocksClient, ethClient, vaultAccountName, logger)
+	assert.NoError(t, err)
+	assetID := fireblocks.AssetIDByChain[5]
+	fireblocksClient.EXPECT().ListVaultAccounts(gomock.Any()).Return([]fireblocks.VaultAccount{
+		{
+			ID:   "vaultAccountID",
+			Name: vaultAccountName,
+			Assets: []fireblocks.Asset{
+				{
+					ID:        assetID,
+					Total:     "1",
+					Balance:   "1",
+					Available: "1",
+				},
+			},
+		},
+	}, nil)
+	expectedSenderAddr := "0x0000000000000000000000000000000000000000"
+	fireblocksClient.EXPECT().GetAssetAddresses(gomock.Any(), "vaultAccountID", assetID).Return([]fireblocks.AssetAddress{
+		{
+			AssetID: assetID,
+			Address: expectedSenderAddr,
+		},
+	}, nil)
+
+	addr, err := w.SenderAddress(context.Background())
+	assert.Nil(t, err)
+	assert.Equal(t, expectedSenderAddr, addr.String())
 }

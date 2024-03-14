@@ -8,6 +8,7 @@ import (
 )
 
 type TransactionOperation string
+type FeeLevel string
 
 const (
 	ContractCall TransactionOperation = "CONTRACT_CALL"
@@ -16,6 +17,10 @@ const (
 	Burn         TransactionOperation = "BURN"
 	TypedMessage TransactionOperation = "TYPED_MESSAGE"
 	Raw          TransactionOperation = "RAW"
+
+	FeeLevelHigh   FeeLevel = "HIGH"
+	FeeLevelMedium FeeLevel = "MEDIUM"
+	FeeLevelLow    FeeLevel = "LOW"
 )
 
 type account struct {
@@ -38,6 +43,10 @@ type ContractCallRequest struct {
 	// In case a transaction is stuck, specify the hash of the stuck transaction to replace it
 	// by this transaction with a higher fee, or to replace it with this transaction with a zero fee and drop it from the blockchain.
 	ReplaceTxByHash string `json:"replaceTxByHash"`
+	// FeeLevel is the fee level for the transaction which Fireblocks estimates based on the current network conditions.
+	// The fee level can be HIGH, MEDIUM, or LOW.
+	FeeLevel FeeLevel `json:"feeLevel"`
+	// TODO: add maxFee and priorityFee
 }
 
 type ContractCallResponse struct {
@@ -53,6 +62,7 @@ func NewContractCallRequest(
 	amount string,
 	calldata string,
 	replaceTxByHash string,
+	feeLevel FeeLevel,
 ) *ContractCallRequest {
 	return &ContractCallRequest{
 		Operation:    ContractCall,
@@ -72,6 +82,7 @@ func NewContractCallRequest(
 			Calldata: calldata,
 		},
 		ReplaceTxByHash: replaceTxByHash,
+		FeeLevel:        feeLevel,
 	}
 }
 

@@ -48,6 +48,9 @@ type Client interface {
 	// GetTransaction makes a GetTransaction request to the Fireblocks API
 	// It returns the transaction details for the given transaction ID.
 	GetTransaction(ctx context.Context, txID string) (*Transaction, error)
+	// GetAssetAddresses makes a GetAssetAddresses request to the Fireblocks API
+	// It returns the addresses for the given asset ID and vault ID.
+	GetAssetAddresses(ctx context.Context, vaultID string, assetID AssetID) ([]AssetAddress, error)
 }
 
 type client struct {

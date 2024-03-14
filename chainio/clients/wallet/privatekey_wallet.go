@@ -92,6 +92,10 @@ func (t *privateKeyWallet) GetTransactionReceipt(ctx context.Context, txID TxID)
 	return t.ethClient.TransactionReceipt(ctx, txHash)
 }
 
+func (t *privateKeyWallet) SenderAddress(ctx context.Context) (common.Address, error) {
+	return t.address, nil
+}
+
 // estimateGasAndNonce we are explicitly implementing this because
 // * We want to support legacy transactions (i.e. not dynamic fee)
 // * We want to support gas management, i.e. add buffer to gas limit

@@ -159,6 +159,8 @@ func (t *fireblocksWallet) SendTransaction(ctx context.Context, tx *types.Transa
 		tx.Value().String(),       // amount
 		hexutil.Encode(tx.Data()), // calldata
 		replaceTxByHash,           // replaceTxByHash
+		// TODO: make this configurable
+		fireblocks.FeeLevelHigh, // feeLevel
 	)
 	res, err := t.fireblocksClient.ContractCall(ctx, req)
 	if err != nil {
@@ -196,4 +198,19 @@ func (t *fireblocksWallet) GetTransactionReceipt(ctx context.Context, txID TxID)
 	}
 
 	return nil, fmt.Errorf("transaction %s not yet completed: status %s", txID, fireblockTx.Status)
+}
+
+func (f *fireblocksWallet) SenderAddress(ctx context.Context) (common.Address, error) {
+	account, err := f.getAccount(ctx)
+	if err != nil {
+		return common.Address{}, fmt.Errorf("error getting account: %w", err)
+	}
+	addresses, err := f.fireblocksClient.GetAssetAddresses(ctx, account.ID, fireblocks.AssetIDByChain[f.chainID.Uint64()])
+	if err != nil {
+		return common.Address{}, fmt.Errorf("error getting asset addresses: %w", err)
+	}
+	if len(addresses) == 0 {
+		return common.Address{}, errors.New("no addresses found")
+	}
+	return common.HexToAddress(addresses[0].Address), nil
 }
