@@ -194,7 +194,7 @@ func (w *ELChainWriter) DepositERC20IntoStrategy(
 
 	tx, err := underlyingTokenContract.Approve(noSendTxOpts, w.strategyManagerAddr, amount)
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(errors.New("failed to approve token transfer"), err)
 	}
 	_, err = w.txMgr.Send(ctx, tx)
 	if err != nil {
