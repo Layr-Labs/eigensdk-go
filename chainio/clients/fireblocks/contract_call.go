@@ -45,6 +45,7 @@ type ContractCallRequest struct {
 	ReplaceTxByHash string `json:"replaceTxByHash"`
 	// FeeLevel is the fee level for the transaction which Fireblocks estimates based on the current network conditions.
 	// The fee level can be HIGH, MEDIUM, or LOW.
+	// Ref: https://developers.fireblocks.com/docs/gas-estimation#estimated-network-fee
 	FeeLevel FeeLevel `json:"feeLevel"`
 	// TODO: add maxFee and priorityFee
 }
