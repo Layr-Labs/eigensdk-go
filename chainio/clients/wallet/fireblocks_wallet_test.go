@@ -44,7 +44,7 @@ func TestSendTransaction(t *testing.T) {
 				Tag     string             `json:"tag"`
 			}{{
 				ID:      "ETH_TEST3",
-				Status:  "ACTIVE",
+				Status:  "APPROVED",
 				Address: common.HexToAddress(contractAddress),
 				Tag:     "",
 			},
@@ -104,7 +104,7 @@ func TestSendTransactionNoValidContract(t *testing.T) {
 				Tag     string             `json:"tag"`
 			}{{
 				ID:      "ETH_TEST123123", // wrong asset ID
-				Status:  "ACTIVE",
+				Status:  "APPROVED",
 				Address: common.HexToAddress(contractAddress),
 				Tag:     "",
 			},
@@ -198,7 +198,7 @@ func TestSendTransactionReplaceTx(t *testing.T) {
 				Tag     string             `json:"tag"`
 			}{{
 				ID:      "ETH_TEST3",
-				Status:  "ACTIVE",
+				Status:  "APPROVED",
 				Address: common.HexToAddress(contractAddress),
 				Tag:     "",
 			},

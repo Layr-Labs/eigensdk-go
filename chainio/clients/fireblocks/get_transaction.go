@@ -11,7 +11,7 @@ import (
 type Transaction struct {
 	ID                            string               `json:"id"`
 	ExternalID                    string               `json:"externalId"`
-	Status                        Status               `json:"status"`
+	Status                        TxStatus             `json:"status"`
 	SubStatus                     string               `json:"subStatus"`
 	TxHash                        string               `json:"txHash"`
 	Operation                     TransactionOperation `json:"operation"`

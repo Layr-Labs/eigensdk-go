@@ -106,16 +106,15 @@ func (m *SimpleTxManager) waitForReceipt(ctx context.Context, txID wallet.TxID) 
 }
 
 func (m *SimpleTxManager) queryReceipt(ctx context.Context, txID wallet.TxID) *types.Receipt {
-	txHash := common.HexToHash(txID)
-	receipt, err := m.wallet.GetTransactionReceipt(ctx, txHash.Hex())
+	receipt, err := m.wallet.GetTransactionReceipt(ctx, txID)
 	if errors.Is(err, ethereum.NotFound) {
-		m.log.Info("Transaction not yet mined", "hash", txHash)
+		m.log.Info("Transaction not yet mined", "txID", txID)
 		return nil
 	} else if err != nil {
-		m.log.Info("Receipt retrieval failed", "hash", txHash, "err", err)
+		m.log.Info("Receipt retrieval failed", "txID", txID, "err", err)
 		return nil
 	} else if receipt == nil {
-		m.log.Warn("Receipt and error are both nil", "hash", txHash)
+		m.log.Warn("Receipt and error are both nil", "txID", txID)
 		return nil
 	}
 
