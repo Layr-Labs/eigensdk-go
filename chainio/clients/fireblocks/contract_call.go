@@ -51,8 +51,8 @@ type ContractCallRequest struct {
 }
 
 type ContractCallResponse struct {
-	ID     string `json:"id"`
-	Status Status `json:"status"`
+	ID     string   `json:"id"`
+	Status TxStatus `json:"status"`
 }
 
 func NewContractCallRequest(

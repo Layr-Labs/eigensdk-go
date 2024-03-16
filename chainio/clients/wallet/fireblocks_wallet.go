@@ -90,10 +90,10 @@ func (t *fireblocksWallet) getWhitelistedContract(ctx context.Context, address c
 		}
 		for _, c := range contracts {
 			for _, a := range c.Assets {
-				if a.Address == address && a.Status == "ACTIVE" && a.ID == assetID {
+				if a.Address == address && a.Status == "APPROVED" && a.ID == assetID {
 					t.whitelistedContracts[address] = &c
 					contract = &c
-					break
+					return contract, nil
 				}
 			}
 		}
@@ -168,6 +168,7 @@ func (t *fireblocksWallet) SendTransaction(ctx context.Context, tx *types.Transa
 	}
 	t.nonceToTxID[nonce] = res.ID
 	t.txIDToNonce[res.ID] = nonce
+	t.logger.Debug("Fireblocks contract call complete", "txID", res.ID, "status", res.Status)
 
 	return res.ID, nil
 }
