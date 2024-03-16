@@ -3,6 +3,7 @@ package wallet
 import (
 	"context"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
@@ -16,4 +17,6 @@ type TxID = string
 type Wallet interface {
 	SendTransaction(ctx context.Context, tx *types.Transaction) (TxID, error)
 	GetTransactionReceipt(ctx context.Context, txID TxID) (*types.Receipt, error)
+	// SenderAddress returns the address of the wallet
+	SenderAddress(ctx context.Context) (common.Address, error)
 }

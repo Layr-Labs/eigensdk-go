@@ -55,6 +55,7 @@ func TestContractCall(t *testing.T) {
 		"0",
 		"0x6057361d00000000000000000000000000000000000000000000000000000000000f4240",
 		"",
+		fireblocks.FeeLevelHigh,
 	)
 	resp, err := c.ContractCall(context.Background(), req)
 	assert.NoError(t, err)
@@ -80,4 +81,17 @@ func TestGetTransaction(t *testing.T) {
 	tx, err := c.GetTransaction(context.Background(), txID)
 	assert.NoError(t, err)
 	t.Logf("Transaction: %+v", tx)
+}
+
+func TestGetAssetAddresses(t *testing.T) {
+	t.Skip("skipping test as it's meant for manual runs only")
+
+	c := newFireblocksClient(t)
+	vaultID := "FILL_ME_IN"
+	assetID := fireblocks.AssetID("FILL_ME_IN")
+	addresses, err := c.GetAssetAddresses(context.Background(), vaultID, assetID)
+	assert.NoError(t, err)
+	for _, address := range addresses {
+		t.Logf("Address: %+v", address)
+	}
 }

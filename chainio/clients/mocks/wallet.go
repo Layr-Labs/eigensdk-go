@@ -13,6 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	common "github.com/ethereum/go-ethereum/common"
 	types "github.com/ethereum/go-ethereum/core/types"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -68,4 +69,19 @@ func (m *MockWallet) SendTransaction(arg0 context.Context, arg1 *types.Transacti
 func (mr *MockWalletMockRecorder) SendTransaction(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendTransaction", reflect.TypeOf((*MockWallet)(nil).SendTransaction), arg0, arg1)
+}
+
+// SenderAddress mocks base method.
+func (m *MockWallet) SenderAddress(arg0 context.Context) (common.Address, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SenderAddress", arg0)
+	ret0, _ := ret[0].(common.Address)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SenderAddress indicates an expected call of SenderAddress.
+func (mr *MockWalletMockRecorder) SenderAddress(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SenderAddress", reflect.TypeOf((*MockWallet)(nil).SenderAddress), arg0)
 }
