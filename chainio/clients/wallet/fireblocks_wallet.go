@@ -45,6 +45,7 @@ func NewFireblocksWallet(fireblocksClient fireblocks.Client, ethClient eth.Clien
 	if err != nil {
 		return nil, fmt.Errorf("error getting chain ID: %w", err)
 	}
+	logger.Debug("Creating new Fireblocks wallet for chain", "chainID", chainID)
 	return &fireblocksWallet{
 		fireblocksClient: fireblocksClient,
 		ethClient:        ethClient,
