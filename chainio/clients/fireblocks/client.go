@@ -23,11 +23,13 @@ type AssetID string
 const (
 	AssetIDETH       AssetID = "ETH"
 	AssetIDGoerliETH AssetID = "ETH_TEST3"
+	AssetIDHolETH    AssetID = "ETH_TEST6"
 )
 
 var AssetIDByChain = map[uint64]AssetID{
-	1: AssetIDETH,       // mainnet
-	5: AssetIDGoerliETH, // goerli
+	1:     AssetIDETH,       // mainnet
+	5:     AssetIDGoerliETH, // goerli
+	17000: AssetIDHolETH,    // holesky
 }
 
 type FireblocksTxID string
