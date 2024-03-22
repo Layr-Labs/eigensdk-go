@@ -152,8 +152,6 @@ func (t *fireblocksWallet) SendTransaction(ctx context.Context, tx *types.Transa
 		}
 		if fireblockTx.TxHash != "" {
 			replaceTxByHash = fireblockTx.TxHash
-		} else {
-			return "", fmt.Errorf("failed to get transaction hash with nonce %d", nonce)
 		}
 	}
 
