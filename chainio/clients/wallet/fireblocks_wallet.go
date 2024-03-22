@@ -18,6 +18,11 @@ import (
 
 var _ Wallet = (*fireblocksWallet)(nil)
 
+var (
+	ErrReceiptNotYetAvailable = errors.New("transaction receipt not yet available")
+	ErrTransactionFailed      = errors.New("transaction failed")
+)
+
 type fireblocksWallet struct {
 	// mu protects access to nonceToTxID and txIDToNonce which can be
 	// accessed concurrently by SendTransaction and GetTransactionReceipt
@@ -193,13 +198,18 @@ func (t *fireblocksWallet) GetTransactionReceipt(ctx context.Context, txID TxID)
 			return receipt, nil
 		}
 		if errors.Is(err, ethereum.NotFound) {
-			return nil, fmt.Errorf("transaction receipt %s not yet available", txID)
+			return nil, fmt.Errorf("%w: for txID %s", ErrReceiptNotYetAvailable, txID)
 		} else {
 			return nil, fmt.Errorf("Transaction receipt retrieval failed: %w", err)
 		}
+	} else if fireblockTx.Status == "FAILED" ||
+		fireblockTx.Status == "REJECTED" ||
+		fireblockTx.Status == "CANCELLED" ||
+		fireblockTx.Status == "BLOCKED" {
+		return nil, fmt.Errorf("%w: the Fireblocks transaction %s has been %s", ErrTransactionFailed, txID, fireblockTx.Status)
 	}
 
-	return nil, fmt.Errorf("transaction %s not yet completed: status %s", txID, fireblockTx.Status)
+	return nil, fmt.Errorf("%w: the Fireblocks transaction %s is in status %s", ErrReceiptNotYetAvailable, txID, fireblockTx.Status)
 }
 
 func (f *fireblocksWallet) SenderAddress(ctx context.Context) (common.Address, error) {
