@@ -235,14 +235,18 @@ func TestSendTransactionReplaceTx(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "1234", txID)
 
-	newTx := types.NewTransaction(
-		0,                                    // nonce
-		common.HexToAddress(contractAddress), // to
-		big.NewInt(0),                        // value
-		100000,                               // gas
-		big.NewInt(100),                      // gasPrice
-		common.Hex2Bytes("0x6057361d00000000000000000000000000000000000000000000000000000000000f4240"), // data
-	)
+	addr := common.HexToAddress(contractAddress)
+	gasLimit := uint64(1000000)
+	baseTx := &types.DynamicFeeTx{
+		To:        &addr,
+		Nonce:     0,
+		GasFeeCap: big.NewInt(10),
+		GasTipCap: big.NewInt(1),
+		Gas:       gasLimit,
+		Value:     big.NewInt(0),
+		Data:      common.Hex2Bytes("0x6057361d00000000000000000000000000000000000000000000000000000000000f4240"),
+	}
+	replacementTx := types.NewTx(baseTx)
 	expectedTxHash := "0xdeadbeef"
 	fireblocksClient.EXPECT().GetTransaction(gomock.Any(), "1234").Return(&fireblocks.Transaction{
 		ID:     expectedTxHash,
@@ -250,20 +254,24 @@ func TestSendTransactionReplaceTx(t *testing.T) {
 		TxHash: expectedTxHash,
 	}, nil)
 	fireblocksClient.EXPECT().ContractCall(gomock.Any(), fireblocks.NewContractCallRequest(
-		newTx.Hash().Hex(),
+		replacementTx.Hash().Hex(),
 		"ETH_TEST3",
 		"vaultAccountID",
 		"contractID",
 		"0",
 		"0x",
 		expectedTxHash,
-		fireblocks.FeeLevelHigh,
+		"",        // gasPrice
+		"1000000", // gasLimit
+		"10",      // maxFee
+		"1",       // priorityFee
+		"",        // feeLevel
 	)).Return(&fireblocks.ContractCallResponse{
 		ID:     "5678",
 		Status: fireblocks.Confirming,
 	}, nil)
 	// send another tx with the same nonce
-	txID, err = sender.SendTransaction(context.Background(), newTx)
+	txID, err = sender.SendTransaction(context.Background(), replacementTx)
 	assert.NoError(t, err)
 	assert.Equal(t, "5678", txID)
 }

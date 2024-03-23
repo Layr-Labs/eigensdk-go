@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"strconv"
 	"sync"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
@@ -155,6 +156,26 @@ func (t *fireblocksWallet) SendTransaction(ctx context.Context, tx *types.Transa
 		}
 	}
 
+	gasLimit := ""
+	if tx.Gas() > 0 {
+		gasLimit = strconv.FormatUint(tx.Gas(), 10)
+	}
+
+	// if the gas fees are specified in the transaction, use them.
+	// Otherwise, use the default "HIGH" gas price estimated by Fireblocks
+	maxFee := ""
+	priorityFee := ""
+	gasPrice := ""
+	feeLevel := fireblocks.FeeLevel("")
+	if tx.GasFeeCap().Cmp(big.NewInt(0)) > 0 && tx.GasTipCap().Cmp(big.NewInt(0)) > 0 {
+		maxFee = tx.GasFeeCap().String()
+		priorityFee = tx.GasTipCap().String()
+	} else if tx.GasPrice().Cmp(big.NewInt(0)) > 0 {
+		gasPrice = tx.GasPrice().String()
+	} else {
+		feeLevel = fireblocks.FeeLevelHigh
+	}
+
 	req := fireblocks.NewContractCallRequest(
 		tx.Hash().Hex(),
 		assetID,
@@ -163,8 +184,11 @@ func (t *fireblocksWallet) SendTransaction(ctx context.Context, tx *types.Transa
 		tx.Value().String(),       // amount
 		hexutil.Encode(tx.Data()), // calldata
 		replaceTxByHash,           // replaceTxByHash
-		// TODO: make this configurable
-		fireblocks.FeeLevelHigh, // feeLevel
+		gasPrice,
+		gasLimit,
+		maxFee,
+		priorityFee,
+		feeLevel,
 	)
 	res, err := t.fireblocksClient.ContractCall(ctx, req)
 	if err != nil {
