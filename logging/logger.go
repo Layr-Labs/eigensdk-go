@@ -20,4 +20,6 @@ type Logger interface {
 	Errorf(template string, args ...interface{})
 
 	Fatalf(template string, args ...interface{})
+
+	With(tags ...any) Logger
 }

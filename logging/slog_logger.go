@@ -106,3 +106,9 @@ func (s SLogger) logfCorrectSource(level slog.Level, template string, args ...in
 	r := slog.NewRecord(time.Now(), level, fmt.Sprintf(template, args...), pcs[0])
 	_ = s.Handler().Handle(context.Background(), r)
 }
+
+func (s SLogger) With(tags ...any) Logger {
+	return &SLogger{
+		s.Logger.With(tags...),
+	}
+}

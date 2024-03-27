@@ -80,3 +80,9 @@ func (z *ZapLogger) Errorf(template string, args ...interface{}) {
 func (z *ZapLogger) Fatalf(template string, args ...interface{}) {
 	z.logger.Sugar().Fatalf(template, args...)
 }
+
+func (z *ZapLogger) With(tags ...any) Logger {
+	return &ZapLogger{
+		logger: z.logger.Sugar().With(tags...).Desugar(),
+	}
+}
