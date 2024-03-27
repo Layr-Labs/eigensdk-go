@@ -37,3 +37,7 @@ func (l *NoopLogger) Warnf(template string, args ...interface{}) {}
 func (l *NoopLogger) Errorf(template string, args ...interface{}) {}
 
 func (l *NoopLogger) Fatalf(template string, args ...interface{}) {}
+
+func (l *NoopLogger) With(tags ...any) Logger {
+	return l
+}
