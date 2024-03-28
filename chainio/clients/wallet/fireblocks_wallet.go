@@ -29,11 +29,12 @@ type fireblocksWallet struct {
 	// accessed concurrently by SendTransaction and GetTransactionReceipt
 	mu sync.Mutex
 
-	fireblocksClient fireblocks.Client
-	ethClient        eth.Client
-	vaultAccountName string
-	logger           logging.Logger
-	chainID          *big.Int
+	fireblocksClient   fireblocks.Client
+	ethClient          eth.Client
+	vaultAccountName   string
+	logger             logging.Logger
+	chainID            *big.Int
+	gasLimitMultiplier float64
 
 	// nonceToTx keeps track of the transaction ID for each nonce
 	// this is used to retrieve the transaction hash for a given nonce
@@ -53,11 +54,12 @@ func NewFireblocksWallet(fireblocksClient fireblocks.Client, ethClient eth.Clien
 	}
 	logger.Debug("Creating new Fireblocks wallet for chain", "chainID", chainID)
 	return &fireblocksWallet{
-		fireblocksClient: fireblocksClient,
-		ethClient:        ethClient,
-		vaultAccountName: vaultAccountName,
-		logger:           logger,
-		chainID:          chainID,
+		fireblocksClient:   fireblocksClient,
+		ethClient:          ethClient,
+		vaultAccountName:   vaultAccountName,
+		logger:             logger,
+		chainID:            chainID,
+		gasLimitMultiplier: FallbackGasLimitMultiplier,
 
 		nonceToTxID: make(map[uint64]TxID),
 		txIDToNonce: make(map[TxID]uint64),
@@ -66,6 +68,11 @@ func NewFireblocksWallet(fireblocksClient fireblocks.Client, ethClient eth.Clien
 		account:              nil,
 		whitelistedContracts: make(map[common.Address]*fireblocks.WhitelistedContract),
 	}, nil
+}
+
+func (t *fireblocksWallet) WithGasLimitMultiplier(multiplier float64) *fireblocksWallet {
+	t.gasLimitMultiplier = multiplier
+	return t
 }
 
 func (t *fireblocksWallet) getAccount(ctx context.Context) (*fireblocks.VaultAccount, error) {
@@ -158,7 +165,7 @@ func (t *fireblocksWallet) SendTransaction(ctx context.Context, tx *types.Transa
 
 	gasLimit := ""
 	if tx.Gas() > 0 {
-		gasLimit = strconv.FormatUint(tx.Gas(), 10)
+		gasLimit = strconv.FormatUint(uint64(float64(tx.Gas())*t.gasLimitMultiplier), 10)
 	}
 
 	// if the gas fees are specified in the transaction, use them.

@@ -17,16 +17,18 @@ import (
 )
 
 var (
-	FallbackGasTipCap = big.NewInt(15_000_000_000)
+	FallbackGasTipCap          = big.NewInt(15_000_000_000)
+	FallbackGasLimitMultiplier = 1.1
 )
 
 var _ Wallet = (*privateKeyWallet)(nil)
 
 type privateKeyWallet struct {
-	ethClient eth.Client
-	address   common.Address
-	signerFn  signerv2.SignerFn
-	logger    logging.Logger
+	ethClient          eth.Client
+	address            common.Address
+	signerFn           signerv2.SignerFn
+	logger             logging.Logger
+	gasLimitMultiplier float64
 
 	// cache
 	contracts map[common.Address]*bind.BoundContract
@@ -34,12 +36,18 @@ type privateKeyWallet struct {
 
 func NewPrivateKeyWallet(ethClient eth.Client, signer signerv2.SignerFn, signerAddress common.Address, logger logging.Logger) (Wallet, error) {
 	return &privateKeyWallet{
-		ethClient: ethClient,
-		address:   signerAddress,
-		signerFn:  signer,
-		logger:    logger,
-		contracts: make(map[common.Address]*bind.BoundContract, 0),
+		ethClient:          ethClient,
+		address:            signerAddress,
+		signerFn:           signer,
+		logger:             logger,
+		gasLimitMultiplier: FallbackGasLimitMultiplier,
+		contracts:          make(map[common.Address]*bind.BoundContract, 0),
 	}, nil
+}
+
+func (t *privateKeyWallet) WithGasLimitMultiplier(multiplier float64) *privateKeyWallet {
+	t.gasLimitMultiplier = multiplier
+	return t
 }
 
 func (t *privateKeyWallet) SendTransaction(ctx context.Context, tx *types.Transaction) (TxID, error) {
@@ -134,7 +142,7 @@ func (t *privateKeyWallet) estimateGasAndNonce(ctx context.Context, tx *types.Tr
 		GasFeeCap: gasFeeCap,
 		Data:      tx.Data(),
 		Value:     tx.Value(),
-		Gas:       gasLimit,   // TODO(add buffer)
+		Gas:       uint64(float64(gasLimit) * t.gasLimitMultiplier),
 		Nonce:     tx.Nonce(), // We are not doing any nonce management for now but we probably should later for more robustness
 	}
 
