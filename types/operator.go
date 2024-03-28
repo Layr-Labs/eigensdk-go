@@ -24,7 +24,7 @@ type Operator struct {
 	// Address of the operator
 	Address string `yaml:"address" json:"address"`
 
-	// https://github.com/Layr-Labs/eigenlayer-contracts/blob/delegation-redesign/src/contracts/interfaces/IDelegationManager.sol#L18
+	// https://github.com/Layr-Labs/eigenlayer-contracts/blob/dev/src/contracts/interfaces/IDelegationManager.sol#L20
 	EarningsReceiverAddress   string `yaml:"earnings_receiver_address"    json:"earnings_receiver_address"`
 	DelegationApproverAddress string `yaml:"delegation_approver_address"  json:"delegation_approver_address"`
 	StakerOptOutWindowBlocks  uint32 `yaml:"staker_opt_out_window_blocks" json:"staker_opt_out_window_blocks"`
