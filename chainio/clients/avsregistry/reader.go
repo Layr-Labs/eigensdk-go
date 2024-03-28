@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"math"
 	"math/big"
 
@@ -212,7 +213,8 @@ func (r *AvsRegistryChainReader) GetOperatorAddrsInQuorumsAtCurrentBlock(
 		uint32(curBlock),
 	)
 	if err != nil {
-		return nil, types.WrapError(errors.New("Failed to get operators state"), err)
+		return nil, types.WrapError(fmt.Errorf("Failed to get operators state at block %d, quorums %v and registryCoordinatorAddr %v",
+			curBlock, quorumNumbers, r.registryCoordinatorAddr), err)
 	}
 	var quorumOperatorAddrs [][]common.Address
 	for _, quorum := range operatorStakes {
