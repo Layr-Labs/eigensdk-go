@@ -3,6 +3,7 @@ package txmgr
 import (
 	"context"
 	"errors"
+	"math/big"
 	"time"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
@@ -13,6 +14,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/log"
+)
+
+var (
+	FallbackGasTipCap          = big.NewInt(15_000_000_000)
+	FallbackGasLimitMultiplier = 1.1
 )
 
 // We are taking inspiration from the optimism TxManager interface
@@ -30,10 +36,11 @@ type TxManager interface {
 }
 
 type SimpleTxManager struct {
-	wallet wallet.Wallet
-	client eth.Client
-	log    logging.Logger
-	sender common.Address
+	wallet             wallet.Wallet
+	client             eth.Client
+	log                logging.Logger
+	sender             common.Address
+	gasLimitMultiplier float64
 }
 
 var _ TxManager = (*SimpleTxManager)(nil)
@@ -47,11 +54,17 @@ func NewSimpleTxManager(
 	sender common.Address,
 ) *SimpleTxManager {
 	return &SimpleTxManager{
-		wallet: wallet,
-		client: client,
-		log:    log,
-		sender: sender,
+		wallet:             wallet,
+		client:             client,
+		log:                log,
+		sender:             sender,
+		gasLimitMultiplier: FallbackGasLimitMultiplier,
 	}
+}
+
+func (m *SimpleTxManager) WithGasLimitMultiplier(multiplier float64) *SimpleTxManager {
+	m.gasLimitMultiplier = multiplier
+	return m
 }
 
 // Send is used to send a transaction to the Ethereum node. It takes an unsigned/signed transaction
@@ -61,7 +74,24 @@ func NewSimpleTxManager(
 // and resign the transaction after adding the nonce and gas limit.
 // To check out the whole flow on how this works, check out the README.md in this folder
 func (m *SimpleTxManager) Send(ctx context.Context, tx *types.Transaction) (*types.Receipt, error) {
-	txID, err := m.wallet.SendTransaction(ctx, tx)
+	// Estimate gas and nonce
+	// can't print tx hash in logs because the tx changes below when we complete and sign it
+	// so the txHash is meaningless at this point
+	m.log.Debug("Estimating gas and nonce")
+	tx, err := m.estimateGasAndNonce(ctx, tx)
+	if err != nil {
+		return nil, err
+	}
+	bumpedGasTx := &types.DynamicFeeTx{
+		To:        tx.To(),
+		Nonce:     tx.Nonce(),
+		GasFeeCap: tx.GasFeeCap(),
+		GasTipCap: tx.GasTipCap(),
+		Gas:       uint64(float64(tx.Gas()) * m.gasLimitMultiplier),
+		Value:     tx.Value(),
+		Data:      tx.Data(),
+	}
+	txID, err := m.wallet.SendTransaction(ctx, types.NewTx(bumpedGasTx))
 	if err != nil {
 		return nil, errors.Join(errors.New("send: failed to estimate gas and nonce"), err)
 	}
@@ -119,4 +149,57 @@ func (m *SimpleTxManager) queryReceipt(ctx context.Context, txID wallet.TxID) *t
 	}
 
 	return receipt
+}
+
+// estimateGasAndNonce we are explicitly implementing this because
+// * We want to support legacy transactions (i.e. not dynamic fee)
+// * We want to support gas management, i.e. add buffer to gas limit
+func (m *SimpleTxManager) estimateGasAndNonce(ctx context.Context, tx *types.Transaction) (*types.Transaction, error) {
+	gasTipCap, err := m.client.SuggestGasTipCap(ctx)
+	if err != nil {
+		// If the transaction failed because the backend does not support
+		// eth_maxPriorityFeePerGas, fallback to using the default constant.
+		m.log.Info("eth_maxPriorityFeePerGas is unsupported by current backend, using fallback gasTipCap")
+		gasTipCap = FallbackGasTipCap
+	}
+
+	header, err := m.client.HeaderByNumber(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	gasFeeCap := new(big.Int).Add(header.BaseFee, gasTipCap)
+
+	gasLimit := tx.Gas()
+	// we only estimate if gasLimit is not already set
+	if gasLimit == 0 {
+		from, err := m.wallet.SenderAddress(ctx)
+		if err != nil {
+			return nil, errors.Join(errors.New("send: failed to get sender address"), err)
+		}
+		gasLimit, err = m.client.EstimateGas(ctx, ethereum.CallMsg{
+			From:      from,
+			To:        tx.To(),
+			GasTipCap: gasTipCap,
+			GasFeeCap: gasFeeCap,
+			Value:     tx.Value(),
+			Data:      tx.Data(),
+		})
+		if err != nil {
+			return nil, errors.Join(errors.New("send: failed to estimate gas"), err)
+		}
+	}
+
+	rawTx := &types.DynamicFeeTx{
+		ChainID:   tx.ChainId(),
+		To:        tx.To(),
+		GasTipCap: gasTipCap,
+		GasFeeCap: gasFeeCap,
+		Data:      tx.Data(),
+		Value:     tx.Value(),
+		Gas:       uint64(float64(gasLimit) * m.gasLimitMultiplier),
+		Nonce:     tx.Nonce(), // We are not doing any nonce management for now but we probably should later for more robustness
+	}
+
+	return types.NewTx(rawTx), nil
 }
