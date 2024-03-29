@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	FallbackGasTipCap          = big.NewInt(15_000_000_000)
+	FallbackGasTipCap          = big.NewInt(5_000_000_000)
 	FallbackGasLimitMultiplier = 1.1
 )
 
