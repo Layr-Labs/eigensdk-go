@@ -240,8 +240,8 @@ func TestSendTransactionReplaceTx(t *testing.T) {
 	baseTx := &types.DynamicFeeTx{
 		To:        &addr,
 		Nonce:     0,
-		GasFeeCap: big.NewInt(10),
-		GasTipCap: big.NewInt(1),
+		GasFeeCap: big.NewInt(10_000_000_000),
+		GasTipCap: big.NewInt(1_000_000_000),
 		Gas:       gasLimit,
 		Value:     big.NewInt(0),
 		Data:      common.Hex2Bytes("0x6057361d00000000000000000000000000000000000000000000000000000000000f4240"),

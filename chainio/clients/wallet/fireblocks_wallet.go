@@ -15,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/params"
 )
 
 var _ Wallet = (*fireblocksWallet)(nil)
@@ -168,10 +169,10 @@ func (t *fireblocksWallet) SendTransaction(ctx context.Context, tx *types.Transa
 	gasPrice := ""
 	feeLevel := fireblocks.FeeLevel("")
 	if tx.GasFeeCap().Cmp(big.NewInt(0)) > 0 && tx.GasTipCap().Cmp(big.NewInt(0)) > 0 {
-		maxFee = tx.GasFeeCap().String()
-		priorityFee = tx.GasTipCap().String()
+		maxFee = weiToGwei(tx.GasFeeCap()).String()
+		priorityFee = weiToGwei(tx.GasTipCap()).String()
 	} else if tx.GasPrice().Cmp(big.NewInt(0)) > 0 {
-		gasPrice = tx.GasPrice().String()
+		gasPrice = weiToGwei(tx.GasPrice()).String()
 	} else {
 		feeLevel = fireblocks.FeeLevelHigh
 	}
@@ -247,4 +248,8 @@ func (f *fireblocksWallet) SenderAddress(ctx context.Context) (common.Address, e
 		return common.Address{}, errors.New("no addresses found")
 	}
 	return common.HexToAddress(addresses[0].Address), nil
+}
+
+func weiToGwei(wei *big.Int) *big.Float {
+	return new(big.Float).Quo(new(big.Float).SetInt(wei), big.NewFloat(params.GWei))
 }
