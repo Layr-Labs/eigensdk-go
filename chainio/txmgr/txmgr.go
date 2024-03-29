@@ -168,7 +168,9 @@ func (m *SimpleTxManager) estimateGasAndNonce(ctx context.Context, tx *types.Tra
 		return nil, err
 	}
 
-	gasFeeCap := new(big.Int).Add(header.BaseFee, gasTipCap)
+	// 2*baseFee + gasTipCap makes sure that the tx remains includeable for 6 consecutive 100% full blocks.
+	// see https://www.blocknative.com/blog/eip-1559-fees
+	gasFeeCap := new(big.Int).Add(header.BaseFee.Mul(header.BaseFee, big.NewInt(2)), gasTipCap)
 
 	gasLimit := tx.Gas()
 	// we only estimate if gasLimit is not already set
