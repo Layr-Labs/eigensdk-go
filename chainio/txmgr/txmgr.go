@@ -17,8 +17,10 @@ import (
 )
 
 var (
-	FallbackGasTipCap          = big.NewInt(5_000_000_000)
-	FallbackGasLimitMultiplier = 1.1
+	// 5 gwei in case the backend does not support eth_maxPriorityFeePerGas (no idea if/when this ever happens..)
+	FallbackGasTipCap = big.NewInt(5_000_000_000)
+	// 1.20x gas limit multiplier. This is arbitrary but should be safe for most cases
+	FallbackGasLimitMultiplier = 1.20
 )
 
 // We are taking inspiration from the optimism TxManager interface
