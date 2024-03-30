@@ -366,58 +366,72 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorPubKeys(
 		return nil, nil, types.WrapError(errors.New("Cannot get Abi"), err)
 	}
 
-	query := ethereum.FilterQuery{
-		FromBlock: startBlock,
-		ToBlock:   stopBlock,
-		Addresses: []gethcommon.Address{
-			r.blsApkRegistryAddr,
-		},
-		Topics: [][]gethcommon.Hash{{blsApkRegistryAbi.Events["NewPubkeyRegistration"].ID}},
+	if startBlock == nil {
+		startBlock = big.NewInt(0)
 	}
-
-	logs, err := r.ethClient.FilterLogs(ctx, query)
-	if err != nil {
-		return nil, nil, types.WrapError(errors.New("Cannot filter logs"), err)
+	if stopBlock == nil {
+		curBlockNum, err := r.ethClient.BlockNumber(ctx)
+		if err != nil {
+			return nil, nil, types.WrapError(errors.New("Cannot get current block number"), err)
+		}
+		stopBlock = big.NewInt(int64(curBlockNum))
 	}
-	r.logger.Debug("avsRegistryChainReader.QueryExistingRegisteredOperatorPubKeys", "transactionLogs", logs)
 
 	operatorAddresses := make([]types.OperatorAddr, 0)
 	operatorPubkeys := make([]types.OperatorPubkeys, 0)
 
-	for _, vLog := range logs {
+	// eth_getLogs is limited to a 10,000 range, so we need to iterate over the range
+	for i := startBlock; i.Cmp(stopBlock) <= 0; i.Add(i, big.NewInt(10_000)) {
+		query := ethereum.FilterQuery{
+			FromBlock: i,
+			ToBlock:   i.Add(i, big.NewInt(10_000)),
+			Addresses: []gethcommon.Address{
+				r.blsApkRegistryAddr,
+			},
+			Topics: [][]gethcommon.Hash{{blsApkRegistryAbi.Events["NewPubkeyRegistration"].ID}},
+		}
 
-		// get the operator address
-		operatorAddr := gethcommon.HexToAddress(vLog.Topics[1].Hex())
-		operatorAddresses = append(operatorAddresses, operatorAddr)
-
-		event, err := blsApkRegistryAbi.Unpack("NewPubkeyRegistration", vLog.Data)
+		logs, err := r.ethClient.FilterLogs(ctx, query)
 		if err != nil {
-			return nil, nil, types.WrapError(errors.New("Cannot unpack event data"), err)
+			return nil, nil, types.WrapError(errors.New("Cannot filter logs"), err)
 		}
+		r.logger.Debug("avsRegistryChainReader.QueryExistingRegisteredOperatorPubKeys", "transactionLogs", logs, "fromBlock", i, "toBlock", i.Add(i, big.NewInt(10_000)))
 
-		G1Pubkey := event[0].(struct {
-			X *big.Int "json:\"X\""
-			Y *big.Int "json:\"Y\""
-		})
+		for _, vLog := range logs {
 
-		G2Pubkey := event[1].(struct {
-			X [2]*big.Int "json:\"X\""
-			Y [2]*big.Int "json:\"Y\""
-		})
+			// get the operator address
+			operatorAddr := gethcommon.HexToAddress(vLog.Topics[1].Hex())
+			operatorAddresses = append(operatorAddresses, operatorAddr)
 
-		operatorPubkey := types.OperatorPubkeys{
-			G1Pubkey: bls.NewG1Point(
-				G1Pubkey.X,
-				G1Pubkey.Y,
-			),
-			G2Pubkey: bls.NewG2Point(
-				G2Pubkey.X,
-				G2Pubkey.Y,
-			),
+			event, err := blsApkRegistryAbi.Unpack("NewPubkeyRegistration", vLog.Data)
+			if err != nil {
+				return nil, nil, types.WrapError(errors.New("Cannot unpack event data"), err)
+			}
+
+			G1Pubkey := event[0].(struct {
+				X *big.Int "json:\"X\""
+				Y *big.Int "json:\"Y\""
+			})
+
+			G2Pubkey := event[1].(struct {
+				X [2]*big.Int "json:\"X\""
+				Y [2]*big.Int "json:\"Y\""
+			})
+
+			operatorPubkey := types.OperatorPubkeys{
+				G1Pubkey: bls.NewG1Point(
+					G1Pubkey.X,
+					G1Pubkey.Y,
+				),
+				G2Pubkey: bls.NewG2Point(
+					G2Pubkey.X,
+					G2Pubkey.Y,
+				),
+			}
+
+			operatorPubkeys = append(operatorPubkeys, operatorPubkey)
+
 		}
-
-		operatorPubkeys = append(operatorPubkeys, operatorPubkey)
-
 	}
 
 	return operatorAddresses, operatorPubkeys, nil
