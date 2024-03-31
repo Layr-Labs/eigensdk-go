@@ -30,11 +30,12 @@ type fireblocksWallet struct {
 	// accessed concurrently by SendTransaction and GetTransactionReceipt
 	mu sync.Mutex
 
-	fireblocksClient fireblocks.Client
-	ethClient        eth.Client
-	vaultAccountName string
-	logger           logging.Logger
-	chainID          *big.Int
+	fireblocksClient      fireblocks.Client
+	ethClient             eth.Client
+	vaultAccountName      string
+	logger                logging.Logger
+	chainID               *big.Int
+	confirmationThreshold int
 
 	// nonceToTx keeps track of the transaction ID for each nonce
 	// this is used to retrieve the transaction hash for a given nonce
@@ -47,18 +48,19 @@ type fireblocksWallet struct {
 	whitelistedContracts map[common.Address]*fireblocks.WhitelistedContract
 }
 
-func NewFireblocksWallet(fireblocksClient fireblocks.Client, ethClient eth.Client, vaultAccountName string, logger logging.Logger) (Wallet, error) {
+func NewFireblocksWallet(fireblocksClient fireblocks.Client, ethClient eth.Client, vaultAccountName string, confirmationThreshold int, logger logging.Logger) (Wallet, error) {
 	chainID, err := ethClient.ChainID(context.Background())
 	if err != nil {
 		return nil, fmt.Errorf("error getting chain ID: %w", err)
 	}
 	logger.Debug("Creating new Fireblocks wallet for chain", "chainID", chainID)
 	return &fireblocksWallet{
-		fireblocksClient: fireblocksClient,
-		ethClient:        ethClient,
-		vaultAccountName: vaultAccountName,
-		logger:           logger,
-		chainID:          chainID,
+		fireblocksClient:      fireblocksClient,
+		ethClient:             ethClient,
+		vaultAccountName:      vaultAccountName,
+		logger:                logger,
+		chainID:               chainID,
+		confirmationThreshold: confirmationThreshold,
 
 		nonceToTxID: make(map[uint64]TxID),
 		txIDToNonce: make(map[TxID]uint64),
@@ -198,6 +200,14 @@ func (t *fireblocksWallet) SendTransaction(ctx context.Context, tx *types.Transa
 	t.nonceToTxID[nonce] = res.ID
 	t.txIDToNonce[res.ID] = nonce
 	t.logger.Debug("Fireblocks contract call complete", "txID", res.ID, "status", res.Status)
+
+	success, err := t.fireblocksClient.SetConfirmationThreshold(ctx, res.ID, t.confirmationThreshold)
+	// if the confirmation threshold fails to be updated, the transaction will be confirmed by default after 3 confirmations
+	if err != nil {
+		t.logger.Error("failed to set confirmation threshold", "txID", res.ID, "threshold", t.confirmationThreshold, "error", err)
+	} else if !success {
+		t.logger.Error("failed to set confirmation threshold", "txID", res.ID, "threshold", t.confirmationThreshold)
+	}
 
 	return res.ID, nil
 }

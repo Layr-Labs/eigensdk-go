@@ -114,3 +114,18 @@ func (mr *MockFireblocksClientMockRecorder) ListVaultAccounts(arg0 any) *gomock.
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListVaultAccounts", reflect.TypeOf((*MockFireblocksClient)(nil).ListVaultAccounts), arg0)
 }
+
+// SetConfirmationThreshold mocks base method.
+func (m *MockFireblocksClient) SetConfirmationThreshold(arg0 context.Context, arg1 string, arg2 int) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetConfirmationThreshold", arg0, arg1, arg2)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SetConfirmationThreshold indicates an expected call of SetConfirmationThreshold.
+func (mr *MockFireblocksClientMockRecorder) SetConfirmationThreshold(arg0, arg1, arg2 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetConfirmationThreshold", reflect.TypeOf((*MockFireblocksClient)(nil).SetConfirmationThreshold), arg0, arg1, arg2)
+}

@@ -53,6 +53,10 @@ type Client interface {
 	// GetAssetAddresses makes a GetAssetAddresses request to the Fireblocks API
 	// It returns the addresses for the given asset ID and vault ID.
 	GetAssetAddresses(ctx context.Context, vaultID string, assetID AssetID) ([]AssetAddress, error)
+	// SetConfirmationThreshold makes a SetConfirmationThreshold request to the Fireblocks API
+	// It sets the confirmation threshold for the given transaction ID.
+	// By default, Fireblocks defaults the confirmation threshold to 3.
+	SetConfirmationThreshold(ctx context.Context, txID string, threshold int) (bool, error)
 }
 
 type client struct {
