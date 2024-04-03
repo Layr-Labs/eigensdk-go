@@ -382,9 +382,13 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorPubKeys(
 
 	// eth_getLogs is limited to a 10,000 range, so we need to iterate over the range
 	for i := startBlock; i.Cmp(stopBlock) <= 0; i.Add(i, big.NewInt(10_000)) {
+		toBlock := big.NewInt(0).Add(i, big.NewInt(10_000))
+		if toBlock.Cmp(stopBlock) > 0 {
+			toBlock = stopBlock
+		}
 		query := ethereum.FilterQuery{
 			FromBlock: i,
-			ToBlock:   i.Add(i, big.NewInt(10_000)),
+			ToBlock:   toBlock,
 			Addresses: []gethcommon.Address{
 				r.blsApkRegistryAddr,
 			},
@@ -395,7 +399,7 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorPubKeys(
 		if err != nil {
 			return nil, nil, types.WrapError(errors.New("Cannot filter logs"), err)
 		}
-		r.logger.Debug("avsRegistryChainReader.QueryExistingRegisteredOperatorPubKeys", "transactionLogs", logs, "fromBlock", i, "toBlock", i.Add(i, big.NewInt(10_000)))
+		r.logger.Debug("avsRegistryChainReader.QueryExistingRegisteredOperatorPubKeys", "transactionLogs", logs, "fromBlock", i, "toBlock", toBlock)
 
 		for _, vLog := range logs {
 
