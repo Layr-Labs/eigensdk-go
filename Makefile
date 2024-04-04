@@ -49,3 +49,8 @@ format-lines: ## formats all go files with golines
 lint: ## runs all linters
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 	golangci-lint run ./...
+
+___CONTRACTS___: ## 
+
+deploy-contracts-to-anvil-and-save-state: ## 
+	./contracts/tests/anvil/deploy-contracts-save-anvil-state.sh

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -o errexit -o nounset -o pipefail
+
 # cd to the directory of this script so that this can be run from anywhere
 script_path=$(
     cd "$(dirname "${BASH_SOURCE[0]}")"
