@@ -43,7 +43,7 @@ func (o Operator) Validate() error {
 		return ErrInvalidDelegationApproverAddress
 	}
 
-	err := checkIfUrlIsValid(o.MetadataUrl)
+	err := utils.CheckIfUrlIsValid(o.MetadataUrl)
 	if err != nil {
 		return WrapError(ErrInvalidMetadataUrl, err)
 	}

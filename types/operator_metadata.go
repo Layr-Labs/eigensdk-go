@@ -2,23 +2,6 @@ package types
 
 import (
 	"github.com/Layr-Labs/eigensdk-go/utils"
-	"net/http"
-	"net/url"
-	"path/filepath"
-	"regexp"
-	"strings"
-)
-
-const (
-	PngMimeType = "image/png"
-)
-
-var (
-	// ImageExtensions List of common image file extensions
-	// Only support PNG for now to reduce surface area of image validation
-	// We do NOT want to support formats like SVG since they can be used for javascript injection
-	// If we get pushback on only supporting png, we can support jpg, jpeg, gif, etc. later
-	ImageExtensions = []string{".png"}
 )
 
 // OperatorMetadata is the metadata operator uploads while registering
@@ -48,12 +31,12 @@ type OperatorMetadata struct {
 }
 
 func (om *OperatorMetadata) Validate() error {
-	err := validateText(om.Name)
+	err := utils.ValidateText(om.Name)
 	if err != nil {
 		return WrapError(ErrInvalidName, err)
 	}
 
-	err = validateText(om.Description)
+	err = utils.ValidateText(om.Description)
 	if err != nil {
 		return WrapError(ErrInvalidDescription, err)
 	}
@@ -62,147 +45,23 @@ func (om *OperatorMetadata) Validate() error {
 		return ErrLogoRequired
 	}
 
-	if err = isImageURL(om.Logo); err != nil {
+	if err = utils.IsImageURL(om.Logo); err != nil {
 		return err
 	}
 
 	if len(om.Website) != 0 {
-		err = checkIfUrlIsValid(om.Website)
+		err = utils.CheckIfUrlIsValid(om.Website)
 		if err != nil {
 			return WrapError(ErrInvalidWebsiteUrl, err)
 		}
 	}
 
 	if len(om.Twitter) != 0 {
-		err := checkIfValidTwitterURL(om.Twitter)
+		err := utils.CheckIfValidTwitterURL(om.Twitter)
 		if err != nil {
 			return WrapError(ErrInvalidTwitterUrl, err)
 		}
 	}
 
 	return nil
-}
-
-func checkIfValidTwitterURL(twitterURL string) error {
-	// Basic validation
-	err := checkBasicURLValidation(twitterURL)
-	if err != nil {
-		return err
-	}
-
-	// Regular expression to validate URLs
-	urlPattern := regexp.MustCompile(`^(?:https?://)?(?:www\.)?(?:twitter\.com/\w+|x\.com/\w+)(?:/?|$)`)
-
-	// Check if the URL matches the regular expression
-	if !urlPattern.MatchString(twitterURL) {
-		return ErrInvalidTwitterUrlRegex
-	}
-
-	return nil
-}
-
-func checkBasicURLValidation(rawUrl string) error {
-	if len(rawUrl) == 0 {
-		return ErrEmptyUrl
-	}
-
-	if strings.Contains(rawUrl, "localhost") || strings.Contains(rawUrl, "127.0.0.1") {
-		return ErrUrlPointingToLocalServer
-	}
-
-	if len(rawUrl) > 1024 {
-		return ErrInvalidUrlLength
-	}
-
-	parsedURL, err := url.Parse(rawUrl)
-	if err != nil {
-		return err
-	}
-
-	// Check if the URL is valid
-	if parsedURL.Scheme != "" && parsedURL.Host != "" {
-		return nil
-	} else {
-		return ErrInvalidUrl
-	}
-}
-
-func checkIfUrlIsValid(rawUrl string) error {
-	// Basic validation
-	err := checkBasicURLValidation(rawUrl)
-	if err != nil {
-		return err
-	}
-
-	// Regular expression to validate URLs
-	urlPattern := regexp.MustCompile(`^(https?)://[^\s/$.?#].[^\s]*$`)
-
-	// Check if the URL matches the regular expression
-	if !urlPattern.MatchString(rawUrl) {
-		return ErrInvalidUrl
-	}
-
-	return nil
-}
-
-func isImageURL(urlString string) error {
-	// Parse the URL
-	parsedURL, err := url.Parse(urlString)
-	if err != nil {
-		return err
-	}
-
-	// Extract the path component from the URL
-	path := parsedURL.Path
-
-	// Get the file extension
-	extension := filepath.Ext(path)
-
-	// Check if the extension is in the list of image extensions
-	for _, imgExt := range ImageExtensions {
-		if strings.EqualFold(extension, imgExt) {
-			imageBytes, err := utils.ReadPublicUrl(urlString)
-			if err != nil {
-				return err
-			}
-
-			contentType := http.DetectContentType(imageBytes)
-			if contentType != PngMimeType {
-				return ErrInvalidImageMimeType
-			}
-			return nil
-		}
-	}
-
-	return ErrInvalidImageExtension
-}
-
-func validateText(text string) error {
-	if len(text) == 0 {
-		return ErrEmptyText
-	}
-
-	if len(text) > 200 {
-		return ErrTextTooLong
-	}
-
-	// Regular expression to validate text
-	textPattern := regexp.MustCompile(`^[a-zA-Z0-9 .,;:?!'"\-_/()\[\]]+$`)
-
-	// Check if the URL matches the regular expression
-	if !textPattern.MatchString(text) {
-		return ErrInvalidText
-	}
-
-	return nil
-}
-func ValidateRawGithubUrl(url string) error {
-	// Regular expression to validate URLs
-	// https://raw.githubusercontent.com/
-	rawGitHubUrlPattern := regexp.MustCompile(`^https?://raw\.githubusercontent\.com/.*$`)
-
-	// Check if the URL matches the regular expression
-	if !rawGitHubUrlPattern.MatchString(url) {
-		return ErrInvalidUrl
-	}
 }

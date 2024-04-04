@@ -4,6 +4,8 @@ import (
 	"crypto/ecdsa"
 	"encoding/json"
 	"errors"
+	"net/url"
+	"strings"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -17,6 +19,18 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+)
+
+const (
+	PngMimeType = "image/png"
+)
+
+var (
+	// ImageExtensions List of common image file extensions
+	// Only support PNG for now to reduce surface area of image validation
+	// We do NOT want to support formats like SVG since they can be used for javascript injection
+	// If we get pushback on only supporting png, we can support jpg, jpeg, gif, etc. later
+	ImageExtensions = []string{".png"}
 )
 
 func ReadFile(path string) ([]byte, error) {
@@ -105,4 +119,135 @@ func ReadPublicUrl(url string) ([]byte, error) {
 	}(resp.Body)
 
 	return io.ReadAll(resp.Body)
+}
+
+func CheckIfValidTwitterURL(twitterURL string) error {
+	// Basic validation
+	err := CheckBasicURLValidation(twitterURL)
+	if err != nil {
+		return err
+	}
+
+	// Regular expression to validate URLs
+	urlPattern := regexp.MustCompile(`^(?:https?://)?(?:www\.)?(?:twitter\.com/\w+|x\.com/\w+)(?:/?|$)`)
+
+	// Check if the URL matches the regular expression
+	if !urlPattern.MatchString(twitterURL) {
+		return ErrInvalidTwitterUrlRegex
+	}
+
+	return nil
+}
+
+func CheckBasicURLValidation(rawUrl string) error {
+	if len(rawUrl) == 0 {
+		return ErrEmptyUrl
+	}
+
+	if strings.Contains(rawUrl, "localhost") || strings.Contains(rawUrl, "127.0.0.1") {
+		return ErrUrlPointingToLocalServer
+	}
+
+	if len(rawUrl) > 1024 {
+		return ErrInvalidUrlLength
+	}
+
+	parsedURL, err := url.Parse(rawUrl)
+	if err != nil {
+		return err
+	}
+
+	// Check if the URL is valid
+	if parsedURL.Scheme != "" && parsedURL.Host != "" {
+		return nil
+	} else {
+		return ErrInvalidUrl
+	}
+}
+
+func CheckIfUrlIsValid(rawUrl string) error {
+	// Basic validation
+	err := CheckBasicURLValidation(rawUrl)
+	if err != nil {
+		return err
+	}
+
+	// Regular expression to validate URLs
+	urlPattern := regexp.MustCompile(`^(https?)://[^\s/$.?#].[^\s]*$`)
+
+	// Check if the URL matches the regular expression
+	if !urlPattern.MatchString(rawUrl) {
+		return ErrInvalidUrl
+	}
+
+	return nil
+}
+
+func IsImageURL(urlString string) error {
+	// Parse the URL
+	parsedURL, err := url.Parse(urlString)
+	if err != nil {
+		return err
+	}
+
+	// Extract the path component from the URL
+	path := parsedURL.Path
+
+	// Get the file extension
+	extension := filepath.Ext(path)
+
+	// Check if the extension is in the list of image extensions
+	for _, imgExt := range ImageExtensions {
+		if strings.EqualFold(extension, imgExt) {
+			imageBytes, err := ReadPublicUrl(urlString)
+			if err != nil {
+				return err
+			}
+
+			contentType := http.DetectContentType(imageBytes)
+			if contentType != PngMimeType {
+				return ErrInvalidImageMimeType
+			}
+			return nil
+		}
+	}
+
+	return ErrInvalidImageExtension
+}
+
+func ValidateText(text string) error {
+	if len(text) == 0 {
+		return ErrEmptyText
+	}
+
+	if len(text) > 200 {
+		return ErrTextTooLong
+	}
+
+	// Regular expression to validate text
+	textPattern := regexp.MustCompile(`^[a-zA-Z0-9 .,;:?!'"\-_/()\[\]]+$`)
+
+	// Check if the URL matches the regular expression
+	if !textPattern.MatchString(text) {
+		return ErrInvalidText
+	}
+
+	return nil
+}
+func ValidateRawGithubUrl(url string) error {
+	// Basic validation
+	err := CheckBasicURLValidation(url)
+	if err != nil {
+		return err
+	}
+
+	// Regular expression to validate URLs
+	rawGitHubUrlPattern := regexp.MustCompile(`^https?://raw\.githubusercontent\.com/.*$`)
+
+	// Check if the URL matches the regular expression
+	if !rawGitHubUrlPattern.MatchString(url) {
+		return ErrInvalidGithubRawUrl
+	}
+
+	return nil
 }
