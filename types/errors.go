@@ -19,6 +19,7 @@ var (
 	ErrInvalidUrlLength         = errors.New("url length should be no larger than 1024 character")
 	ErrInvalidUrl               = errors.New("invalid url")
 
+	ErrImageFetchFailed      = errors.New("error fetching operator logo")
 	ErrInvalidImageMimeType  = errors.New("invalid image mime-type. only png is supported")
 	ErrInvalidImageExtension = errors.New(
 		"invalid image extension. only " + strings.Join(ImageExtensions, ",") + " is supported",

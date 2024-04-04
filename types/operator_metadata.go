@@ -139,6 +139,12 @@ func isImageURL(urlString string) error {
 			if err != nil {
 				return err
 			}
+
+			// Check if the response status was an error
+			if imageResponse.StatusCode >= 400 {
+				return ErrImageFetchFailed
+			}
+
 			imageBytes, err := io.ReadAll(imageResponse.Body)
 			if err != nil {
 				return err
