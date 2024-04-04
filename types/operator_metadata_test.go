@@ -89,6 +89,17 @@ func TestOperatorMetadata(t *testing.T) {
 			expectedError: ErrLogoRequired,
 		},
 		{
+			name: "Invalid url - FTP url",
+			metadata: OperatorMetadata{
+				Name:        "test",
+				Description: "test",
+				Logo:        "https://goerli-operator-metadata.s3.amazonaws.com/eigenlayer.png",
+				Twitter:     "ftp://twitter.com/test",
+				Website:     "https://test.com",
+			},
+			expectedError: WrapError(ErrInvalidTwitterUrl, ErrInvalidUrl),
+		},
+		{
 			name: "Invalid metadata - invalid logo no extension",
 			metadata: OperatorMetadata{
 				Name:        "test",
