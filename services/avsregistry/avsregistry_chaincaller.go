@@ -109,7 +109,7 @@ func (ar *AvsRegistryServiceChainCaller) getOperatorPubkeys(ctx context.Context,
 	}
 	pubkeys, ok := ar.operatorPubkeysService.GetOperatorPubkeys(ctx, operatorAddr)
 	if !ok {
-		return types.OperatorPubkeys{}, types.WrapError(fmt.Errorf("Failed to get operator pubkeys from pubkey compendium service (operatorAddr: %v, operatorId: %v)", operatorAddr, operatorId), err)
+		return types.OperatorPubkeys{}, fmt.Errorf("Failed to get operator pubkeys from pubkey compendium service (operatorAddr: %v, operatorId: %v)", operatorAddr, operatorId)
 	}
 	return pubkeys, nil
 }
