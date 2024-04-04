@@ -19,26 +19,32 @@ type ZapLogger struct {
 
 var _ Logger = (*ZapLogger)(nil)
 
+// NewZapLogger creates a new logger wrapped the zap.Logger
 func NewZapLogger(env LogLevel) (Logger, error) {
+	var config zap.Config
+
 	if env == Production {
-		logger, err := zap.NewProduction()
-		if err != nil {
-			panic(err)
-		}
-		return &ZapLogger{
-			logger: logger,
-		}, nil
+		config = zap.NewProductionConfig()
 	} else if env == Development {
-		logger, err := zap.NewDevelopment()
-		if err != nil {
-			panic(err)
-		}
-		return &ZapLogger{
-			logger: logger,
-		}, nil
+		config = zap.NewDevelopmentConfig()
 	} else {
 		panic(fmt.Sprintf("Unknown environment. Expected %s or %s. Received %s.", Development, Production, env))
 	}
+
+	return NewZapLoggerByConfig(config, zap.AddCallerSkip(1))
+}
+
+// NewZapLoggerByConfig creates a logger wrapped the zap.Logger
+// Note if the logger need to show the caller, need use `zap.AddCallerSkip(1)` ad options
+func NewZapLoggerByConfig(config zap.Config, options ...zap.Option) (Logger, error) {
+	logger, err := config.Build(options...)
+	if err != nil {
+		panic(err)
+	}
+
+	return &ZapLogger{
+		logger: logger,
+	}, nil
 }
 
 func (z *ZapLogger) Debug(msg string, tags ...any) {
