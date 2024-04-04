@@ -26,12 +26,15 @@ var (
 	)
 
 	// Metadata Errors
-	ErrNameRequired        = errors.New("name is required")
-	ErrDescriptionRequired = errors.New("description is required")
-	ErrDescriptionTooLong  = errors.New("description should be less than 200 characters")
-	ErrLogoRequired        = errors.New("logo is required")
-	ErrInvalidWebsiteUrl   = errors.New("invalid website url")
-	ErrInvalidTwitterUrl   = errors.New("invalid twitter url")
+	ErrNameRequired           = errors.New("name is required")
+	ErrDescriptionRequired    = errors.New("description is required")
+	ErrDescriptionTooLong     = errors.New("description should be less than 200 characters")
+	ErrLogoRequired           = errors.New("logo is required")
+	ErrInvalidWebsiteUrl      = errors.New("invalid website url")
+	ErrInvalidTwitterUrl      = errors.New("invalid twitter url")
+	ErrInvalidTwitterUrlRegex = errors.New(
+		"invalid twitter url, it should be of the format https://twitter.com/<username> or https://x.com/<username>",
+	)
 
 	ErrInvalidMetadataUrl         = errors.New("invalid metadata url")
 	ErrUnmarshalOperatorMetadata  = errors.New("unable to unmarshal operator metadata")

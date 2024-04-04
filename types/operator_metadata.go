@@ -76,7 +76,7 @@ func (om *OperatorMetadata) Validate() error {
 	}
 
 	if len(om.Twitter) != 0 {
-		err := checkIfUrlIsValid(om.Twitter)
+		err := checkIfValidTwitterURL(om.Twitter)
 		if err != nil {
 			return WrapError(ErrInvalidTwitterUrl, err)
 		}
@@ -85,7 +85,25 @@ func (om *OperatorMetadata) Validate() error {
 	return nil
 }
 
-func checkIfUrlIsValid(rawUrl string) error {
+func checkIfValidTwitterURL(twitterURL string) error {
+	// Basic validation
+	err := checkBasicURLValidation(twitterURL)
+	if err != nil {
+		return err
+	}
+
+	// Regular expression to validate URLs
+	urlPattern := regexp.MustCompile(`^(?:https?://)?(?:www\.)?twitter\.com/\w+|x\.com/\w+$`)
+
+	// Check if the URL matches the regular expression
+	if !urlPattern.MatchString(twitterURL) {
+		return ErrInvalidTwitterUrlRegex
+	}
+
+	return nil
+}
+
+func checkBasicURLValidation(rawUrl string) error {
 	if len(rawUrl) == 0 {
 		return ErrEmptyUrl
 	}
@@ -96,14 +114,6 @@ func checkIfUrlIsValid(rawUrl string) error {
 
 	if len(rawUrl) > 1024 {
 		return ErrInvalidUrlLength
-	}
-
-	// Regular expression to validate URLs
-	urlPattern := regexp.MustCompile(`^(https?)://[^\s/$.?#].[^\s]*$`)
-
-	// Check if the URL matches the regular expression
-	if !urlPattern.MatchString(rawUrl) {
-		return ErrInvalidUrl
 	}
 
 	parsedURL, err := url.Parse(rawUrl)
@@ -117,6 +127,24 @@ func checkIfUrlIsValid(rawUrl string) error {
 	} else {
 		return ErrInvalidUrl
 	}
+}
+
+func checkIfUrlIsValid(rawUrl string) error {
+	// Basic validation
+	err := checkBasicURLValidation(rawUrl)
+	if err != nil {
+		return err
+	}
+
+	// Regular expression to validate URLs
+	urlPattern := regexp.MustCompile(`^(https?)://[^\s/$.?#].[^\s]*$`)
+
+	// Check if the URL matches the regular expression
+	if !urlPattern.MatchString(rawUrl) {
+		return ErrInvalidUrl
+	}
+
+	return nil
 }
 
 func isImageURL(urlString string) error {

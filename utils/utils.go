@@ -4,15 +4,14 @@ import (
 	"crypto/ecdsa"
 	"encoding/json"
 	"errors"
+	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+	"gopkg.in/yaml.v3"
 	"log"
 	"math/big"
 	"os"
 	"path/filepath"
 	"regexp"
-
-	gethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
-	"gopkg.in/yaml.v3"
 )
 
 func ReadFile(path string) ([]byte, error) {
