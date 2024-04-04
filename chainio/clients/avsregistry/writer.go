@@ -255,7 +255,7 @@ func (w *AvsRegistryChainWriter) RegisterOperatorInQuorumWithAVSRegistryCoordina
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
-	w.logger.Info("successfully registered operator with AVS registry coordinator", "tx hash", receipt.TxHash.String(), "avs-service-manager", w.serviceManagerAddr, "operator", operatorAddr, "quorumNumbers", quorumNumbers)
+	w.logger.Info("successfully registered operator with AVS registry coordinator", "txHash", receipt.TxHash.String(), "avs-service-manager", w.serviceManagerAddr, "operator", operatorAddr, "quorumNumbers", quorumNumbers)
 	return receipt, nil
 }
 
@@ -277,7 +277,7 @@ func (w *AvsRegistryChainWriter) UpdateStakesOfEntireOperatorSetForQuorums(
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
-	w.logger.Info("succesfully updated stakes for entire operator set", "tx hash", receipt.TxHash.String(), "quorumNumbers", quorumNumbers)
+	w.logger.Info("succesfully updated stakes for entire operator set", "txHash", receipt.TxHash.String(), "quorumNumbers", quorumNumbers)
 	return receipt, nil
 
 }
@@ -299,7 +299,7 @@ func (w *AvsRegistryChainWriter) UpdateStakesOfOperatorSubsetForAllQuorums(
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
-	w.logger.Info("succesfully updated stakes of operator subset for all quorums", "tx hash", receipt.TxHash.String(), "operators", operators)
+	w.logger.Info("succesfully updated stakes of operator subset for all quorums", "txHash", receipt.TxHash.String(), "operators", operators)
 	return receipt, nil
 
 }
@@ -322,6 +322,6 @@ func (w *AvsRegistryChainWriter) DeregisterOperator(
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
-	w.logger.Info("succesfully deregistered operator with the AVS's registry coordinator", "tx hash", receipt.TxHash.String())
+	w.logger.Info("succesfully deregistered operator with the AVS's registry coordinator", "txHash", receipt.TxHash.String())
 	return receipt, nil
 }
