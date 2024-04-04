@@ -28,10 +28,6 @@ var (
 	)
 
 	// Metadata Errors
-
-	ErrNameRequired           = errors.New("name is required")
-	ErrDescriptionRequired    = errors.New("description is required")
-	ErrDescriptionTooLong     = errors.New("description should be less than 200 characters")
 	ErrInvalidTwitterUrlRegex = errors.New(
 		"invalid twitter url, it should be of the format https://twitter.com/<username> or https://x.com/<username>",
 	)
