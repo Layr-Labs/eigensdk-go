@@ -1,7 +1,7 @@
 package types
 
 import (
-	"io"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -161,17 +161,7 @@ func isImageURL(urlString string) error {
 	// Check if the extension is in the list of image extensions
 	for _, imgExt := range ImageExtensions {
 		if strings.EqualFold(extension, imgExt) {
-			imageResponse, err := http.Get(urlString)
-			if err != nil {
-				return err
-			}
-
-			// Check if the response status was an error
-			if imageResponse.StatusCode >= 400 {
-				return ErrImageFetchFailed
-			}
-
-			imageBytes, err := io.ReadAll(imageResponse.Body)
+			imageBytes, err := utils.ReadPublicUrl(urlString)
 			if err != nil {
 				return err
 			}
@@ -205,4 +195,14 @@ func validateText(text string) error {
 	}
 
 	return nil
+}
+func ValidateRawGithubUrl(url string) error {
+	// Regular expression to validate URLs
+	// https://raw.githubusercontent.com/
+	rawGitHubUrlPattern := regexp.MustCompile(`^https?://raw\.githubusercontent\.com/.*$`)
+
+	// Check if the URL matches the regular expression
+	if !rawGitHubUrlPattern.MatchString(url) {
+		return ErrInvalidUrl
+	}
 }

@@ -3,16 +3,13 @@ package types
 import (
 	"encoding/json"
 	"fmt"
-	"io"
-	"log/slog"
-	"math/big"
-	"net/http"
-
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
+	"log/slog"
+	"math/big"
 )
 
 const (
@@ -51,19 +48,7 @@ func (o Operator) Validate() error {
 		return WrapError(ErrInvalidMetadataUrl, err)
 	}
 
-	resp, err := http.Get(o.MetadataUrl)
-	if err != nil {
-		return err
-	}
-
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			fmt.Println("error closing metadata url body")
-		}
-	}(resp.Body)
-
-	body, err := io.ReadAll(resp.Body)
+	body, err := utils.ReadPublicUrl(o.MetadataUrl)
 	if err != nil {
 		return WrapError(ErrReadingMetadataUrlResponse, err)
 	}

@@ -4,11 +4,16 @@ import (
 	"crypto/ecdsa"
 	"encoding/json"
 	"errors"
+
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"gopkg.in/yaml.v3"
 	"log"
 	"math/big"
+
+	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -74,4 +79,30 @@ func RoundUpDivideBig(a, b *big.Int) *big.Int {
 func IsValidEthereumAddress(address string) bool {
 	re := regexp.MustCompile("^0x[0-9a-fA-F]{40}$")
 	return re.MatchString(address)
+}
+
+func ReadPublicUrl(url string) ([]byte, error) {
+	// allow no redirects
+	httpClient := http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+	resp, err := httpClient.Get(url)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	if resp.StatusCode >= 400 {
+		return []byte{}, fmt.Errorf("error fetching url: %s", resp.Status)
+	}
+
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			fmt.Println("error closing url body")
+		}
+	}(resp.Body)
+
+	return io.ReadAll(resp.Body)
 }
