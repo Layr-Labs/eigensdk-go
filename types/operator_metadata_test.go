@@ -13,12 +13,32 @@ func TestOperatorMetadata(t *testing.T) {
 		expectedError error
 	}{
 		{
-			name: "Valid metadata",
+			name: "Valid metadata with twitter.com url",
 			metadata: OperatorMetadata{
 				Name:        "test",
 				Description: "test",
 				Logo:        "https://goerli-operator-metadata.s3.amazonaws.com/eigenlayer.png",
 				Twitter:     "https://twitter.com/test",
+				Website:     "https://test.com",
+			},
+		},
+		{
+			name: "Valid metadata with twitter.com url with /",
+			metadata: OperatorMetadata{
+				Name:        "test",
+				Description: "test",
+				Logo:        "https://goerli-operator-metadata.s3.amazonaws.com/eigenlayer.png",
+				Twitter:     "https://twitter.com/test/",
+				Website:     "https://test.com",
+			},
+		},
+		{
+			name: "Valid metadata with x.com twitter url",
+			metadata: OperatorMetadata{
+				Name:        "test",
+				Description: "test",
+				Logo:        "https://goerli-operator-metadata.s3.amazonaws.com/eigenlayer.png",
+				Twitter:     "https://x.com/test",
 				Website:     "https://test.com",
 			},
 		},
@@ -97,7 +117,7 @@ func TestOperatorMetadata(t *testing.T) {
 				Twitter:     "ftp://twitter.com/test",
 				Website:     "https://test.com",
 			},
-			expectedError: WrapError(ErrInvalidTwitterUrl, ErrInvalidUrl),
+			expectedError: WrapError(ErrInvalidTwitterUrl, ErrInvalidTwitterUrlRegex),
 		},
 		{
 			name: "Invalid metadata - invalid logo no extension",
@@ -163,7 +183,7 @@ func TestOperatorMetadata(t *testing.T) {
 				Twitter:     "ht://twitter.com/test",
 				Website:     "https://test.com",
 			},
-			expectedError: WrapError(ErrInvalidTwitterUrl, ErrInvalidUrl),
+			expectedError: WrapError(ErrInvalidTwitterUrl, ErrInvalidTwitterUrlRegex),
 		},
 		{
 			name: "Invalid metadata - invalid twitter url #3",
@@ -175,6 +195,17 @@ func TestOperatorMetadata(t *testing.T) {
 				Website:     "https://test.com",
 			},
 			expectedError: WrapError(ErrInvalidTwitterUrl, ErrInvalidUrl),
+		},
+		{
+			name: "Invalid metadata - invalid twitter url #4 - not twitter url",
+			metadata: OperatorMetadata{
+				Name:        "test",
+				Description: "test",
+				Logo:        "https://goerli-operator-metadata.s3.amazonaws.com/eigenlayer.png",
+				Twitter:     "https://facebook.com/test",
+				Website:     "https://test.com",
+			},
+			expectedError: WrapError(ErrInvalidTwitterUrl, ErrInvalidTwitterUrlRegex),
 		},
 	}
 
