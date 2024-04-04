@@ -1,6 +1,7 @@
 package types
 
 import (
+	"errors"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 	"testing"
 
@@ -84,7 +85,7 @@ func TestOperatorValidate(t *testing.T) {
 				MetadataUrl:               "https://example.com/metadata.json",
 			},
 			wantErr:     true,
-			expectedErr: ErrUnmarshalOperatorMetadata,
+			expectedErr: WrapError(ErrReadingMetadataUrlResponse, errors.New("error fetching url: 404 Not Found")),
 		},
 		{
 			name: "failed operator validation - wrong operator address",
