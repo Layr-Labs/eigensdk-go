@@ -93,7 +93,7 @@ func checkIfValidTwitterURL(twitterURL string) error {
 	}
 
 	// Regular expression to validate URLs
-	urlPattern := regexp.MustCompile(`^(?:https?://)?(?:www\.)?twitter\.com/\w+|x\.com/\w+$`)
+	urlPattern := regexp.MustCompile(`^(?:https?://)?(?:www\.)?(?:twitter\.com/\w+|x\.com/\w+)(?:/?|$)`)
 
 	// Check if the URL matches the regular expression
 	if !urlPattern.MatchString(twitterURL) {

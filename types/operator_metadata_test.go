@@ -23,6 +23,16 @@ func TestOperatorMetadata(t *testing.T) {
 			},
 		},
 		{
+			name: "Valid metadata with twitter.com url with /",
+			metadata: OperatorMetadata{
+				Name:        "test",
+				Description: "test",
+				Logo:        "https://goerli-operator-metadata.s3.amazonaws.com/eigenlayer.png",
+				Twitter:     "https://twitter.com/test/",
+				Website:     "https://test.com",
+			},
+		},
+		{
 			name: "Valid metadata with x.com twitter url",
 			metadata: OperatorMetadata{
 				Name:        "test",
