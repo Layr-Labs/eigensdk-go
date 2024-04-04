@@ -14,6 +14,8 @@ var (
 		ZeroAddress,
 	)
 
+	ErrEmptyText                = errors.New("text is empty")
+	ErrInvalidText              = errors.New("text is invalid")
 	ErrEmptyUrl                 = errors.New("url is empty")
 	ErrUrlPointingToLocalServer = errors.New("url should not point to local server")
 	ErrInvalidUrlLength         = errors.New("url length should be no larger than 1024 character")
@@ -26,15 +28,20 @@ var (
 	)
 
 	// Metadata Errors
+
 	ErrNameRequired           = errors.New("name is required")
 	ErrDescriptionRequired    = errors.New("description is required")
 	ErrDescriptionTooLong     = errors.New("description should be less than 200 characters")
-	ErrLogoRequired           = errors.New("logo is required")
-	ErrInvalidWebsiteUrl      = errors.New("invalid website url")
-	ErrInvalidTwitterUrl      = errors.New("invalid twitter url")
 	ErrInvalidTwitterUrlRegex = errors.New(
 		"invalid twitter url, it should be of the format https://twitter.com/<username> or https://x.com/<username>",
 	)
+
+	ErrInvalidName        = errors.New("name is invalid")
+	ErrInvalidDescription = errors.New("description is invalid")
+	ErrTextTooLong        = errors.New("text should be less than 200 characters")
+	ErrLogoRequired       = errors.New("logo is required")
+	ErrInvalidWebsiteUrl  = errors.New("invalid website url")
+	ErrInvalidTwitterUrl  = errors.New("invalid twitter url")
 
 	ErrInvalidMetadataUrl         = errors.New("invalid metadata url")
 	ErrUnmarshalOperatorMetadata  = errors.New("unable to unmarshal operator metadata")

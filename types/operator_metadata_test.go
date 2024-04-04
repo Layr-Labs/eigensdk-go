@@ -15,7 +15,7 @@ func TestOperatorMetadata(t *testing.T) {
 		{
 			name: "Valid metadata with twitter.com url",
 			metadata: OperatorMetadata{
-				Name:        "test",
+				Name:        "Ethereum Utopia",
 				Description: "test",
 				Logo:        "https://goerli-operator-metadata.s3.amazonaws.com/eigenlayer.png",
 				Twitter:     "https://twitter.com/test",
@@ -51,7 +51,18 @@ func TestOperatorMetadata(t *testing.T) {
 				Twitter:     "https://twitter.com/test",
 				Website:     "https://test.com",
 			},
-			expectedError: ErrNameRequired,
+			expectedError: WrapError(ErrInvalidName, ErrEmptyText),
+		},
+		{
+			name: "Invalid metadata - name has js script",
+			metadata: OperatorMetadata{
+				Name:        "<script> alert('test') </script>",
+				Description: "test",
+				Logo:        "https://goerli-operator-metadata.s3.amazonaws.com/eigenlayer.png",
+				Twitter:     "https://twitter.com/test",
+				Website:     "https://test.com",
+			},
+			expectedError: WrapError(ErrInvalidName, ErrInvalidText),
 		},
 		{
 			name: "Invalid metadata - no description",
@@ -62,7 +73,7 @@ func TestOperatorMetadata(t *testing.T) {
 				Twitter:     "https://twitter.com/test",
 				Website:     "https://test.com",
 			},
-			expectedError: ErrDescriptionRequired,
+			expectedError: WrapError(ErrInvalidDescription, ErrEmptyText),
 		},
 		{
 			name: "Invalid metadata - wrong image format",
@@ -87,6 +98,17 @@ func TestOperatorMetadata(t *testing.T) {
 			expectedError: ErrInvalidImageMimeType,
 		},
 		{
+			name: "Invalid metadata - name > 200 characters",
+			metadata: OperatorMetadata{
+				Name:        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+				Description: "test",
+				Logo:        "https://goerli-operator-metadata.s3.amazonaws.com/eigenlayer.png",
+				Twitter:     "https://twitter.com/test",
+				Website:     "https://test.com",
+			},
+			expectedError: WrapError(ErrInvalidName, ErrTextTooLong),
+		},
+		{
 			name: "Invalid metadata - description > 200 characters",
 			metadata: OperatorMetadata{
 				Name:        "test",
@@ -95,7 +117,7 @@ func TestOperatorMetadata(t *testing.T) {
 				Twitter:     "https://twitter.com/test",
 				Website:     "https://test.com",
 			},
-			expectedError: ErrDescriptionTooLong,
+			expectedError: WrapError(ErrInvalidDescription, ErrTextTooLong),
 		},
 		{
 			name: "Invalid metadata - no logo",
