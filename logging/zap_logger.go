@@ -20,8 +20,10 @@ type ZapLogger struct {
 var _ Logger = (*ZapLogger)(nil)
 
 func NewZapLogger(env LogLevel) (Logger, error) {
+	callerSkip := zap.AddCallerSkip(1)
+
 	if env == Production {
-		logger, err := zap.NewProduction()
+		logger, err := zap.NewProduction(callerSkip)
 		if err != nil {
 			panic(err)
 		}
@@ -29,7 +31,7 @@ func NewZapLogger(env LogLevel) (Logger, error) {
 			logger: logger,
 		}, nil
 	} else if env == Development {
-		logger, err := zap.NewDevelopment()
+		logger, err := zap.NewDevelopment(callerSkip)
 		if err != nil {
 			panic(err)
 		}
