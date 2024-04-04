@@ -48,28 +48,26 @@ type OperatorMetadata struct {
 }
 
 func (om *OperatorMetadata) Validate() error {
-	if len(om.Name) == 0 {
-		return ErrNameRequired
+	err := validateText(om.Name)
+	if err != nil {
+		return WrapError(ErrInvalidName, err)
 	}
 
-	if len(om.Description) == 0 {
-		return ErrDescriptionRequired
-	}
-
-	if len(om.Description) > 200 {
-		return ErrDescriptionTooLong
+	err = validateText(om.Description)
+	if err != nil {
+		return WrapError(ErrInvalidDescription, err)
 	}
 
 	if len(om.Logo) == 0 {
 		return ErrLogoRequired
 	}
 
-	if err := isImageURL(om.Logo); err != nil {
+	if err = isImageURL(om.Logo); err != nil {
 		return err
 	}
 
 	if len(om.Website) != 0 {
-		err := checkIfUrlIsValid(om.Website)
+		err = checkIfUrlIsValid(om.Website)
 		if err != nil {
 			return WrapError(ErrInvalidWebsiteUrl, err)
 		}
@@ -187,4 +185,24 @@ func isImageURL(urlString string) error {
 	}
 
 	return ErrInvalidImageExtension
+}
+
+func validateText(text string) error {
+	if len(text) == 0 {
+		return ErrEmptyText
+	}
+
+	if len(text) > 200 {
+		return ErrTextTooLong
+	}
+
+	// Regular expression to validate text
+	textPattern := regexp.MustCompile(`^[a-zA-Z0-9 .,;:?!'"\-_/()\[\]]+$`)
+
+	// Check if the URL matches the regular expression
+	if !textPattern.MatchString(text) {
+		return ErrInvalidText
+	}
+
+	return nil
 }
