@@ -99,7 +99,7 @@ func checkIfUrlIsValid(rawUrl string) error {
 	}
 
 	// Regular expression to validate URLs
-	urlPattern := regexp.MustCompile(`^(https?|ftp)://[^\s/$.?#].[^\s]*$`)
+	urlPattern := regexp.MustCompile(`^(https?)://[^\s/$.?#].[^\s]*$`)
 
 	// Check if the URL matches the regular expression
 	if !urlPattern.MatchString(rawUrl) {
