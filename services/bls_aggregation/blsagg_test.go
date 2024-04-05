@@ -337,7 +337,7 @@ func TestBlsAgg(t *testing.T) {
 		require.Equal(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
 	})
 
-	t.Run("2 quorums 2 operators which just stake 1 quorum; 2 correct signature - verified", func(t *testing.T) {
+	t.Run("2 quorums 2 operators which just stake one quorum; 2 correct signature - verified", func(t *testing.T) {
 		testOperator1 := types.TestOperator{
 			OperatorId: types.OperatorId{1},
 			// Note the quorums is {0, 1}, but operator id 1 just stake 0.
@@ -385,7 +385,7 @@ func TestBlsAgg(t *testing.T) {
 		require.EqualValues(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
 	})
 
-	t.Run("2 quorum 3 operator which just stake 1 quorum; 2 correct signature quorumThreshold 50% - verified", func(t *testing.T) {
+	t.Run("2 quorums 3 operators which just stake one quorum; 2 correct signature quorumThreshold 50% - verified", func(t *testing.T) {
 		testOperator1 := types.TestOperator{
 			OperatorId: types.OperatorId{1},
 			// Note the quorums is {0, 1}, but operator id 1 just stake 0.
@@ -440,7 +440,7 @@ func TestBlsAgg(t *testing.T) {
 		require.EqualValues(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
 	})
 
-	t.Run("2 quorum 3 operator which just stake 1 quorum; 2 correct signature quorumThreshold 60% - task expired", func(t *testing.T) {
+	t.Run("2 quorums 3 operators which just stake one quorum; 2 correct signature quorumThreshold 60% - task expired", func(t *testing.T) {
 		testOperator1 := types.TestOperator{
 			OperatorId: types.OperatorId{1},
 			// Note the quorums is {0, 1}, but operator id 1 just stake 0.
@@ -484,7 +484,7 @@ func TestBlsAgg(t *testing.T) {
 		require.EqualValues(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
 	})
 
-	t.Run("2 quorums 1 operators which just stake 0; 1 signatures - task expired", func(t *testing.T) {
+	t.Run("2 quorums 1 operators which just stake one quorum; 1 signatures - task expired", func(t *testing.T) {
 		testOperator1 := types.TestOperator{
 			OperatorId: types.OperatorId{1},
 			// Note the quorums is {0, 1}, but operator id 1 just stake 0.
@@ -514,7 +514,7 @@ func TestBlsAgg(t *testing.T) {
 		require.EqualValues(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
 	})
 
-	t.Run("2 quorums 2 operators, 1 operator which just stake 0; 1 signatures - task expired", func(t *testing.T) {
+	t.Run("2 quorums 2 operators, 1 operator which just stake one quorum; 1 signatures - task expired", func(t *testing.T) {
 		testOperator1 := types.TestOperator{
 			OperatorId: types.OperatorId{1},
 			// Note the quorums is {0, 1}, but operator id 1 just stake 0.
