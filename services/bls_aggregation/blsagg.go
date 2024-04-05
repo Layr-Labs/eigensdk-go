@@ -374,6 +374,7 @@ func checkIfStakeThresholdsMet(
 		if !ok {
 			// signedStakePerQuorum not contain the quorum,
 			// this case means signedStakePerQuorum has not signed for each quorum.
+			// even the total stake for this quorum is zero.
 			return false
 		}
 

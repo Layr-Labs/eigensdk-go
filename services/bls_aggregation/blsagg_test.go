@@ -514,6 +514,41 @@ func TestBlsAgg(t *testing.T) {
 		require.EqualValues(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
 	})
 
+	t.Run("2 quorums 2 operators, 1 operator which just stake 0; 1 signatures - task expired", func(t *testing.T) {
+		testOperator1 := types.TestOperator{
+			OperatorId: types.OperatorId{1},
+			// Note the quorums is {0, 1}, but operator id 1 just stake 0.
+			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100)},
+			BlsKeypair:     newBlsKeyPairPanics("0x1"),
+		}
+		testOperator2 := types.TestOperator{
+			OperatorId:     types.OperatorId{2},
+			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{1: big.NewInt(200)},
+			BlsKeypair:     newBlsKeyPairPanics("0x2"),
+		}
+		taskIndex := types.TaskIndex(0)
+		quorumNumbers := types.QuorumNums{0, 1}
+		quorumThresholdPercentages := []types.QuorumThresholdPercentage{100, 100}
+		taskResponseDigest := types.TaskResponseDigest{123}
+		blockNum := uint32(1)
+
+		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1, testOperator2})
+		noopLogger := logging.NewNoopLogger()
+		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
+
+		err := blsAggServ.InitializeNewTask(taskIndex, blockNum, quorumNumbers, quorumThresholdPercentages, tasksTimeToExpiry)
+		require.Nil(t, err)
+		blsSigOp1 := testOperator1.BlsKeypair.SignMessage(taskResponseDigest)
+		err = blsAggServ.ProcessNewSignature(context.Background(), taskIndex, taskResponseDigest, blsSigOp1, testOperator1.OperatorId)
+		require.Nil(t, err)
+
+		wantAggregationServiceResponse := BlsAggregationServiceResponse{
+			Err: TaskExpiredError,
+		}
+		gotAggregationServiceResponse := <-blsAggServ.aggregatedResponsesC
+		require.EqualValues(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
+	})
+
 	t.Run("send signature of task that isn't initialized - task not found error", func(t *testing.T) {
 		testOperator1 := types.TestOperator{
 			OperatorId:     types.OperatorId{1},
