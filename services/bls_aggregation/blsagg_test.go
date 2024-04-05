@@ -337,6 +337,183 @@ func TestBlsAgg(t *testing.T) {
 		require.Equal(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
 	})
 
+	t.Run("2 quorums 2 operators which just stake 1 quorum; 2 correct signature - verified", func(t *testing.T) {
+		testOperator1 := types.TestOperator{
+			OperatorId: types.OperatorId{1},
+			// Note the quorums is {0, 1}, but operator id 1 just stake 0.
+			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100)},
+			BlsKeypair:     newBlsKeyPairPanics("0x1"),
+		}
+		testOperator2 := types.TestOperator{
+			OperatorId: types.OperatorId{2},
+			// Note the quorums is {0, 1}, but operator id 1 just stake 0.
+			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{1: big.NewInt(200)},
+			BlsKeypair:     newBlsKeyPairPanics("0x2"),
+		}
+		taskIndex := types.TaskIndex(0)
+		quorumNumbers := types.QuorumNums{0, 1}
+		quorumThresholdPercentages := []types.QuorumThresholdPercentage{100, 100}
+		taskResponseDigest := types.TaskResponseDigest{123}
+		blockNum := uint32(1)
+
+		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1, testOperator2})
+		noopLogger := logging.NewNoopLogger()
+		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
+
+		err := blsAggServ.InitializeNewTask(taskIndex, blockNum, quorumNumbers, quorumThresholdPercentages, tasksTimeToExpiry)
+		require.Nil(t, err)
+		blsSigOp1 := testOperator1.BlsKeypair.SignMessage(taskResponseDigest)
+		err = blsAggServ.ProcessNewSignature(context.Background(), taskIndex, taskResponseDigest, blsSigOp1, testOperator1.OperatorId)
+		require.Nil(t, err)
+		blsSigOp2 := testOperator2.BlsKeypair.SignMessage(taskResponseDigest)
+		err = blsAggServ.ProcessNewSignature(context.Background(), taskIndex, taskResponseDigest, blsSigOp2, testOperator2.OperatorId)
+		require.Nil(t, err)
+
+		wantAggregationServiceResponse := BlsAggregationServiceResponse{
+			Err:                 nil,
+			TaskIndex:           taskIndex,
+			TaskResponseDigest:  taskResponseDigest,
+			NonSignersPubkeysG1: []*bls.G1Point{},
+			QuorumApksG1: []*bls.G1Point{
+				bls.NewZeroG1Point().Add(testOperator1.BlsKeypair.GetPubKeyG1()),
+				bls.NewZeroG1Point().Add(testOperator2.BlsKeypair.GetPubKeyG1()),
+			},
+			SignersApkG2:    testOperator1.BlsKeypair.GetPubKeyG2().Add(testOperator2.BlsKeypair.GetPubKeyG2()),
+			SignersAggSigG1: testOperator1.BlsKeypair.SignMessage(taskResponseDigest).Add(testOperator2.BlsKeypair.SignMessage(taskResponseDigest)),
+		}
+		gotAggregationServiceResponse := <-blsAggServ.aggregatedResponsesC
+		require.EqualValues(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
+	})
+
+	t.Run("2 quorum 3 operator which just stake 1 quorum; 2 correct signature quorumThreshold 50% - verified", func(t *testing.T) {
+		testOperator1 := types.TestOperator{
+			OperatorId: types.OperatorId{1},
+			// Note the quorums is {0, 1}, but operator id 1 just stake 0.
+			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100)},
+			BlsKeypair:     newBlsKeyPairPanics("0x1"),
+		}
+		testOperator2 := types.TestOperator{
+			OperatorId: types.OperatorId{2},
+			// Note the quorums is {0, 1}, but operator id 2 just stake 1.
+			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{1: big.NewInt(200)},
+			BlsKeypair:     newBlsKeyPairPanics("0x2"),
+		}
+		testOperator3 := types.TestOperator{
+			OperatorId:     types.OperatorId{3},
+			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100), 1: big.NewInt(200)},
+			BlsKeypair:     newBlsKeyPairPanics("0x3"),
+		}
+		taskIndex := types.TaskIndex(0)
+		quorumNumbers := types.QuorumNums{0, 1}
+		quorumThresholdPercentages := []types.QuorumThresholdPercentage{50, 50}
+		taskResponseDigest := types.TaskResponseDigest{123}
+		blockNum := uint32(1)
+
+		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1, testOperator2, testOperator3})
+		noopLogger := logging.NewNoopLogger()
+		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
+
+		err := blsAggServ.InitializeNewTask(taskIndex, blockNum, quorumNumbers, quorumThresholdPercentages, tasksTimeToExpiry)
+		require.Nil(t, err)
+		blsSigOp1 := testOperator1.BlsKeypair.SignMessage(taskResponseDigest)
+		err = blsAggServ.ProcessNewSignature(context.Background(), taskIndex, taskResponseDigest, blsSigOp1, testOperator1.OperatorId)
+		require.Nil(t, err)
+		blsSigOp2 := testOperator2.BlsKeypair.SignMessage(taskResponseDigest)
+		err = blsAggServ.ProcessNewSignature(context.Background(), taskIndex, taskResponseDigest, blsSigOp2, testOperator2.OperatorId)
+		require.Nil(t, err)
+
+		wantAggregationServiceResponse := BlsAggregationServiceResponse{
+			Err:                nil,
+			TaskIndex:          taskIndex,
+			TaskResponseDigest: taskResponseDigest,
+			NonSignersPubkeysG1: []*bls.G1Point{
+				testOperator3.BlsKeypair.GetPubKeyG1(),
+			},
+			QuorumApksG1: []*bls.G1Point{
+				bls.NewZeroG1Point().Add(testOperator1.BlsKeypair.GetPubKeyG1()).Add(testOperator3.BlsKeypair.GetPubKeyG1()),
+				bls.NewZeroG1Point().Add(testOperator2.BlsKeypair.GetPubKeyG1()).Add(testOperator3.BlsKeypair.GetPubKeyG1()),
+			},
+			SignersApkG2:    testOperator1.BlsKeypair.GetPubKeyG2().Add(testOperator2.BlsKeypair.GetPubKeyG2()),
+			SignersAggSigG1: testOperator1.BlsKeypair.SignMessage(taskResponseDigest).Add(testOperator2.BlsKeypair.SignMessage(taskResponseDigest)),
+		}
+		gotAggregationServiceResponse := <-blsAggServ.aggregatedResponsesC
+		require.EqualValues(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
+	})
+
+	t.Run("2 quorum 3 operator which just stake 1 quorum; 2 correct signature quorumThreshold 60% - task expired", func(t *testing.T) {
+		testOperator1 := types.TestOperator{
+			OperatorId: types.OperatorId{1},
+			// Note the quorums is {0, 1}, but operator id 1 just stake 0.
+			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100)},
+			BlsKeypair:     newBlsKeyPairPanics("0x1"),
+		}
+		testOperator2 := types.TestOperator{
+			OperatorId: types.OperatorId{2},
+			// Note the quorums is {0, 1}, but operator id 2 just stake 1.
+			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{1: big.NewInt(200)},
+			BlsKeypair:     newBlsKeyPairPanics("0x2"),
+		}
+		testOperator3 := types.TestOperator{
+			OperatorId:     types.OperatorId{3},
+			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100), 1: big.NewInt(200)},
+			BlsKeypair:     newBlsKeyPairPanics("0x3"),
+		}
+		taskIndex := types.TaskIndex(0)
+		quorumNumbers := types.QuorumNums{0, 1}
+		quorumThresholdPercentages := []types.QuorumThresholdPercentage{60, 60}
+		taskResponseDigest := types.TaskResponseDigest{123}
+		blockNum := uint32(1)
+
+		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1, testOperator2, testOperator3})
+		noopLogger := logging.NewNoopLogger()
+		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
+
+		err := blsAggServ.InitializeNewTask(taskIndex, blockNum, quorumNumbers, quorumThresholdPercentages, tasksTimeToExpiry)
+		require.Nil(t, err)
+		blsSigOp1 := testOperator1.BlsKeypair.SignMessage(taskResponseDigest)
+		err = blsAggServ.ProcessNewSignature(context.Background(), taskIndex, taskResponseDigest, blsSigOp1, testOperator1.OperatorId)
+		require.Nil(t, err)
+		blsSigOp2 := testOperator2.BlsKeypair.SignMessage(taskResponseDigest)
+		err = blsAggServ.ProcessNewSignature(context.Background(), taskIndex, taskResponseDigest, blsSigOp2, testOperator2.OperatorId)
+		require.Nil(t, err)
+
+		wantAggregationServiceResponse := BlsAggregationServiceResponse{
+			Err: TaskExpiredError,
+		}
+		gotAggregationServiceResponse := <-blsAggServ.aggregatedResponsesC
+		require.EqualValues(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
+	})
+
+	t.Run("2 quorums 1 operators which just stake 0; 1 signatures - task expired", func(t *testing.T) {
+		testOperator1 := types.TestOperator{
+			OperatorId: types.OperatorId{1},
+			// Note the quorums is {0, 1}, but operator id 1 just stake 0.
+			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100)},
+			BlsKeypair:     newBlsKeyPairPanics("0x1"),
+		}
+		taskIndex := types.TaskIndex(0)
+		quorumNumbers := types.QuorumNums{0, 1}
+		quorumThresholdPercentages := []types.QuorumThresholdPercentage{100, 100}
+		taskResponseDigest := types.TaskResponseDigest{123}
+		blockNum := uint32(1)
+
+		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1})
+		noopLogger := logging.NewNoopLogger()
+		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
+
+		err := blsAggServ.InitializeNewTask(taskIndex, blockNum, quorumNumbers, quorumThresholdPercentages, tasksTimeToExpiry)
+		require.Nil(t, err)
+		blsSigOp1 := testOperator1.BlsKeypair.SignMessage(taskResponseDigest)
+		err = blsAggServ.ProcessNewSignature(context.Background(), taskIndex, taskResponseDigest, blsSigOp1, testOperator1.OperatorId)
+		require.Nil(t, err)
+
+		wantAggregationServiceResponse := BlsAggregationServiceResponse{
+			Err: TaskExpiredError,
+		}
+		gotAggregationServiceResponse := <-blsAggServ.aggregatedResponsesC
+		require.EqualValues(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
+	})
+
 	t.Run("send signature of task that isn't initialized - task not found error", func(t *testing.T) {
 		testOperator1 := types.TestOperator{
 			OperatorId:     types.OperatorId{1},
