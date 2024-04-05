@@ -3,7 +3,6 @@ package types
 import (
 	"errors"
 	"fmt"
-	"strings"
 )
 
 var (
@@ -14,27 +13,8 @@ var (
 		ZeroAddress,
 	)
 
-	ErrEmptyText                = errors.New("text is empty")
-	ErrInvalidText              = errors.New("text is invalid")
-	ErrEmptyUrl                 = errors.New("url is empty")
-	ErrUrlPointingToLocalServer = errors.New("url should not point to local server")
-	ErrInvalidUrlLength         = errors.New("url length should be no larger than 1024 character")
-	ErrInvalidUrl               = errors.New("invalid url")
-
-	ErrImageFetchFailed      = errors.New("error fetching operator logo")
-	ErrInvalidImageMimeType  = errors.New("invalid image mime-type. only png is supported")
-	ErrInvalidImageExtension = errors.New(
-		"invalid image extension. only " + strings.Join(ImageExtensions, ",") + " is supported",
-	)
-
-	// Metadata Errors
-	ErrInvalidTwitterUrlRegex = errors.New(
-		"invalid twitter url, it should be of the format https://twitter.com/<username> or https://x.com/<username>",
-	)
-
 	ErrInvalidName        = errors.New("name is invalid")
 	ErrInvalidDescription = errors.New("description is invalid")
-	ErrTextTooLong        = errors.New("text should be less than 200 characters")
 	ErrLogoRequired       = errors.New("logo is required")
 	ErrInvalidWebsiteUrl  = errors.New("invalid website url")
 	ErrInvalidTwitterUrl  = errors.New("invalid twitter url")

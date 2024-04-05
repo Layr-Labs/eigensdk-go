@@ -1,6 +1,8 @@
 package types
 
 import (
+	"errors"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -47,7 +49,7 @@ func TestOperatorValidate(t *testing.T) {
 				MetadataUrl:               "",
 			},
 			wantErr:     true,
-			expectedErr: WrapError(ErrInvalidMetadataUrl, ErrEmptyUrl),
+			expectedErr: WrapError(ErrInvalidMetadataUrl, utils.ErrEmptyUrl),
 		},
 		{
 			name: "failed operator validation - localhost metadata url",
@@ -59,7 +61,7 @@ func TestOperatorValidate(t *testing.T) {
 				MetadataUrl:               "http://localhost:8080/metadata.json",
 			},
 			wantErr:     true,
-			expectedErr: WrapError(ErrInvalidMetadataUrl, ErrUrlPointingToLocalServer),
+			expectedErr: WrapError(ErrInvalidMetadataUrl, utils.ErrUrlPointingToLocalServer),
 		},
 		{
 			name: "failed operator validation - 127.0.0.1 metadata url",
@@ -71,7 +73,7 @@ func TestOperatorValidate(t *testing.T) {
 				MetadataUrl:               "http://127.0.0.1:8080/metadata.json",
 			},
 			wantErr:     true,
-			expectedErr: WrapError(ErrInvalidMetadataUrl, ErrUrlPointingToLocalServer),
+			expectedErr: WrapError(ErrInvalidMetadataUrl, utils.ErrUrlPointingToLocalServer),
 		},
 		{
 			name: "failed operator validation - bad metadata",
@@ -83,7 +85,7 @@ func TestOperatorValidate(t *testing.T) {
 				MetadataUrl:               "https://example.com/metadata.json",
 			},
 			wantErr:     true,
-			expectedErr: ErrUnmarshalOperatorMetadata,
+			expectedErr: WrapError(ErrReadingMetadataUrlResponse, errors.New("error fetching url: 404 Not Found")),
 		},
 		{
 			name: "failed operator validation - wrong operator address",
