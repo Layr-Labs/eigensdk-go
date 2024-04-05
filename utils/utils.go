@@ -96,7 +96,7 @@ func IsValidEthereumAddress(address string) bool {
 	return re.MatchString(address)
 }
 
-func ReadPublicUrl(url string) ([]byte, error) {
+func ReadPublicURL(url string) ([]byte, error) {
 	// allow no redirects
 	httpClient := http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
@@ -120,7 +120,8 @@ func ReadPublicUrl(url string) ([]byte, error) {
 		}
 	}(resp.Body)
 
-	return io.ReadAll(resp.Body)
+	// allow images of up to 1 MiB
+	return io.ReadAll(http.MaxBytesReader(nil, resp.Body, 1*1024*1024))
 }
 
 func CheckIfValidTwitterURL(twitterURL string) error {
@@ -201,7 +202,7 @@ func IsImageURL(urlString string) error {
 	// Check if the extension is in the list of image extensions
 	for _, imgExt := range ImageExtensions {
 		if strings.EqualFold(extension, imgExt) {
-			imageBytes, err := ReadPublicUrl(urlString)
+			imageBytes, err := ReadPublicURL(urlString)
 			if err != nil {
 				return err
 			}
@@ -222,7 +223,7 @@ func ValidateText(text string) error {
 		return ErrEmptyText
 	}
 
-	if len(text) > 200 {
+	if len(text) > 500 {
 		return ErrTextTooLong
 	}
 
