@@ -370,11 +370,25 @@ func checkIfStakeThresholdsMet(
 	quorumThresholdPercentagesMap map[types.QuorumNum]types.QuorumThresholdPercentage,
 ) bool {
 	for quorumNum, quorumThresholdPercentage := range quorumThresholdPercentagesMap {
+		signedStakeByQuorum, ok := signedStakePerQuorum[quorumNum]
+		if !ok {
+			// signedStakePerQuorum not contain the quorum,
+			// this case means signedStakePerQuorum has not signed for each quorum.
+			return false
+		}
+
+		totalStakeByQuorum, ok := totalStakePerQuorum[quorumNum]
+		if !ok {
+			// Note this case should not happend, if not found in totalStakePerQuorum
+			// We can just think is zero
+			totalStakeByQuorum = big.NewInt(0)
+		}
+
 		// we check that signedStake >= totalStake * quorumThresholdPercentage / 100
 		// to be exact (and do like the contracts), we actually check that
 		// signedStake * 100 >= totalStake * quorumThresholdPercentage
-		signedStake := big.NewInt(0).Mul(signedStakePerQuorum[quorumNum], big.NewInt(100))
-		thresholdStake := big.NewInt(0).Mul(totalStakePerQuorum[quorumNum], big.NewInt(int64(quorumThresholdPercentage)))
+		signedStake := big.NewInt(0).Mul(signedStakeByQuorum, big.NewInt(100))
+		thresholdStake := big.NewInt(0).Mul(totalStakeByQuorum, big.NewInt(int64(quorumThresholdPercentage)))
 		if signedStake.Cmp(thresholdStake) < 0 {
 			return false
 		}
