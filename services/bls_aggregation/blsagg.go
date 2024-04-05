@@ -274,7 +274,7 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 			// because of https://github.com/golang/go/issues/3117
 			aggregatedOperatorsDict[signedTaskResponseDigest.TaskResponseDigest] = digestAggregatedOperators
 
-			if checkIfStakeThresholdsMet(digestAggregatedOperators.signersTotalStakePerQuorum, totalStakePerQuorum, quorumThresholdPercentagesMap) {
+			if checkIfStakeThresholdsMet(a.logger, digestAggregatedOperators.signersTotalStakePerQuorum, totalStakePerQuorum, quorumThresholdPercentagesMap) {
 				nonSignersOperatorIds := []types.OperatorId{}
 				for operatorId := range operatorsAvsStateDict {
 					if _, operatorSigned := digestAggregatedOperators.signersOperatorIdsSet[operatorId]; !operatorSigned {
@@ -365,6 +365,7 @@ func (a *BlsAggregatorService) verifySignature(
 // checkIfStakeThresholdsMet checks at least quorumThresholdPercentage of stake
 // has signed for each quorum.
 func checkIfStakeThresholdsMet(
+	logger logging.Logger,
 	signedStakePerQuorum map[types.QuorumNum]*big.Int,
 	totalStakePerQuorum map[types.QuorumNum]*big.Int,
 	quorumThresholdPercentagesMap map[types.QuorumNum]types.QuorumThresholdPercentage,
@@ -380,9 +381,11 @@ func checkIfStakeThresholdsMet(
 
 		totalStakeByQuorum, ok := totalStakePerQuorum[quorumNum]
 		if !ok {
-			// Note this case should not happend, if not found in totalStakePerQuorum
-			// We can just think is zero
-			totalStakeByQuorum = big.NewInt(0)
+			// Note this case should not happend.
+			// The `totalStakePerQuorum` is got from the contract, so if we not found the
+			// totalStakeByQuorum, that means the code have a bug.
+			logger.Errorf("TotalStake not found for quorum %d.", quorumNum)
+			return false
 		}
 
 		// we check that signedStake >= totalStake * quorumThresholdPercentage / 100
