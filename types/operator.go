@@ -48,7 +48,7 @@ func (o Operator) Validate() error {
 		return WrapError(ErrInvalidMetadataUrl, err)
 	}
 
-	body, err := utils.ReadPublicUrl(o.MetadataUrl)
+	body, err := utils.ReadPublicURL(o.MetadataUrl)
 	if err != nil {
 		return WrapError(ErrReadingMetadataUrlResponse, err)
 	}
