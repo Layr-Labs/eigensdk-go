@@ -278,9 +278,12 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 
 			if checkIfStakeThresholdsMet(digestAggregatedOperators.signersTotalStakePerQuorum, totalStakePerQuorum, quorumThresholdPercentagesMap) {
 				nonSignersOperatorIds := []types.OperatorId{}
-				for operatorId := range operatorsAvsStateDict {
+				nonSignersG1Pubkeys := []*bls.G1Point{}
+
+				for operatorId, operator := range operatorsAvsStateDict {
 					if _, operatorSigned := digestAggregatedOperators.signersOperatorIdsSet[operatorId]; !operatorSigned {
 						nonSignersOperatorIds = append(nonSignersOperatorIds, operatorId)
+						nonSignersG1Pubkeys = append(nonSignersG1Pubkeys, operator.Pubkeys.G1Pubkey)
 					}
 				}
 				indices, err := a.avsRegistryService.GetCheckSignaturesIndices(&bind.CallOpts{}, taskCreatedBlock, quorumNumbers, nonSignersOperatorIds)
@@ -294,7 +297,7 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 					Err:                          nil,
 					TaskIndex:                    taskIndex,
 					TaskResponseDigest:           signedTaskResponseDigest.TaskResponseDigest,
-					NonSignersPubkeysG1:          getG1PubkeysOfNonSigners(digestAggregatedOperators.signersOperatorIdsSet, operatorsAvsStateDict),
+					NonSignersPubkeysG1:          nonSignersG1Pubkeys,
 					QuorumApksG1:                 quorumApksG1,
 					SignersApkG2:                 digestAggregatedOperators.signersApkG2,
 					SignersAggSigG1:              digestAggregatedOperators.signersAggSigG1,
@@ -431,14 +434,4 @@ func checkIfStakeThresholdsMet(
 		}
 	}
 	return true
-}
-
-func getG1PubkeysOfNonSigners(signersOperatorIdsSet map[types.OperatorId]bool, operatorAvsStateDict map[types.OperatorId]types.OperatorAvsState) []*bls.G1Point {
-	nonSignersG1Pubkeys := []*bls.G1Point{}
-	for operatorId, operator := range operatorAvsStateDict {
-		if _, operatorSigned := signersOperatorIdsSet[operatorId]; !operatorSigned {
-			nonSignersG1Pubkeys = append(nonSignersG1Pubkeys, operator.Pubkeys.G1Pubkey)
-		}
-	}
-	return nonSignersG1Pubkeys
 }
