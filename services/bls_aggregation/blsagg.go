@@ -274,7 +274,7 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 			// because of https://github.com/golang/go/issues/3117
 			aggregatedOperatorsDict[signedTaskResponseDigest.TaskResponseDigest] = digestAggregatedOperators
 
-			if checkIfStakeThresholdsMet(digestAggregatedOperators.signersTotalStakePerQuorum, totalStakePerQuorum, quorumThresholdPercentagesMap) {
+			if checkIfStakeThresholdsMet(a.logger, digestAggregatedOperators.signersTotalStakePerQuorum, totalStakePerQuorum, quorumThresholdPercentagesMap) {
 				nonSignersOperatorIds := []types.OperatorId{}
 				for operatorId := range operatorsAvsStateDict {
 					if _, operatorSigned := digestAggregatedOperators.signersOperatorIdsSet[operatorId]; !operatorSigned {
@@ -365,16 +365,34 @@ func (a *BlsAggregatorService) verifySignature(
 // checkIfStakeThresholdsMet checks at least quorumThresholdPercentage of stake
 // has signed for each quorum.
 func checkIfStakeThresholdsMet(
+	logger logging.Logger,
 	signedStakePerQuorum map[types.QuorumNum]*big.Int,
 	totalStakePerQuorum map[types.QuorumNum]*big.Int,
 	quorumThresholdPercentagesMap map[types.QuorumNum]types.QuorumThresholdPercentage,
 ) bool {
 	for quorumNum, quorumThresholdPercentage := range quorumThresholdPercentagesMap {
+		signedStakeByQuorum, ok := signedStakePerQuorum[quorumNum]
+		if !ok {
+			// signedStakePerQuorum not contain the quorum,
+			// this case means signedStakePerQuorum has not signed for each quorum.
+			// even the total stake for this quorum is zero.
+			return false
+		}
+
+		totalStakeByQuorum, ok := totalStakePerQuorum[quorumNum]
+		if !ok {
+			// Note this case should not happend.
+			// The `totalStakePerQuorum` is got from the contract, so if we not found the
+			// totalStakeByQuorum, that means the code have a bug.
+			logger.Errorf("TotalStake not found for quorum %d.", quorumNum)
+			return false
+		}
+
 		// we check that signedStake >= totalStake * quorumThresholdPercentage / 100
 		// to be exact (and do like the contracts), we actually check that
 		// signedStake * 100 >= totalStake * quorumThresholdPercentage
-		signedStake := big.NewInt(0).Mul(signedStakePerQuorum[quorumNum], big.NewInt(100))
-		thresholdStake := big.NewInt(0).Mul(totalStakePerQuorum[quorumNum], big.NewInt(int64(quorumThresholdPercentage)))
+		signedStake := big.NewInt(0).Mul(signedStakeByQuorum, big.NewInt(100))
+		thresholdStake := big.NewInt(0).Mul(totalStakeByQuorum, big.NewInt(int64(quorumThresholdPercentage)))
 		if signedStake.Cmp(thresholdStake) < 0 {
 			return false
 		}
