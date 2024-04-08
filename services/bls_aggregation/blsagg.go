@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"sort"
 	"sync"
 	"time"
 
@@ -281,6 +282,20 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 						nonSignersOperatorIds = append(nonSignersOperatorIds, operatorId)
 					}
 				}
+
+				// the contract requires a sorted nonSignersOperatorIds
+				sort.SliceStable(nonSignersOperatorIds, func(i, j int) bool {
+					iOprInt := new(big.Int).SetBytes(nonSignersOperatorIds[i][:])
+					jOprInt := new(big.Int).SetBytes(nonSignersOperatorIds[j][:])
+					return iOprInt.Cmp(jOprInt) == -1
+				})
+
+				nonSignersG1Pubkeys := []*bls.G1Point{}
+				for _, operatorId := range nonSignersOperatorIds {
+					operator := operatorsAvsStateDict[operatorId]
+					nonSignersG1Pubkeys = append(nonSignersG1Pubkeys, operator.Pubkeys.G1Pubkey)
+				}
+
 				indices, err := a.avsRegistryService.GetCheckSignaturesIndices(&bind.CallOpts{}, taskCreatedBlock, quorumNumbers, nonSignersOperatorIds)
 				if err != nil {
 					a.aggregatedResponsesC <- BlsAggregationServiceResponse{
@@ -292,7 +307,7 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 					Err:                          nil,
 					TaskIndex:                    taskIndex,
 					TaskResponseDigest:           signedTaskResponseDigest.TaskResponseDigest,
-					NonSignersPubkeysG1:          getG1PubkeysOfNonSigners(digestAggregatedOperators.signersOperatorIdsSet, operatorsAvsStateDict),
+					NonSignersPubkeysG1:          nonSignersG1Pubkeys,
 					QuorumApksG1:                 quorumApksG1,
 					SignersApkG2:                 digestAggregatedOperators.signersApkG2,
 					SignersAggSigG1:              digestAggregatedOperators.signersAggSigG1,
@@ -398,14 +413,4 @@ func checkIfStakeThresholdsMet(
 		}
 	}
 	return true
-}
-
-func getG1PubkeysOfNonSigners(signersOperatorIdsSet map[types.OperatorId]bool, operatorAvsStateDict map[types.OperatorId]types.OperatorAvsState) []*bls.G1Point {
-	nonSignersG1Pubkeys := []*bls.G1Point{}
-	for operatorId, operator := range operatorAvsStateDict {
-		if _, operatorSigned := signersOperatorIdsSet[operatorId]; !operatorSigned {
-			nonSignersG1Pubkeys = append(nonSignersG1Pubkeys, operator.Pubkeys.G1Pubkey)
-		}
-	}
-	return nonSignersG1Pubkeys
 }
