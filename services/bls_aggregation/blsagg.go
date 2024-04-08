@@ -1,10 +1,12 @@
 package blsagg
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"math/big"
+	"sort"
 	"sync"
 	"time"
 
@@ -301,6 +303,16 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 					TotalStakeIndices:            indices.TotalStakeIndices,
 					NonSignerStakeIndices:        indices.NonSignerStakeIndices,
 				}
+
+				blsAggregationServiceResponse.NonSignersPubkeysG1,
+					blsAggregationServiceResponse.NonSignerQuorumBitmapIndices,
+					blsAggregationServiceResponse.NonSignerStakeIndices =
+					sortByOprId(
+						blsAggregationServiceResponse.NonSignersPubkeysG1,
+						blsAggregationServiceResponse.NonSignerQuorumBitmapIndices,
+						blsAggregationServiceResponse.NonSignerStakeIndices,
+					)
+
 				a.aggregatedResponsesC <- blsAggregationServiceResponse
 				return
 			}
@@ -312,6 +324,45 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 		}
 	}
 
+}
+
+type Wrapper struct {
+	pubkeyG1          *bls.G1Point
+	quorumBitmapIndex uint32
+	stakeIndex        []uint32
+}
+
+// note for caller, this method assumes quorumBitmapIndices & stakeIndices both have same length with pubkeysG1
+// will return original arrays if the lengths are not match
+func sortByOprId(pubkeysG1 []*bls.G1Point, quorumBitmapIndices []uint32, stakeIndices [][]uint32) (
+	retPubkeysG1 []*bls.G1Point, retQuorumBitmapIndices []uint32, retStakeIndices [][]uint32,
+) {
+	if len(pubkeysG1) != len(quorumBitmapIndices) || len(quorumBitmapIndices) != len(stakeIndices) ||
+		len(pubkeysG1) == 0 || len(pubkeysG1) == 1 {
+		return pubkeysG1, quorumBitmapIndices, stakeIndices
+	}
+
+	var wrappers []*Wrapper
+	for i := range pubkeysG1 {
+		wrappers = append(wrappers, &Wrapper{
+			pubkeyG1:          pubkeysG1[i],
+			quorumBitmapIndex: quorumBitmapIndices[i],
+			stakeIndex:        stakeIndices[i],
+		})
+	}
+	sort.SliceStable(wrappers, func(i, j int) bool {
+		iOpr := types.OperatorIdFromPubkey(wrappers[i].pubkeyG1)
+		jOpr := types.OperatorIdFromPubkey(wrappers[j].pubkeyG1)
+		return bytes.Compare(iOpr[:], jOpr[:]) == -1
+	})
+
+	for i := range wrappers {
+		retPubkeysG1 = append(retPubkeysG1, wrappers[i].pubkeyG1)
+		retQuorumBitmapIndices = append(retQuorumBitmapIndices, wrappers[i].quorumBitmapIndex)
+		retStakeIndices = append(retStakeIndices, wrappers[i].stakeIndex)
+	}
+
+	return
 }
 
 // closeTaskGoroutine is run when the goroutine processing taskIndex's task responses ends (for whatever reason)
