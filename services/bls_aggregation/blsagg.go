@@ -1,7 +1,6 @@
 package blsagg
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -356,7 +355,9 @@ func sortByOprId(pubkeysG1 []*bls.G1Point, quorumBitmapIndices []uint32, stakeIn
 	sort.SliceStable(wrappers, func(i, j int) bool {
 		iOpr := types.OperatorIdFromPubkey(wrappers[i].pubkeyG1)
 		jOpr := types.OperatorIdFromPubkey(wrappers[j].pubkeyG1)
-		return bytes.Compare(iOpr[:], jOpr[:]) == -1
+		iOprInt := new(big.Int).SetBytes(iOpr[:])
+		jOprInt := new(big.Int).SetBytes(jOpr[:])
+		return iOprInt.Cmp(jOprInt) == -1
 	})
 
 	for i := range wrappers {
