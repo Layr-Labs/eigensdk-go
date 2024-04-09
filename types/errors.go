@@ -31,12 +31,12 @@ func WrapError(mainErr error, subErr error) error {
 	}
 
 	if mainErr == nil && subErr != nil {
-		return fmt.Errorf("sub error: %s", subErr.Error())
+		return fmt.Errorf("sub error: %w", subErr)
 	}
 
 	if mainErr != nil && subErr == nil {
-		return fmt.Errorf("%s: unknown sub error", mainErr.Error())
+		return fmt.Errorf("%w: unknown sub error", mainErr)
 	}
 
-	return fmt.Errorf("%s: %s", mainErr.Error(), subErr.Error())
+	return fmt.Errorf("%w: %w", mainErr, subErr)
 }
