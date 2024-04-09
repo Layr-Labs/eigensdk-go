@@ -323,7 +323,30 @@ func TestWaitForTransactionReceiptFailFromFireblocks(t *testing.T) {
 	}, nil)
 
 	receipt, err := sender.GetTransactionReceipt(context.Background(), expectedTxHash)
-	assert.Error(t, err)
+	assert.ErrorAs(t, err, &wallet.ErrReceiptNotYetAvailable)
+	assert.Nil(t, receipt)
+}
+
+func TestWaitForTransactionReceiptStuckAtFireblocks(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	fireblocksClient := cmocks.NewMockFireblocksClient(ctrl)
+	ethClient := mocks.NewMockEthClient(ctrl)
+	logger, err := logging.NewZapLogger(logging.Development)
+	assert.NoError(t, err)
+	ethClient.EXPECT().ChainID(gomock.Any()).Return(big.NewInt(5), nil)
+	sender, err := wallet.NewFireblocksWallet(fireblocksClient, ethClient, vaultAccountName, logger)
+	assert.NoError(t, err)
+
+	expectedTxHash := "0x0000000000000000000000000000000000000000000000000000000000001234"
+	fireblocksClient.EXPECT().GetTransaction(gomock.Any(), expectedTxHash).Return(&fireblocks.Transaction{
+		ID:     expectedTxHash,
+		Status: fireblocks.PendingSignature, // not completed
+		TxHash: expectedTxHash,
+	}, nil)
+
+	receipt, err := sender.GetTransactionReceipt(context.Background(), expectedTxHash)
+	assert.ErrorAs(t, err, &wallet.ErrNotYetBroadcasted)
 	assert.Nil(t, receipt)
 }
 
