@@ -21,6 +21,10 @@ import (
 var _ Wallet = (*fireblocksWallet)(nil)
 
 var (
+	// ErrNotYetBroadcasted indicates that the transaction has not been broadcasted yet.
+	// This can happen if the transaction is still being processed by Fireblocks and has not been broadcasted to the blockchain yet.
+	ErrNotYetBroadcasted = errors.New("transaction not yet broadcasted")
+	// ErrReceiptNotYetAvailable indicates that the transaction has been broadcasted but has not been confirmed onchain yet.
 	ErrReceiptNotYetAvailable = errors.New("transaction receipt not yet available")
 	ErrTransactionFailed      = errors.New("transaction failed")
 )
@@ -207,7 +211,7 @@ func (t *fireblocksWallet) GetTransactionReceipt(ctx context.Context, txID TxID)
 	if err != nil {
 		return nil, fmt.Errorf("error getting fireblocks transaction %s: %w", txID, err)
 	}
-	if fireblockTx.Status == "COMPLETED" {
+	if fireblockTx.Status == fireblocks.Completed {
 		txHash := common.HexToHash(fireblockTx.TxHash)
 		receipt, err := t.ethClient.TransactionReceipt(ctx, txHash)
 		if err == nil {
@@ -225,11 +229,20 @@ func (t *fireblocksWallet) GetTransactionReceipt(ctx context.Context, txID TxID)
 		} else {
 			return nil, fmt.Errorf("Transaction receipt retrieval failed: %w", err)
 		}
-	} else if fireblockTx.Status == "FAILED" ||
-		fireblockTx.Status == "REJECTED" ||
-		fireblockTx.Status == "CANCELLED" ||
-		fireblockTx.Status == "BLOCKED" {
+	} else if fireblockTx.Status == fireblocks.Failed ||
+		fireblockTx.Status == fireblocks.Rejected ||
+		fireblockTx.Status == fireblocks.Cancelled ||
+		fireblockTx.Status == fireblocks.Blocked {
 		return nil, fmt.Errorf("%w: the Fireblocks transaction %s has been %s", ErrTransactionFailed, txID, fireblockTx.Status)
+	} else if fireblockTx.Status == fireblocks.Submitted ||
+		fireblockTx.Status == fireblocks.PendingScreening ||
+		fireblockTx.Status == fireblocks.PendingAuthorization ||
+		fireblockTx.Status == fireblocks.Queued ||
+		fireblockTx.Status == fireblocks.PendingSignature ||
+		fireblockTx.Status == fireblocks.PendingEmailApproval ||
+		fireblockTx.Status == fireblocks.Pending3rdParty ||
+		fireblockTx.Status == fireblocks.Broadcasting {
+		return nil, fmt.Errorf("%w: the Fireblocks transaction %s is in status %s", ErrNotYetBroadcasted, txID, fireblockTx.Status)
 	}
 
 	return nil, fmt.Errorf("%w: the Fireblocks transaction %s is in status %s", ErrReceiptNotYetAvailable, txID, fireblockTx.Status)
