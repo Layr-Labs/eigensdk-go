@@ -70,6 +70,9 @@ func (s SLogger) Fatal(msg string, tags ...any) {
 // logCorrectSource logs the message with the correct source information
 // adapted from https://pkg.go.dev/log/slog#example-package-Wrapping
 func (s SLogger) logCorrectSource(level slog.Level, msg string, tags ...any) {
+	if !s.Logger.Enabled(context.Background(), level) {
+		return
+	}
 	var pcs [1]uintptr
 	runtime.Callers(3, pcs[:]) // skip [Callers, logCorrectSource, Info/Debug/Warn/Error/Fatal]
 	r := slog.NewRecord(time.Now(), level, msg, pcs[0])
@@ -101,6 +104,9 @@ func (s SLogger) Fatalf(template string, args ...interface{}) {
 // logfCorrectSource logs the message with the correct source information
 // adapted from https://pkg.go.dev/log/slog#example-package-Wrapping
 func (s SLogger) logfCorrectSource(level slog.Level, template string, args ...interface{}) {
+	if !s.Logger.Enabled(context.Background(), level) {
+		return
+	}
 	var pcs [1]uintptr
 	runtime.Callers(3, pcs[:]) // skip [Callers, logfCorrectSource, Info/Debug/Warn/Error/Fatal]
 	r := slog.NewRecord(time.Now(), level, fmt.Sprintf(template, args...), pcs[0])
