@@ -32,13 +32,16 @@ var AssetIDByChain = map[uint64]AssetID{
 	17000: AssetIDHolETH,    // holesky
 }
 
-type FireblocksTxID string
-
 type Client interface {
 	// ContractCall makes a ContractCall request to the Fireblocks API.
 	// It signs and broadcasts a transaction and returns the transaction ID and status.
 	// ref: https://developers.fireblocks.com/reference/post_transactions
 	ContractCall(ctx context.Context, body *ContractCallRequest) (*ContractCallResponse, error)
+	// CancelTransaction makes a CancelTransaction request to the Fireblocks API
+	// It cancels a transaction by its transaction ID.
+	// It returns true if the transaction was successfully canceled.
+	// ref: https://developers.fireblocks.com/reference/post_transactions-txid-cancel
+	CancelTransaction(ctx context.Context, txID string) (bool, error)
 	// ListContracts makes a ListContracts request to the Fireblocks API
 	// It returns a list of whitelisted contracts and their assets for the account.
 	// This call is used to get the contract ID for a whitelisted contract, which is needed as destination account ID by NewContractCallRequest in a ContractCall
