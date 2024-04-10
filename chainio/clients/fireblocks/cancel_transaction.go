@@ -13,8 +13,8 @@ type CancelTransactionResponse struct {
 
 func (f *client) CancelTransaction(ctx context.Context, txID string) (bool, error) {
 	f.logger.Debug("Fireblocks cancel transaction", "txID", txID)
-	url := fmt.Sprintf("/v1/transactions/%s/cancel", txID)
-	res, err := f.makeRequest(ctx, "POST", url, nil)
+	path := fmt.Sprintf("/v1/transactions/%s/cancel", txID)
+	res, err := f.makeRequest(ctx, "POST", path, nil)
 	if err != nil {
 		return false, fmt.Errorf("error making request: %w", err)
 	}
