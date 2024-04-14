@@ -206,6 +206,10 @@ func (t *fireblocksWallet) SendTransaction(ctx context.Context, tx *types.Transa
 	return res.ID, nil
 }
 
+func (t *fireblocksWallet) CancelTransactionBroadcast(ctx context.Context, txID TxID) (bool, error) {
+	return t.fireblocksClient.CancelTransaction(ctx, string(txID))
+}
+
 func (t *fireblocksWallet) GetTransactionReceipt(ctx context.Context, txID TxID) (*types.Receipt, error) {
 	fireblockTx, err := t.fireblocksClient.GetTransaction(ctx, txID)
 	if err != nil {

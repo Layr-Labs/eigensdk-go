@@ -40,6 +40,21 @@ func (m *MockFireblocksClient) EXPECT() *MockFireblocksClientMockRecorder {
 	return m.recorder
 }
 
+// CancelTransaction mocks base method.
+func (m *MockFireblocksClient) CancelTransaction(arg0 context.Context, arg1 string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CancelTransaction", arg0, arg1)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CancelTransaction indicates an expected call of CancelTransaction.
+func (mr *MockFireblocksClientMockRecorder) CancelTransaction(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CancelTransaction", reflect.TypeOf((*MockFireblocksClient)(nil).CancelTransaction), arg0, arg1)
+}
+
 // ContractCall mocks base method.
 func (m *MockFireblocksClient) ContractCall(arg0 context.Context, arg1 *fireblocks.ContractCallRequest) (*fireblocks.ContractCallResponse, error) {
 	m.ctrl.T.Helper()

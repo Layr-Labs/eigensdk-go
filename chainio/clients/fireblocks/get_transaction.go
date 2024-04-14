@@ -49,8 +49,8 @@ type Transaction struct {
 
 func (f *client) GetTransaction(ctx context.Context, txID string) (*Transaction, error) {
 	f.logger.Debug("Fireblocks get transaction", "txID", txID)
-	url := fmt.Sprintf("/v1/transactions/%s", txID)
-	res, err := f.makeRequest(ctx, "GET", url, nil)
+	path := fmt.Sprintf("/v1/transactions/%s", txID)
+	res, err := f.makeRequest(ctx, "GET", path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error making request: %w", err)
 	}

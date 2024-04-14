@@ -66,6 +66,16 @@ func TestContractCall(t *testing.T) {
 	t.Logf("txID: %s, status: %s", resp.ID, resp.Status)
 }
 
+func TestCancelTransaction(t *testing.T) {
+	t.Skip("skipping test as it's meant for manual runs only")
+
+	c := newFireblocksClient(t)
+	txID := "FILL_ME_IN"
+	success, err := c.CancelTransaction(context.Background(), txID)
+	assert.NoError(t, err)
+	t.Logf("txID: %s, success: %t", txID, success)
+}
+
 func TestListVaultAccounts(t *testing.T) {
 	t.Skip("skipping test as it's meant for manual runs only")
 

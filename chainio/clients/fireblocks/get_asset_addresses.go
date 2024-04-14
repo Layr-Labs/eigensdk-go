@@ -20,8 +20,8 @@ type AssetAddress struct {
 
 func (f *client) GetAssetAddresses(ctx context.Context, vaultID string, assetID AssetID) ([]AssetAddress, error) {
 	f.logger.Debug("Fireblocks get asset addressees", "vaultID", vaultID, "assetID", assetID)
-	url := fmt.Sprintf("/v1/vault/accounts/%s/%s/addresses", vaultID, assetID)
-	res, err := f.makeRequest(ctx, "GET", url, nil)
+	path := fmt.Sprintf("/v1/vault/accounts/%s/%s/addresses", vaultID, assetID)
+	res, err := f.makeRequest(ctx, "GET", path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error making request: %w", err)
 	}
