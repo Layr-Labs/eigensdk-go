@@ -90,6 +90,7 @@ type AvsRegistryContractBindings struct {
 	StakeRegistryAddr          gethcommon.Address
 	BlsApkRegistryAddr         gethcommon.Address
 	OperatorStateRetrieverAddr gethcommon.Address
+	IndexRegistryAddr          gethcommon.Address
 	// contract bindings
 	ServiceManager         *servicemanager.ContractServiceManagerBase
 	RegistryCoordinator    *regcoordinator.ContractRegistryCoordinator
@@ -140,6 +141,10 @@ func NewAVSRegistryContractBindings(
 	if err != nil {
 		return nil, types.WrapError(errors.New("Failed to fetch BLSPubkeyRegistry address"), err)
 	}
+	indexRegistryAddr, err := contractBlsRegistryCoordinator.IndexRegistry(&bind.CallOpts{})
+	if err != nil {
+		return nil, types.WrapError(errors.New("Failed to fetch IndexRegistry address"), err)
+	}
 	contractBlsApkRegistry, err := blsapkregistry.NewContractBLSApkRegistry(
 		blsApkRegistryAddr,
 		ethclient,
@@ -161,6 +166,7 @@ func NewAVSRegistryContractBindings(
 		RegistryCoordinatorAddr:    registryCoordinatorAddr,
 		StakeRegistryAddr:          stakeregistryAddr,
 		BlsApkRegistryAddr:         blsApkRegistryAddr,
+		IndexRegistryAddr:          indexRegistryAddr,
 		OperatorStateRetrieverAddr: operatorStateRetrieverAddr,
 		ServiceManager:             contractServiceManager,
 		RegistryCoordinator:        contractBlsRegistryCoordinator,
