@@ -25,7 +25,7 @@ import (
 const (
 	PngMimeType = "image/png"
 
-	TextRegex = `^[a-zA-Z0-9 +.,;:?!'"\-_/()\[\]~&#$]+$`
+	TextRegex = `^[a-zA-Z0-9 +.,;:?!'"\-_/()\[\]~&#$—]+$`
 )
 
 var (
