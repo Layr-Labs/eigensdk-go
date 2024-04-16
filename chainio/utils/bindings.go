@@ -15,6 +15,7 @@ import (
 	blsapkregistry "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSApkRegistry"
 	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
 	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/ISlasher"
+	indexregistry "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IndexRegistry"
 	opstateretriever "github.com/Layr-Labs/eigensdk-go/contracts/bindings/OperatorStateRetriever"
 	regcoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
 	servicemanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/ServiceManagerBase"
@@ -96,6 +97,7 @@ type AvsRegistryContractBindings struct {
 	RegistryCoordinator    *regcoordinator.ContractRegistryCoordinator
 	StakeRegistry          *stakeregistry.ContractStakeRegistry
 	BlsApkRegistry         *blsapkregistry.ContractBLSApkRegistry
+	IndexRegistry          *indexregistry.ContractIndexRegistry
 	OperatorStateRetriever *opstateretriever.ContractOperatorStateRetriever
 }
 
@@ -141,16 +143,21 @@ func NewAVSRegistryContractBindings(
 	if err != nil {
 		return nil, types.WrapError(errors.New("Failed to fetch BLSPubkeyRegistry address"), err)
 	}
-	indexRegistryAddr, err := contractBlsRegistryCoordinator.IndexRegistry(&bind.CallOpts{})
-	if err != nil {
-		return nil, types.WrapError(errors.New("Failed to fetch IndexRegistry address"), err)
-	}
 	contractBlsApkRegistry, err := blsapkregistry.NewContractBLSApkRegistry(
 		blsApkRegistryAddr,
 		ethclient,
 	)
 	if err != nil {
 		return nil, types.WrapError(errors.New("Failed to fetch BLSPubkeyRegistry contract"), err)
+	}
+
+	indexRegistryAddr, err := contractBlsRegistryCoordinator.IndexRegistry(&bind.CallOpts{})
+	if err != nil {
+		return nil, types.WrapError(errors.New("Failed to fetch IndexRegistry address"), err)
+	}
+	contractIndexRegistry, err := indexregistry.NewContractIndexRegistry(indexRegistryAddr, ethclient)
+	if err != nil {
+		return nil, types.WrapError(errors.New("Failed to fetch IndexRegistry contract"), err)
 	}
 
 	contractOperatorStateRetriever, err := opstateretriever.NewContractOperatorStateRetriever(
@@ -172,6 +179,7 @@ func NewAVSRegistryContractBindings(
 		RegistryCoordinator:        contractBlsRegistryCoordinator,
 		StakeRegistry:              contractStakeRegistry,
 		BlsApkRegistry:             contractBlsApkRegistry,
+		IndexRegistry:              contractIndexRegistry,
 		OperatorStateRetriever:     contractOperatorStateRetriever,
 	}, nil
 }
