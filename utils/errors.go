@@ -2,13 +2,14 @@ package utils
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 )
 
 var (
 	ErrInvalidUrl            = errors.New("invalid url")
 	ErrInvalidGithubRawUrl   = errors.New("invalid github raw url")
-	ErrInvalidText           = errors.New("text is invalid")
+	ErrInvalidText           = fmt.Errorf("invalid text format, doesn't conform to regex %s", TextRegex)
 	ErrTextTooLong           = errors.New("text should be less than 500 characters")
 	ErrEmptyText             = errors.New("text is empty")
 	ErrInvalidImageExtension = errors.New(

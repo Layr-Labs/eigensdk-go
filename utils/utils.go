@@ -24,6 +24,8 @@ import (
 
 const (
 	PngMimeType = "image/png"
+
+	TextRegex = `^[a-zA-Z0-9 +.,;:?!'"\-_/()\[\]~&#$—]+$`
 )
 
 var (
@@ -228,7 +230,7 @@ func ValidateText(text string) error {
 	}
 
 	// Regular expression to validate text
-	textPattern := regexp.MustCompile(`^[a-zA-Z0-9 +.,;:?!'"\-_/()\[\]~&#]+$`)
+	textPattern := regexp.MustCompile(TextRegex)
 
 	// Check if the URL matches the regular expression
 	if !textPattern.MatchString(text) {
