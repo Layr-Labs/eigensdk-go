@@ -3,7 +3,6 @@ package signer
 import (
 	"context"
 	"crypto/ecdsa"
-	"errors"
 	"fmt"
 	"math/big"
 
@@ -39,7 +38,7 @@ func NewBasicSigner(
 
 	accountAddress, err := utils.EcdsaPrivateKeyToAddress(privateKey)
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Cannot get account address"), err)
+		return nil, utils.WrapError("Cannot get account address", err)
 	}
 
 	return &BasicSigner{
@@ -59,11 +58,11 @@ func NewBasicSigner(
 func (s *BasicSigner) GetNoSendTransactOpts() (*bind.TransactOpts, error) {
 	chainIDBigInt, err := s.ethClient.ChainID(context.Background())
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Cannot get chainId"), err)
+		return nil, utils.WrapError("Cannot get chainId", err)
 	}
 	opts, err := bind.NewKeyedTransactorWithChainID(s.privateKey, chainIDBigInt)
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Cannot create NoSendTransactOpts"), err)
+		return nil, utils.WrapError("Cannot create NoSendTransactOpts", err)
 	}
 	opts.NoSend = true
 	return opts, nil
@@ -122,7 +121,7 @@ func (s *BasicSigner) EstimateGasPriceAndLimitAndSendTx(
 
 	opts, err := bind.NewKeyedTransactorWithChainID(s.privateKey, tx.ChainId())
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Cannot create transactOpts"), err)
+		return nil, utils.WrapError("Cannot create transactOpts", err)
 	}
 	opts.Context = ctx
 	opts.Nonce = new(big.Int).SetUint64(tx.Nonce())

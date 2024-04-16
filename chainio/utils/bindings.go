@@ -3,8 +3,6 @@
 package utils
 
 import (
-	"errors"
-
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -44,30 +42,30 @@ func NewEigenlayerContractBindings(
 ) (*EigenlayerContractBindings, error) {
 	contractDelegationManager, err := delegationmanager.NewContractDelegationManager(delegationManagerAddr, ethclient)
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Failed to create DelegationManager contract"), err)
+		return nil, utils.WrapError("Failed to create DelegationManager contract", err)
 	}
 
 	slasherAddr, err := contractDelegationManager.Slasher(&bind.CallOpts{})
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Failed to fetch Slasher address"), err)
+		return nil, utils.WrapError("Failed to fetch Slasher address", err)
 	}
 	contractSlasher, err := slasher.NewContractISlasher(slasherAddr, ethclient)
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Failed to fetch Slasher contract"), err)
+		return nil, utils.WrapError("Failed to fetch Slasher contract", err)
 	}
 
 	strategyManagerAddr, err := contractDelegationManager.StrategyManager(&bind.CallOpts{})
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Failed to fetch StrategyManager address"), err)
+		return nil, utils.WrapError("Failed to fetch StrategyManager address", err)
 	}
 	contractStrategyManager, err := strategymanager.NewContractStrategyManager(strategyManagerAddr, ethclient)
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Failed to fetch StrategyManager contract"), err)
+		return nil, utils.WrapError("Failed to fetch StrategyManager contract", err)
 	}
 
 	avsDirectory, err := avsdirectory.NewContractAVSDirectory(avsDirectoryAddr, ethclient)
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Failed to fetch AVSDirectory contract"), err)
+		return nil, utils.WrapError("Failed to fetch AVSDirectory contract", err)
 	}
 
 	return &EigenlayerContractBindings{
@@ -112,52 +110,52 @@ func NewAVSRegistryContractBindings(
 		ethclient,
 	)
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Failed to create BLSRegistryCoordinator contract"), err)
+		return nil, utils.WrapError("Failed to create BLSRegistryCoordinator contract", err)
 	}
 
 	serviceManagerAddr, err := contractBlsRegistryCoordinator.ServiceManager(&bind.CallOpts{})
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Failed to fetch ServiceManager address"), err)
+		return nil, utils.WrapError("Failed to fetch ServiceManager address", err)
 	}
 	contractServiceManager, err := servicemanager.NewContractServiceManagerBase(
 		serviceManagerAddr,
 		ethclient,
 	)
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Failed to fetch ServiceManager contract"), err)
+		return nil, utils.WrapError("Failed to fetch ServiceManager contract", err)
 	}
 
 	stakeregistryAddr, err := contractBlsRegistryCoordinator.StakeRegistry(&bind.CallOpts{})
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Failed to fetch StakeRegistry address"), err)
+		return nil, utils.WrapError("Failed to fetch StakeRegistry address", err)
 	}
 	contractStakeRegistry, err := stakeregistry.NewContractStakeRegistry(
 		stakeregistryAddr,
 		ethclient,
 	)
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Failed to fetch StakeRegistry contract"), err)
+		return nil, utils.WrapError("Failed to fetch StakeRegistry contract", err)
 	}
 
 	blsApkRegistryAddr, err := contractBlsRegistryCoordinator.BlsApkRegistry(&bind.CallOpts{})
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Failed to fetch BLSPubkeyRegistry address"), err)
+		return nil, utils.WrapError("Failed to fetch BLSPubkeyRegistry address", err)
 	}
 	contractBlsApkRegistry, err := blsapkregistry.NewContractBLSApkRegistry(
 		blsApkRegistryAddr,
 		ethclient,
 	)
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Failed to fetch BLSPubkeyRegistry contract"), err)
+		return nil, utils.WrapError("Failed to fetch BLSPubkeyRegistry contract", err)
 	}
 
 	indexRegistryAddr, err := contractBlsRegistryCoordinator.IndexRegistry(&bind.CallOpts{})
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Failed to fetch IndexRegistry address"), err)
+		return nil, utils.WrapError("Failed to fetch IndexRegistry address", err)
 	}
 	contractIndexRegistry, err := indexregistry.NewContractIndexRegistry(indexRegistryAddr, ethclient)
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Failed to fetch IndexRegistry contract"), err)
+		return nil, utils.WrapError("Failed to fetch IndexRegistry contract", err)
 	}
 
 	contractOperatorStateRetriever, err := opstateretriever.NewContractOperatorStateRetriever(
@@ -165,7 +163,7 @@ func NewAVSRegistryContractBindings(
 		ethclient,
 	)
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Failed to fetch OperatorStateRetriever contract"), err)
+		return nil, utils.WrapError("Failed to fetch OperatorStateRetriever contract", err)
 	}
 
 	return &AvsRegistryContractBindings{

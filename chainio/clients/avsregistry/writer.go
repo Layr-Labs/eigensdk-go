@@ -118,50 +118,50 @@ func BuildAvsRegistryChainWriter(
 ) (*AvsRegistryChainWriter, error) {
 	registryCoordinator, err := regcoord.NewContractRegistryCoordinator(registryCoordinatorAddr, ethClient)
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Failed to create RegistryCoordinator contract"), err)
+		return nil, utils.WrapError("Failed to create RegistryCoordinator contract", err)
 	}
 	operatorStateRetriever, err := opstateretriever.NewContractOperatorStateRetriever(
 		operatorStateRetrieverAddr,
 		ethClient,
 	)
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Failed to create OperatorStateRetriever contract"), err)
+		return nil, utils.WrapError("Failed to create OperatorStateRetriever contract", err)
 	}
 	serviceManagerAddr, err := registryCoordinator.ServiceManager(&bind.CallOpts{})
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Failed to get ServiceManager address"), err)
+		return nil, utils.WrapError("Failed to get ServiceManager address", err)
 	}
 	serviceManager, err := smbase.NewContractServiceManagerBase(serviceManagerAddr, ethClient)
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Failed to create ServiceManager contract"), err)
+		return nil, utils.WrapError("Failed to create ServiceManager contract", err)
 	}
 	blsApkRegistryAddr, err := registryCoordinator.BlsApkRegistry(&bind.CallOpts{})
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Failed to get BLSApkRegistry address"), err)
+		return nil, utils.WrapError("Failed to get BLSApkRegistry address", err)
 	}
 	blsApkRegistry, err := blsapkregistry.NewContractBLSApkRegistry(blsApkRegistryAddr, ethClient)
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Failed to create BLSApkRegistry contract"), err)
+		return nil, utils.WrapError("Failed to create BLSApkRegistry contract", err)
 	}
 	stakeRegistryAddr, err := registryCoordinator.StakeRegistry(&bind.CallOpts{})
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Failed to get StakeRegistry address"), err)
+		return nil, utils.WrapError("Failed to get StakeRegistry address", err)
 	}
 	stakeRegistry, err := stakeregistry.NewContractStakeRegistry(stakeRegistryAddr, ethClient)
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Failed to create StakeRegistry contract"), err)
+		return nil, utils.WrapError("Failed to create StakeRegistry contract", err)
 	}
 	delegationManagerAddr, err := stakeRegistry.Delegation(&bind.CallOpts{})
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Failed to get DelegationManager address"), err)
+		return nil, utils.WrapError("Failed to get DelegationManager address", err)
 	}
 	avsDirectoryAddr, err := serviceManager.AvsDirectory(&bind.CallOpts{})
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Failed to get AvsDirectory address"), err)
+		return nil, utils.WrapError("Failed to get AvsDirectory address", err)
 	}
 	elReader, err := elcontracts.BuildELChainReader(delegationManagerAddr, avsDirectoryAddr, ethClient, logger)
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Failed to create ELChainReader"), err)
+		return nil, utils.WrapError("Failed to create ELChainReader", err)
 	}
 	return NewAvsRegistryChainWriter(
 		serviceManagerAddr,

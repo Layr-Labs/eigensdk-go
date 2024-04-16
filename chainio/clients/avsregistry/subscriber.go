@@ -1,8 +1,6 @@
 package avsregistry
 
 import (
-	"errors"
-
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/event"
@@ -42,7 +40,7 @@ func BuildAvsRegistryChainSubscriber(
 ) (*AvsRegistryChainSubscriber, error) {
 	blsapkreg, err := blsapkreg.NewContractBLSApkRegistry(blsApkRegistryAddr, ethWsClient)
 	if err != nil {
-		return nil, utils.WrapError(errors.New("Failed to create BLSApkRegistry contract"), err)
+		return nil, utils.WrapError("Failed to create BLSApkRegistry contract", err)
 	}
 	return NewAvsRegistryChainSubscriber(blsapkreg, logger)
 }
@@ -53,7 +51,7 @@ func (s *AvsRegistryChainSubscriber) SubscribeToNewPubkeyRegistrations() (chan *
 		&bind.WatchOpts{}, newPubkeyRegistrationChan, nil,
 	)
 	if err != nil {
-		return nil, nil, utils.WrapError(errors.New("Failed to subscribe to NewPubkeyRegistration events"), err)
+		return nil, nil, utils.WrapError("Failed to subscribe to NewPubkeyRegistration events", err)
 	}
 	return newPubkeyRegistrationChan, sub, nil
 }

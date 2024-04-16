@@ -115,7 +115,7 @@ func (ec *Collector) initOperatorId() error {
 	if ec.operatorId == [32]byte{} {
 		operatorId, err := ec.avsRegistryReader.GetOperatorId(&bind.CallOpts{}, ec.operatorAddr)
 		if err != nil {
-			return utils.WrapError(errors.New("Failed to get operator id"), err)
+			return utils.WrapError("Failed to get operator id", err)
 		}
 		if operatorId == [32]byte{} {
 			return errors.New("operator not registered")
