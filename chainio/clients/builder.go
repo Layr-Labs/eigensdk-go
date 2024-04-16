@@ -15,7 +15,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/metrics"
 	"github.com/Layr-Labs/eigensdk-go/signerv2"
-	"github.com/Layr-Labs/eigensdk-go/types"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
@@ -61,12 +61,12 @@ func BuildAll(
 	// creating two types of Eth clients: HTTP and WS
 	ethHttpClient, err := eth.NewClient(config.EthHttpUrl)
 	if err != nil {
-		return nil, types.WrapError(errors.New("Failed to create Eth Http client"), err)
+		return nil, utils.WrapError(errors.New("Failed to create Eth Http client"), err)
 	}
 
 	ethWsClient, err := eth.NewClient(config.EthWsUrl)
 	if err != nil {
-		return nil, types.WrapError(errors.New("Failed to create Eth WS client"), err)
+		return nil, utils.WrapError(errors.New("Failed to create Eth WS client"), err)
 	}
 
 	rpcCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -82,7 +82,7 @@ func BuildAll(
 
 	pkWallet, err := wallet.NewPrivateKeyWallet(ethHttpClient, signerV2, addr, logger)
 	if err != nil {
-		return nil, types.WrapError(errors.New("Failed to create transaction sender"), err)
+		return nil, utils.WrapError(errors.New("Failed to create transaction sender"), err)
 	}
 	txMgr := txmgr.NewSimpleTxManager(pkWallet, ethHttpClient, logger, addr)
 	// creating EL clients: Reader, Writer and Subscriber
@@ -93,7 +93,7 @@ func BuildAll(
 		eigenMetrics,
 	)
 	if err != nil {
-		return nil, types.WrapError(errors.New("Failed to create EL Reader, Writer and Subscriber"), err)
+		return nil, utils.WrapError(errors.New("Failed to create EL Reader, Writer and Subscriber"), err)
 	}
 
 	// creating AVS clients: Reader and Writer
@@ -105,7 +105,7 @@ func BuildAll(
 		logger,
 	)
 	if err != nil {
-		return nil, types.WrapError(errors.New("Failed to create AVS Registry Reader and Writer"), err)
+		return nil, utils.WrapError(errors.New("Failed to create AVS Registry Reader and Writer"), err)
 	}
 
 	return &Clients{
@@ -136,7 +136,7 @@ func (config *BuildAllConfig) buildElClients(
 		logger,
 	)
 	if err != nil {
-		return nil, nil, types.WrapError(errors.New("Failed to create AVSRegistryContractBindings"), err)
+		return nil, nil, utils.WrapError(errors.New("Failed to create AVSRegistryContractBindings"), err)
 	}
 
 	delegationManagerAddr, err := avsRegistryContractBindings.StakeRegistry.Delegation(&bind.CallOpts{})
@@ -155,7 +155,7 @@ func (config *BuildAllConfig) buildElClients(
 		logger,
 	)
 	if err != nil {
-		return nil, nil, types.WrapError(errors.New("Failed to create EigenlayerContractBindings"), err)
+		return nil, nil, utils.WrapError(errors.New("Failed to create EigenlayerContractBindings"), err)
 	}
 
 	// get the Reader for the EL contracts
@@ -180,7 +180,7 @@ func (config *BuildAllConfig) buildElClients(
 		txMgr,
 	)
 	if err != nil {
-		return nil, nil, types.WrapError(errors.New("Failed to create ELChainWriter"), err)
+		return nil, nil, utils.WrapError(errors.New("Failed to create ELChainWriter"), err)
 	}
 
 	return elChainReader, elChainWriter, nil
@@ -201,7 +201,7 @@ func (config *BuildAllConfig) buildAvsClients(
 		logger,
 	)
 	if err != nil {
-		return nil, nil, nil, types.WrapError(errors.New("Failed to create AVSRegistryContractBindings"), err)
+		return nil, nil, nil, utils.WrapError(errors.New("Failed to create AVSRegistryContractBindings"), err)
 	}
 
 	avsRegistryChainReader := avsregistry.NewAvsRegistryChainReader(
@@ -226,7 +226,7 @@ func (config *BuildAllConfig) buildAvsClients(
 		txMgr,
 	)
 	if err != nil {
-		return nil, nil, nil, types.WrapError(errors.New("Failed to create AVSRegistryChainWriter"), err)
+		return nil, nil, nil, utils.WrapError(errors.New("Failed to create AVSRegistryChainWriter"), err)
 	}
 
 	// get the Subscriber for Avs Registry contracts
@@ -237,7 +237,7 @@ func (config *BuildAllConfig) buildAvsClients(
 		logger,
 	)
 	if err != nil {
-		return nil, nil, nil, types.WrapError(errors.New("Failed to create ELChainSubscriber"), err)
+		return nil, nil, nil, utils.WrapError(errors.New("Failed to create ELChainSubscriber"), err)
 	}
 
 	return avsRegistryChainReader, avsRegistrySubscriber, avsRegistryChainWriter, nil

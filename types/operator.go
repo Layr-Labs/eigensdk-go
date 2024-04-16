@@ -3,13 +3,14 @@ package types
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
+	"math/big"
+
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
-	"log/slog"
-	"math/big"
 )
 
 const (
@@ -45,12 +46,12 @@ func (o Operator) Validate() error {
 
 	err := utils.CheckIfUrlIsValid(o.MetadataUrl)
 	if err != nil {
-		return WrapError(ErrInvalidMetadataUrl, err)
+		return utils.WrapError(ErrInvalidMetadataUrl, err)
 	}
 
 	body, err := utils.ReadPublicURL(o.MetadataUrl)
 	if err != nil {
-		return WrapError(ErrReadingMetadataUrlResponse, err)
+		return utils.WrapError(ErrReadingMetadataUrlResponse, err)
 	}
 
 	operatorMetadata := OperatorMetadata{}

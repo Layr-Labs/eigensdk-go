@@ -8,7 +8,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/signerv2"
-	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -68,7 +68,7 @@ func (t *privateKeyWallet) SendTransaction(ctx context.Context, tx *types.Transa
 
 	sendingTx, err := contract.RawTransact(opts, tx.Data())
 	if err != nil {
-		return "", sdktypes.WrapError(fmt.Errorf("send: tx %v failed.", tx.Hash().String()), err)
+		return "", utils.WrapError(fmt.Errorf("send: tx %v failed.", tx.Hash().String()), err)
 	}
 
 	return sendingTx.Hash().Hex(), nil

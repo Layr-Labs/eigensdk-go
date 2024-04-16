@@ -12,6 +12,7 @@ import (
 	chainioutils "github.com/Layr-Labs/eigensdk-go/chainio/utils"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/types"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 
 	avsdirectory "github.com/Layr-Labs/eigensdk-go/contracts/bindings/AVSDirectory"
 	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
@@ -151,11 +152,11 @@ func (r *ELChainReader) GetStrategyAndUnderlyingToken(
 ) (*strategy.ContractIStrategy, gethcommon.Address, error) {
 	contractStrategy, err := strategy.NewContractIStrategy(strategyAddr, r.ethClient)
 	if err != nil {
-		return nil, common.Address{}, types.WrapError(errors.New("Failed to fetch strategy contract"), err)
+		return nil, common.Address{}, utils.WrapError(errors.New("Failed to fetch strategy contract"), err)
 	}
 	underlyingTokenAddr, err := contractStrategy.UnderlyingToken(opts)
 	if err != nil {
-		return nil, common.Address{}, types.WrapError(errors.New("Failed to fetch token contract"), err)
+		return nil, common.Address{}, utils.WrapError(errors.New("Failed to fetch token contract"), err)
 	}
 	return contractStrategy, underlyingTokenAddr, nil
 }
@@ -167,15 +168,15 @@ func (r *ELChainReader) GetStrategyAndUnderlyingERC20Token(
 ) (*strategy.ContractIStrategy, erc20.ContractIERC20Methods, gethcommon.Address, error) {
 	contractStrategy, err := strategy.NewContractIStrategy(strategyAddr, r.ethClient)
 	if err != nil {
-		return nil, nil, common.Address{}, types.WrapError(errors.New("Failed to fetch strategy contract"), err)
+		return nil, nil, common.Address{}, utils.WrapError(errors.New("Failed to fetch strategy contract"), err)
 	}
 	underlyingTokenAddr, err := contractStrategy.UnderlyingToken(opts)
 	if err != nil {
-		return nil, nil, common.Address{}, types.WrapError(errors.New("Failed to fetch token contract"), err)
+		return nil, nil, common.Address{}, utils.WrapError(errors.New("Failed to fetch token contract"), err)
 	}
 	contractUnderlyingToken, err := erc20.NewContractIERC20(underlyingTokenAddr, r.ethClient)
 	if err != nil {
-		return nil, nil, common.Address{}, types.WrapError(errors.New("Failed to fetch token contract"), err)
+		return nil, nil, common.Address{}, utils.WrapError(errors.New("Failed to fetch token contract"), err)
 	}
 	return contractStrategy, contractUnderlyingToken, underlyingTokenAddr, nil
 }
