@@ -116,6 +116,7 @@ func (w *ELChainWriter) RegisterAsOperator(ctx context.Context, operator types.O
 	opDetails := delegationmanager.IDelegationManagerOperatorDetails{
 		EarningsReceiver:         gethcommon.HexToAddress(operator.EarningsReceiverAddress),
 		StakerOptOutWindowBlocks: operator.StakerOptOutWindowBlocks,
+		DelegationApprover:       gethcommon.HexToAddress(operator.DelegationApproverAddress),
 	}
 
 	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
