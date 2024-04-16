@@ -258,19 +258,33 @@ func ValidateRawGithubUrl(url string) error {
 	return nil
 }
 
-func WrapError(mainErr error, subErr error) error {
+func TypedErr(e interface{}) error {
+	switch t := e.(type) {
+	case error:
+		return t
+	case string:
+		return errors.New(t)
+	default:
+		return nil
+	}
+}
+
+func WrapError(mainErr interface{}, subErr interface{}) error {
+	var main, sub error
+	main = TypedErr(mainErr)
+	sub = TypedErr(subErr)
 	// Some times the wrap will wrap a nil error
-	if mainErr == nil && subErr == nil {
+	if main == nil && sub == nil {
 		return nil
 	}
 
-	if mainErr == nil && subErr != nil {
-		return fmt.Errorf("sub error: %w", subErr)
+	if main == nil && sub != nil {
+		return fmt.Errorf("sub error: %w", sub)
 	}
 
-	if mainErr != nil && subErr == nil {
-		return fmt.Errorf("%w: unknown sub error", mainErr)
+	if main != nil && sub == nil {
+		return fmt.Errorf("%w: unknown sub error", main)
 	}
 
-	return fmt.Errorf("%w: %w", mainErr, subErr)
+	return fmt.Errorf("%w: %w", main, sub)
 }
