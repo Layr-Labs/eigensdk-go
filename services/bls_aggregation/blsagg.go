@@ -20,7 +20,9 @@ var (
 	TaskAlreadyInitializedErrorFn = func(taskIndex types.TaskIndex) error {
 		return fmt.Errorf("task %d already initialized", taskIndex)
 	}
-	TaskExpiredError    = fmt.Errorf("task expired")
+	TaskExpiredErrorFn = func(taskIndex types.TaskIndex) error {
+		return fmt.Errorf("task %d expired", taskIndex)
+	}
 	TaskNotFoundErrorFn = func(taskIndex types.TaskIndex) error {
 		return fmt.Errorf("task %d not initialized or already completed", taskIndex)
 	}
@@ -317,11 +319,12 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 					NonSignerStakeIndices:        indices.NonSignerStakeIndices,
 				}
 				a.aggregatedResponsesC <- blsAggregationServiceResponse
+				taskExpiredTimer.Stop()
 				return
 			}
 		case <-taskExpiredTimer.C:
 			a.aggregatedResponsesC <- BlsAggregationServiceResponse{
-				Err: TaskExpiredError,
+				Err: TaskExpiredErrorFn(taskIndex),
 			}
 			return
 		}

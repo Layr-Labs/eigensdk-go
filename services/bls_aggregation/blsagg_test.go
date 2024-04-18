@@ -259,7 +259,7 @@ func TestBlsAgg(t *testing.T) {
 		err := blsAggServ.InitializeNewTask(taskIndex, blockNum, quorumNumbers, quorumThresholdPercentages, tasksTimeToExpiry)
 		require.Nil(t, err)
 		wantAggregationServiceResponse := BlsAggregationServiceResponse{
-			Err: TaskExpiredError,
+			Err: TaskExpiredErrorFn(taskIndex),
 		}
 		gotAggregationServiceResponse := <-blsAggServ.aggregatedResponsesC
 		require.Equal(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
@@ -331,7 +331,7 @@ func TestBlsAgg(t *testing.T) {
 		err = blsAggServ.ProcessNewSignature(context.Background(), taskIndex, taskResponseDigest, blsSig, testOperator1.OperatorId)
 		require.Nil(t, err)
 		wantAggregationServiceResponse := BlsAggregationServiceResponse{
-			Err: TaskExpiredError,
+			Err: TaskExpiredErrorFn(taskIndex),
 		}
 		gotAggregationServiceResponse := <-blsAggServ.aggregatedResponsesC
 		require.Equal(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
@@ -478,7 +478,7 @@ func TestBlsAgg(t *testing.T) {
 		require.Nil(t, err)
 
 		wantAggregationServiceResponse := BlsAggregationServiceResponse{
-			Err: TaskExpiredError,
+			Err: TaskExpiredErrorFn(taskIndex),
 		}
 		gotAggregationServiceResponse := <-blsAggServ.aggregatedResponsesC
 		require.EqualValues(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
@@ -508,7 +508,7 @@ func TestBlsAgg(t *testing.T) {
 		require.Nil(t, err)
 
 		wantAggregationServiceResponse := BlsAggregationServiceResponse{
-			Err: TaskExpiredError,
+			Err: TaskExpiredErrorFn(taskIndex),
 		}
 		gotAggregationServiceResponse := <-blsAggServ.aggregatedResponsesC
 		require.EqualValues(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
@@ -543,7 +543,7 @@ func TestBlsAgg(t *testing.T) {
 		require.Nil(t, err)
 
 		wantAggregationServiceResponse := BlsAggregationServiceResponse{
-			Err: TaskExpiredError,
+			Err: TaskExpiredErrorFn(taskIndex),
 		}
 		gotAggregationServiceResponse := <-blsAggServ.aggregatedResponsesC
 		require.EqualValues(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
@@ -649,7 +649,7 @@ func TestBlsAgg(t *testing.T) {
 		err = blsAggServ.ProcessNewSignature(context.Background(), taskIndex, taskResponseDigest2, blsSigOp2, testOperator2.OperatorId)
 		require.Nil(t, err)
 		wantAggregationServiceResponse := BlsAggregationServiceResponse{
-			Err: TaskExpiredError,
+			Err: TaskExpiredErrorFn(taskIndex),
 		}
 		gotAggregationServiceResponse := <-blsAggServ.aggregatedResponsesC
 		require.Equal(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
