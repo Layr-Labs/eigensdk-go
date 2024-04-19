@@ -179,9 +179,6 @@ func (config *BuildAllConfig) buildElClients(
 		eigenMetrics,
 		txMgr,
 	)
-	if err != nil {
-		return nil, nil, types.WrapError(errors.New("Failed to create ELChainWriter"), err)
-	}
 
 	return elChainReader, elChainWriter, nil
 }
@@ -232,7 +229,7 @@ func (config *BuildAllConfig) buildAvsClients(
 	// get the Subscriber for Avs Registry contracts
 	// note that the subscriber needs a ws connection instead of http
 	avsRegistrySubscriber, err := avsregistry.BuildAvsRegistryChainSubscriber(
-		avsRegistryContractBindings.BlsApkRegistryAddr,
+		avsRegistryContractBindings.RegistryCoordinatorAddr,
 		ethWsClient,
 		logger,
 	)
