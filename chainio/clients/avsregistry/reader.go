@@ -74,6 +74,12 @@ type AvsRegistryReader interface {
 		startBlock *big.Int,
 		stopBlock *big.Int,
 	) ([]types.OperatorAddr, []types.OperatorPubkeys, error)
+
+	QueryExistingRegisteredOperatorSockets(
+		ctx context.Context,
+		startBlock *big.Int,
+		stopBlock *big.Int,
+	) (map[types.OperatorId]types.Socket, error)
 }
 
 type AvsRegistryChainReader struct {
@@ -436,4 +442,48 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorPubKeys(
 	}
 
 	return operatorAddresses, operatorPubkeys, nil
+}
+
+func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorSockets(
+	ctx context.Context,
+	startBlock *big.Int,
+	stopBlock *big.Int,
+) (map[types.OperatorId]types.Socket, error) {
+
+	if startBlock == nil {
+		startBlock = big.NewInt(0)
+	}
+	if stopBlock == nil {
+		curBlockNum, err := r.ethClient.BlockNumber(ctx)
+		if err != nil {
+			return nil, types.WrapError(errors.New("Cannot get current block number"), err)
+		}
+		stopBlock = big.NewInt(int64(curBlockNum))
+	}
+
+	operatorIdToSocketMap := make(map[types.OperatorId]types.Socket)
+
+	// eth_getLogs is limited to a 10,000 range, so we need to iterate over the range
+	for i := startBlock; i.Cmp(stopBlock) <= 0; i.Add(i, big.NewInt(10_000)) {
+		toBlock := big.NewInt(0).Add(i, big.NewInt(10_000))
+		if toBlock.Cmp(stopBlock) > 0 {
+			toBlock = stopBlock
+		}
+
+		end := toBlock.Uint64()
+		filterOpts := &bind.FilterOpts{
+			Start: i.Uint64(),
+			End:   &end,
+		}
+		socketUpdates, err := r.registryCoordinator.FilterOperatorSocketUpdate(filterOpts, nil)
+		if err != nil {
+			return nil, types.WrapError(errors.New("Cannot filter operator socket updates"), err)
+		}
+		r.logger.Debug("avsRegistryChainReader.QueryExistingRegisteredOperatorSockets", "fromBlock", i, "toBlock", toBlock)
+
+		for update := socketUpdates; update.Event != nil; update.Next() {
+			operatorIdToSocketMap[update.Event.OperatorId] = update.Event.Socket
+		}
+	}
+	return operatorIdToSocketMap, nil
 }

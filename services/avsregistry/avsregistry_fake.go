@@ -23,8 +23,11 @@ func NewFakeAvsRegistryService(blockNum types.BlockNum, operators []types.TestOp
 	}
 	for _, operator := range operators {
 		fakeAvsRegistryService.operators[blockNum][operator.OperatorId] = types.OperatorAvsState{
-			OperatorId:     operator.OperatorId,
-			Pubkeys:        types.OperatorPubkeys{G1Pubkey: operator.BlsKeypair.GetPubKeyG1(), G2Pubkey: operator.BlsKeypair.GetPubKeyG2()},
+			OperatorId: operator.OperatorId,
+			OperatorInfo: types.OperatorInfo{
+				Pubkeys: types.OperatorPubkeys{G1Pubkey: operator.BlsKeypair.GetPubKeyG1(), G2Pubkey: operator.BlsKeypair.GetPubKeyG2()},
+				Socket:  "localhost:8080",
+			},
 			StakePerQuorum: operator.StakePerQuorum,
 			BlockNumber:    blockNum,
 		}
@@ -54,7 +57,7 @@ func (f *FakeAvsRegistryService) GetQuorumsAvsStateAtBlock(ctx context.Context, 
 		for _, operator := range operatorsAvsState {
 			// only include operators that have a stake in this quorum
 			if stake, ok := operator.StakePerQuorum[quorumNum]; ok {
-				aggPubkeyG1.Add(operator.Pubkeys.G1Pubkey)
+				aggPubkeyG1.Add(operator.OperatorInfo.Pubkeys.G1Pubkey)
 				totalStake.Add(totalStake, stake)
 			}
 		}

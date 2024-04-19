@@ -13,6 +13,7 @@ import (
 	reflect "reflect"
 
 	contractBLSApkRegistry "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSApkRegistry"
+	contractRegistryCoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
 	event "github.com/ethereum/go-ethereum/event"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -54,4 +55,20 @@ func (m *MockAvsRegistrySubscriber) SubscribeToNewPubkeyRegistrations() (chan *c
 func (mr *MockAvsRegistrySubscriberMockRecorder) SubscribeToNewPubkeyRegistrations() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubscribeToNewPubkeyRegistrations", reflect.TypeOf((*MockAvsRegistrySubscriber)(nil).SubscribeToNewPubkeyRegistrations))
+}
+
+// SubscribeToOperatorSocketUpdates mocks base method.
+func (m *MockAvsRegistrySubscriber) SubscribeToOperatorSocketUpdates() (chan *contractRegistryCoordinator.ContractRegistryCoordinatorOperatorSocketUpdate, event.Subscription, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SubscribeToOperatorSocketUpdates")
+	ret0, _ := ret[0].(chan *contractRegistryCoordinator.ContractRegistryCoordinatorOperatorSocketUpdate)
+	ret1, _ := ret[1].(event.Subscription)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// SubscribeToOperatorSocketUpdates indicates an expected call of SubscribeToOperatorSocketUpdates.
+func (mr *MockAvsRegistrySubscriberMockRecorder) SubscribeToOperatorSocketUpdates() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SubscribeToOperatorSocketUpdates", reflect.TypeOf((*MockAvsRegistrySubscriber)(nil).SubscribeToOperatorSocketUpdates))
 }

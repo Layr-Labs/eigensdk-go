@@ -1,4 +1,4 @@
-package operatorpubkeys
+package operatorsinfo
 
 import (
 	"context"
@@ -11,9 +11,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-// OperatorPubkeysServiceInMemory is a stateful goroutine (see https://gobyexample.com/stateful-goroutines)
-// implementation of OperatorPubkeysService that listen for the NewPubkeyRegistration using a websocket connection
-// to an eth client and stores the pubkeys in memory. Another possible implementation is using a mutex
+// OperatorsInfoServiceInMemory is a stateful goroutine (see https://gobyexample.com/stateful-goroutines)
+// implementation of OperatorsInfoService that listen for the NewPubkeyRegistration and OperatorSocketUpdate events using a websocket connection
+// to an eth client and stores the pubkeys/sockets in memory. Another possible implementation is using a mutex
 // (https://gobyexample.com/mutexes) instead. We can switch to that if we ever find a good reason to.
 //
 // Warning: this service should probably not be used in production. Haven't done a thorough analysis of all the clients
@@ -22,42 +22,50 @@ import (
 // websocket connection errors or when failing to query past events. The philosophy here is that hard crashing is
 // better than silently failing, since it will be easier to debug. Naturally, this means that this aggregator using this service needs
 // to be replicated and load-balanced, so that when it fails traffic can be switched to the other aggregator.
-type OperatorPubkeysServiceInMemory struct {
+type OperatorsInfoServiceInMemory struct {
 	avsRegistrySubscriber avsregistry.AvsRegistrySubscriber
 	avsRegistryReader     avsregistry.AvsRegistryReader
 	logger                logging.Logger
 	queryC                chan<- query
+	// queried via the queryC channel, so don't need mutex to access
+	pubkeyDict       map[common.Address]types.OperatorPubkeys
+	operatorAddrToId map[common.Address]types.OperatorId
+	socketDict       map[types.OperatorId]string
 }
 type query struct {
 	operatorAddr common.Address
-	// channel through which to receive the response (operator pubkeys)
+	// channel through which to receive the resp
 	respC chan<- resp
 }
 type resp struct {
-	operatorPubkeys types.OperatorPubkeys
+	// TODO: possible for socket to be empty string if haven't received the event yet... would be a crazy race condition though.
+	operatorInfo types.OperatorInfo
 	// false if operators were not present in the pubkey dict
 	operatorExists bool
 }
 
-var _ OperatorPubkeysService = (*OperatorPubkeysServiceInMemory)(nil)
+var _ OperatorsInfoService = (*OperatorsInfoServiceInMemory)(nil)
 
-// NewOperatorPubkeysServiceInMemory constructs a OperatorPubkeysServiceInMemory and starts it in a goroutine.
+// NewOperatorsInfoServiceInMemory constructs a OperatorsInfoServiceInMemory and starts it in a goroutine.
 // It takes a context as argument because the "backfilling" of the database is done inside this constructor,
-// so we wait for all past NewPubkeyRegistration events to be queried and the db to be filled before returning the service.
+// so we wait for all past NewPubkeyRegistration/OperatorSocketUpdate events to be queried and the db to be filled before returning the service.
 // The constructor is thus following a RAII-like pattern, of initializing the serving during construction.
 // Using a separate initialize() function might lead to some users forgetting to call it and the service not behaving properly.
-func NewOperatorPubkeysServiceInMemory(
+func NewOperatorsInfoServiceInMemory(
 	ctx context.Context,
 	avsRegistrySubscriber avsregistry.AvsRegistrySubscriber,
 	avsRegistryReader avsregistry.AvsRegistryReader,
 	logger logging.Logger,
-) *OperatorPubkeysServiceInMemory {
+) *OperatorsInfoServiceInMemory {
 	queryC := make(chan query)
-	pkcs := &OperatorPubkeysServiceInMemory{
+	pkcs := &OperatorsInfoServiceInMemory{
 		avsRegistrySubscriber: avsRegistrySubscriber,
 		avsRegistryReader:     avsRegistryReader,
 		logger:                logger,
 		queryC:                queryC,
+		pubkeyDict:            make(map[common.Address]types.OperatorPubkeys),
+		operatorAddrToId:      make(map[common.Address]types.OperatorId),
+		socketDict:            make(map[types.OperatorId]string),
 	}
 	// We use this waitgroup to wait on the initialization of the inmemory pubkey dict,
 	// which requires querying the past events of the pubkey registration contract
@@ -68,9 +76,8 @@ func NewOperatorPubkeysServiceInMemory(
 	return pkcs
 }
 
-func (ops *OperatorPubkeysServiceInMemory) startServiceInGoroutine(ctx context.Context, queryC <-chan query, wg *sync.WaitGroup) {
+func (ops *OperatorsInfoServiceInMemory) startServiceInGoroutine(ctx context.Context, queryC <-chan query, wg *sync.WaitGroup) {
 	go func() {
-		pubkeyDict := make(map[common.Address]types.OperatorPubkeys)
 
 		// TODO(samlaf): we should probably save the service in the logger itself and add it automatically to all logs
 		ops.logger.Debug("Subscribing to new pubkey registration events on blsApkRegistry contract", "service", "OperatorPubkeysServiceInMemory")
@@ -80,7 +87,12 @@ func (ops *OperatorPubkeysServiceInMemory) startServiceInGoroutine(ctx context.C
 			// see the warning above the struct definition to understand why we panic here
 			panic(err)
 		}
-		ops.queryPastRegisteredOperatorEventsAndFillDb(ctx, pubkeyDict)
+		newSocketRegistrationC, newSocketRegistrationSub, err := ops.avsRegistrySubscriber.SubscribeToOperatorSocketUpdates()
+		if err != nil {
+			ops.logger.Error("Fatal error opening websocket subscription for new socket registrations", "err", err, "service", "OperatorPubkeysServiceInMemory")
+			panic(err)
+		}
+		ops.queryPastRegisteredOperatorEventsAndFillDb(ctx)
 		// The constructor can return after we have backfilled the db by querying the events of operators that have registered with the blsApkRegistry
 		// before the block at which we started the ws subscription above
 		wg.Done()
@@ -99,50 +111,81 @@ func (ops *OperatorPubkeysServiceInMemory) startServiceInGoroutine(ctx context.C
 					// see the warning above the struct definition to understand why we panic here
 					panic(err)
 				}
+			case err := <-newSocketRegistrationSub.Err():
+				ops.logger.Error("Error in websocket subscription for new socket registration events. Attempting to reconnect...", "err", err, "service", "OperatorPubkeysServiceInMemory")
+				newSocketRegistrationSub.Unsubscribe()
+				newSocketRegistrationC, newSocketRegistrationSub, err = ops.avsRegistrySubscriber.SubscribeToOperatorSocketUpdates()
+				if err != nil {
+					ops.logger.Error("Error opening websocket subscription for new socket registrations", "err", err, "service", "OperatorPubkeysServiceInMemory")
+					panic(err)
+				}
 			case newPubkeyRegistrationEvent := <-newPubkeyRegistrationC:
 				operatorAddr := newPubkeyRegistrationEvent.Operator
-				pubkeyDict[operatorAddr] = types.OperatorPubkeys{
+				ops.pubkeyDict[operatorAddr] = types.OperatorPubkeys{
 					G1Pubkey: bls.NewG1Point(newPubkeyRegistrationEvent.PubkeyG1.X, newPubkeyRegistrationEvent.PubkeyG1.Y),
 					G2Pubkey: bls.NewG2Point(newPubkeyRegistrationEvent.PubkeyG2.X, newPubkeyRegistrationEvent.PubkeyG2.Y),
 				}
-				ops.logger.Debug("Added operator pubkeys to pubkey dict",
-					"service", "OperatorPubkeysServiceInMemory", "block", newPubkeyRegistrationEvent.Raw.BlockNumber, "operatorAddr", operatorAddr,
-					"G1pubkey", pubkeyDict[operatorAddr].G1Pubkey, "G2pubkey", pubkeyDict[operatorAddr].G2Pubkey,
+
+				operatorId := types.OperatorIdFromContractG1Pubkey(newPubkeyRegistrationEvent.PubkeyG1)
+				ops.operatorAddrToId[operatorAddr] = operatorId
+				ops.logger.Debug("Added operator pubkeys to pubkey dict from new pubkey registration event",
+					"service", "OperatorPubkeysServiceInMemory", "block", newPubkeyRegistrationEvent.Raw.BlockNumber,
+					"operatorAddr", operatorAddr, "operatorId", operatorId,
+					"G1pubkey", ops.pubkeyDict[operatorAddr].G1Pubkey, "G2pubkey", ops.pubkeyDict[operatorAddr].G2Pubkey,
 				)
+			case newSocketRegistrationEvent := <-newSocketRegistrationC:
+				operatorId := newSocketRegistrationEvent.OperatorId
+				ops.socketDict[operatorId] = newSocketRegistrationEvent.Socket
+				ops.logger.Debug("Received new socket registration event", "service", "OperatorPubkeysServiceInMemory", "operatorId", newSocketRegistrationEvent.OperatorId, "socket", newSocketRegistrationEvent.Socket)
 			// Receive a query from GetOperatorPubkeys
-			case operatorPubkeyQuery := <-queryC:
-				pubkeys, ok := pubkeyDict[operatorPubkeyQuery.operatorAddr]
-				operatorPubkeyQuery.respC <- resp{pubkeys, ok}
+			case query := <-queryC:
+				pubkeys, ok := ops.pubkeyDict[query.operatorAddr]
+				operatorId := ops.operatorAddrToId[query.operatorAddr]
+				socket := ops.socketDict[operatorId]
+				operatorInfo := types.OperatorInfo{
+					Socket:  socket,
+					Pubkeys: pubkeys,
+				}
+				query.respC <- resp{operatorInfo, ok}
 			}
 		}
 	}()
 }
 
-func (pkcs *OperatorPubkeysServiceInMemory) queryPastRegisteredOperatorEventsAndFillDb(ctx context.Context, pubkeydict map[common.Address]types.OperatorPubkeys) {
+func (ops *OperatorsInfoServiceInMemory) queryPastRegisteredOperatorEventsAndFillDb(ctx context.Context) {
 	// Querying with nil startBlock and stopBlock will return all events. It doesn't matter if we query some events that we will receive again in the websocket,
 	// since we will just overwrite the pubkey dict with the same values.
-	alreadyRegisteredOperatorAddrs, alreadyRegisteredOperatorPubkeys, err := pkcs.avsRegistryReader.QueryExistingRegisteredOperatorPubKeys(ctx, nil, nil)
+	alreadyRegisteredOperatorAddrs, alreadyRegisteredOperatorPubkeys, err := ops.avsRegistryReader.QueryExistingRegisteredOperatorPubKeys(ctx, nil, nil)
 	if err != nil {
-		pkcs.logger.Error("Fatal error querying existing registered operators", "err", err, "service", "OperatorPubkeysServiceInMemory")
+		ops.logger.Error("Fatal error querying existing registered operators", "err", err, "service", "OperatorPubkeysServiceInMemory")
 		panic(err)
 	}
-	pkcs.logger.Debug("List of queried operator registration events in blsApkRegistry", "alreadyRegisteredOperatorAddr", alreadyRegisteredOperatorAddrs, "service", "OperatorPubkeysServiceInMemory")
+	ops.logger.Debug("List of queried operator registration events in blsApkRegistry", "alreadyRegisteredOperatorAddr", alreadyRegisteredOperatorAddrs, "service", "OperatorPubkeysServiceInMemory")
+
+	socketsMap, err := ops.avsRegistryReader.QueryExistingRegisteredOperatorSockets(ctx, nil, nil)
+	if err != nil {
+		ops.logger.Error("Fatal error querying existing registered operator sockets", "err", err, "service", "OperatorPubkeysServiceInMemory")
+		panic(err)
+	}
 
 	// Fill the pubkeydict db with the operators and pubkeys found
 	for i, operatorAddr := range alreadyRegisteredOperatorAddrs {
 		operatorPubkeys := alreadyRegisteredOperatorPubkeys[i]
-		pubkeydict[operatorAddr] = operatorPubkeys
+		ops.pubkeyDict[operatorAddr] = operatorPubkeys
+		operatorId := types.OperatorIdFromG1Pubkey(operatorPubkeys.G1Pubkey)
+		ops.operatorAddrToId[operatorAddr] = operatorId
+		ops.socketDict[operatorId] = socketsMap[operatorId]
 	}
 }
 
 // TODO(samlaf): we might want to also add an async version of this method that returns a channel of operator pubkeys?
-func (pkcs *OperatorPubkeysServiceInMemory) GetOperatorPubkeys(ctx context.Context, operator common.Address) (operatorPubkeys types.OperatorPubkeys, operatorFound bool) {
+func (ops *OperatorsInfoServiceInMemory) GetOperatorInfo(ctx context.Context, operator common.Address) (operatorPubkeys types.OperatorInfo, operatorFound bool) {
 	respC := make(chan resp)
-	pkcs.queryC <- query{operator, respC}
+	ops.queryC <- query{operator, respC}
 	select {
 	case <-ctx.Done():
-		return types.OperatorPubkeys{}, false
+		return types.OperatorInfo{}, false
 	case resp := <-respC:
-		return resp.operatorPubkeys, resp.operatorExists
+		return resp.operatorInfo, resp.operatorExists
 	}
 }
