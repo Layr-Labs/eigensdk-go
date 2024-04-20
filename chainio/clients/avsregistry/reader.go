@@ -396,7 +396,7 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorPubKeys(
 		if err != nil {
 			return nil, nil, types.WrapError(errors.New("Cannot filter logs"), err)
 		}
-		r.logger.Debug("avsRegistryChainReader.QueryExistingRegisteredOperatorPubKeys", "transactionLogs", logs, "fromBlock", i, "toBlock", toBlock)
+		r.logger.Debug("avsRegistryChainReader.QueryExistingRegisteredOperatorPubKeys", "numTransactionLogs", len(logs), "fromBlock", i, "toBlock", toBlock)
 
 		for _, vLog := range logs {
 
