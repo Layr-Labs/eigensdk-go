@@ -17,6 +17,8 @@ import (
 )
 
 var (
+	// TODO: refactor these errors to use a custom struct with taskIndex field instead of wrapping taskIndex in the error string directly.
+	//       see https://go.dev/blog/go1.13-errors
 	TaskAlreadyInitializedErrorFn = func(taskIndex types.TaskIndex) error {
 		return fmt.Errorf("task %d already initialized", taskIndex)
 	}
