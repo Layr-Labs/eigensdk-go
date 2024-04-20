@@ -64,7 +64,7 @@ func (o Operator) Validate() error {
 	return operatorMetadata.Validate()
 }
 
-type Socket = string
+type Socket string
 
 type OperatorInfo struct {
 	Socket  Socket

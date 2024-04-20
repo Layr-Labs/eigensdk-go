@@ -30,7 +30,7 @@ type OperatorsInfoServiceInMemory struct {
 	// queried via the queryC channel, so don't need mutex to access
 	pubkeyDict       map[common.Address]types.OperatorPubkeys
 	operatorAddrToId map[common.Address]types.OperatorId
-	socketDict       map[types.OperatorId]string
+	socketDict       map[types.OperatorId]types.Socket
 }
 type query struct {
 	operatorAddr common.Address
@@ -65,7 +65,7 @@ func NewOperatorsInfoServiceInMemory(
 		queryC:                queryC,
 		pubkeyDict:            make(map[common.Address]types.OperatorPubkeys),
 		operatorAddrToId:      make(map[common.Address]types.OperatorId),
-		socketDict:            make(map[types.OperatorId]string),
+		socketDict:            make(map[types.OperatorId]types.Socket),
 	}
 	// We use this waitgroup to wait on the initialization of the inmemory pubkey dict,
 	// which requires querying the past events of the pubkey registration contract
@@ -135,7 +135,7 @@ func (ops *OperatorsInfoServiceInMemory) startServiceInGoroutine(ctx context.Con
 				)
 			case newSocketRegistrationEvent := <-newSocketRegistrationC:
 				operatorId := newSocketRegistrationEvent.OperatorId
-				ops.socketDict[operatorId] = newSocketRegistrationEvent.Socket
+				ops.socketDict[operatorId] = types.Socket(newSocketRegistrationEvent.Socket)
 				ops.logger.Debug("Received new socket registration event", "service", "OperatorPubkeysServiceInMemory", "operatorId", newSocketRegistrationEvent.OperatorId, "socket", newSocketRegistrationEvent.Socket)
 			// Receive a query from GetOperatorPubkeys
 			case query := <-queryC:

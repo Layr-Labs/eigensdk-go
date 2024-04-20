@@ -228,10 +228,10 @@ func (mr *MockAvsRegistryReaderMockRecorder) QueryExistingRegisteredOperatorPubK
 }
 
 // QueryExistingRegisteredOperatorSockets mocks base method.
-func (m *MockAvsRegistryReader) QueryExistingRegisteredOperatorSockets(arg0 context.Context, arg1, arg2 *big.Int) (map[types.Bytes32]string, error) {
+func (m *MockAvsRegistryReader) QueryExistingRegisteredOperatorSockets(arg0 context.Context, arg1, arg2 *big.Int) (map[types.Bytes32]types.Socket, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueryExistingRegisteredOperatorSockets", arg0, arg1, arg2)
-	ret0, _ := ret[0].(map[types.Bytes32]string)
+	ret0, _ := ret[0].(map[types.Bytes32]types.Socket)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

@@ -76,7 +76,7 @@ func TestGetOperatorPubkeys(t *testing.T) {
 					Return([]common.Address{testOperator1.operatorAddr}, []types.OperatorPubkeys{testOperator1.operatorInfo.Pubkeys}, nil)
 				mockAvsRegistrySubscriber.EXPECT().SubscribeToOperatorSocketUpdates().Return(nil, mockSubscription, nil)
 				mockAvsReader.EXPECT().QueryExistingRegisteredOperatorSockets(gomock.Any(), nil, nil).
-					Return(map[types.OperatorId]string{
+					Return(map[types.OperatorId]types.Socket{
 						types.OperatorIdFromG1Pubkey(testOperator1.operatorInfo.Pubkeys.G1Pubkey): testOperator1.operatorInfo.Socket,
 					}, nil)
 			},
@@ -99,7 +99,7 @@ func TestGetOperatorPubkeys(t *testing.T) {
 				operatorSocketUpdateEventC := make(chan *regcoordbindings.ContractRegistryCoordinatorOperatorSocketUpdate, 1)
 				operatorSocketUpdateEvent := &regcoordbindings.ContractRegistryCoordinatorOperatorSocketUpdate{
 					OperatorId: types.OperatorIdFromG1Pubkey(testOperator1.operatorInfo.Pubkeys.G1Pubkey),
-					Socket:     testOperator1.operatorInfo.Socket,
+					Socket:     string(testOperator1.operatorInfo.Socket),
 					Raw:        gethtypes.Log{},
 				}
 				operatorSocketUpdateEventC <- operatorSocketUpdateEvent

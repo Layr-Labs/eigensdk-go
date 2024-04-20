@@ -482,7 +482,7 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorSockets(
 		r.logger.Debug("avsRegistryChainReader.QueryExistingRegisteredOperatorSockets", "fromBlock", i, "toBlock", toBlock)
 
 		for update := socketUpdates; update.Event != nil; update.Next() {
-			operatorIdToSocketMap[update.Event.OperatorId] = update.Event.Socket
+			operatorIdToSocketMap[update.Event.OperatorId] = types.Socket(update.Event.Socket)
 		}
 	}
 	return operatorIdToSocketMap, nil
