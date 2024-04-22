@@ -9,7 +9,7 @@ import (
 	avsregistry "github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
-	oppubkeysservice "github.com/Layr-Labs/eigensdk-go/services/operatorpubkeys"
+	opinfoservice "github.com/Layr-Labs/eigensdk-go/services/operatorsinfo"
 	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
@@ -18,17 +18,17 @@ import (
 // nicer golang types that are easier to work with
 type AvsRegistryServiceChainCaller struct {
 	avsregistry.AvsRegistryReader
-	operatorPubkeysService oppubkeysservice.OperatorPubkeysService
-	logger                 logging.Logger
+	operatorInfoService opinfoservice.OperatorsInfoService
+	logger              logging.Logger
 }
 
 var _ AvsRegistryService = (*AvsRegistryServiceChainCaller)(nil)
 
-func NewAvsRegistryServiceChainCaller(avsRegistryReader avsregistry.AvsRegistryReader, operatorPubkeysService oppubkeysservice.OperatorPubkeysService, logger logging.Logger) *AvsRegistryServiceChainCaller {
+func NewAvsRegistryServiceChainCaller(avsRegistryReader avsregistry.AvsRegistryReader, operatorInfoService opinfoservice.OperatorsInfoService, logger logging.Logger) *AvsRegistryServiceChainCaller {
 	return &AvsRegistryServiceChainCaller{
-		AvsRegistryReader:      avsRegistryReader,
-		operatorPubkeysService: operatorPubkeysService,
-		logger:                 logger,
+		AvsRegistryReader:   avsRegistryReader,
+		operatorInfoService: operatorInfoService,
+		logger:              logger,
 	}
 }
 
@@ -46,9 +46,9 @@ func (ar *AvsRegistryServiceChainCaller) GetOperatorsAvsStateAtBlock(ctx context
 
 	for quorumIdx, quorumNum := range quorumNumbers {
 		for _, operator := range operatorsStakesInQuorums[quorumIdx] {
-			pubkeys, err := ar.getOperatorPubkeys(ctx, operator.OperatorId)
+			info, err := ar.getOperatorInfo(ctx, operator.OperatorId)
 			if err != nil {
-				return nil, types.WrapError(errors.New("Failed to find pubkeys for operator while building operatorsAvsState"), err)
+				return nil, types.WrapError(errors.New("Failed to get operatorInfo for operator while building operatorsAvsState"), err)
 			}
 			if operatorAvsState, ok := operatorsAvsState[operator.OperatorId]; ok {
 				operatorAvsState.StakePerQuorum[quorumNum] = operator.Stake
@@ -57,7 +57,7 @@ func (ar *AvsRegistryServiceChainCaller) GetOperatorsAvsStateAtBlock(ctx context
 				stakePerQuorum[quorumNum] = operator.Stake
 				operatorsAvsState[operator.OperatorId] = types.OperatorAvsState{
 					OperatorId:     operator.OperatorId,
-					Pubkeys:        pubkeys,
+					OperatorInfo:   info,
 					StakePerQuorum: stakePerQuorum,
 					BlockNumber:    blockNumber,
 				}
@@ -81,7 +81,7 @@ func (ar *AvsRegistryServiceChainCaller) GetQuorumsAvsStateAtBlock(ctx context.C
 		for _, operator := range operatorsAvsState {
 			// only include operators that have a stake in this quorum
 			if stake, ok := operator.StakePerQuorum[quorumNum]; ok {
-				aggPubkeyG1.Add(operator.Pubkeys.G1Pubkey)
+				aggPubkeyG1.Add(operator.OperatorInfo.Pubkeys.G1Pubkey)
 				totalStake.Add(totalStake, stake)
 			}
 		}
@@ -95,21 +95,14 @@ func (ar *AvsRegistryServiceChainCaller) GetQuorumsAvsStateAtBlock(ctx context.C
 	return quorumsAvsState, nil
 }
 
-// getOperatorPubkeys is a temporary hack until we implement GetOperatorAddr on the BLSpubkeyregistry contract
-// TODO(samlaf): we need operatorId -> operatorAddr so that we can query the operatorPubkeysService
-// this inverse mapping (only operatorAddr->operatorId is stored in registryCoordinator) is not stored,
-// but we know that the current implementation uses the hash of the G1 pubkey as the operatorId,
-// and the BLSApkRegistry contract stores the mapping G1pubkeyHash -> operatorAddr
-// When the above PR is merged, we should change this to instead call GetOperatorAddressFromOperatorId on the avsRegistryReader
-// and not hardcode the definition of the operatorId here
-func (ar *AvsRegistryServiceChainCaller) getOperatorPubkeys(ctx context.Context, operatorId types.OperatorId) (types.OperatorPubkeys, error) {
+func (ar *AvsRegistryServiceChainCaller) getOperatorInfo(ctx context.Context, operatorId types.OperatorId) (types.OperatorInfo, error) {
 	operatorAddr, err := ar.AvsRegistryReader.GetOperatorFromId(&bind.CallOpts{Context: ctx}, operatorId)
 	if err != nil {
-		return types.OperatorPubkeys{}, types.WrapError(errors.New("Failed to get operator address from pubkey hash"), err)
+		return types.OperatorInfo{}, types.WrapError(errors.New("Failed to get operator address from pubkey hash"), err)
 	}
-	pubkeys, ok := ar.operatorPubkeysService.GetOperatorPubkeys(ctx, operatorAddr)
+	info, ok := ar.operatorInfoService.GetOperatorInfo(ctx, operatorAddr)
 	if !ok {
-		return types.OperatorPubkeys{}, fmt.Errorf("Failed to get operator pubkeys from pubkey compendium service (operatorAddr: %v, operatorId: %v)", operatorAddr, operatorId)
+		return types.OperatorInfo{}, fmt.Errorf("Failed to get operator info from operatorInfoService (operatorAddr: %v, operatorId: %v)", operatorAddr, operatorId)
 	}
-	return pubkeys, nil
+	return info, nil
 }

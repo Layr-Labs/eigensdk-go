@@ -12,6 +12,7 @@ package mocks
 import (
 	reflect "reflect"
 
+	logging "github.com/Layr-Labs/eigensdk-go/logging"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -206,4 +207,22 @@ func (mr *MockLoggerMockRecorder) Warnf(arg0 any, arg1 ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{arg0}, arg1...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Warnf", reflect.TypeOf((*MockLogger)(nil).Warnf), varargs...)
+}
+
+// With mocks base method.
+func (m *MockLogger) With(arg0 ...any) logging.Logger {
+	m.ctrl.T.Helper()
+	varargs := []any{}
+	for _, a := range arg0 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "With", varargs...)
+	ret0, _ := ret[0].(logging.Logger)
+	return ret0
+}
+
+// With indicates an expected call of With.
+func (mr *MockLoggerMockRecorder) With(arg0 ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "With", reflect.TypeOf((*MockLogger)(nil).With), arg0...)
 }

@@ -226,3 +226,18 @@ func (mr *MockAvsRegistryReaderMockRecorder) QueryExistingRegisteredOperatorPubK
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryExistingRegisteredOperatorPubKeys", reflect.TypeOf((*MockAvsRegistryReader)(nil).QueryExistingRegisteredOperatorPubKeys), arg0, arg1, arg2)
 }
+
+// QueryExistingRegisteredOperatorSockets mocks base method.
+func (m *MockAvsRegistryReader) QueryExistingRegisteredOperatorSockets(arg0 context.Context, arg1, arg2 *big.Int) (map[types.Bytes32]types.Socket, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "QueryExistingRegisteredOperatorSockets", arg0, arg1, arg2)
+	ret0, _ := ret[0].(map[types.Bytes32]types.Socket)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// QueryExistingRegisteredOperatorSockets indicates an expected call of QueryExistingRegisteredOperatorSockets.
+func (mr *MockAvsRegistryReaderMockRecorder) QueryExistingRegisteredOperatorSockets(arg0, arg1, arg2 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryExistingRegisteredOperatorSockets", reflect.TypeOf((*MockAvsRegistryReader)(nil).QueryExistingRegisteredOperatorSockets), arg0, arg1, arg2)
+}
