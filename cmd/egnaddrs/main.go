@@ -132,7 +132,7 @@ func getRegCoordAndServiceMngrAddr(
 		// we use the IBLSSignatureChecker interface because the IServiceManager interface doesn't have a getter for the
 		// registry coordinator
 		// because we don't want to restrict teams to use our registry contracts.
-		// However, egnaddrs is targetted at teams using our registry contracts, so we assume that they are using our
+		// However, egnaddrs is targeted at teams using our registry contracts, so we assume that they are using our
 		// registries and that their service manager inherits the IBLSSignatureChecker interface (to check signatures
 		// against the BLSPubkeyRegistry).
 		serviceManagerContract, err := iblssigchecker.NewContractIBLSSignatureChecker(serviceManagerAddr, client)

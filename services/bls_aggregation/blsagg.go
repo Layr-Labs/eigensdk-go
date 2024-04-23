@@ -401,7 +401,7 @@ func checkIfStakeThresholdsMet(
 
 		totalStakeByQuorum, ok := totalStakePerQuorum[quorumNum]
 		if !ok {
-			// Note this case should not happend.
+			// Note this case should not happen.
 			// The `totalStakePerQuorum` is got from the contract, so if we not found the
 			// totalStakeByQuorum, that means the code have a bug.
 			logger.Errorf("TotalStake not found for quorum %d.", quorumNum)
