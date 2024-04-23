@@ -193,7 +193,7 @@ func (w *AvsRegistryChainWriter) RegisterOperatorInQuorumWithAVSRegistryCoordina
 	socket string,
 ) (*gethtypes.Receipt, error) {
 	operatorAddr := crypto.PubkeyToAddress(operatorEcdsaPrivateKey.PublicKey)
-	w.logger.Info("registering operator with the AVS's registry coordinator", "avs-service-manager", w.serviceManagerAddr, "operator", operatorAddr, "quorumNumbers", quorumNumbers)
+	w.logger.Info("registering operator with the AVS's registry coordinator", "avs-service-manager", w.serviceManagerAddr, "operator", operatorAddr, "quorumNumbers", quorumNumbers, "socket", socket)
 	// params to register bls pubkey with bls apk registry
 	g1HashedMsgToSign, err := w.registryCoordinator.PubkeyRegistrationMessageHash(&bind.CallOpts{}, operatorAddr)
 	if err != nil {
