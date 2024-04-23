@@ -65,63 +65,62 @@ It creates the following artifacts based on arguments
 
 // KeyGenerator defines the interface for generating keys
 type KeyGenerator interface {
-    GenerateKeys(numKeys int, path string, passwordFile, privateKeyFile *os.File) error
+	GenerateKeys(numKeys int, path string, passwordFile, privateKeyFile *os.File) error
 }
 
 // ECDSAKeyGenerator implements KeyGenerator for ECDSA keys
 type ECDSAKeyGenerator struct{}
 
 func (g ECDSAKeyGenerator) GenerateKeys(numKeys int, path string, passwordFile, privateKeyFile *os.File) error {
-    return generateECDSAKeys(numKeys, path, passwordFile, privateKeyFile) // Existing logic from generateECDSAKeys
+	return generateECDSAKeys(numKeys, path, passwordFile, privateKeyFile) // Existing logic from generateECDSAKeys
 }
 
 // BLSKeyGenerator implements KeyGenerator for BLS keys
 type BLSKeyGenerator struct{}
 
 func (g BLSKeyGenerator) GenerateKeys(numKeys int, path string, passwordFile, privateKeyFile *os.File) error {
-    return generateBlsKeys(numKeys, path, passwordFile, privateKeyFile) // Existing logic from generateBlsKeys
+	return generateBlsKeys(numKeys, path, passwordFile, privateKeyFile) // Existing logic from generateBlsKeys
 }
 
 // NewKeyGenerator is the factory function to create a KeyGenerator based on the key type
 func NewKeyGenerator(keyType string) KeyGenerator {
-    switch keyType {
-    case "ecdsa":
-        return ECDSAKeyGenerator{}
-    case "bls":
-        return BLSKeyGenerator{}
-    default:
-        return nil
-    }
+	switch keyType {
+	case "ecdsa":
+		return ECDSAKeyGenerator{}
+	case "bls":
+		return BLSKeyGenerator{}
+	default:
+		return nil
+	}
 }
 
 // Modified generate function using the factory pattern
 func generate(c *cli.Context) error {
-    keyType := c.String(KeyTypeFlag.Name)
-    numKeys := c.Int(NumKeysFlag.Name)
-    
-    generator := NewKeyGenerator(keyType)
-    if generator == nil {
-        return cli.Exit("Invalid key type", 1)
-    }
+	keyType := c.String(KeyTypeFlag.Name)
+	numKeys := c.Int(NumKeysFlag.Name)
 
-    folder, err := createDir(c, keyType+"-")
-    if err != nil {
-        return err
-    }
+	generator := NewKeyGenerator(keyType)
+	if generator == nil {
+		return cli.Exit("Invalid key type", 1)
+	}
 
-    passwordFile, privateKeyFile, err := createPasswordAndPrivateKeyFiles(folder)
-    if err != nil {
-        return err
-    }
+	folder, err := createDir(c, keyType+"-")
+	if err != nil {
+		return err
+	}
 
-    err = generator.GenerateKeys(numKeys, folder, passwordFile, privateKeyFile)
-    if err != nil {
-        return err
-    }
+	passwordFile, privateKeyFile, err := createPasswordAndPrivateKeyFiles(folder)
+	if err != nil {
+		return err
+	}
 
-    return nil
+	err = generator.GenerateKeys(numKeys, folder, passwordFile, privateKeyFile)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
-
 
 func createDir(c *cli.Context, prefix string) (fileName string, err error) {
 	folder := c.String(OutputDirFlag.Name)

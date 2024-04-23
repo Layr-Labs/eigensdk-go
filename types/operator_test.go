@@ -2,8 +2,9 @@ package types
 
 import (
 	"errors"
-	"github.com/Layr-Labs/eigensdk-go/utils"
 	"testing"
+
+	"github.com/Layr-Labs/eigensdk-go/utils"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -100,7 +101,7 @@ func TestOperatorValidate(t *testing.T) {
 			expectedErr: ErrInvalidOperatorAddress,
 		},
 		{
-			name: "failed operator validation - wrong earning recievers address address",
+			name: "failed operator validation - wrong earning receivers address address",
 			operator: Operator{
 				Address:                   "0xd5e099c71b797516c10ed0f0d895f429c2781142",
 				DelegationApproverAddress: "0xd5e099c71b797516c10ed0f0d895f429c2781142",

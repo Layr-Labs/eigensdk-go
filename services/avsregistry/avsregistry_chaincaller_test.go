@@ -196,7 +196,7 @@ func TestAvsRegistryServiceChainCaller_GetQuorumsAvsState(t *testing.T) {
 			queryBlockNum:      1,
 			wantErr:            nil,
 			wantQuorumsAvsStateDict: map[types.QuorumNum]types.QuorumAvsState{
-				1: types.QuorumAvsState{
+				1: {
 					QuorumNumber: types.QuorumNum(1),
 					TotalStake:   big.NewInt(123),
 					AggPubkeyG1:  bls.NewG1Point(big.NewInt(1), big.NewInt(1)),
