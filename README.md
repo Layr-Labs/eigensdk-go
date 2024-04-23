@@ -1,6 +1,7 @@
 ![Unit Tests](https://github.com/Layr-Labs/eigensdk-go/actions/workflows/unit-tests.yml/badge.svg)
 ![Linter](https://github.com/Layr-Labs/eigensdk-go/actions/workflows/golangci-lint.yml/badge.svg)
 ![Go Coverage](https://github.com/Layr-Labs/eigensdk-go/wiki/coverage.svg)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Layr-Labs/eigensdk-go)](https://goreportcard.com/report/github.com/Layr-Labs/eigensdk-go)
 
 <p align="center"><b>
 🚧 Under active development. EIGENSDK-GO is rapidly being upgraded, features are being added, interfaces will have breaking changes 🚧
