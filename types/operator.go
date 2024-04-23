@@ -64,6 +64,10 @@ func (o Operator) Validate() error {
 	return operatorMetadata.Validate()
 }
 
+// Socket represents the operator's socket address, which is registered onchain
+// TODO: this could have multiple formats... do we really want to use a custom type for this?
+// it could be ip:port, or just port, or ip:port:port if 2 ports are needed (like in eigenda's cast)
+// or whatever an avs decides to use
 type Socket string
 
 type OperatorInfo struct {
