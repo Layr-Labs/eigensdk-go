@@ -33,13 +33,14 @@ type extraParams struct {
 }
 
 type ContractCallRequest struct {
-	Operation       TransactionOperation `json:"operation"`
-	ExternalTxID    string               `json:"externalTxId"`
-	AssetID         AssetID              `json:"assetId"`
-	Source          account              `json:"source"`
-	Destination     account              `json:"destination"`
-	Amount          string               `json:"amount,omitempty"`
-	ExtraParameters extraParams          `json:"extraParameters"`
+	Operation TransactionOperation `json:"operation"`
+	// ExternalTxID is an optional field that can be used as an idempotency key.
+	ExternalTxID    string      `json:"externalTxId,omitempty"`
+	AssetID         AssetID     `json:"assetId"`
+	Source          account     `json:"source"`
+	Destination     account     `json:"destination"`
+	Amount          string      `json:"amount,omitempty"`
+	ExtraParameters extraParams `json:"extraParameters"`
 	// In case a transaction is stuck, specify the hash of the stuck transaction to replace it
 	// by this transaction with a higher fee, or to replace it with this transaction with a zero fee and drop it from the blockchain.
 	ReplaceTxByHash string `json:"replaceTxByHash,omitempty"`

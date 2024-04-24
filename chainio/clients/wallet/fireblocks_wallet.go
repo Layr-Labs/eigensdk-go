@@ -182,7 +182,7 @@ func (t *fireblocksWallet) SendTransaction(ctx context.Context, tx *types.Transa
 	}
 
 	req := fireblocks.NewContractCallRequest(
-		tx.Hash().Hex(),
+		"", // externalTxID
 		assetID,
 		account.ID,                // source account ID
 		contract.ID,               // destination account ID
