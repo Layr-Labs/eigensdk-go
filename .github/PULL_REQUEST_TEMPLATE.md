@@ -14,3 +14,8 @@ What is the solution here from a high level. What are the key technical decision
 <!--
 (optional) Any open questions or feedback on design desired?
 -->
+
+### Reviewer Checklist
+- [ ] Code is well-documented
+- [ ] Code adheres to Go naming conventions
+- [ ] Code deprecates any old functionality before removing it
