@@ -193,6 +193,7 @@ func (ops *OperatorsInfoServiceInMemory) GetOperatorInfo(ctx context.Context, op
 func (ops *OperatorsInfoServiceInMemory) updateSocketMapping(operatorId types.OperatorId, socket types.Socket) {
 	if socket == "" {
 		ops.logger.Warn("Received empty socket for operator", "operatorId", operatorId)
+		return
 	}
 	ops.socketDict[operatorId] = types.Socket(socket)
 }
