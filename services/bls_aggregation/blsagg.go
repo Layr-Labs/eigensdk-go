@@ -19,6 +19,9 @@ import (
 var (
 	// TODO: refactor these errors to use a custom struct with taskIndex field instead of wrapping taskIndex in the error string directly.
 	//       see https://go.dev/blog/go1.13-errors
+	TaskInitializationErrorFn = func(err error, taskIndex types.TaskIndex) error {
+		return fmt.Errorf("Failed to initialize task %d: %w", taskIndex, err)
+	}
 	TaskAlreadyInitializedErrorFn = func(taskIndex types.TaskIndex) error {
 		return fmt.Errorf("task %d already initialized", taskIndex)
 	}
@@ -221,12 +224,17 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 	}
 	operatorsAvsStateDict, err := a.avsRegistryService.GetOperatorsAvsStateAtBlock(context.Background(), quorumNumbers, taskCreatedBlock)
 	if err != nil {
-		// TODO: how should we handle such an error?
-		a.logger.Fatal("AggregatorService failed to get operators state from avs registry", "err", err, "blockNumber", taskCreatedBlock)
+		a.aggregatedResponsesC <- BlsAggregationServiceResponse{
+			Err: TaskInitializationErrorFn(fmt.Errorf("AggregatorService failed to get operators state from avs registry at blockNum %d: %w", taskCreatedBlock, err), taskIndex),
+		}
+		return
 	}
 	quorumsAvsStakeDict, err := a.avsRegistryService.GetQuorumsAvsStateAtBlock(context.Background(), quorumNumbers, taskCreatedBlock)
 	if err != nil {
-		a.logger.Fatal("Aggregator failed to get quorums state from avs registry", "err", err)
+		a.aggregatedResponsesC <- BlsAggregationServiceResponse{
+			Err: TaskInitializationErrorFn(fmt.Errorf("Aggregator failed to get quorums state from avs registry: %w", err), taskIndex),
+		}
+		return
 	}
 	totalStakePerQuorum := make(map[types.QuorumNum]*big.Int)
 	for quorumNum, quorumAvsState := range quorumsAvsStakeDict {
@@ -365,7 +373,8 @@ func (a *BlsAggregatorService) verifySignature(
 	// 0. verify that the msg actually came from the correct operator
 	operatorG2Pubkey := operatorsAvsStateDict[signedTaskResponseDigest.OperatorId].OperatorInfo.Pubkeys.G2Pubkey
 	if operatorG2Pubkey == nil {
-		a.logger.Fatal("Operator G2 pubkey not found")
+		a.logger.Error("Operator G2 pubkey not found", "operatorId", signedTaskResponseDigest.OperatorId, "taskId", taskIndex)
+		return fmt.Errorf("taskId %d: Operator G2 pubkey not found (operatorId: %x)", taskIndex, signedTaskResponseDigest.OperatorId)
 	}
 	a.logger.Debug("Verifying signed task response digest signature",
 		"operatorG2Pubkey", operatorG2Pubkey,
