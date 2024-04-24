@@ -471,6 +471,7 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorSockets(
 		}
 
 		end := toBlock.Uint64()
+
 		filterOpts := &bind.FilterOpts{
 			Start: i.Uint64(),
 			End:   &end,
@@ -479,11 +480,13 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorSockets(
 		if err != nil {
 			return nil, types.WrapError(errors.New("Cannot filter operator socket updates"), err)
 		}
-		r.logger.Debug("avsRegistryChainReader.QueryExistingRegisteredOperatorSockets", "fromBlock", i, "toBlock", toBlock)
 
-		for update := socketUpdates; update.Event != nil; update.Next() {
-			operatorIdToSocketMap[update.Event.OperatorId] = types.Socket(update.Event.Socket)
+		numSocketUpdates := 0
+		for socketUpdates.Next() {
+			operatorIdToSocketMap[socketUpdates.Event.OperatorId] = types.Socket(socketUpdates.Event.Socket)
+			numSocketUpdates++
 		}
+		r.logger.Debug("avsRegistryChainReader.QueryExistingRegisteredOperatorSockets", "numTransactionLogs", numSocketUpdates, "fromBlock", i, "toBlock", toBlock)
 	}
 	return operatorIdToSocketMap, nil
 }

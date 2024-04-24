@@ -134,9 +134,8 @@ func (ops *OperatorsInfoServiceInMemory) startServiceInGoroutine(ctx context.Con
 					"G1pubkey", ops.pubkeyDict[operatorAddr].G1Pubkey, "G2pubkey", ops.pubkeyDict[operatorAddr].G2Pubkey,
 				)
 			case newSocketRegistrationEvent := <-newSocketRegistrationC:
-				operatorId := newSocketRegistrationEvent.OperatorId
-				ops.socketDict[operatorId] = types.Socket(newSocketRegistrationEvent.Socket)
 				ops.logger.Debug("Received new socket registration event", "service", "OperatorPubkeysServiceInMemory", "operatorId", newSocketRegistrationEvent.OperatorId, "socket", newSocketRegistrationEvent.Socket)
+				ops.updateSocketMapping(newSocketRegistrationEvent.OperatorId, types.Socket(newSocketRegistrationEvent.Socket))
 			// Receive a query from GetOperatorPubkeys
 			case query := <-queryC:
 				pubkeys, ok := ops.pubkeyDict[query.operatorAddr]
@@ -167,6 +166,7 @@ func (ops *OperatorsInfoServiceInMemory) queryPastRegisteredOperatorEventsAndFil
 		ops.logger.Error("Fatal error querying existing registered operator sockets", "err", err, "service", "OperatorPubkeysServiceInMemory")
 		panic(err)
 	}
+	ops.logger.Debug("List of queried operator socket registration events", "socketsMap", socketsMap, "service", "OperatorPubkeysServiceInMemory")
 
 	// Fill the pubkeydict db with the operators and pubkeys found
 	for i, operatorAddr := range alreadyRegisteredOperatorAddrs {
@@ -174,7 +174,7 @@ func (ops *OperatorsInfoServiceInMemory) queryPastRegisteredOperatorEventsAndFil
 		ops.pubkeyDict[operatorAddr] = operatorPubkeys
 		operatorId := types.OperatorIdFromG1Pubkey(operatorPubkeys.G1Pubkey)
 		ops.operatorAddrToId[operatorAddr] = operatorId
-		ops.socketDict[operatorId] = socketsMap[operatorId]
+		ops.updateSocketMapping(operatorId, socketsMap[operatorId])
 	}
 }
 
@@ -188,4 +188,12 @@ func (ops *OperatorsInfoServiceInMemory) GetOperatorInfo(ctx context.Context, op
 	case resp := <-respC:
 		return resp.operatorInfo, resp.operatorExists
 	}
+}
+
+func (ops *OperatorsInfoServiceInMemory) updateSocketMapping(operatorId types.OperatorId, socket types.Socket) {
+	if socket == "" {
+		ops.logger.Warn("Received empty socket for operator", "operatorId", operatorId)
+		return
+	}
+	ops.socketDict[operatorId] = types.Socket(socket)
 }
