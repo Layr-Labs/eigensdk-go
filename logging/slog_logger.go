@@ -8,6 +8,8 @@ import (
 	"os"
 	"runtime"
 	"time"
+
+	"github.com/lmittmann/tint"
 )
 
 type SLogger struct {
@@ -16,6 +18,63 @@ type SLogger struct {
 
 var _ Logger = (*SLogger)(nil)
 
+// SLoggerOptions are options when creating a new SLogger.
+// A zero Options consists entirely of default values.
+//
+// SLoggerOptions are an extension of [slog.HandlerOptions].
+type SLoggerOptions struct {
+	// Enable source code location (Default: false)
+	AddSource bool
+
+	// Minimum level to log (Default: slog.LevelInfo)
+	Level slog.Leveler
+
+	// ReplaceAttr is called to rewrite each non-group attribute before it is logged.
+	// See https://pkg.go.dev/log/slog#HandlerOptions for details.
+	ReplaceAttr func(groups []string, attr slog.Attr) slog.Attr
+
+	// Time format (Default: time.StampMilli)
+	// only supported with text handler
+	TimeFormat string
+
+	// Disable color (Default: false)
+	// only supported with text handler (no color in json)
+	NoColor bool
+}
+
+// NewSlogTextLogger creates a new SLogger with a text handler
+// Default behavior is colored log outputs. To disable colors, set opts.NoColor to true.
+func NewTextSLogger(outputWriter io.Writer, opts *SLoggerOptions) *SLogger {
+	tintOptions := &tint.Options{
+		AddSource:   opts.AddSource,
+		Level:       opts.Level,
+		ReplaceAttr: opts.ReplaceAttr,
+		TimeFormat:  opts.TimeFormat,
+		NoColor:     opts.NoColor,
+	}
+	handler := tint.NewHandler(outputWriter, tintOptions)
+	logger := slog.New(handler)
+	return &SLogger{
+		logger,
+	}
+}
+
+// NewSlogJsonLogger creates a new SLogger with a Json handler
+// Currently colors are not supported with json handler. If colors are required,
+// use NewTextSLogger instead.
+func NewJsonSLogger(outputWriter io.Writer, opts *SLoggerOptions) *SLogger {
+	handlerOpts := &slog.HandlerOptions{
+		AddSource:   opts.AddSource,
+		Level:       opts.Level,
+		ReplaceAttr: opts.ReplaceAttr,
+	}
+	handler := slog.NewJSONHandler(outputWriter, handlerOpts)
+	logger := slog.New(handler)
+	return &SLogger{
+		logger,
+	}
+}
+
 // NewSlogTextLogger creates a new SLogger with a text handler
 //
 //		outputWriter is the writer to write the logs to (typically os.Stdout,
@@ -23,6 +82,8 @@ var _ Logger = (*SLogger)(nil)
 //	 	handlerOptions is the options for the handler, such as
 //		Level is the minimum level to log
 //		AddSource if true, adds source information to the log
+//
+// Deprecated: use NewTextSLogger instead
 func NewSlogTextLogger(outputWriter io.Writer, handlerOpts *slog.HandlerOptions) *SLogger {
 	handler := slog.NewTextHandler(outputWriter, handlerOpts)
 	logger := slog.New(handler)
@@ -38,6 +99,8 @@ func NewSlogTextLogger(outputWriter io.Writer, handlerOpts *slog.HandlerOptions)
 //	 	handlerOptions is the options for the handler, such as
 //		Level is the minimum level to log
 //		AddSource if true, adds source information to the log
+//
+// Deprecated: use NewJsonSLogger instead
 func NewSlogJsonLogger(outputWriter io.Writer, handlerOpts *slog.HandlerOptions) *SLogger {
 	handler := slog.NewJSONHandler(outputWriter, handlerOpts)
 	logger := slog.New(handler)
