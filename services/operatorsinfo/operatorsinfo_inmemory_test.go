@@ -28,7 +28,7 @@ type testOperator struct {
 }
 
 func TestGetOperatorPubkeys(t *testing.T) {
-	logger := logging.NewSlogTextLogger(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})
+	logger := logging.NewTextSLogger(os.Stdout, &logging.SLoggerOptions{Level: slog.LevelDebug})
 	operator1Pubkeys := types.OperatorPubkeys{
 		G1Pubkey: bls.NewG1Point(big.NewInt(1), big.NewInt(1)),
 		G2Pubkey: bls.NewG2Point([2]*big.Int{big.NewInt(1), big.NewInt(1)}, [2]*big.Int{big.NewInt(1), big.NewInt(1)}),
