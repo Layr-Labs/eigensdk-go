@@ -254,7 +254,7 @@ func TestSendTransactionReplaceTx(t *testing.T) {
 		TxHash: expectedTxHash,
 	}, nil)
 	fireblocksClient.EXPECT().ContractCall(gomock.Any(), fireblocks.NewContractCallRequest(
-		replacementTx.Hash().Hex(),
+		"",
 		"ETH_TEST3",
 		"vaultAccountID",
 		"contractID",
