@@ -315,6 +315,7 @@ func (w *AvsRegistryChainWriter) UpdateStakesOfOperatorSubsetForAllQuorums(
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
 	w.logger.Info("successfully updated stakes of operator subset for all quorums", "txHash", receipt.TxHash.String(), "operators", operators)
+	return receipt, nil
 }
 
 func (w *AvsRegistryChainWriter) DeregisterOperator(

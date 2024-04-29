@@ -45,11 +45,11 @@ func BuildAvsRegistryChainSubscriber(
 ) (*AvsRegistryChainSubscriber, error) {
 	regCoord, err := regcoord.NewContractRegistryCoordinator(regCoordAddr, ethWsClient)
 	if err != nil {
-		return nil, types.WrapError(errors.New("Failed to create RegistryCoordinator contract"), err)
+		return nil, utils.WrapError("Failed to create RegistryCoordinator contract", err)
 	}
 	blsApkRegAddr, err := regCoord.BlsApkRegistry(&bind.CallOpts{})
 	if err != nil {
-		return nil, types.WrapError(errors.New("Failed to get BLSApkRegistry address from RegistryCoordinator"), err)
+		return nil, utils.WrapError("Failed to get BLSApkRegistry address from RegistryCoordinator", err)
 	}
 	blsApkReg, err := blsapkreg.NewContractBLSApkRegistry(blsApkRegAddr, ethWsClient)
 	if err != nil {
@@ -75,7 +75,7 @@ func (s *AvsRegistryChainSubscriber) SubscribeToOperatorSocketUpdates() (chan *r
 		&bind.WatchOpts{}, operatorSocketUpdateChan, nil,
 	)
 	if err != nil {
-		return nil, nil, types.WrapError(errors.New("Failed to subscribe to OperatorSocketUpdate events"), err)
+		return nil, nil, utils.WrapError("Failed to subscribe to OperatorSocketUpdate events", err)
 	}
 	return operatorSocketUpdateChan, sub, nil
 }

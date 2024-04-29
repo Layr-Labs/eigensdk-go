@@ -2,7 +2,6 @@ package avsregistry
 
 import (
 	"context"
-	"errors"
 	"math"
 	"math/big"
 
@@ -460,7 +459,7 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorSockets(
 	if stopBlock == nil {
 		curBlockNum, err := r.ethClient.BlockNumber(ctx)
 		if err != nil {
-			return nil, types.WrapError(errors.New("Cannot get current block number"), err)
+			return nil, utils.WrapError("Cannot get current block number", err)
 		}
 		stopBlock = big.NewInt(int64(curBlockNum))
 	}
@@ -482,7 +481,7 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorSockets(
 		}
 		socketUpdates, err := r.registryCoordinator.FilterOperatorSocketUpdate(filterOpts, nil)
 		if err != nil {
-			return nil, types.WrapError(errors.New("Cannot filter operator socket updates"), err)
+			return nil, utils.WrapError("Cannot filter operator socket updates", err)
 		}
 
 		numSocketUpdates := 0
