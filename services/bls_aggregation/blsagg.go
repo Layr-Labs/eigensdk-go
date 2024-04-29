@@ -250,6 +250,7 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 	taskExpiredTimer := time.NewTimer(timeToExpiry)
 
 	aggregatedOperatorsDict := map[types.TaskResponseDigest]aggregatedOperators{}
+
 	for {
 		select {
 		case signedTaskResponseDigest := <-signedTaskRespsC:
@@ -262,13 +263,17 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 			// after verifying signature we aggregate its sig and pubkey, and update the signed stake amount
 			digestAggregatedOperators, ok := aggregatedOperatorsDict[signedTaskResponseDigest.TaskResponseDigest]
 			if !ok {
+				var signersTotalStakePerQuorum = make(map[types.QuorumNum]*big.Int)
+				for quorum, stakeAmount := range operatorsAvsStateDict[signedTaskResponseDigest.OperatorId].StakePerQuorum {
+					signersTotalStakePerQuorum[quorum] = (*big.Int)(stakeAmount) // Convert types.StakeAmount to *big.Int
+				}
 				// first operator to sign on this digest
 				digestAggregatedOperators = aggregatedOperators{
 					// we've already verified that the operator is part of the task's quorum, so we don't need checks here
 					signersApkG2:               bls.NewZeroG2Point().Add(operatorsAvsStateDict[signedTaskResponseDigest.OperatorId].OperatorInfo.Pubkeys.G2Pubkey),
 					signersAggSigG1:            signedTaskResponseDigest.BlsSignature,
 					signersOperatorIdsSet:      map[types.OperatorId]bool{signedTaskResponseDigest.OperatorId: true},
-					signersTotalStakePerQuorum: operatorsAvsStateDict[signedTaskResponseDigest.OperatorId].StakePerQuorum,
+					signersTotalStakePerQuorum: signersTotalStakePerQuorum,
 				}
 			} else {
 				digestAggregatedOperators.signersAggSigG1.Add(signedTaskResponseDigest.BlsSignature)

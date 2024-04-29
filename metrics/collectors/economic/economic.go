@@ -3,6 +3,7 @@ package economic
 
 import (
 	"errors"
+	"math/big"
 	"strconv"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
@@ -157,7 +158,7 @@ func (ec *Collector) Collect(ch chan<- prometheus.Metric) {
 			ec.logger.Error("Failed to get operator stake", "err", err)
 		} else {
 			for quorumNum, stake := range quorumStakeMap {
-				stakeFloat64, _ := stake.Float64()
+				stakeFloat64, _ := ((*big.Int)(stake)).Float64()
 				ch <- prometheus.MustNewConstMetric(
 					ec.registeredStake, prometheus.GaugeValue, stakeFloat64, strconv.Itoa(int(quorumNum)), ec.quorumNames[quorumNum],
 				)

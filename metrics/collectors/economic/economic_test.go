@@ -31,7 +31,7 @@ func TestEconomicCollector(t *testing.T) {
 	avsRegistryReader := mocks.NewMockAvsRegistryReader(mockCtrl)
 	avsRegistryReader.EXPECT().GetOperatorId(gomock.Any(), operatorAddr).Return(operatorId, nil)
 	avsRegistryReader.EXPECT().GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(gomock.Any(), gomock.Any()).Return(
-		map[types.QuorumNum]*big.Int{
+		map[types.QuorumNum]types.StakeAmount{
 			0: big.NewInt(1000),
 			1: big.NewInt(2000),
 		},

@@ -105,10 +105,10 @@ func (mr *MockAvsRegistryReaderMockRecorder) GetOperatorId(arg0, arg1 any) *gomo
 }
 
 // GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock mocks base method.
-func (m *MockAvsRegistryReader) GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(arg0 *bind.CallOpts, arg1 types.OperatorId) (map[types.QuorumNum]*big.Int, error) {
+func (m *MockAvsRegistryReader) GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(arg0 *bind.CallOpts, arg1 types.OperatorId) (map[types.QuorumNum]types.StakeAmount, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock", arg0, arg1)
-	ret0, _ := ret[0].(map[types.QuorumNum]*big.Int)
+	ret0, _ := ret[0].(map[types.QuorumNum]types.StakeAmount)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
