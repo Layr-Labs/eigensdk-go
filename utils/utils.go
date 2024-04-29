@@ -279,12 +279,12 @@ func WrapError(mainErr interface{}, subErr interface{}) error {
 	}
 
 	if main == nil && sub != nil {
-		return fmt.Errorf("sub error: %w", sub)
+		return sub
 	}
 
 	if main != nil && sub == nil {
-		return fmt.Errorf("%w: unknown sub error", main)
+		return main
 	}
 
-	return fmt.Errorf("%w: %w", main, sub)
+	return main
 }
