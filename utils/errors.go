@@ -22,6 +22,7 @@ var (
 	ErrInvalidTwitterUrlRegex   = errors.New(
 		"invalid twitter url, it should be of the format https://twitter.com/<username> or https://x.com/<username>",
 	)
+	ErrResponseTooLarge = errors.New("response too large, allowed size is 1 MB")
 )
 
 func TypedErr(e interface{}) error {

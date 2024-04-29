@@ -27,6 +27,9 @@ const (
 	PngMimeType = "image/png"
 
 	TextRegex = `^[a-zA-Z0-9 +.,;:?!'"\-_/()\[\]~&#$—]+$`
+
+	// Limit Http response to 1 MB
+	httpResponseLimitBytes = 1 * 1024 * 1024
 )
 
 var (
@@ -124,7 +127,18 @@ func ReadPublicURL(url string) ([]byte, error) {
 	}(resp.Body)
 
 	// allow images of up to 1 MiB
-	return io.ReadAll(http.MaxBytesReader(nil, resp.Body, 1*1024*1024))
+	response, err := io.ReadAll(http.MaxBytesReader(nil, resp.Body, httpResponseLimitBytes))
+	if err != nil {
+		// We are doing this because errors.Is(err) check doesn't work for this
+		// since MaxBytesError has pointer receiver. Not sure what is the correct
+		// way to do this.
+		maxByteErr := http.MaxBytesError{}
+		if err.Error() == maxByteErr.Error() {
+			return nil, ErrResponseTooLarge
+		}
+		return nil, err
+	}
+	return response, nil
 }
 
 func CheckIfValidTwitterURL(twitterURL string) error {
