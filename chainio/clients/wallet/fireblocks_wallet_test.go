@@ -400,12 +400,14 @@ func TestSenderAddress(t *testing.T) {
 		},
 	}, nil)
 	expectedSenderAddr := "0x0000000000000000000000000000000000000000"
-	fireblocksClient.EXPECT().GetAssetAddresses(gomock.Any(), "vaultAccountID", assetID).Return([]fireblocks.AssetAddress{
-		{
-			AssetID: assetID,
-			Address: expectedSenderAddr,
-		},
-	}, nil)
+	fireblocksClient.EXPECT().
+		GetAssetAddresses(gomock.Any(), "vaultAccountID", assetID).
+		Return([]fireblocks.AssetAddress{
+			{
+				AssetID: assetID,
+				Address: expectedSenderAddr,
+			},
+		}, nil)
 
 	addr, err := w.SenderAddress(context.Background())
 	assert.Nil(t, err)

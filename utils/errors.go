@@ -23,3 +23,34 @@ var (
 		"invalid twitter url, it should be of the format https://twitter.com/<username> or https://x.com/<username>",
 	)
 )
+
+func TypedErr(e interface{}) error {
+	switch t := e.(type) {
+	case error:
+		return t
+	case string:
+		return errors.New(t)
+	default:
+		return nil
+	}
+}
+
+func WrapError(mainErr interface{}, subErr interface{}) error {
+	var main, sub error
+	main = TypedErr(mainErr)
+	sub = TypedErr(subErr)
+	// Some times the wrap will wrap a nil error
+	if main == nil && sub == nil {
+		return nil
+	}
+
+	if main == nil && sub != nil {
+		return sub
+	}
+
+	if main != nil && sub == nil {
+		return main
+	}
+
+	return fmt.Errorf("%w: %w", main, sub)
+}

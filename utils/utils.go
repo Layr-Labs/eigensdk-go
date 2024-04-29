@@ -8,11 +8,12 @@ import (
 	"strings"
 	"time"
 
+	"log"
+	"math/big"
+
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"gopkg.in/yaml.v3"
-	"log"
-	"math/big"
 
 	"fmt"
 	"io"
@@ -239,6 +240,7 @@ func ValidateText(text string) error {
 
 	return nil
 }
+
 func ValidateRawGithubUrl(url string) error {
 	// Basic validation
 	err := CheckBasicURLValidation(url)
