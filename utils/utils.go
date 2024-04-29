@@ -8,11 +8,12 @@ import (
 	"strings"
 	"time"
 
+	"log"
+	"math/big"
+
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"gopkg.in/yaml.v3"
-	"log"
-	"math/big"
 
 	"fmt"
 	"io"
@@ -255,4 +256,35 @@ func ValidateRawGithubUrl(url string) error {
 	}
 
 	return nil
+}
+
+func TypedErr(e interface{}) error {
+	switch t := e.(type) {
+	case error:
+		return t
+	case string:
+		return errors.New(t)
+	default:
+		return nil
+	}
+}
+
+func WrapError(mainErr interface{}, subErr interface{}) error {
+	var main, sub error
+	main = TypedErr(mainErr)
+	sub = TypedErr(subErr)
+	// Some times the wrap will wrap a nil error
+	if main == nil && sub == nil {
+		return nil
+	}
+
+	if main == nil && sub != nil {
+		return fmt.Errorf("sub error: %w", sub)
+	}
+
+	if main != nil && sub == nil {
+		return fmt.Errorf("%w: unknown sub error", main)
+	}
+
+	return fmt.Errorf("%w: %w", main, sub)
 }

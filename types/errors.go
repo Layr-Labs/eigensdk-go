@@ -23,20 +23,3 @@ var (
 	ErrUnmarshalOperatorMetadata  = errors.New("unable to unmarshal operator metadata")
 	ErrReadingMetadataUrlResponse = errors.New("error reading metadata url body")
 )
-
-func WrapError(mainErr error, subErr error) error {
-	// Some times the wrap will wrap a nil error
-	if mainErr == nil && subErr == nil {
-		return nil
-	}
-
-	if mainErr == nil && subErr != nil {
-		return fmt.Errorf("sub error: %w", subErr)
-	}
-
-	if mainErr != nil && subErr == nil {
-		return fmt.Errorf("%w: unknown sub error", mainErr)
-	}
-
-	return fmt.Errorf("%w: %w", mainErr, subErr)
-}

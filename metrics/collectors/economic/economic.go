@@ -9,6 +9,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/types"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
@@ -114,7 +115,7 @@ func (ec *Collector) initOperatorId() error {
 	if ec.operatorId == [32]byte{} {
 		operatorId, err := ec.avsRegistryReader.GetOperatorId(&bind.CallOpts{}, ec.operatorAddr)
 		if err != nil {
-			return types.WrapError(errors.New("Failed to get operator id"), err)
+			return utils.WrapError("Failed to get operator id", err)
 		}
 		if operatorId == [32]byte{} {
 			return errors.New("operator not registered")

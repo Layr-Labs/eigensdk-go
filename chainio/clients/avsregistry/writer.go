@@ -9,10 +9,11 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
-	"github.com/Layr-Labs/eigensdk-go/chainio/utils"
+	chainioutils "github.com/Layr-Labs/eigensdk-go/chainio/utils"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/types"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
@@ -117,50 +118,50 @@ func BuildAvsRegistryChainWriter(
 ) (*AvsRegistryChainWriter, error) {
 	registryCoordinator, err := regcoord.NewContractRegistryCoordinator(registryCoordinatorAddr, ethClient)
 	if err != nil {
-		return nil, types.WrapError(errors.New("Failed to create RegistryCoordinator contract"), err)
+		return nil, utils.WrapError("Failed to create RegistryCoordinator contract", err)
 	}
 	operatorStateRetriever, err := opstateretriever.NewContractOperatorStateRetriever(
 		operatorStateRetrieverAddr,
 		ethClient,
 	)
 	if err != nil {
-		return nil, types.WrapError(errors.New("Failed to create OperatorStateRetriever contract"), err)
+		return nil, utils.WrapError("Failed to create OperatorStateRetriever contract", err)
 	}
 	serviceManagerAddr, err := registryCoordinator.ServiceManager(&bind.CallOpts{})
 	if err != nil {
-		return nil, types.WrapError(errors.New("Failed to get ServiceManager address"), err)
+		return nil, utils.WrapError("Failed to get ServiceManager address", err)
 	}
 	serviceManager, err := smbase.NewContractServiceManagerBase(serviceManagerAddr, ethClient)
 	if err != nil {
-		return nil, types.WrapError(errors.New("Failed to create ServiceManager contract"), err)
+		return nil, utils.WrapError("Failed to create ServiceManager contract", err)
 	}
 	blsApkRegistryAddr, err := registryCoordinator.BlsApkRegistry(&bind.CallOpts{})
 	if err != nil {
-		return nil, types.WrapError(errors.New("Failed to get BLSApkRegistry address"), err)
+		return nil, utils.WrapError("Failed to get BLSApkRegistry address", err)
 	}
 	blsApkRegistry, err := blsapkregistry.NewContractBLSApkRegistry(blsApkRegistryAddr, ethClient)
 	if err != nil {
-		return nil, types.WrapError(errors.New("Failed to create BLSApkRegistry contract"), err)
+		return nil, utils.WrapError("Failed to create BLSApkRegistry contract", err)
 	}
 	stakeRegistryAddr, err := registryCoordinator.StakeRegistry(&bind.CallOpts{})
 	if err != nil {
-		return nil, types.WrapError(errors.New("Failed to get StakeRegistry address"), err)
+		return nil, utils.WrapError("Failed to get StakeRegistry address", err)
 	}
 	stakeRegistry, err := stakeregistry.NewContractStakeRegistry(stakeRegistryAddr, ethClient)
 	if err != nil {
-		return nil, types.WrapError(errors.New("Failed to create StakeRegistry contract"), err)
+		return nil, utils.WrapError("Failed to create StakeRegistry contract", err)
 	}
 	delegationManagerAddr, err := stakeRegistry.Delegation(&bind.CallOpts{})
 	if err != nil {
-		return nil, types.WrapError(errors.New("Failed to get DelegationManager address"), err)
+		return nil, utils.WrapError("Failed to get DelegationManager address", err)
 	}
 	avsDirectoryAddr, err := serviceManager.AvsDirectory(&bind.CallOpts{})
 	if err != nil {
-		return nil, types.WrapError(errors.New("Failed to get AvsDirectory address"), err)
+		return nil, utils.WrapError("Failed to get AvsDirectory address", err)
 	}
 	elReader, err := elcontracts.BuildELChainReader(delegationManagerAddr, avsDirectoryAddr, ethClient, logger)
 	if err != nil {
-		return nil, types.WrapError(errors.New("Failed to create ELChainReader"), err)
+		return nil, utils.WrapError("Failed to create ELChainReader", err)
 	}
 	return NewAvsRegistryChainWriter(
 		serviceManagerAddr,
@@ -199,11 +200,11 @@ func (w *AvsRegistryChainWriter) RegisterOperatorInQuorumWithAVSRegistryCoordina
 	if err != nil {
 		return nil, err
 	}
-	signedMsg := utils.ConvertToBN254G1Point(
-		blsKeyPair.SignHashedToCurveMessage(utils.ConvertBn254GethToGnark(g1HashedMsgToSign)).G1Point,
+	signedMsg := chainioutils.ConvertToBN254G1Point(
+		blsKeyPair.SignHashedToCurveMessage(chainioutils.ConvertBn254GethToGnark(g1HashedMsgToSign)).G1Point,
 	)
-	G1pubkeyBN254 := utils.ConvertToBN254G1Point(blsKeyPair.GetPubKeyG1())
-	G2pubkeyBN254 := utils.ConvertToBN254G2Point(blsKeyPair.GetPubKeyG2())
+	G1pubkeyBN254 := chainioutils.ConvertToBN254G1Point(blsKeyPair.GetPubKeyG1())
+	G2pubkeyBN254 := chainioutils.ConvertToBN254G2Point(blsKeyPair.GetPubKeyG2())
 	pubkeyRegParams := regcoord.IBLSApkRegistryPubkeyRegistrationParams{
 		PubkeyRegistrationSignature: signedMsg,
 		PubkeyG1:                    G1pubkeyBN254,
@@ -255,7 +256,17 @@ func (w *AvsRegistryChainWriter) RegisterOperatorInQuorumWithAVSRegistryCoordina
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
-	w.logger.Info("successfully registered operator with AVS registry coordinator", "txHash", receipt.TxHash.String(), "avs-service-manager", w.serviceManagerAddr, "operator", operatorAddr, "quorumNumbers", quorumNumbers)
+	w.logger.Info(
+		"successfully registered operator with AVS registry coordinator",
+		"txHash",
+		receipt.TxHash.String(),
+		"avs-service-manager",
+		w.serviceManagerAddr,
+		"operator",
+		operatorAddr,
+		"quorumNumbers",
+		quorumNumbers,
+	)
 	return receipt, nil
 }
 
@@ -269,7 +280,11 @@ func (w *AvsRegistryChainWriter) UpdateStakesOfEntireOperatorSetForQuorums(
 	if err != nil {
 		return nil, err
 	}
-	tx, err := w.registryCoordinator.UpdateOperatorsForQuorum(noSendTxOpts, operatorsPerQuorum, quorumNumbers.UnderlyingType())
+	tx, err := w.registryCoordinator.UpdateOperatorsForQuorum(
+		noSendTxOpts,
+		operatorsPerQuorum,
+		quorumNumbers.UnderlyingType(),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -300,8 +315,6 @@ func (w *AvsRegistryChainWriter) UpdateStakesOfOperatorSubsetForAllQuorums(
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
 	w.logger.Info("successfully updated stakes of operator subset for all quorums", "txHash", receipt.TxHash.String(), "operators", operators)
-	return receipt, nil
-
 }
 
 func (w *AvsRegistryChainWriter) DeregisterOperator(
@@ -322,6 +335,7 @@ func (w *AvsRegistryChainWriter) DeregisterOperator(
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
+
 	w.logger.Info("successfully deregistered operator with the AVS's registry coordinator", "txHash", receipt.TxHash.String())
 	return receipt, nil
 }

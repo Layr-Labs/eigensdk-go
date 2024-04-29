@@ -22,9 +22,11 @@ var _ Wallet = (*fireblocksWallet)(nil)
 
 var (
 	// ErrNotYetBroadcasted indicates that the transaction has not been broadcasted yet.
-	// This can happen if the transaction is still being processed by Fireblocks and has not been broadcasted to the blockchain yet.
+	// This can happen if the transaction is still being processed by Fireblocks and has not been broadcasted to the
+	// blockchain yet.
 	ErrNotYetBroadcasted = errors.New("transaction not yet broadcasted")
-	// ErrReceiptNotYetAvailable indicates that the transaction has been broadcasted but has not been confirmed onchain yet.
+	// ErrReceiptNotYetAvailable indicates that the transaction has been broadcasted but has not been confirmed onchain
+	// yet.
 	ErrReceiptNotYetAvailable = errors.New("transaction receipt not yet available")
 	ErrTransactionFailed      = errors.New("transaction failed")
 )
@@ -51,7 +53,12 @@ type fireblocksWallet struct {
 	whitelistedContracts map[common.Address]*fireblocks.WhitelistedContract
 }
 
-func NewFireblocksWallet(fireblocksClient fireblocks.Client, ethClient eth.Client, vaultAccountName string, logger logging.Logger) (Wallet, error) {
+func NewFireblocksWallet(
+	fireblocksClient fireblocks.Client,
+	ethClient eth.Client,
+	vaultAccountName string,
+	logger logging.Logger,
+) (Wallet, error) {
 	chainID, err := ethClient.ChainID(context.Background())
 	if err != nil {
 		return nil, fmt.Errorf("error getting chain ID: %w", err)
@@ -89,7 +96,10 @@ func (t *fireblocksWallet) getAccount(ctx context.Context) (*fireblocks.VaultAcc
 	return t.account, nil
 }
 
-func (t *fireblocksWallet) getWhitelistedContract(ctx context.Context, address common.Address) (*fireblocks.WhitelistedContract, error) {
+func (t *fireblocksWallet) getWhitelistedContract(
+	ctx context.Context,
+	address common.Address,
+) (*fireblocks.WhitelistedContract, error) {
 	assetID, ok := fireblocks.AssetIDByChain[t.chainID.Uint64()]
 	if !ok {
 		return nil, fmt.Errorf("unsupported chain %d", t.chainID.Uint64())
@@ -249,7 +259,12 @@ func (t *fireblocksWallet) GetTransactionReceipt(ctx context.Context, txID TxID)
 		return nil, fmt.Errorf("%w: the Fireblocks transaction %s is in status %s", ErrNotYetBroadcasted, txID, fireblockTx.Status)
 	}
 
-	return nil, fmt.Errorf("%w: the Fireblocks transaction %s is in status %s", ErrReceiptNotYetAvailable, txID, fireblockTx.Status)
+	return nil, fmt.Errorf(
+		"%w: the Fireblocks transaction %s is in status %s",
+		ErrReceiptNotYetAvailable,
+		txID,
+		fireblockTx.Status,
+	)
 }
 
 func (f *fireblocksWallet) SenderAddress(ctx context.Context) (common.Address, error) {
@@ -257,7 +272,11 @@ func (f *fireblocksWallet) SenderAddress(ctx context.Context) (common.Address, e
 	if err != nil {
 		return common.Address{}, fmt.Errorf("error getting account: %w", err)
 	}
-	addresses, err := f.fireblocksClient.GetAssetAddresses(ctx, account.ID, fireblocks.AssetIDByChain[f.chainID.Uint64()])
+	addresses, err := f.fireblocksClient.GetAssetAddresses(
+		ctx,
+		account.ID,
+		fireblocks.AssetIDByChain[f.chainID.Uint64()],
+	)
 	if err != nil {
 		return common.Address{}, fmt.Errorf("error getting asset addresses: %w", err)
 	}

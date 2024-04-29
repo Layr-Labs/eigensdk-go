@@ -10,6 +10,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/types"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -123,26 +124,26 @@ func BuildAvsRegistryChainReader(
 ) (*AvsRegistryChainReader, error) {
 	contractRegistryCoordinator, err := regcoord.NewContractRegistryCoordinator(registryCoordinatorAddr, ethClient)
 	if err != nil {
-		return nil, types.WrapError(errors.New("Failed to create contractRegistryCoordinator"), err)
+		return nil, utils.WrapError("Failed to create contractRegistryCoordinator", err)
 	}
 	blsApkRegistryAddr, err := contractRegistryCoordinator.BlsApkRegistry(&bind.CallOpts{})
 	if err != nil {
-		return nil, types.WrapError(errors.New("Failed to get blsApkRegistryAddr"), err)
+		return nil, utils.WrapError("Failed to get blsApkRegistryAddr", err)
 	}
 	stakeRegistryAddr, err := contractRegistryCoordinator.StakeRegistry(&bind.CallOpts{})
 	if err != nil {
-		return nil, types.WrapError(errors.New("Failed to get stakeRegistryAddr"), err)
+		return nil, utils.WrapError("Failed to get stakeRegistryAddr", err)
 	}
 	contractStakeRegistry, err := stakeregistry.NewContractStakeRegistry(stakeRegistryAddr, ethClient)
 	if err != nil {
-		return nil, types.WrapError(errors.New("Failed to create contractStakeRegistry"), err)
+		return nil, utils.WrapError("Failed to create contractStakeRegistry", err)
 	}
 	contractOperatorStateRetriever, err := opstateretriever.NewContractOperatorStateRetriever(
 		operatorStateRetrieverAddr,
 		ethClient,
 	)
 	if err != nil {
-		return nil, types.WrapError(errors.New("Failed to create contractOperatorStateRetriever"), err)
+		return nil, utils.WrapError("Failed to create contractOperatorStateRetriever", err)
 	}
 	return NewAvsRegistryChainReader(
 		registryCoordinatorAddr,
@@ -168,10 +169,10 @@ func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsAtCurrentBlock(
 	}
 	curBlock, err := r.ethClient.BlockNumber(opts.Context)
 	if err != nil {
-		return nil, types.WrapError(errors.New("Cannot get current block number"), err)
+		return nil, utils.WrapError("Cannot get current block number", err)
 	}
 	if curBlock > math.MaxUint32 {
-		return nil, types.WrapError(errors.New("Current block number is too large to be converted to uint32"), err)
+		return nil, utils.WrapError("Current block number is too large to be converted to uint32", err)
 	}
 	return r.GetOperatorsStakeInQuorumsAtBlock(opts, quorumNumbers, uint32(curBlock))
 }
@@ -189,7 +190,7 @@ func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsAtBlock(
 		quorumNumbers.UnderlyingType(),
 		blockNumber)
 	if err != nil {
-		return nil, types.WrapError(errors.New("Failed to get operators state"), err)
+		return nil, utils.WrapError("Failed to get operators state", err)
 	}
 	return operatorStakes, nil
 }
@@ -203,10 +204,10 @@ func (r *AvsRegistryChainReader) GetOperatorAddrsInQuorumsAtCurrentBlock(
 	}
 	curBlock, err := r.ethClient.BlockNumber(opts.Context)
 	if err != nil {
-		return nil, types.WrapError(errors.New("Failed to get current block number"), err)
+		return nil, utils.WrapError("Failed to get current block number", err)
 	}
 	if curBlock > math.MaxUint32 {
-		return nil, types.WrapError(errors.New("Current block number is too large to be converted to uint32"), err)
+		return nil, utils.WrapError("Current block number is too large to be converted to uint32", err)
 	}
 	operatorStakes, err := r.operatorStateRetriever.GetOperatorState(
 		opts,
@@ -215,7 +216,7 @@ func (r *AvsRegistryChainReader) GetOperatorAddrsInQuorumsAtCurrentBlock(
 		uint32(curBlock),
 	)
 	if err != nil {
-		return nil, types.WrapError(errors.New("Failed to get operators state"), err)
+		return nil, utils.WrapError("Failed to get operators state", err)
 	}
 	var quorumOperatorAddrs [][]common.Address
 	for _, quorum := range operatorStakes {
@@ -240,7 +241,7 @@ func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsOfOperatorAtBlock(
 		operatorId,
 		blockNumber)
 	if err != nil {
-		return nil, nil, types.WrapError(errors.New("Failed to get operators state"), err)
+		return nil, nil, utils.WrapError("Failed to get operators state", err)
 	}
 	quorums := types.BitmapToQuorumIds(quorumBitmap)
 	return quorums, operatorStakes, nil
@@ -257,10 +258,10 @@ func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsOfOperatorAtCurrentBl
 	}
 	curBlock, err := r.ethClient.BlockNumber(opts.Context)
 	if err != nil {
-		return nil, nil, types.WrapError(errors.New("Failed to get current block number"), err)
+		return nil, nil, utils.WrapError("Failed to get current block number", err)
 	}
 	if curBlock > math.MaxUint32 {
-		return nil, nil, types.WrapError(errors.New("Current block number is too large to be converted to uint32"), err)
+		return nil, nil, utils.WrapError("Current block number is too large to be converted to uint32", err)
 	}
 	opts.BlockNumber = big.NewInt(int64(curBlock))
 	return r.GetOperatorsStakeInQuorumsOfOperatorAtBlock(opts, operatorId, uint32(curBlock))
@@ -275,7 +276,7 @@ func (r *AvsRegistryChainReader) GetOperatorStakeInQuorumsOfOperatorAtCurrentBlo
 ) (map[types.QuorumNum]types.StakeAmount, error) {
 	quorumBitmap, err := r.registryCoordinator.GetCurrentQuorumBitmap(opts, operatorId)
 	if err != nil {
-		return nil, types.WrapError(errors.New("Failed to get operator quorums"), err)
+		return nil, utils.WrapError("Failed to get operator quorums", err)
 	}
 	quorums := types.BitmapToQuorumIds(quorumBitmap)
 	quorumStakes := make(map[types.QuorumNum]types.StakeAmount)
@@ -286,7 +287,7 @@ func (r *AvsRegistryChainReader) GetOperatorStakeInQuorumsOfOperatorAtCurrentBlo
 			uint8(quorum),
 		)
 		if err != nil {
-			return nil, types.WrapError(errors.New("Failed to get operator stake"), err)
+			return nil, utils.WrapError("Failed to get operator stake", err)
 		}
 		quorumStakes[quorum] = stake
 	}
@@ -311,7 +312,10 @@ func (r *AvsRegistryChainReader) GetCheckSignaturesIndices(
 		nonSignerOperatorIdsBytes,
 	)
 	if err != nil {
-		return opstateretriever.OperatorStateRetrieverCheckSignaturesIndices{}, types.WrapError(errors.New("Failed to get check signatures indices"), err)
+		return opstateretriever.OperatorStateRetrieverCheckSignaturesIndices{}, utils.WrapError(
+			"Failed to get check signatures indices",
+			err,
+		)
 	}
 	return checkSignatureIndices, nil
 }
@@ -325,7 +329,7 @@ func (r *AvsRegistryChainReader) GetOperatorId(
 		operatorAddress,
 	)
 	if err != nil {
-		return [32]byte{}, types.WrapError(errors.New("Failed to get operator id"), err)
+		return [32]byte{}, utils.WrapError("Failed to get operator id", err)
 	}
 	return operatorId, nil
 }
@@ -339,7 +343,7 @@ func (r *AvsRegistryChainReader) GetOperatorFromId(
 		operatorId,
 	)
 	if err != nil {
-		return gethcommon.Address{}, types.WrapError(errors.New("Failed to get operator address"), err)
+		return gethcommon.Address{}, utils.WrapError("Failed to get operator address", err)
 	}
 	return operatorAddress, nil
 }
@@ -350,7 +354,7 @@ func (r *AvsRegistryChainReader) IsOperatorRegistered(
 ) (bool, error) {
 	operatorStatus, err := r.registryCoordinator.GetOperatorStatus(opts, operatorAddress)
 	if err != nil {
-		return false, types.WrapError(errors.New("Failed to get operator status"), err)
+		return false, utils.WrapError("Failed to get operator status", err)
 	}
 
 	// 0 = NEVER_REGISTERED, 1 = REGISTERED, 2 = DEREGISTERED
@@ -366,7 +370,7 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorPubKeys(
 
 	blsApkRegistryAbi, err := apkreg.ContractBLSApkRegistryMetaData.GetAbi()
 	if err != nil {
-		return nil, nil, types.WrapError(errors.New("Cannot get Abi"), err)
+		return nil, nil, utils.WrapError("Cannot get Abi", err)
 	}
 
 	if startBlock == nil {
@@ -375,7 +379,7 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorPubKeys(
 	if stopBlock == nil {
 		curBlockNum, err := r.ethClient.BlockNumber(ctx)
 		if err != nil {
-			return nil, nil, types.WrapError(errors.New("Cannot get current block number"), err)
+			return nil, nil, utils.WrapError("Cannot get current block number", err)
 		}
 		stopBlock = big.NewInt(int64(curBlockNum))
 	}
@@ -400,7 +404,7 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorPubKeys(
 
 		logs, err := r.ethClient.FilterLogs(ctx, query)
 		if err != nil {
-			return nil, nil, types.WrapError(errors.New("Cannot filter logs"), err)
+			return nil, nil, utils.WrapError("Cannot filter logs", err)
 		}
 		r.logger.Debug("avsRegistryChainReader.QueryExistingRegisteredOperatorPubKeys", "numTransactionLogs", len(logs), "fromBlock", i, "toBlock", toBlock)
 
@@ -412,7 +416,7 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorPubKeys(
 
 			event, err := blsApkRegistryAbi.Unpack("NewPubkeyRegistration", vLog.Data)
 			if err != nil {
-				return nil, nil, types.WrapError(errors.New("Cannot unpack event data"), err)
+				return nil, nil, utils.WrapError("Cannot unpack event data", err)
 			}
 
 			G1Pubkey := event[0].(struct {

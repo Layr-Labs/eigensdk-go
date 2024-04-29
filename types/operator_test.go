@@ -50,7 +50,7 @@ func TestOperatorValidate(t *testing.T) {
 				MetadataUrl:               "",
 			},
 			wantErr:     true,
-			expectedErr: WrapError(ErrInvalidMetadataUrl, utils.ErrEmptyUrl),
+			expectedErr: utils.WrapError(ErrInvalidMetadataUrl, utils.ErrEmptyUrl),
 		},
 		{
 			name: "failed operator validation - localhost metadata url",
@@ -62,7 +62,7 @@ func TestOperatorValidate(t *testing.T) {
 				MetadataUrl:               "http://localhost:8080/metadata.json",
 			},
 			wantErr:     true,
-			expectedErr: WrapError(ErrInvalidMetadataUrl, utils.ErrUrlPointingToLocalServer),
+			expectedErr: utils.WrapError(ErrInvalidMetadataUrl, utils.ErrUrlPointingToLocalServer),
 		},
 		{
 			name: "failed operator validation - 127.0.0.1 metadata url",
@@ -74,7 +74,7 @@ func TestOperatorValidate(t *testing.T) {
 				MetadataUrl:               "http://127.0.0.1:8080/metadata.json",
 			},
 			wantErr:     true,
-			expectedErr: WrapError(ErrInvalidMetadataUrl, utils.ErrUrlPointingToLocalServer),
+			expectedErr: utils.WrapError(ErrInvalidMetadataUrl, utils.ErrUrlPointingToLocalServer),
 		},
 		{
 			name: "failed operator validation - bad metadata",
@@ -85,8 +85,11 @@ func TestOperatorValidate(t *testing.T) {
 				StakerOptOutWindowBlocks:  100,
 				MetadataUrl:               "https://example.com/metadata.json",
 			},
-			wantErr:     true,
-			expectedErr: WrapError(ErrReadingMetadataUrlResponse, errors.New("error fetching url: 404 Not Found")),
+			wantErr: true,
+			expectedErr: utils.WrapError(
+				ErrReadingMetadataUrlResponse,
+				errors.New("error fetching url: 404 Not Found"),
+			),
 		},
 		{
 			name: "failed operator validation - wrong operator address",
