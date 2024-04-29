@@ -194,7 +194,17 @@ func (w *AvsRegistryChainWriter) RegisterOperatorInQuorumWithAVSRegistryCoordina
 	socket string,
 ) (*gethtypes.Receipt, error) {
 	operatorAddr := crypto.PubkeyToAddress(operatorEcdsaPrivateKey.PublicKey)
-	w.logger.Info("registering operator with the AVS's registry coordinator", "avs-service-manager", w.serviceManagerAddr, "operator", operatorAddr, "quorumNumbers", quorumNumbers, "socket", socket)
+	w.logger.Info(
+		"registering operator with the AVS's registry coordinator",
+		"avs-service-manager",
+		w.serviceManagerAddr,
+		"operator",
+		operatorAddr,
+		"quorumNumbers",
+		quorumNumbers,
+		"socket",
+		socket,
+	)
 	// params to register bls pubkey with bls apk registry
 	g1HashedMsgToSign, err := w.registryCoordinator.PubkeyRegistrationMessageHash(&bind.CallOpts{}, operatorAddr)
 	if err != nil {
@@ -292,7 +302,13 @@ func (w *AvsRegistryChainWriter) UpdateStakesOfEntireOperatorSetForQuorums(
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
-	w.logger.Info("successfully updated stakes for entire operator set", "txHash", receipt.TxHash.String(), "quorumNumbers", quorumNumbers)
+	w.logger.Info(
+		"successfully updated stakes for entire operator set",
+		"txHash",
+		receipt.TxHash.String(),
+		"quorumNumbers",
+		quorumNumbers,
+	)
 	return receipt, nil
 
 }
@@ -314,7 +330,13 @@ func (w *AvsRegistryChainWriter) UpdateStakesOfOperatorSubsetForAllQuorums(
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
-	w.logger.Info("successfully updated stakes of operator subset for all quorums", "txHash", receipt.TxHash.String(), "operators", operators)
+	w.logger.Info(
+		"successfully updated stakes of operator subset for all quorums",
+		"txHash",
+		receipt.TxHash.String(),
+		"operators",
+		operators,
+	)
 	return receipt, nil
 }
 
@@ -337,6 +359,10 @@ func (w *AvsRegistryChainWriter) DeregisterOperator(
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
 
-	w.logger.Info("successfully deregistered operator with the AVS's registry coordinator", "txHash", receipt.TxHash.String())
+	w.logger.Info(
+		"successfully deregistered operator with the AVS's registry coordinator",
+		"txHash",
+		receipt.TxHash.String(),
+	)
 	return receipt, nil
 }

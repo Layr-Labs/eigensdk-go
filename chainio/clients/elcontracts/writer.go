@@ -161,7 +161,13 @@ func (w *ELChainWriter) UpdateOperatorDetails(
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
-	w.logger.Info("successfully updated operator metadata URI", "txHash", receipt.TxHash.String(), "operator", operator.Address)
+	w.logger.Info(
+		"successfully updated operator metadata URI",
+		"txHash",
+		receipt.TxHash.String(),
+		"operator",
+		operator.Address,
+	)
 
 	tx, err = w.delegationManager.UpdateOperatorMetadataURI(noSendTxOpts, operator.MetadataUrl)
 	if err != nil {
@@ -171,7 +177,13 @@ func (w *ELChainWriter) UpdateOperatorDetails(
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
-	w.logger.Info("successfully updated operator details", "txHash", receipt.TxHash.String(), "operator", operator.Address)
+	w.logger.Info(
+		"successfully updated operator details",
+		"txHash",
+		receipt.TxHash.String(),
+		"operator",
+		operator.Address,
+	)
 	return receipt, nil
 }
 

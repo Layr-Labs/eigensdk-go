@@ -405,7 +405,15 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorPubKeys(
 		if err != nil {
 			return nil, nil, utils.WrapError("Cannot filter logs", err)
 		}
-		r.logger.Debug("avsRegistryChainReader.QueryExistingRegisteredOperatorPubKeys", "numTransactionLogs", len(logs), "fromBlock", i, "toBlock", toBlock)
+		r.logger.Debug(
+			"avsRegistryChainReader.QueryExistingRegisteredOperatorPubKeys",
+			"numTransactionLogs",
+			len(logs),
+			"fromBlock",
+			i,
+			"toBlock",
+			toBlock,
+		)
 
 		for _, vLog := range logs {
 
@@ -489,7 +497,15 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorSockets(
 			operatorIdToSocketMap[socketUpdates.Event.OperatorId] = types.Socket(socketUpdates.Event.Socket)
 			numSocketUpdates++
 		}
-		r.logger.Debug("avsRegistryChainReader.QueryExistingRegisteredOperatorSockets", "numTransactionLogs", numSocketUpdates, "fromBlock", i, "toBlock", toBlock)
+		r.logger.Debug(
+			"avsRegistryChainReader.QueryExistingRegisteredOperatorSockets",
+			"numTransactionLogs",
+			numSocketUpdates,
+			"fromBlock",
+			i,
+			"toBlock",
+			toBlock,
+		)
 	}
 	return operatorIdToSocketMap, nil
 }
