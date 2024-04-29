@@ -21,6 +21,8 @@ import (
 	stakeregistry "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StakeRegistry"
 )
 
+const QueryBlockRange = 10_000
+
 type AvsRegistryReader interface {
 	GetQuorumCount(opts *bind.CallOpts) (uint8, error)
 
@@ -366,7 +368,6 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorPubKeys(
 	startBlock *big.Int,
 	stopBlock *big.Int,
 ) ([]types.OperatorAddr, []types.OperatorPubkeys, error) {
-
 	blsApkRegistryAbi, err := apkreg.ContractBLSApkRegistryMetaData.GetAbi()
 	if err != nil {
 		return nil, nil, utils.WrapError("Cannot get Abi", err)
@@ -387,8 +388,9 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorPubKeys(
 	operatorPubkeys := make([]types.OperatorPubkeys, 0)
 
 	// eth_getLogs is limited to a 10,000 range, so we need to iterate over the range
-	for i := startBlock; i.Cmp(stopBlock) <= 0; i.Add(i, big.NewInt(10_000)) {
-		toBlock := big.NewInt(0).Add(i, big.NewInt(10_000))
+	for i := startBlock; i.Cmp(stopBlock) <= 0; i.Add(i, big.NewInt(QueryBlockRange)) {
+		// Subtract 1 since FilterQuery is inclusive
+		toBlock := big.NewInt(0).Add(i, big.NewInt(QueryBlockRange-1))
 		if toBlock.Cmp(stopBlock) > 0 {
 			toBlock = stopBlock
 		}
@@ -416,7 +418,6 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorPubKeys(
 		)
 
 		for _, vLog := range logs {
-
 			// get the operator address
 			operatorAddr := gethcommon.HexToAddress(vLog.Topics[1].Hex())
 			operatorAddresses = append(operatorAddresses, operatorAddr)
@@ -448,7 +449,6 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorPubKeys(
 			}
 
 			operatorPubkeys = append(operatorPubkeys, operatorPubkey)
-
 		}
 	}
 
@@ -475,8 +475,9 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorSockets(
 	operatorIdToSocketMap := make(map[types.OperatorId]types.Socket)
 
 	// eth_getLogs is limited to a 10,000 range, so we need to iterate over the range
-	for i := startBlock; i.Cmp(stopBlock) <= 0; i.Add(i, big.NewInt(10_000)) {
-		toBlock := big.NewInt(0).Add(i, big.NewInt(10_000))
+	for i := startBlock; i.Cmp(stopBlock) <= 0; i.Add(i, big.NewInt(QueryBlockRange)) {
+		// Subtract 1 since FilterQuery is inclusive
+		toBlock := big.NewInt(0).Add(i, big.NewInt(QueryBlockRange-1))
 		if toBlock.Cmp(stopBlock) > 0 {
 			toBlock = stopBlock
 		}
