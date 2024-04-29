@@ -43,7 +43,7 @@ func (m *MockAvsRegistryService) EXPECT() *MockAvsRegistryServiceMockRecorder {
 }
 
 // GetCheckSignaturesIndices mocks base method.
-func (m *MockAvsRegistryService) GetCheckSignaturesIndices(arg0 *bind.CallOpts, arg1 uint32, arg2 types.QuorumNums, arg3 []types.Bytes32) (contractOperatorStateRetriever.OperatorStateRetrieverCheckSignaturesIndices, error) {
+func (m *MockAvsRegistryService) GetCheckSignaturesIndices(arg0 *bind.CallOpts, arg1 uint32, arg2 types.QuorumNums, arg3 []types.OperatorId) (contractOperatorStateRetriever.OperatorStateRetrieverCheckSignaturesIndices, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetCheckSignaturesIndices", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(contractOperatorStateRetriever.OperatorStateRetrieverCheckSignaturesIndices)
@@ -58,10 +58,10 @@ func (mr *MockAvsRegistryServiceMockRecorder) GetCheckSignaturesIndices(arg0, ar
 }
 
 // GetOperatorsAvsStateAtBlock mocks base method.
-func (m *MockAvsRegistryService) GetOperatorsAvsStateAtBlock(arg0 context.Context, arg1 types.QuorumNums, arg2 uint32) (map[types.Bytes32]types.OperatorAvsState, error) {
+func (m *MockAvsRegistryService) GetOperatorsAvsStateAtBlock(arg0 context.Context, arg1 types.QuorumNums, arg2 uint32) (map[types.OperatorId]types.OperatorAvsState, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetOperatorsAvsStateAtBlock", arg0, arg1, arg2)
-	ret0, _ := ret[0].(map[types.Bytes32]types.OperatorAvsState)
+	ret0, _ := ret[0].(map[types.OperatorId]types.OperatorAvsState)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

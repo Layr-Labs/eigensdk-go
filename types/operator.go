@@ -3,13 +3,14 @@ package types
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
+	"math/big"
+
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
-	"log/slog"
-	"math/big"
 
 	apkreg "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSApkRegistry"
 )
@@ -98,7 +99,7 @@ type StakeAmount = *big.Int
 
 // OperatorId is the ID of an operator, defined by the AVS registry
 // It is the hash of the operator's G1 pubkey
-type OperatorId = Bytes32
+type OperatorId Bytes32
 
 func OperatorIdFromG1Pubkey(pubkey *bls.G1Point) OperatorId {
 	x := pubkey.X.BigInt(new(big.Int))
