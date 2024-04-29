@@ -52,5 +52,5 @@ func WrapError(mainErr interface{}, subErr interface{}) error {
 		return main
 	}
 
-	return fmt.Errorf("%v: %v", mainErr, subErr)
+	return fmt.Errorf("%w: %w", main, sub)
 }
