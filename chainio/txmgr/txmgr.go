@@ -17,9 +17,9 @@ import (
 )
 
 var (
-	// 5 gwei in case the backend does not support eth_maxPriorityFeePerGas (no idea if/when this ever happens..)
+	// FallbackGasTipCap 5 gwei in case the backend does not support eth_maxPriorityFeePerGas (no idea if/when this ever happens..)
 	FallbackGasTipCap = big.NewInt(5_000_000_000)
-	// 1.20x gas limit multiplier. This is arbitrary but should be safe for most cases
+	// FallbackGasLimitMultiplier 1.20x gas limit multiplier. This is arbitrary but should be safe for most cases
 	FallbackGasLimitMultiplier = 1.20
 )
 
@@ -201,7 +201,7 @@ func (m *SimpleTxManager) estimateGasAndNonce(ctx context.Context, tx *types.Tra
 		GasFeeCap: gasFeeCap,
 		Data:      tx.Data(),
 		Value:     tx.Value(),
-		Gas:       uint64(float64(gasLimit) * m.gasLimitMultiplier),
+		Gas:       gasLimit,
 		Nonce:     tx.Nonce(), // We are not doing any nonce management for now but we probably should later for more robustness
 	}
 
