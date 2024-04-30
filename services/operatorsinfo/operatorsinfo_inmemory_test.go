@@ -7,6 +7,7 @@ import (
 	"os"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/mocks"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
@@ -27,7 +28,7 @@ type testOperator struct {
 	contractG2Pubkey apkregistrybindings.BN254G2Point
 }
 
-func TestGetOperatorPubkeys(t *testing.T) {
+func TestGetOperatorInfo(t *testing.T) {
 	logger := logging.NewTextSLogger(os.Stdout, &logging.SLoggerOptions{Level: slog.LevelDebug})
 	operator1Pubkeys := types.OperatorPubkeys{
 		G1Pubkey: bls.NewG1Point(big.NewInt(1), big.NewInt(1)),
@@ -67,7 +68,7 @@ func TestGetOperatorPubkeys(t *testing.T) {
 			wantOperatorInfo:  types.OperatorInfo{},
 		},
 		{
-			name: "should return operator pubkeys found via query",
+			name: "should return operator info found via query",
 			mocksInitializationFunc: func(mockAvsRegistrySubscriber *mocks.MockAvsRegistrySubscriber, mockAvsReader *mocks.MockAvsRegistryReader, mockSubscription *mocks.MockSubscription) {
 				errC := make(chan error)
 				mockSubscription.EXPECT().Err().AnyTimes().Return(errC)
@@ -85,7 +86,7 @@ func TestGetOperatorPubkeys(t *testing.T) {
 			wantOperatorInfo:  testOperator1.operatorInfo,
 		},
 		{
-			name: "should return operator pubkeys found via subscription",
+			name: "should return operator info found via subscription",
 			mocksInitializationFunc: func(mockAvsRegistrySubscriber *mocks.MockAvsRegistrySubscriber, mockAvsReader *mocks.MockAvsRegistryReader, mockSubscription *mocks.MockSubscription) {
 				errC := make(chan error)
 				pubkeyRegistrationEventC := make(chan *apkregistrybindings.ContractBLSApkRegistryNewPubkeyRegistration, 1)
@@ -129,6 +130,7 @@ func TestGetOperatorPubkeys(t *testing.T) {
 			}
 			// Create a new instance of the operatorpubkeys service
 			service := NewOperatorsInfoServiceInMemory(context.Background(), mockAvsRegistrySubscriber, mockAvsReader, logger)
+			time.Sleep(2 * time.Second) // need to give it time to process the subscription events.. not sure if there's a better way to do this.
 
 			// Call the GetOperatorPubkeys method with the test operator address
 			gotOperatorsInfo, gotOperatorFound := service.GetOperatorInfo(context.Background(), tt.queryOperatorAddr)

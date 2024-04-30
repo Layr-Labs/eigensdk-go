@@ -44,7 +44,8 @@ type Client interface {
 	CancelTransaction(ctx context.Context, txID string) (bool, error)
 	// ListContracts makes a ListContracts request to the Fireblocks API
 	// It returns a list of whitelisted contracts and their assets for the account.
-	// This call is used to get the contract ID for a whitelisted contract, which is needed as destination account ID by NewContractCallRequest in a ContractCall
+	// This call is used to get the contract ID for a whitelisted contract, which is needed as destination account ID by
+	// NewContractCallRequest in a ContractCall
 	// ref: https://developers.fireblocks.com/reference/get_contracts
 	ListContracts(ctx context.Context) ([]WhitelistedContract, error)
 	// ListVaultAccounts makes a ListVaultAccounts request to the Fireblocks API
@@ -72,7 +73,13 @@ type ErrorResponse struct {
 	Code    int    `json:"code"`
 }
 
-func NewClient(apiKey string, secretKey []byte, baseURL string, timeout time.Duration, logger logging.Logger) (Client, error) {
+func NewClient(
+	apiKey string,
+	secretKey []byte,
+	baseURL string,
+	timeout time.Duration,
+	logger logging.Logger,
+) (Client, error) {
 	c := http.Client{Timeout: timeout}
 	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(secretKey)
 	if err != nil {
@@ -90,7 +97,8 @@ func NewClient(apiKey string, secretKey []byte, baseURL string, timeout time.Dur
 }
 
 // signJwt signs a JWT token for the Fireblocks API
-// mostly copied from the Fireblocks example: https://github.com/fireblocks/developers-hub/blob/main/authentication_examples/go/test.go
+// mostly copied from the Fireblocks example:
+// https://github.com/fireblocks/developers-hub/blob/main/authentication_examples/go/test.go
 func (f *client) signJwt(path string, bodyJson interface{}, durationSeconds int64) (string, error) {
 	nonce := uuid.New().String()
 	now := time.Now().Unix()
@@ -124,7 +132,8 @@ func (f *client) signJwt(path string, bodyJson interface{}, durationSeconds int6
 }
 
 // makeRequest makes a request to the Fireblocks API
-// mostly copied from the Fireblocks example: https://github.com/fireblocks/developers-hub/blob/main/authentication_examples/go/test.go
+// mostly copied from the Fireblocks example:
+// https://github.com/fireblocks/developers-hub/blob/main/authentication_examples/go/test.go
 func (f *client) makeRequest(ctx context.Context, method, path string, body interface{}) ([]byte, error) {
 	// remove query parameters from path and join with baseURL
 	pathURI, err := url.Parse(path)
@@ -187,7 +196,12 @@ func (f *client) makeRequest(ctx context.Context, method, path string, body inte
 		if err != nil {
 			return nil, fmt.Errorf("error parsing error response: %w", err)
 		}
-		return nil, fmt.Errorf("error response (%d) from Fireblocks with code %d: %s", resp.StatusCode, errResp.Code, errResp.Message)
+		return nil, fmt.Errorf(
+			"error response (%d) from Fireblocks with code %d: %s",
+			resp.StatusCode,
+			errResp.Code,
+			errResp.Message,
+		)
 	}
 
 	return respBody, nil

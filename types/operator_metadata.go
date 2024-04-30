@@ -33,12 +33,12 @@ type OperatorMetadata struct {
 func (om *OperatorMetadata) Validate() error {
 	err := utils.ValidateText(om.Name)
 	if err != nil {
-		return WrapError(ErrInvalidName, err)
+		return utils.WrapError(ErrInvalidName, err)
 	}
 
 	err = utils.ValidateText(om.Description)
 	if err != nil {
-		return WrapError(ErrInvalidDescription, err)
+		return utils.WrapError(ErrInvalidDescription, err)
 	}
 
 	if len(om.Logo) == 0 {
@@ -52,14 +52,14 @@ func (om *OperatorMetadata) Validate() error {
 	if len(om.Website) != 0 {
 		err = utils.CheckIfUrlIsValid(om.Website)
 		if err != nil {
-			return WrapError(ErrInvalidWebsiteUrl, err)
+			return utils.WrapError(ErrInvalidWebsiteUrl, err)
 		}
 	}
 
 	if len(om.Twitter) != 0 {
 		err := utils.CheckIfValidTwitterURL(om.Twitter)
 		if err != nil {
-			return WrapError(ErrInvalidTwitterUrl, err)
+			return utils.WrapError(ErrInvalidTwitterUrl, err)
 		}
 	}
 
