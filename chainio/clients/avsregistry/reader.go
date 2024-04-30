@@ -21,6 +21,7 @@ import (
 	stakeregistry "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StakeRegistry"
 )
 
+// eth_getLogs is limited to a 10,000 range, so we need to iterate over the range
 const QueryBlockRange = 10_000
 
 type AvsRegistryReader interface {
@@ -386,8 +387,6 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorPubKeys(
 
 	operatorAddresses := make([]types.OperatorAddr, 0)
 	operatorPubkeys := make([]types.OperatorPubkeys, 0)
-
-	// eth_getLogs is limited to a 10,000 range, so we need to iterate over the range
 	for i := startBlock; i.Cmp(stopBlock) <= 0; i.Add(i, big.NewInt(QueryBlockRange)) {
 		// Subtract 1 since FilterQuery is inclusive
 		toBlock := big.NewInt(0).Add(i, big.NewInt(QueryBlockRange-1))
@@ -473,8 +472,6 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorSockets(
 	}
 
 	operatorIdToSocketMap := make(map[types.OperatorId]types.Socket)
-
-	// eth_getLogs is limited to a 10,000 range, so we need to iterate over the range
 	for i := startBlock; i.Cmp(stopBlock) <= 0; i.Add(i, big.NewInt(QueryBlockRange)) {
 		// Subtract 1 since FilterQuery is inclusive
 		toBlock := big.NewInt(0).Add(i, big.NewInt(QueryBlockRange-1))
