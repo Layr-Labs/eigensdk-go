@@ -51,6 +51,7 @@ type fireblocksWallet struct {
 	// caches
 	account              *fireblocks.VaultAccount
 	whitelistedContracts map[common.Address]*fireblocks.WhitelistedContract
+	whitelistedAccounts  map[common.Address]*fireblocks.WhitelistedAccount
 }
 
 func NewFireblocksWallet(
@@ -77,6 +78,7 @@ func NewFireblocksWallet(
 		// caches
 		account:              nil,
 		whitelistedContracts: make(map[common.Address]*fireblocks.WhitelistedContract),
+		whitelistedAccounts:  make(map[common.Address]*fireblocks.WhitelistedAccount),
 	}, nil
 }
 
@@ -94,6 +96,37 @@ func (t *fireblocksWallet) getAccount(ctx context.Context) (*fireblocks.VaultAcc
 		}
 	}
 	return t.account, nil
+}
+
+func (f *fireblocksWallet) getWhitelistedAccount(
+	ctx context.Context,
+	address common.Address,
+) (*fireblocks.WhitelistedAccount, error) {
+	assetID, ok := fireblocks.AssetIDByChain[f.chainID.Uint64()]
+	if !ok {
+		return nil, fmt.Errorf("unsupported chain %d", f.chainID.Uint64())
+	}
+	whitelistedAccount, ok := f.whitelistedAccounts[address]
+	if !ok {
+		accounts, err := f.fireblocksClient.ListExternalWallets(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("error listing external wallets: %w", err)
+		}
+		for _, a := range accounts {
+			for _, asset := range a.Assets {
+				if asset.Address == address && asset.Status == "APPROVED" && asset.ID == assetID {
+					f.whitelistedAccounts[address] = &a
+					whitelistedAccount = &a
+					return whitelistedAccount, nil
+				}
+			}
+		}
+	}
+
+	if whitelistedAccount == nil {
+		return nil, fmt.Errorf("account %s not found in whitelisted accounts", address.Hex())
+	}
+	return whitelistedAccount, nil
 }
 
 func (t *fireblocksWallet) getWhitelistedContract(
@@ -150,11 +183,6 @@ func (t *fireblocksWallet) SendTransaction(ctx context.Context, tx *types.Transa
 		return "", fmt.Errorf("asset %s not found in account %s", assetID, t.vaultAccountName)
 	}
 
-	contract, err := t.getWhitelistedContract(ctx, *tx.To())
-	if err != nil {
-		return "", fmt.Errorf("error getting whitelisted contract %s: %w", tx.To().Hex(), err)
-	}
-
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	// if the nonce is already in the map, it means that the transaction was already submitted
@@ -191,21 +219,50 @@ func (t *fireblocksWallet) SendTransaction(ctx context.Context, tx *types.Transa
 		feeLevel = fireblocks.FeeLevelHigh
 	}
 
-	req := fireblocks.NewContractCallRequest(
-		"", // externalTxID
-		assetID,
-		account.ID,                // source account ID
-		contract.ID,               // destination account ID
-		tx.Value().String(),       // amount
-		hexutil.Encode(tx.Data()), // calldata
-		replaceTxByHash,           // replaceTxByHash
-		gasPrice,
-		gasLimit,
-		maxFee,
-		priorityFee,
-		feeLevel,
-	)
-	res, err := t.fireblocksClient.ContractCall(ctx, req)
+	var res *fireblocks.TransactionResponse
+	if len(tx.Data()) == 0 && tx.Value().Cmp(big.NewInt(0)) > 0 {
+		targetAccount, clientErr := t.getWhitelistedAccount(ctx, *tx.To())
+		if clientErr != nil {
+			return "", fmt.Errorf("error getting whitelisted account %s: %w", tx.To().Hex(), clientErr)
+		}
+		req := fireblocks.NewTransferRequest(
+			"", // externalTxID
+			assetID,
+			account.ID,                      // source account ID
+			targetAccount.ID,                // destination account ID
+			weiToEther(tx.Value()).String(), // amount in ETH
+			replaceTxByHash,                 // replaceTxByHash
+			gasPrice,
+			gasLimit,
+			maxFee,
+			priorityFee,
+			feeLevel,
+		)
+		res, err = t.fireblocksClient.Transfer(ctx, req)
+	} else if len(tx.Data()) > 0 {
+		contract, clientErr := t.getWhitelistedContract(ctx, *tx.To())
+		if clientErr != nil {
+			return "", fmt.Errorf("error getting whitelisted contract %s: %w", tx.To().Hex(), clientErr)
+		}
+		req := fireblocks.NewContractCallRequest(
+			"", // externalTxID
+			assetID,
+			account.ID,                      // source account ID
+			contract.ID,                     // destination account ID
+			weiToEther(tx.Value()).String(), // amount
+			hexutil.Encode(tx.Data()),       // calldata
+			replaceTxByHash,                 // replaceTxByHash
+			gasPrice,
+			gasLimit,
+			maxFee,
+			priorityFee,
+			feeLevel,
+		)
+		res, err = t.fireblocksClient.ContractCall(ctx, req)
+	} else {
+		return "", errors.New("transaction has no value and no data")
+	}
+
 	if err != nil {
 		return "", fmt.Errorf("error calling contract %s: %w", tx.To().Hex(), err)
 	}
@@ -288,4 +345,8 @@ func (f *fireblocksWallet) SenderAddress(ctx context.Context) (common.Address, e
 
 func weiToGwei(wei *big.Int) *big.Float {
 	return new(big.Float).Quo(new(big.Float).SetInt(wei), big.NewFloat(params.GWei))
+}
+
+func weiToEther(wei *big.Int) *big.Float {
+	return new(big.Float).Quo(new(big.Float).SetInt(wei), big.NewFloat(params.Ether))
 }

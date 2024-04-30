@@ -7,13 +7,12 @@ import (
 	"strings"
 )
 
-func NewContractCallRequest(
+func NewTransferRequest(
 	externalTxID string,
 	assetID AssetID,
 	sourceAccountID string,
 	destinationAccountID string,
 	amount string, // amount in ETH
-	calldata string,
 	replaceTxByHash string,
 	gasPrice string,
 	gasLimit string,
@@ -22,7 +21,7 @@ func NewContractCallRequest(
 	feeLevel FeeLevel,
 ) *TransactionRequest {
 	req := &TransactionRequest{
-		Operation:    ContractCall,
+		Operation:    Transfer,
 		ExternalTxID: externalTxID,
 		AssetID:      assetID,
 		Source: account{
@@ -34,10 +33,7 @@ func NewContractCallRequest(
 			Type: "EXTERNAL_WALLET",
 			ID:   destinationAccountID,
 		},
-		Amount: amount,
-		ExtraParameters: extraParams{
-			Calldata: calldata,
-		},
+		Amount:          amount,
 		ReplaceTxByHash: replaceTxByHash,
 		GasLimit:        gasLimit,
 	}
@@ -54,8 +50,8 @@ func NewContractCallRequest(
 	return req
 }
 
-func (f *client) ContractCall(ctx context.Context, req *TransactionRequest) (*TransactionResponse, error) {
-	f.logger.Debug("Fireblocks call contract", "req", req)
+func (f *client) Transfer(ctx context.Context, req *TransactionRequest) (*TransactionResponse, error) {
+	f.logger.Debug("Fireblocks transfer", "req", req)
 	res, err := f.makeRequest(ctx, "POST", "/v1/transactions", req)
 	if err != nil {
 		return nil, fmt.Errorf("error making request: %w", err)

@@ -66,6 +66,29 @@ func TestContractCall(t *testing.T) {
 	t.Logf("txID: %s, status: %s", resp.ID, resp.Status)
 }
 
+func TestTransfer(t *testing.T) {
+	t.Skip("skipping test as it's meant for manual runs only")
+
+	c := newFireblocksClient(t)
+	destinationAccountID := "FILL_ME_IN"
+	req := fireblocks.NewTransferRequest(
+		"",
+		"ETH_TEST6",
+		"5", // source account ID
+		destinationAccountID,
+		"1", // amount
+		"",  // replaceTxByHash
+		"",  // gasPrice
+		"",  // gasLimit
+		"",  // maxFee
+		"",  // priorityFee
+		fireblocks.FeeLevelHigh,
+	)
+	resp, err := c.Transfer(context.Background(), req)
+	assert.NoError(t, err)
+	t.Logf("txID: %s, status: %s", resp.ID, resp.Status)
+}
+
 func TestCancelTransaction(t *testing.T) {
 	t.Skip("skipping test as it's meant for manual runs only")
 
@@ -74,6 +97,17 @@ func TestCancelTransaction(t *testing.T) {
 	success, err := c.CancelTransaction(context.Background(), txID)
 	assert.NoError(t, err)
 	t.Logf("txID: %s, success: %t", txID, success)
+}
+
+func TestListExternalWallets(t *testing.T) {
+	t.Skip("skipping test as it's meant for manual runs only")
+
+	c := newFireblocksClient(t)
+	wallets, err := c.ListExternalWallets(context.Background())
+	assert.NoError(t, err)
+	for _, wallet := range wallets {
+		t.Logf("Wallet: %+v", wallet)
+	}
 }
 
 func TestListVaultAccounts(t *testing.T) {
