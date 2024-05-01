@@ -83,7 +83,7 @@ type BlsAggregationService interface {
 	// in each of the listed quorums adds up to at least quorumThresholdPercentages[i] of the total stake in that quorum
 	InitializeNewTask(
 		taskIndex types.TaskIndex,
-		taskCreatedBlock uint32,
+		taskCreatedBlock types.BlockNum,
 		quorumNumbers types.QuorumNums,
 		quorumThresholdPercentages types.QuorumThresholdPercentages,
 		timeToExpiry time.Duration,
@@ -159,7 +159,7 @@ func (a *BlsAggregatorService) GetResponseChannel() <-chan BlsAggregationService
 // in each of the listed quorums adds up to at least quorumThresholdPercentages[i] of the total stake in that quorum
 func (a *BlsAggregatorService) InitializeNewTask(
 	taskIndex types.TaskIndex,
-	taskCreatedBlock uint32,
+	taskCreatedBlock types.BlockNum,
 	quorumNumbers types.QuorumNums,
 	quorumThresholdPercentages types.QuorumThresholdPercentages,
 	timeToExpiry time.Duration,
@@ -172,7 +172,7 @@ func (a *BlsAggregatorService) InitializeNewTask(
 	a.taskChansMutex.Lock()
 	a.signedTaskRespsCs[taskIndex] = signedTaskRespsC
 	a.taskChansMutex.Unlock()
-	go a.singleTaskAggregatorGoroutineFunc(taskIndex, taskCreatedBlock, quorumNumbers, quorumThresholdPercentages, timeToExpiry, signedTaskRespsC)
+	go a.singleTaskAggregatorGoroutineFunc(taskIndex, types.BlockNum(taskCreatedBlock), quorumNumbers, quorumThresholdPercentages, timeToExpiry, signedTaskRespsC)
 	return nil
 }
 
@@ -211,7 +211,7 @@ func (a *BlsAggregatorService) ProcessNewSignature(
 
 func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 	taskIndex types.TaskIndex,
-	taskCreatedBlock uint32,
+	taskCreatedBlock types.BlockNum,
 	quorumNumbers types.QuorumNums,
 	quorumThresholdPercentages []types.QuorumThresholdPercentage,
 	timeToExpiry time.Duration,

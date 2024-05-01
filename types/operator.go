@@ -162,7 +162,7 @@ func (q QuorumThresholdPercentage) LogValue() slog.Value {
 	return slog.StringValue(fmt.Sprintf("%d", q))
 }
 
-type BlockNum = uint32
+type BlockNum uint32
 
 // AvsOperator represents the operator state in AVS registries
 type OperatorAvsState struct {

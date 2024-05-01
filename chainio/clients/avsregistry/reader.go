@@ -35,7 +35,7 @@ type AvsRegistryReader interface {
 	GetOperatorsStakeInQuorumsAtBlock(
 		opts *bind.CallOpts,
 		quorumNumbers types.QuorumNums,
-		blockNumber uint32,
+		blockNumber types.BlockNum,
 	) ([][]opstateretriever.OperatorStateRetrieverOperator, error)
 
 	GetOperatorAddrsInQuorumsAtCurrentBlock(
@@ -46,7 +46,7 @@ type AvsRegistryReader interface {
 	GetOperatorsStakeInQuorumsOfOperatorAtBlock(
 		opts *bind.CallOpts,
 		operatorId types.OperatorId,
-		blockNumber uint32,
+		blockNumber types.BlockNum,
 	) (types.QuorumNums, [][]opstateretriever.OperatorStateRetrieverOperator, error)
 
 	GetOperatorsStakeInQuorumsOfOperatorAtCurrentBlock(
@@ -61,7 +61,7 @@ type AvsRegistryReader interface {
 
 	GetCheckSignaturesIndices(
 		opts *bind.CallOpts,
-		referenceBlockNumber uint32,
+		referenceBlockNumber types.BlockNum,
 		quorumNumbers types.QuorumNums,
 		nonSignerOperatorIds []types.OperatorId,
 	) (opstateretriever.OperatorStateRetrieverCheckSignaturesIndices, error)
@@ -176,7 +176,7 @@ func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsAtCurrentBlock(
 	if curBlock > math.MaxUint32 {
 		return nil, utils.WrapError("Current block number is too large to be converted to uint32", err)
 	}
-	return r.GetOperatorsStakeInQuorumsAtBlock(opts, quorumNumbers, uint32(curBlock))
+	return r.GetOperatorsStakeInQuorumsAtBlock(opts, quorumNumbers, types.BlockNum(curBlock))
 }
 
 // the contract stores historical state, so blockNumber should be the block number of the state you want to query
@@ -184,13 +184,13 @@ func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsAtCurrentBlock(
 func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsAtBlock(
 	opts *bind.CallOpts,
 	quorumNumbers types.QuorumNums,
-	blockNumber uint32,
+	blockNumber types.BlockNum,
 ) ([][]opstateretriever.OperatorStateRetrieverOperator, error) {
 	operatorStakes, err := r.operatorStateRetriever.GetOperatorState(
 		opts,
 		r.registryCoordinatorAddr,
 		quorumNumbers.UnderlyingType(),
-		blockNumber)
+		uint32(blockNumber))
 	if err != nil {
 		return nil, utils.WrapError("Failed to get operators state", err)
 	}
@@ -235,13 +235,13 @@ func (r *AvsRegistryChainReader) GetOperatorAddrsInQuorumsAtCurrentBlock(
 func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsOfOperatorAtBlock(
 	opts *bind.CallOpts,
 	operatorId types.OperatorId,
-	blockNumber uint32,
+	blockNumber types.BlockNum,
 ) (types.QuorumNums, [][]opstateretriever.OperatorStateRetrieverOperator, error) {
 	quorumBitmap, operatorStakes, err := r.operatorStateRetriever.GetOperatorState0(
 		opts,
 		r.registryCoordinatorAddr,
 		operatorId,
-		blockNumber)
+		uint32(blockNumber))
 	if err != nil {
 		return nil, nil, utils.WrapError("Failed to get operators state", err)
 	}
@@ -266,7 +266,7 @@ func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsOfOperatorAtCurrentBl
 		return nil, nil, utils.WrapError("Current block number is too large to be converted to uint32", err)
 	}
 	opts.BlockNumber = big.NewInt(int64(curBlock))
-	return r.GetOperatorsStakeInQuorumsOfOperatorAtBlock(opts, operatorId, uint32(curBlock))
+	return r.GetOperatorsStakeInQuorumsOfOperatorAtBlock(opts, operatorId, types.BlockNum(curBlock))
 }
 
 // GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock could have race conditions
@@ -298,7 +298,7 @@ func (r *AvsRegistryChainReader) GetOperatorStakeInQuorumsOfOperatorAtCurrentBlo
 
 func (r *AvsRegistryChainReader) GetCheckSignaturesIndices(
 	opts *bind.CallOpts,
-	referenceBlockNumber uint32,
+	referenceBlockNumber types.BlockNum,
 	quorumNumbers types.QuorumNums,
 	nonSignerOperatorIds []types.OperatorId,
 ) (opstateretriever.OperatorStateRetrieverCheckSignaturesIndices, error) {
@@ -309,7 +309,7 @@ func (r *AvsRegistryChainReader) GetCheckSignaturesIndices(
 	checkSignatureIndices, err := r.operatorStateRetriever.GetCheckSignaturesIndices(
 		opts,
 		r.registryCoordinatorAddr,
-		referenceBlockNumber,
+		uint32(referenceBlockNumber),
 		quorumNumbers.UnderlyingType(),
 		nonSignerOperatorIdsBytes,
 	)
