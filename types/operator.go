@@ -94,7 +94,7 @@ func (op OperatorPubkeys) ToContractPubkeys() (apkreg.BN254G1Point, apkreg.BN254
 }
 
 // ECDSA address of the operator
-type OperatorAddr = common.Address
+type OperatorAddr common.Address
 type StakeAmount *big.Int
 
 // OperatorId is the ID of an operator, defined by the AVS registry

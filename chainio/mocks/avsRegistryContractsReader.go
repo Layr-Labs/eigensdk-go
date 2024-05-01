@@ -212,10 +212,10 @@ func (mr *MockAvsRegistryReaderMockRecorder) IsOperatorRegistered(arg0, arg1 any
 }
 
 // QueryExistingRegisteredOperatorPubKeys mocks base method.
-func (m *MockAvsRegistryReader) QueryExistingRegisteredOperatorPubKeys(arg0 context.Context, arg1, arg2 *big.Int) ([]common.Address, []types.OperatorPubkeys, error) {
+func (m *MockAvsRegistryReader) QueryExistingRegisteredOperatorPubKeys(arg0 context.Context, arg1, arg2 *big.Int) ([]types.OperatorAddr, []types.OperatorPubkeys, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "QueryExistingRegisteredOperatorPubKeys", arg0, arg1, arg2)
-	ret0, _ := ret[0].([]common.Address)
+	ret0, _ := ret[0].([]types.OperatorAddr)
 	ret1, _ := ret[1].([]types.OperatorPubkeys)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2

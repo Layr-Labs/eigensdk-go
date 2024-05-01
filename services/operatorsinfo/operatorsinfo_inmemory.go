@@ -170,6 +170,7 @@ func (ops *OperatorsInfoServiceInMemory) queryPastRegisteredOperatorEventsAndFil
 
 	// Fill the pubkeydict db with the operators and pubkeys found
 	for i, operatorAddr := range alreadyRegisteredOperatorAddrs {
+		operatorAddr := common.Address(operatorAddr)
 		operatorPubkeys := alreadyRegisteredOperatorPubkeys[i]
 		ops.pubkeyDict[operatorAddr] = operatorPubkeys
 		operatorId := types.OperatorIdFromG1Pubkey(operatorPubkeys.G1Pubkey)

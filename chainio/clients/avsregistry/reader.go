@@ -418,7 +418,7 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorPubKeys(
 
 		for _, vLog := range logs {
 			// get the operator address
-			operatorAddr := gethcommon.HexToAddress(vLog.Topics[1].Hex())
+			operatorAddr := types.OperatorAddr(gethcommon.HexToAddress(vLog.Topics[1].Hex()))
 			operatorAddresses = append(operatorAddresses, operatorAddr)
 
 			event, err := blsApkRegistryAbi.Unpack("NewPubkeyRegistration", vLog.Data)
