@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/kms"
 )
 
-func NewKMSClient(ctx context.Context, secretName, region string) (*kms.Client, error) {
+func NewKMSClient(ctx context.Context, region string) (*kms.Client, error) {
 	config, err := config.LoadDefaultConfig(ctx, config.WithRegion(region))
 	if err != nil {
 		return nil, fmt.Errorf("failed to load AWS config: %w", err)

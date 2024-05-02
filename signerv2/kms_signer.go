@@ -1,44 +1,103 @@
 package signerv2
 
 import (
+	"bytes"
 	"context"
 	"crypto/ecdsa"
-	"encoding/asn1"
-	"fmt"
+	"encoding/hex"
+	"errors"
 	"math/big"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
+	eigenkms "github.com/Layr-Labs/eigensdk-go/aws/kms"
 	"github.com/aws/aws-sdk-go-v2/service/kms"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 )
 
-func KMSSignerFn(address common.Address, chainID *big.Int) (bind.SignerFn, error) {
-	return func(address common.Address, tx *types.Transaction) (*types.Transaction, error) {
-		return nil, errors.New("unimplemented")
-	}, errors.New("unimplemented")
+var secp256k1N = crypto.S256().Params().N
+var secp256k1HalfN = new(big.Int).Div(secp256k1N, big.NewInt(2))
+
+func NewKMSSigner(ctx context.Context, svc *kms.Client, pk *ecdsa.PublicKey, keyId string, chainID *big.Int) SignerFn {
+	return func(ctx context.Context, address common.Address) (bind.SignerFn, error) {
+		return KMSSignerFn(ctx, svc, pk, keyId, chainID)
+	}
 }
 
-func getPubKey(ctx context.Context, svc *kms.Client, keyId string) (*ecdsa.PublicKey, error) {
-	getPubKeyOutput, err := svc.GetPublicKey(ctx, &kms.GetPublicKeyInput{
-		KeyId: aws.String(keyId),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to get public key for KeyId=%s: %w", keyId, err)
+// KMSSignerFn returns a SignerFn that uses a KMS key to sign transactions
+// Heavily taken from https://github.com/welthee/go-ethereum-aws-kms-tx-signer
+func KMSSignerFn(ctx context.Context, svc *kms.Client, pk *ecdsa.PublicKey, keyId string, chainID *big.Int) (bind.SignerFn, error) {
+	if chainID == nil {
+		return nil, errors.New("chainID is required")
+	}
+	if svc == nil {
+		return nil, errors.New("kms client is required")
+	}
+	if pk == nil {
+		return nil, errors.New("public key is required")
 	}
 
-	var asn1pubk asn1EcPublicKey
-	_, err = asn1.Unmarshal(getPubKeyOutput.PublicKey, &asn1pubk)
+	pubKeyBytes := secp256k1.S256().Marshal(pk.X, pk.Y)
+	keyAddr := crypto.PubkeyToAddress(*pk)
+	signer := types.LatestSignerForChainID(chainID)
+	return func(address common.Address, tx *types.Transaction) (*types.Transaction, error) {
+		if address != keyAddr {
+			return nil, bind.ErrNotAuthorized
+		}
+
+		txHashBytes := signer.Hash(tx).Bytes()
+
+		rBytes, sBytes, err := eigenkms.GetSignature(ctx, svc, keyId, txHashBytes)
+		if err != nil {
+			return nil, err
+		}
+
+		// Adjust S value from signature according to Ethereum standard
+		sBigInt := new(big.Int).SetBytes(sBytes)
+		if sBigInt.Cmp(secp256k1HalfN) > 0 {
+			sBytes = new(big.Int).Sub(secp256k1N, sBigInt).Bytes()
+		}
+
+		signature, err := getEthereumSignature(pubKeyBytes, txHashBytes, rBytes, sBytes)
+		if err != nil {
+			return nil, err
+		}
+
+		return tx.WithSignature(signer, signature)
+	}, nil
+}
+
+func getEthereumSignature(expectedPublicKeyBytes []byte, txHash []byte, r []byte, s []byte) ([]byte, error) {
+	rsSignature := append(adjustSignatureLength(r), adjustSignatureLength(s)...)
+	signature := append(rsSignature, []byte{0}...)
+
+	recoveredPublicKeyBytes, err := crypto.Ecrecover(txHash, signature)
 	if err != nil {
-		return nil, errors.Wrapf(err, "can not parse asn1 public key for KeyId=%s", keyId)
+		return nil, err
 	}
 
-	pubkey, err := crypto.UnmarshalPubkey(asn1pubk.PublicKey.Bytes)
-	if err != nil {
-		return nil, errors.Wrap(err, "can not construct secp256k1 public key from key bytes")
+	if hex.EncodeToString(recoveredPublicKeyBytes) != hex.EncodeToString(expectedPublicKeyBytes) {
+		signature = append(rsSignature, []byte{1}...)
+		recoveredPublicKeyBytes, err = crypto.Ecrecover(txHash, signature)
+		if err != nil {
+			return nil, err
+		}
+
+		if hex.EncodeToString(recoveredPublicKeyBytes) != hex.EncodeToString(expectedPublicKeyBytes) {
+			return nil, errors.New("can not reconstruct public key from sig")
+		}
 	}
 
-	return pubkey, nil
+	return signature, nil
+}
+
+func adjustSignatureLength(buffer []byte) []byte {
+	buffer = bytes.TrimLeft(buffer, "\x00")
+	for len(buffer) < 32 {
+		zeroBuf := []byte{0}
+		buffer = append(zeroBuf, buffer...)
+	}
+	return buffer
 }

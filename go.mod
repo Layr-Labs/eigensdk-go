@@ -3,6 +3,7 @@ module github.com/Layr-Labs/eigensdk-go
 go 1.21
 
 require (
+	github.com/aws/aws-sdk-go-v2/credentials v1.17.11
 	github.com/consensys/gnark-crypto v0.12.1
 	github.com/ethereum/go-ethereum v1.14.0
 	github.com/google/uuid v1.6.0
@@ -17,7 +18,6 @@ require (
 )
 
 require (
-	github.com/aws/aws-sdk-go-v2/credentials v1.17.11 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.1 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.5 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.5 // indirect
