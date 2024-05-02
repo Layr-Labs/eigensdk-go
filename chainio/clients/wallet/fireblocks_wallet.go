@@ -264,7 +264,7 @@ func (t *fireblocksWallet) SendTransaction(ctx context.Context, tx *types.Transa
 	}
 
 	if err != nil {
-		return "", fmt.Errorf("error calling contract %s: %w", tx.To().Hex(), err)
+		return "", fmt.Errorf("error sending a transaction %s: %w", tx.To().Hex(), err)
 	}
 	t.nonceToTxID[nonce] = res.ID
 	t.txIDToNonce[res.ID] = nonce
