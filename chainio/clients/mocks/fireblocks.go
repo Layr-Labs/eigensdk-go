@@ -56,10 +56,10 @@ func (mr *MockFireblocksClientMockRecorder) CancelTransaction(arg0, arg1 any) *g
 }
 
 // ContractCall mocks base method.
-func (m *MockFireblocksClient) ContractCall(arg0 context.Context, arg1 *fireblocks.ContractCallRequest) (*fireblocks.ContractCallResponse, error) {
+func (m *MockFireblocksClient) ContractCall(arg0 context.Context, arg1 *fireblocks.TransactionRequest) (*fireblocks.TransactionResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ContractCall", arg0, arg1)
-	ret0, _ := ret[0].(*fireblocks.ContractCallResponse)
+	ret0, _ := ret[0].(*fireblocks.TransactionResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -115,6 +115,21 @@ func (mr *MockFireblocksClientMockRecorder) ListContracts(arg0 any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListContracts", reflect.TypeOf((*MockFireblocksClient)(nil).ListContracts), arg0)
 }
 
+// ListExternalWallets mocks base method.
+func (m *MockFireblocksClient) ListExternalWallets(arg0 context.Context) ([]fireblocks.WhitelistedAccount, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListExternalWallets", arg0)
+	ret0, _ := ret[0].([]fireblocks.WhitelistedAccount)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListExternalWallets indicates an expected call of ListExternalWallets.
+func (mr *MockFireblocksClientMockRecorder) ListExternalWallets(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListExternalWallets", reflect.TypeOf((*MockFireblocksClient)(nil).ListExternalWallets), arg0)
+}
+
 // ListVaultAccounts mocks base method.
 func (m *MockFireblocksClient) ListVaultAccounts(arg0 context.Context) ([]fireblocks.VaultAccount, error) {
 	m.ctrl.T.Helper()
@@ -128,4 +143,19 @@ func (m *MockFireblocksClient) ListVaultAccounts(arg0 context.Context) ([]firebl
 func (mr *MockFireblocksClientMockRecorder) ListVaultAccounts(arg0 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListVaultAccounts", reflect.TypeOf((*MockFireblocksClient)(nil).ListVaultAccounts), arg0)
+}
+
+// Transfer mocks base method.
+func (m *MockFireblocksClient) Transfer(arg0 context.Context, arg1 *fireblocks.TransactionRequest) (*fireblocks.TransactionResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Transfer", arg0, arg1)
+	ret0, _ := ret[0].(*fireblocks.TransactionResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Transfer indicates an expected call of Transfer.
+func (mr *MockFireblocksClientMockRecorder) Transfer(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Transfer", reflect.TypeOf((*MockFireblocksClient)(nil).Transfer), arg0, arg1)
 }

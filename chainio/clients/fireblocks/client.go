@@ -36,7 +36,11 @@ type Client interface {
 	// ContractCall makes a ContractCall request to the Fireblocks API.
 	// It signs and broadcasts a transaction and returns the transaction ID and status.
 	// ref: https://developers.fireblocks.com/reference/post_transactions
-	ContractCall(ctx context.Context, body *ContractCallRequest) (*ContractCallResponse, error)
+	ContractCall(ctx context.Context, body *TransactionRequest) (*TransactionResponse, error)
+	// Transfer makes a Transfer request to the Fireblocks API.
+	// It signs and broadcasts a transaction and returns the transaction ID and status.
+	// ref: https://developers.fireblocks.com/reference/post_transactions
+	Transfer(ctx context.Context, body *TransactionRequest) (*TransactionResponse, error)
 	// CancelTransaction makes a CancelTransaction request to the Fireblocks API
 	// It cancels a transaction by its transaction ID.
 	// It returns true if the transaction was successfully canceled.
@@ -48,6 +52,12 @@ type Client interface {
 	// NewContractCallRequest in a ContractCall
 	// ref: https://developers.fireblocks.com/reference/get_contracts
 	ListContracts(ctx context.Context) ([]WhitelistedContract, error)
+	// ListExternalWallets makes a ListExternalWallets request to the Fireblocks API
+	// It returns a list of external wallets for the account.
+	// This call is used to get the external wallet ID, which is needed as destination account ID by NewTransferRequest
+	// in a Transfer
+	// ref: https://developers.fireblocks.com/reference/get_external-wallets
+	ListExternalWallets(ctx context.Context) ([]WhitelistedAccount, error)
 	// ListVaultAccounts makes a ListVaultAccounts request to the Fireblocks API
 	// It returns a list of vault accounts for the account.
 	ListVaultAccounts(ctx context.Context) ([]VaultAccount, error)
