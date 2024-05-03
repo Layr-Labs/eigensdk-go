@@ -18,7 +18,7 @@ func StartLocalstackContainer(name string) (testcontainers.Container, error) {
 	req := testcontainers.ContainerRequest{
 		Image:        "localstack/localstack:latest",
 		Name:         fmt.Sprintf("localstack-test-%s", name),
-		Env:          map[string]string{"GATEWAY_LISTEN": fmt.Sprintf("0.0.0.0:%s", LocalStackPort), "LOCALSTACK_HOST": fmt.Sprintf("localhost.localstack.cloud:%s", LocalStackPort)},
+		Env:          map[string]string{"LOCALSTACK_HOST": fmt.Sprintf("localhost.localstack.cloud:%s", LocalStackPort)},
 		ExposedPorts: []string{LocalStackPort},
 		WaitingFor:   wait.ForLog("Ready."),
 		AutoRemove:   true,
@@ -30,7 +30,7 @@ func StartLocalstackContainer(name string) (testcontainers.Container, error) {
 }
 
 func NewKMSClient(localStackPort string) (*kms.Client, error) {
-	cfg, err := aws.GetAWSConfig("localstack", "localstack", "us-east-1", fmt.Sprintf("http://0.0.0.0:%s", localStackPort))
+	cfg, err := aws.GetAWSConfig("localstack", "localstack", "us-east-1", fmt.Sprintf("http://127.0.0.1:%s", localStackPort))
 	if err != nil {
 		return nil, fmt.Errorf("failed to load AWS config: %w", err)
 	}

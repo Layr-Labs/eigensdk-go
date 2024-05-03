@@ -28,6 +28,8 @@ func NewKMSSigner(ctx context.Context, svc *kms.Client, pk *ecdsa.PublicKey, key
 
 // KMSSignerFn returns a SignerFn that uses a KMS key to sign transactions
 // Heavily taken from https://github.com/welthee/go-ethereum-aws-kms-tx-signer
+// It constructs R and S values from KMS, and constructs the recovery id (V) by trying to recover with both 0 and 1 values:
+// ref: https://github.com/aws-samples/aws-kms-ethereum-accounts?tab=readme-ov-file#the-recovery-identifier-v
 func KMSSignerFn(ctx context.Context, svc *kms.Client, pk *ecdsa.PublicKey, keyId string, chainID *big.Int) (bind.SignerFn, error) {
 	if chainID == nil {
 		return nil, errors.New("chainID is required")
