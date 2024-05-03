@@ -134,7 +134,7 @@ func (ops *OperatorsInfoServiceInMemory) startServiceInGoroutine(ctx context.Con
 					"G1pubkey", ops.pubkeyDict[operatorAddr].G1Pubkey, "G2pubkey", ops.pubkeyDict[operatorAddr].G2Pubkey,
 				)
 			case newSocketRegistrationEvent := <-newSocketRegistrationC:
-				ops.logger.Debug("Received new socket registration event", "service", "OperatorPubkeysServiceInMemory", "operatorId", newSocketRegistrationEvent.OperatorId, "socket", newSocketRegistrationEvent.Socket)
+				ops.logger.Debug("Received new socket registration event", "service", "OperatorPubkeysServiceInMemory", "operatorId", types.OperatorId(newSocketRegistrationEvent.OperatorId), "socket", newSocketRegistrationEvent.Socket)
 				ops.updateSocketMapping(newSocketRegistrationEvent.OperatorId, types.Socket(newSocketRegistrationEvent.Socket))
 			// Receive a query from GetOperatorPubkeys
 			case query := <-queryC:
