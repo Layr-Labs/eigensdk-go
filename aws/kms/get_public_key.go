@@ -21,9 +21,9 @@ type asn1EcPublicKeyInfo struct {
 	Parameters asn1.ObjectIdentifier
 }
 
-// GetPublicKey retrieves the ECDSA public key for a KMS key
+// GetECDSAPublicKey retrieves the ECDSA public key for a KMS key
 // It assumes the key is set up with `ECC_SECG_P256K1` key spec and `SIGN_VERIFY` key usage
-func GetPublicKey(ctx context.Context, svc *kms.Client, keyId string) (*ecdsa.PublicKey, error) {
+func GetECDSAPublicKey(ctx context.Context, svc *kms.Client, keyId string) (*ecdsa.PublicKey, error) {
 	getPubKeyOutput, err := svc.GetPublicKey(ctx, &kms.GetPublicKeyInput{
 		KeyId: aws.String(keyId),
 	})

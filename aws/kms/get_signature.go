@@ -14,10 +14,10 @@ type asn1EcSig struct {
 	S asn1.RawValue
 }
 
-// GetSignature retrieves the ECDSA signature for a message using a KMS key
-func GetSignature(
+// GetECDSASignature retrieves the ECDSA signature for a message using a KMS key
+func GetECDSASignature(
 	ctx context.Context, svc *kms.Client, keyId string, msg []byte,
-) ([]byte, []byte, error) {
+) (r []byte, s []byte, err error) {
 	signInput := &kms.SignInput{
 		KeyId:            aws.String(keyId),
 		SigningAlgorithm: types.SigningAlgorithmSpecEcdsaSha256,

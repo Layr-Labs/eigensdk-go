@@ -49,7 +49,7 @@ func KMSSignerFn(ctx context.Context, svc *kms.Client, pk *ecdsa.PublicKey, keyI
 
 		txHashBytes := signer.Hash(tx).Bytes()
 
-		rBytes, sBytes, err := eigenkms.GetSignature(ctx, svc, keyId, txHashBytes)
+		rBytes, sBytes, err := eigenkms.GetECDSASignature(ctx, svc, keyId, txHashBytes)
 		if err != nil {
 			return nil, err
 		}

@@ -85,7 +85,7 @@ func TestSendTransaction(t *testing.T) {
 	c, err := testutils.NewKMSClient(mappedLocalstackPort)
 	assert.Nil(t, err)
 	assert.NotNil(t, keyMetadata.KeyId)
-	pk, err := eigenkms.GetPublicKey(context.Background(), c, *keyMetadata.KeyId)
+	pk, err := eigenkms.GetECDSAPublicKey(context.Background(), c, *keyMetadata.KeyId)
 	assert.Nil(t, err)
 	assert.NotNil(t, pk)
 	keyAddr := crypto.PubkeyToAddress(*pk)
