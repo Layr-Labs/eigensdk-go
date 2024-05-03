@@ -358,7 +358,6 @@ func (w *AvsRegistryChainWriter) DeregisterOperator(
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
-
 	w.logger.Info(
 		"successfully deregistered operator with the AVS's registry coordinator",
 		"txHash",
