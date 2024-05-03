@@ -42,11 +42,11 @@ func KeyStoreSignerFn(path string, password string, chainID *big.Int) (bind.Sign
 // RemoteSignerFn creates a signer function that uses a remote signer
 // It should expose `eth_SignTransaction` endpoint which return rlp
 // encoded signed tx
-func RemoteSignerFn(remoteSignerUrl string, chainID *big.Int) (bind.SignerFn, error) {
+func RemoteSignerFn(remoteSignerUrl string) (bind.SignerFn, error) {
 	client := NewRemoteSignerClient(remoteSignerUrl)
 
 	return func(address common.Address, tx *types.Transaction) (*types.Transaction, error) {
-		signedTx, err := client.SignTransaction(address, tx, chainID)
+		signedTx, err := client.SignTransaction(address, tx)
 		if err != nil {
 			return nil, err
 		}
@@ -74,7 +74,7 @@ func SignerFromConfig(c Config, chainID *big.Int) (SignerFn, common.Address, err
 	} else if c.IsRemoteSigner() {
 		senderAddress = common.HexToAddress(c.Address)
 		signer = func(ctx context.Context, address common.Address) (bind.SignerFn, error) {
-			return RemoteSignerFn(c.Endpoint, chainID)
+			return RemoteSignerFn(c.Endpoint)
 		}
 	} else {
 		return nil, common.Address{}, errors.New("no signer found")

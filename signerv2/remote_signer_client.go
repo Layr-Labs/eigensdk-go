@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"math/big"
 	"net/http"
 
 	"github.com/Layr-Labs/eigensdk-go/utils"
@@ -22,7 +21,7 @@ type RpcRequest struct {
 }
 
 type RemoteSignerClient interface {
-	SignTransaction(from common.Address, tx *types.Transaction, chainId *big.Int) (*types.Transaction, error)
+	SignTransaction(from common.Address, tx *types.Transaction) (*types.Transaction, error)
 }
 
 // RemoteSigner is a client for a remote signer
@@ -41,7 +40,6 @@ func NewRemoteSignerClient(url string) RemoteSignerClient {
 func (r RemoteSigner) SignTransaction(
 	from common.Address,
 	tx *types.Transaction,
-	chainId *big.Int,
 ) (*types.Transaction, error) {
 	method := "eth_signTransaction"
 	id := 1
