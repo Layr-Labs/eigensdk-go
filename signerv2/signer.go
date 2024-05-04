@@ -46,11 +46,7 @@ func RemoteSignerFn(remoteSignerUrl string) (bind.SignerFn, error) {
 	client := NewRemoteSignerClient(remoteSignerUrl)
 
 	return func(address common.Address, tx *types.Transaction) (*types.Transaction, error) {
-		signedTx, err := client.SignTransaction(address, tx)
-		if err != nil {
-			return nil, err
-		}
-		return signedTx, nil
+		return client.SignTransaction(address, tx)
 	}, nil
 }
 
