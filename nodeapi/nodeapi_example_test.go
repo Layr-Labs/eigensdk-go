@@ -13,7 +13,7 @@ func ExampleNodeApi() {
 
 	nodeApi := nodeapi.NewNodeApi("testAvs", "v0.0.1", "localhost:8080", logger)
 	// register a service with the nodeApi. This could be a db, a cache, a queue, etc.
-	// see https://eigen.nethermind.io/docs/spec/api/#get-eigennodeservices
+	// see https://docs.eigenlayer.xyz/eigenlayer/avs-guides/spec/api/#get-eigennodeservices
 	nodeApi.RegisterNewService("testServiceId", "testServiceName", "testServiceDescription", nodeapi.ServiceStatusInitializing)
 
 	// this starts the nodeApi server in a goroutine, so no need to wrap it in a go func

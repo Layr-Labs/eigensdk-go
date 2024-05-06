@@ -38,7 +38,10 @@ func NewInstrumentedClient(rpcAddress string, rpcCallsCollector *rpccalls.Collec
 	return NewInstrumentedClientFromClient(client, rpcCallsCollector), nil
 }
 
-func NewInstrumentedClientFromClient(client *ethclient.Client, rpcCallsCollector *rpccalls.Collector) *InstrumentedClient {
+func NewInstrumentedClientFromClient(
+	client *ethclient.Client,
+	rpcCallsCollector *rpccalls.Collector,
+) *InstrumentedClient {
 	clientAndVersion := getClientAndVersion(client)
 	return &InstrumentedClient{
 		client:            client,
@@ -495,7 +498,7 @@ func (iec *InstrumentedClient) WaitForTransactionReceipt(ctx context.Context, tx
 
 // Not sure why this method is not exposed in the ethclient itself...
 // but it is needed to comply with the rpc metrics defined in avs-node spec
-// https://eigen.nethermind.io/docs/metrics/metrics-prom-spec
+// https://docs.eigenlayer.xyz/eigenlayer/avs-guides/spec/metrics/metrics-prom-spec
 func getClientAndVersion(client *ethclient.Client) string {
 	var clientVersion string
 	err := client.Client().Call(&clientVersion, "web3_clientVersion")

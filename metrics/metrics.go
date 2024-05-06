@@ -7,7 +7,7 @@ import (
 )
 
 // Metrics is the interface for the EigenMetrics server
-// it only wraps 2 of the 6 methods required by the spec (https://eigen.nethermind.io/docs/spec/metrics/metrics-prom-spec)
+// it only wraps 2 of the 6 methods required by the spec (https://docs.eigenlayer.xyz/eigenlayer/avs-guides/spec/metrics/metrics-prom-spec)
 // the others are implemented by the economics and rpc_calls collectors,
 // and need to be registered with the metrics server prometheus registry
 type Metrics interface {

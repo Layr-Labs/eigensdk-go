@@ -1,6 +1,6 @@
 package nodeapi
 
-// Implementation of https://eigen.nethermind.io/docs/spec/api/#api-versioning
+// Implementation of https://docs.eigenlayer.xyz/eigenlayer/avs-guides/spec/api/#api-versioning
 
 import (
 	"context"
@@ -18,7 +18,7 @@ import (
 const (
 	baseUrl = "/eigen"
 	// Spec version is the version of the avs node spec that this node is implementing
-	// see https://eigen.nethermind.io/docs/spec/api/#api-versioning
+	// see https://docs.eigenlayer.xyz/eigenlayer/avs-guides/spec/api/#api-versioning
 	specSemVer = "v0.0.1"
 )
 
@@ -120,18 +120,7 @@ func (api *NodeApi) Start() <-chan error {
 	return errChan
 }
 
-// https://eigen.nethermind.io/docs/metrics/metrics-api#get-eigennodespec-version
-func (api *NodeApi) specVersionHandler(w http.ResponseWriter, r *http.Request) {
-	response := map[string]string{
-		"spec_version": specSemVer,
-	}
-	err := jsonResponse(w, response)
-	if err != nil {
-		api.logger.Error("Error in specVersionHandler", "err", err)
-	}
-}
-
-// https://eigen.nethermind.io/docs/metrics/metrics-api#get-eigennodeversion
+// https://docs.eigenlayer.xyz/eigenlayer/avs-guides/spec/api/#get-eigennode
 func (api *NodeApi) nodeHandler(w http.ResponseWriter, r *http.Request) {
 	response := map[string]string{
 		"node_name":    api.avsNodeName,
@@ -144,7 +133,7 @@ func (api *NodeApi) nodeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// https://eigen.nethermind.io/docs/metrics/metrics-api#get-eigennodehealth
+// https://docs.eigenlayer.xyz/eigenlayer/avs-guides/spec/api/#get-eigennodehealth
 func (api *NodeApi) healthHandler(w http.ResponseWriter, r *http.Request) {
 	switch api.health {
 	case Healthy:
@@ -163,7 +152,7 @@ func (api *NodeApi) healthHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// https://eigen.nethermind.io/docs/metrics/metrics-api#get-eigennodeservices
+// https://docs.eigenlayer.xyz/eigenlayer/avs-guides/spec/api/#get-eigennodeservices
 func (api *NodeApi) servicesHandler(w http.ResponseWriter, r *http.Request) {
 	response := map[string][]nodeService{
 		"services": api.nodeServices,
@@ -174,7 +163,7 @@ func (api *NodeApi) servicesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// https://eigen.nethermind.io/docs/metrics/metrics-api#get-eigennodeservicesservice_idhealth
+// https://docs.eigenlayer.xyz/eigenlayer/avs-guides/spec/api/#get-eigennodeservicesservice_idhealth
 func (api *NodeApi) serviceHealthHandler(w http.ResponseWriter, r *http.Request) {
 	suffix, found := strings.CutPrefix(r.URL.Path, "/eigen/node/services/")
 	if !found {

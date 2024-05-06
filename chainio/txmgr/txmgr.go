@@ -17,7 +17,8 @@ import (
 )
 
 var (
-	// FallbackGasTipCap 5 gwei in case the backend does not support eth_maxPriorityFeePerGas (no idea if/when this ever happens..)
+	// FallbackGasTipCap 5 gwei in case the backend does not support eth_maxPriorityFeePerGas (no idea if/when this ever
+	// happens..)
 	FallbackGasTipCap = big.NewInt(5_000_000_000)
 	// FallbackGasLimitMultiplier 1.20x gas limit multiplier. This is arbitrary but should be safe for most cases
 	FallbackGasLimitMultiplier = 1.20
