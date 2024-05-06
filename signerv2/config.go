@@ -18,7 +18,7 @@ func (c Config) IsLocalKeystoreSigner() bool {
 	return c.KeystorePath != ""
 }
 
-func (c Config) IsRemoteSigner() bool {
+func (c Config) IsWeb3Signer() bool {
 	if c.Endpoint == "" || c.Address == "" {
 		return false
 	}

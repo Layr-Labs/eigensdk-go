@@ -272,3 +272,14 @@ func ValidateRawGithubUrl(url string) error {
 
 	return nil
 }
+
+func Add0x(address string) string {
+	if strings.HasPrefix(address, "0x") {
+		return address
+	}
+	return "0x" + address
+}
+
+func Trim0x(address string) string {
+	return strings.TrimPrefix(address, "0x")
+}

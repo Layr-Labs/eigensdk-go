@@ -39,10 +39,15 @@ func KeyStoreSignerFn(path string, password string, chainID *big.Int) (bind.Sign
 	return PrivateKeySignerFn(privateKey, chainID)
 }
 
-func RemoteSignerFn(address common.Address, chainID *big.Int) (bind.SignerFn, error) {
+// Web3SignerFn creates a signer function that uses a remote signer
+// It exposes `eth_SignTransaction` endpoint which return rlp
+// encoded signed tx
+func Web3SignerFn(remoteSignerUrl string) (bind.SignerFn, error) {
+	client := NewWeb3SignerClient(remoteSignerUrl)
+
 	return func(address common.Address, tx *types.Transaction) (*types.Transaction, error) {
-		return nil, errors.New("unimplemented")
-	}, errors.New("unimplemented")
+		return client.SignTransaction(address, tx)
+	}, nil
 }
 
 func SignerFromConfig(c Config, chainID *big.Int) (SignerFn, common.Address, error) {
@@ -62,15 +67,13 @@ func SignerFromConfig(c Config, chainID *big.Int) (SignerFn, common.Address, err
 		signer = func(ctx context.Context, address common.Address) (bind.SignerFn, error) {
 			return KeyStoreSignerFn(c.KeystorePath, c.Password, chainID)
 		}
-	} else if c.IsRemoteSigner() {
+	} else if c.IsWeb3Signer() {
+		senderAddress = common.HexToAddress(c.Address)
 		signer = func(ctx context.Context, address common.Address) (bind.SignerFn, error) {
-			return RemoteSignerFn(address, chainID)
+			return Web3SignerFn(c.Endpoint)
 		}
 	} else {
 		return nil, common.Address{}, errors.New("no signer found")
-	}
-	if err != nil {
-		return nil, common.Address{}, err
 	}
 	return signer, senderAddress, nil
 }
