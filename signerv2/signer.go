@@ -40,7 +40,7 @@ func KeyStoreSignerFn(path string, password string, chainID *big.Int) (bind.Sign
 }
 
 // RemoteSignerFn creates a signer function that uses a remote signer
-// It should expose `eth_SignTransaction` endpoint which return rlp
+// It exposes `eth_SignTransaction` endpoint which return rlp
 // encoded signed tx
 func RemoteSignerFn(remoteSignerUrl string) (bind.SignerFn, error) {
 	client := NewRemoteSignerClient(remoteSignerUrl)

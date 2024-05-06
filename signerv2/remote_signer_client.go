@@ -11,13 +11,16 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rlp"
+	"github.com/google/uuid"
 )
 
-type RpcRequest struct {
+// JsonRpcRequest is a struct for JSON RPC 2.0 request
+// See: https://www.jsonrpc.org/specification
+type JsonRpcRequest struct {
 	JsonRPC string      `json:"jsonrpc"`
 	Method  string      `json:"method"`
 	Params  interface{} `json:"params"`
-	ID      int         `json:"id"`
+	ID      string      `json:"id"`
 }
 
 type RemoteSignerClient interface {
@@ -25,8 +28,8 @@ type RemoteSignerClient interface {
 }
 
 // RemoteSigner is a client for a remote signer
-// It implements Consensys Web3 Signer
-// Reference: https://docs.web3signer.consensys.io/reference/api/json-rpc
+// It currently implements `eth_signTransaction` method of Consensys Web3 Signer
+// Reference: https://docs.web3signer.consensys.io/reference/api/json-rpc#eth_signtransaction
 type RemoteSigner struct {
 	url    string
 	client http.Client
@@ -42,7 +45,7 @@ func (r RemoteSigner) SignTransaction(
 	tx *types.Transaction,
 ) (*types.Transaction, error) {
 	method := "eth_signTransaction"
-	id := 1
+	id := uuid.New().String()
 	params := []map[string]string{
 		{
 			"from":     from.Hex(),
@@ -54,7 +57,7 @@ func (r RemoteSigner) SignTransaction(
 		},
 	}
 
-	request := RpcRequest{
+	request := JsonRpcRequest{
 		JsonRPC: "2.0",
 		Method:  method,
 		Params:  params,
@@ -63,33 +66,22 @@ func (r RemoteSigner) SignTransaction(
 
 	jsonData, err := json.Marshal(request)
 	if err != nil {
-		fmt.Println("Error marshalling request:", err)
-		return nil, err
+		return nil, utils.WrapError("error marshalling request", err)
 	}
 
-	req, err := http.NewRequest("POST", r.url, bytes.NewBuffer(jsonData))
+	resp, err := r.client.Post(r.url, "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
-		fmt.Println("Error creating request:", err)
-		return nil, err
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := r.client.Do(req)
-	if err != nil {
-		fmt.Println("Error sending request:", err)
 		return nil, err
 	}
 	defer resp.Body.Close()
 
 	var result map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		fmt.Println("Error decoding response:", err)
-		return nil, err
+	if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, utils.WrapError("error decoding response", err)
 	}
 
 	if result["error"] != nil {
-		fmt.Println("Error in response:", result["error"])
-		return nil, fmt.Errorf("error in response")
+		return nil, utils.WrapError("error in response", fmt.Errorf("%v", result["error"]))
 	}
 
 	rlpEncodedSignedTx := result["result"].(string)
