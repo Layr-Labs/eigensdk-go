@@ -120,17 +120,6 @@ func (api *NodeApi) Start() <-chan error {
 	return errChan
 }
 
-// https://eigen.nethermind.io/docs/metrics/metrics-api#get-eigennodespec-version
-func (api *NodeApi) specVersionHandler(w http.ResponseWriter, r *http.Request) {
-	response := map[string]string{
-		"spec_version": specSemVer,
-	}
-	err := jsonResponse(w, response)
-	if err != nil {
-		api.logger.Error("Error in specVersionHandler", "err", err)
-	}
-}
-
 // https://docs.eigenlayer.xyz/eigenlayer/avs-guides/spec/api/#get-eigennode
 func (api *NodeApi) nodeHandler(w http.ResponseWriter, r *http.Request) {
 	response := map[string]string{

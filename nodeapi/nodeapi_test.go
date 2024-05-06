@@ -26,22 +26,6 @@ func TestStart(t *testing.T) {
 	}
 }
 
-func TestSpecVersionHandler(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/eigen/node/spec-version", nil)
-	w := httptest.NewRecorder()
-
-	testNodeApi.specVersionHandler(w, req)
-
-	res := w.Result()
-	defer res.Body.Close()
-
-	data, err := io.ReadAll(res.Body)
-	assert.NoError(t, err)
-
-	assert.Equal(t, http.StatusOK, res.StatusCode)
-	assert.Equal(t, "{\"spec_version\":\"v0.0.1\"}\n", string(data))
-}
-
 func TestNodeHandler(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/eigen/node", nil)
 	w := httptest.NewRecorder()

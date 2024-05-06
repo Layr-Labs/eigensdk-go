@@ -38,7 +38,10 @@ func NewInstrumentedClient(rpcAddress string, rpcCallsCollector *rpccalls.Collec
 	return NewInstrumentedClientFromClient(client, rpcCallsCollector), nil
 }
 
-func NewInstrumentedClientFromClient(client *ethclient.Client, rpcCallsCollector *rpccalls.Collector) *InstrumentedClient {
+func NewInstrumentedClientFromClient(
+	client *ethclient.Client,
+	rpcCallsCollector *rpccalls.Collector,
+) *InstrumentedClient {
 	clientAndVersion := getClientAndVersion(client)
 	return &InstrumentedClient{
 		client:            client,
