@@ -1,4 +1,4 @@
-// Package metrics implements the avs node prometheus metrics spec: https://eigen.nethermind.io/docs/metrics/metrics-prom-spec
+// Package metrics implements the avs node prometheus metrics spec: https://docs.eigenlayer.xyz/eigenlayer/avs-guides/spec/metrics/metrics-prom-spec
 package metrics
 
 import (

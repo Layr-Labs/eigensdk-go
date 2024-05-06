@@ -17,7 +17,7 @@ import (
 
 // Collector exports the economic metrics listed at
 //
-//	https://eigen.nethermind.io/docs/spec/metrics/metrics-examples#economics-metrics
+//	https://docs.eigenlayer.xyz/eigenlayer/avs-guides/spec/metrics/metrics-prom-spec#economics-metrics
 //
 // these are metrics that are exported not via instrumentation, but instead by proxying
 // a call to the relevant eigenlayer contracts
