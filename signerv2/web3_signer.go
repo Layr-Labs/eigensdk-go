@@ -23,24 +23,24 @@ type JsonRpcRequest struct {
 	ID      string      `json:"id"`
 }
 
-type RemoteSignerClient interface {
+type Web3SignerClient interface {
 	SignTransaction(from common.Address, tx *types.Transaction) (*types.Transaction, error)
 }
 
-// RemoteSigner is a client for a remote signer
+// Web3Signer is a client for a remote signer
 // It currently implements `eth_signTransaction` method of Consensys Web3 Signer
 // Reference: https://docs.web3signer.consensys.io/reference/api/json-rpc#eth_signtransaction
-type RemoteSigner struct {
+type Web3Signer struct {
 	url    string
 	client http.Client
 }
 
-func NewRemoteSignerClient(url string) RemoteSignerClient {
+func NewWeb3SignerClient(url string) Web3SignerClient {
 	client := http.Client{}
-	return &RemoteSigner{client: client, url: url}
+	return &Web3Signer{client: client, url: url}
 }
 
-func (r RemoteSigner) SignTransaction(
+func (r Web3Signer) SignTransaction(
 	from common.Address,
 	tx *types.Transaction,
 ) (*types.Transaction, error) {
