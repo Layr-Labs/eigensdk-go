@@ -18,7 +18,7 @@ func TestOperatorMetadata(t *testing.T) {
 			name: "Valid metadata with twitter.com url",
 			metadata: OperatorMetadata{
 				Name:        "Ethereum Utopia",
-				Description: "Madhur's first operator is best in this world+&~#$—",
+				Description: "Madhur's first operator is best in this world+&~#$—%",
 				Logo:        "https://goerli-operator-metadata.s3.amazonaws.com/eigenlayer.png",
 				Twitter:     "https://twitter.com/test",
 				Website:     "https://test.com",
