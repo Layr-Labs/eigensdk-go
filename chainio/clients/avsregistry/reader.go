@@ -21,8 +21,8 @@ import (
 	stakeregistry "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StakeRegistry"
 )
 
-// eth_getLogs is limited to a 10,000 range, so we need to iterate over the range
-const QueryBlockRange = 10_000
+// different node providers have different eth_getLogs range limits. 10k is an arbitrary choice that should work for most
+var DefaultQueryBlockRange = big.NewInt(10_000)
 
 type AvsRegistryReader interface {
 	GetQuorumCount(opts *bind.CallOpts) (uint8, error)
@@ -76,12 +76,14 @@ type AvsRegistryReader interface {
 		ctx context.Context,
 		startBlock *big.Int,
 		stopBlock *big.Int,
+		blockRange *big.Int,
 	) ([]types.OperatorAddr, []types.OperatorPubkeys, error)
 
 	QueryExistingRegisteredOperatorSockets(
 		ctx context.Context,
 		startBlock *big.Int,
 		stopBlock *big.Int,
+		blockRange *big.Int,
 	) (map[types.OperatorId]types.Socket, error)
 }
 
@@ -368,6 +370,7 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorPubKeys(
 	ctx context.Context,
 	startBlock *big.Int,
 	stopBlock *big.Int,
+	blockRange *big.Int,
 ) ([]types.OperatorAddr, []types.OperatorPubkeys, error) {
 	blsApkRegistryAbi, err := apkreg.ContractBLSApkRegistryMetaData.GetAbi()
 	if err != nil {
@@ -384,12 +387,15 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorPubKeys(
 		}
 		stopBlock = big.NewInt(int64(curBlockNum))
 	}
+	if blockRange == nil {
+		blockRange = DefaultQueryBlockRange
+	}
 
 	operatorAddresses := make([]types.OperatorAddr, 0)
 	operatorPubkeys := make([]types.OperatorPubkeys, 0)
-	for i := startBlock; i.Cmp(stopBlock) <= 0; i.Add(i, big.NewInt(QueryBlockRange)) {
+	for i := startBlock; i.Cmp(stopBlock) <= 0; i.Add(i, blockRange) {
 		// Subtract 1 since FilterQuery is inclusive
-		toBlock := big.NewInt(0).Add(i, big.NewInt(QueryBlockRange-1))
+		toBlock := big.NewInt(0).Add(i, big.NewInt(0).Sub(DefaultQueryBlockRange, big.NewInt(1)))
 		if toBlock.Cmp(stopBlock) > 0 {
 			toBlock = stopBlock
 		}
@@ -458,6 +464,7 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorSockets(
 	ctx context.Context,
 	startBlock *big.Int,
 	stopBlock *big.Int,
+	blockRange *big.Int,
 ) (map[types.OperatorId]types.Socket, error) {
 
 	if startBlock == nil {
@@ -470,11 +477,14 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorSockets(
 		}
 		stopBlock = big.NewInt(int64(curBlockNum))
 	}
+	if blockRange == nil {
+		blockRange = DefaultQueryBlockRange
+	}
 
 	operatorIdToSocketMap := make(map[types.OperatorId]types.Socket)
-	for i := startBlock; i.Cmp(stopBlock) <= 0; i.Add(i, big.NewInt(QueryBlockRange)) {
+	for i := startBlock; i.Cmp(stopBlock) <= 0; i.Add(i, blockRange) {
 		// Subtract 1 since FilterQuery is inclusive
-		toBlock := big.NewInt(0).Add(i, big.NewInt(QueryBlockRange-1))
+		toBlock := big.NewInt(0).Add(i, big.NewInt(0).Sub(DefaultQueryBlockRange, big.NewInt(1)))
 		if toBlock.Cmp(stopBlock) > 0 {
 			toBlock = stopBlock
 		}
