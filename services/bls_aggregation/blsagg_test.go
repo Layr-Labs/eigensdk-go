@@ -29,7 +29,7 @@ func TestBlsAgg(t *testing.T) {
 			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100), 1: big.NewInt(200)},
 			BlsKeypair:     newBlsKeyPairPanics("0x1"),
 		}
-		blockNum := uint32(1)
+		blockNum := types.BlockNum(uint32(1))
 		taskIndex := types.TaskIndex(0)
 		quorumNumbers := types.QuorumNums{0}
 		quorumThresholdPercentages := []types.QuorumThresholdPercentage{100}
@@ -77,7 +77,7 @@ func TestBlsAgg(t *testing.T) {
 		quorumNumbers := types.QuorumNums{0}
 		quorumThresholdPercentages := []types.QuorumThresholdPercentage{100}
 		taskResponseDigest := types.TaskResponseDigest{123}
-		blockNum := uint32(1)
+		blockNum := types.BlockNum(uint32(1))
 
 		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1, testOperator2, testOperator3})
 		noopLogger := logging.NewNoopLogger()
@@ -130,7 +130,7 @@ func TestBlsAgg(t *testing.T) {
 		quorumNumbers := types.QuorumNums{0, 1}
 		quorumThresholdPercentages := []types.QuorumThresholdPercentage{100, 100}
 		taskResponseDigest := types.TaskResponseDigest{123}
-		blockNum := uint32(1)
+		blockNum := types.BlockNum(uint32(1))
 
 		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1, testOperator2})
 		noopLogger := logging.NewNoopLogger()
@@ -174,7 +174,7 @@ func TestBlsAgg(t *testing.T) {
 		}
 		quorumNumbers := types.QuorumNums{0, 1}
 		quorumThresholdPercentages := []types.QuorumThresholdPercentage{100, 100}
-		blockNum := uint32(1)
+		blockNum := types.BlockNum(uint32(1))
 
 		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1, testOperator2})
 		noopLogger := logging.NewNoopLogger()
@@ -250,7 +250,7 @@ func TestBlsAgg(t *testing.T) {
 		taskIndex := types.TaskIndex(0)
 		quorumNumbers := types.QuorumNums{0}
 		quorumThresholdPercentages := []types.QuorumThresholdPercentage{100}
-		blockNum := uint32(1)
+		blockNum := types.BlockNum(uint32(1))
 
 		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1})
 		noopLogger := logging.NewNoopLogger()
@@ -281,7 +281,7 @@ func TestBlsAgg(t *testing.T) {
 		quorumThresholdPercentages := []types.QuorumThresholdPercentage{50}
 		taskResponseDigest := types.TaskResponseDigest{123}
 		blsSig := testOperator1.BlsKeypair.SignMessage(taskResponseDigest)
-		blockNum := uint32(1)
+		blockNum := types.BlockNum(uint32(1))
 
 		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1, testOperator2})
 		noopLogger := logging.NewNoopLogger()
@@ -315,7 +315,7 @@ func TestBlsAgg(t *testing.T) {
 			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100), 1: big.NewInt(200)},
 			BlsKeypair:     newBlsKeyPairPanics("0x2"),
 		}
-		blockNum := uint32(1)
+		blockNum := types.BlockNum(uint32(1))
 		taskIndex := types.TaskIndex(0)
 		quorumNumbers := types.QuorumNums{0}
 		quorumThresholdPercentages := []types.QuorumThresholdPercentage{60}
@@ -354,7 +354,7 @@ func TestBlsAgg(t *testing.T) {
 		quorumNumbers := types.QuorumNums{0, 1}
 		quorumThresholdPercentages := []types.QuorumThresholdPercentage{100, 100}
 		taskResponseDigest := types.TaskResponseDigest{123}
-		blockNum := uint32(1)
+		blockNum := types.BlockNum(uint32(1))
 
 		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1, testOperator2})
 		noopLogger := logging.NewNoopLogger()
@@ -407,7 +407,7 @@ func TestBlsAgg(t *testing.T) {
 		quorumNumbers := types.QuorumNums{0, 1}
 		quorumThresholdPercentages := []types.QuorumThresholdPercentage{50, 50}
 		taskResponseDigest := types.TaskResponseDigest{123}
-		blockNum := uint32(1)
+		blockNum := types.BlockNum(uint32(1))
 
 		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1, testOperator2, testOperator3})
 		noopLogger := logging.NewNoopLogger()
@@ -462,7 +462,7 @@ func TestBlsAgg(t *testing.T) {
 		quorumNumbers := types.QuorumNums{0, 1}
 		quorumThresholdPercentages := []types.QuorumThresholdPercentage{60, 60}
 		taskResponseDigest := types.TaskResponseDigest{123}
-		blockNum := uint32(1)
+		blockNum := types.BlockNum(uint32(1))
 
 		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1, testOperator2, testOperator3})
 		noopLogger := logging.NewNoopLogger()
@@ -495,7 +495,7 @@ func TestBlsAgg(t *testing.T) {
 		quorumNumbers := types.QuorumNums{0, 1}
 		quorumThresholdPercentages := []types.QuorumThresholdPercentage{100, 100}
 		taskResponseDigest := types.TaskResponseDigest{123}
-		blockNum := uint32(1)
+		blockNum := types.BlockNum(uint32(1))
 
 		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1})
 		noopLogger := logging.NewNoopLogger()
@@ -530,7 +530,7 @@ func TestBlsAgg(t *testing.T) {
 		quorumNumbers := types.QuorumNums{0, 1}
 		quorumThresholdPercentages := []types.QuorumThresholdPercentage{100, 100}
 		taskResponseDigest := types.TaskResponseDigest{123}
-		blockNum := uint32(1)
+		blockNum := types.BlockNum(uint32(1))
 
 		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1, testOperator2})
 		noopLogger := logging.NewNoopLogger()
@@ -555,7 +555,7 @@ func TestBlsAgg(t *testing.T) {
 			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100), 1: big.NewInt(200)},
 			BlsKeypair:     newBlsKeyPairPanics("0x1"),
 		}
-		blockNum := uint32(1)
+		blockNum := types.BlockNum(uint32(1))
 		taskIndex := types.TaskIndex(0)
 		taskResponseDigest := types.TaskResponseDigest{123}
 		blsSig := testOperator1.BlsKeypair.SignMessage(taskResponseDigest)
@@ -581,7 +581,7 @@ func TestBlsAgg(t *testing.T) {
 			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100), 1: big.NewInt(200)},
 			BlsKeypair:     newBlsKeyPairPanics("0x2"),
 		}
-		blockNum := uint32(1)
+		blockNum := types.BlockNum(uint32(1))
 		taskIndex := types.TaskIndex(0)
 		quorumNumbers := types.QuorumNums{0}
 		quorumThresholdPercentages := []types.QuorumThresholdPercentage{100}
@@ -629,7 +629,7 @@ func TestBlsAgg(t *testing.T) {
 			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100), 1: big.NewInt(200)},
 			BlsKeypair:     newBlsKeyPairPanics("0x2"),
 		}
-		blockNum := uint32(1)
+		blockNum := types.BlockNum(uint32(1))
 		taskIndex := types.TaskIndex(0)
 		quorumNumbers := types.QuorumNums{0}
 		quorumThresholdPercentages := []types.QuorumThresholdPercentage{100}

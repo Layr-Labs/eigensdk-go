@@ -94,12 +94,12 @@ func (op OperatorPubkeys) ToContractPubkeys() (apkreg.BN254G1Point, apkreg.BN254
 }
 
 // ECDSA address of the operator
-type OperatorAddr = common.Address
-type StakeAmount = *big.Int
+type OperatorAddr common.Address
+type StakeAmount *big.Int
 
 // OperatorId is the ID of an operator, defined by the AVS registry
 // It is the hash of the operator's G1 pubkey
-type OperatorId = Bytes32
+type OperatorId Bytes32
 
 func OperatorIdFromG1Pubkey(pubkey *bls.G1Point) OperatorId {
 	x := pubkey.X.BigInt(new(big.Int))
@@ -162,7 +162,7 @@ func (q QuorumThresholdPercentage) LogValue() slog.Value {
 	return slog.StringValue(fmt.Sprintf("%d", q))
 }
 
-type BlockNum = uint32
+type BlockNum uint32
 
 // AvsOperator represents the operator state in AVS registries
 type OperatorAvsState struct {
