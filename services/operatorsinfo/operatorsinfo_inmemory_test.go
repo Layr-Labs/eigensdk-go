@@ -59,9 +59,9 @@ func TestGetOperatorInfo(t *testing.T) {
 				errC := make(chan error)
 				mockSubscription.EXPECT().Err().AnyTimes().Return(errC)
 				mockAvsRegistrySubscriber.EXPECT().SubscribeToNewPubkeyRegistrations().Return(nil, mockSubscription, nil)
-				mockAvsReader.EXPECT().QueryExistingRegisteredOperatorPubKeys(gomock.Any(), nil, nil).Return(nil, nil, nil)
+				mockAvsReader.EXPECT().QueryExistingRegisteredOperatorPubKeys(gomock.Any(), nil, nil, defaultLogFilterQueryBlockRange).Return(nil, nil, nil)
 				mockAvsRegistrySubscriber.EXPECT().SubscribeToOperatorSocketUpdates().Return(nil, mockSubscription, nil)
-				mockAvsReader.EXPECT().QueryExistingRegisteredOperatorSockets(gomock.Any(), nil, nil).Return(nil, nil)
+				mockAvsReader.EXPECT().QueryExistingRegisteredOperatorSockets(gomock.Any(), nil, nil, defaultLogFilterQueryBlockRange).Return(nil, nil)
 			},
 			queryOperatorAddr: testOperator1.operatorAddr,
 			wantOperatorFound: false,
@@ -73,10 +73,10 @@ func TestGetOperatorInfo(t *testing.T) {
 				errC := make(chan error)
 				mockSubscription.EXPECT().Err().AnyTimes().Return(errC)
 				mockAvsRegistrySubscriber.EXPECT().SubscribeToNewPubkeyRegistrations().Return(nil, mockSubscription, nil)
-				mockAvsReader.EXPECT().QueryExistingRegisteredOperatorPubKeys(gomock.Any(), nil, nil).
+				mockAvsReader.EXPECT().QueryExistingRegisteredOperatorPubKeys(gomock.Any(), nil, nil, defaultLogFilterQueryBlockRange).
 					Return([]common.Address{testOperator1.operatorAddr}, []types.OperatorPubkeys{testOperator1.operatorInfo.Pubkeys}, nil)
 				mockAvsRegistrySubscriber.EXPECT().SubscribeToOperatorSocketUpdates().Return(nil, mockSubscription, nil)
-				mockAvsReader.EXPECT().QueryExistingRegisteredOperatorSockets(gomock.Any(), nil, nil).
+				mockAvsReader.EXPECT().QueryExistingRegisteredOperatorSockets(gomock.Any(), nil, nil, defaultLogFilterQueryBlockRange).
 					Return(map[types.OperatorId]types.Socket{
 						types.OperatorIdFromG1Pubkey(testOperator1.operatorInfo.Pubkeys.G1Pubkey): testOperator1.operatorInfo.Socket,
 					}, nil)
@@ -106,10 +106,10 @@ func TestGetOperatorInfo(t *testing.T) {
 				operatorSocketUpdateEventC <- operatorSocketUpdateEvent
 				mockSubscription.EXPECT().Err().AnyTimes().Return(errC)
 				mockAvsRegistrySubscriber.EXPECT().SubscribeToNewPubkeyRegistrations().Return(pubkeyRegistrationEventC, mockSubscription, nil)
-				mockAvsReader.EXPECT().QueryExistingRegisteredOperatorPubKeys(gomock.Any(), nil, nil).
+				mockAvsReader.EXPECT().QueryExistingRegisteredOperatorPubKeys(gomock.Any(), nil, nil, defaultLogFilterQueryBlockRange).
 					Return([]common.Address{}, []types.OperatorPubkeys{}, nil)
 				mockAvsRegistrySubscriber.EXPECT().SubscribeToOperatorSocketUpdates().Return(operatorSocketUpdateEventC, mockSubscription, nil)
-				mockAvsReader.EXPECT().QueryExistingRegisteredOperatorSockets(gomock.Any(), nil, nil).Return(nil, nil)
+				mockAvsReader.EXPECT().QueryExistingRegisteredOperatorSockets(gomock.Any(), nil, nil, defaultLogFilterQueryBlockRange).Return(nil, nil)
 			},
 			queryOperatorAddr: testOperator1.operatorAddr,
 			wantOperatorFound: true,
@@ -129,7 +129,7 @@ func TestGetOperatorInfo(t *testing.T) {
 				tt.mocksInitializationFunc(mockAvsRegistrySubscriber, mockAvsReader, mockSubscription)
 			}
 			// Create a new instance of the operatorpubkeys service
-			service := NewOperatorsInfoServiceInMemory(context.Background(), mockAvsRegistrySubscriber, mockAvsReader, logger)
+			service := NewOperatorsInfoServiceInMemory(context.Background(), mockAvsRegistrySubscriber, mockAvsReader, nil, logger)
 			time.Sleep(2 * time.Second) // need to give it time to process the subscription events.. not sure if there's a better way to do this.
 
 			// Call the GetOperatorPubkeys method with the test operator address
