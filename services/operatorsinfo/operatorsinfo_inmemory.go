@@ -2,6 +2,7 @@ package operatorsinfo
 
 import (
 	"context"
+	"math/big"
 	"sync"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
@@ -10,6 +11,8 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum/common"
 )
+
+var defaultLogFilterQueryBlockRange = big.NewInt(10_000)
 
 // OperatorsInfoServiceInMemory is a stateful goroutine (see https://gobyexample.com/stateful-goroutines)
 // implementation of OperatorsInfoService that listen for the NewPubkeyRegistration and OperatorSocketUpdate events using a websocket connection
@@ -23,10 +26,11 @@ import (
 // better than silently failing, since it will be easier to debug. Naturally, this means that this aggregator using this service needs
 // to be replicated and load-balanced, so that when it fails traffic can be switched to the other aggregator.
 type OperatorsInfoServiceInMemory struct {
-	avsRegistrySubscriber avsregistry.AvsRegistrySubscriber
-	avsRegistryReader     avsregistry.AvsRegistryReader
-	logger                logging.Logger
-	queryC                chan<- query
+	logFilterQueryBlockRange *big.Int
+	avsRegistrySubscriber    avsregistry.AvsRegistrySubscriber
+	avsRegistryReader        avsregistry.AvsRegistryReader
+	logger                   logging.Logger
+	queryC                   chan<- query
 	// queried via the queryC channel, so don't need mutex to access
 	pubkeyDict       map[common.Address]types.OperatorPubkeys
 	operatorAddrToId map[common.Address]types.OperatorId
@@ -55,17 +59,22 @@ func NewOperatorsInfoServiceInMemory(
 	ctx context.Context,
 	avsRegistrySubscriber avsregistry.AvsRegistrySubscriber,
 	avsRegistryReader avsregistry.AvsRegistryReader,
+	logFilterQueryBlockRange *big.Int,
 	logger logging.Logger,
 ) *OperatorsInfoServiceInMemory {
 	queryC := make(chan query)
+	if logFilterQueryBlockRange == nil {
+		logFilterQueryBlockRange = defaultLogFilterQueryBlockRange
+	}
 	pkcs := &OperatorsInfoServiceInMemory{
-		avsRegistrySubscriber: avsRegistrySubscriber,
-		avsRegistryReader:     avsRegistryReader,
-		logger:                logger,
-		queryC:                queryC,
-		pubkeyDict:            make(map[common.Address]types.OperatorPubkeys),
-		operatorAddrToId:      make(map[common.Address]types.OperatorId),
-		socketDict:            make(map[types.OperatorId]types.Socket),
+		avsRegistrySubscriber:    avsRegistrySubscriber,
+		avsRegistryReader:        avsRegistryReader,
+		logFilterQueryBlockRange: logFilterQueryBlockRange,
+		logger:                   logger,
+		queryC:                   queryC,
+		pubkeyDict:               make(map[common.Address]types.OperatorPubkeys),
+		operatorAddrToId:         make(map[common.Address]types.OperatorId),
+		socketDict:               make(map[types.OperatorId]types.Socket),
 	}
 	// We use this waitgroup to wait on the initialization of the inmemory pubkey dict,
 	// which requires querying the past events of the pubkey registration contract
@@ -154,14 +163,14 @@ func (ops *OperatorsInfoServiceInMemory) startServiceInGoroutine(ctx context.Con
 func (ops *OperatorsInfoServiceInMemory) queryPastRegisteredOperatorEventsAndFillDb(ctx context.Context) {
 	// Querying with nil startBlock and stopBlock will return all events. It doesn't matter if we query some events that we will receive again in the websocket,
 	// since we will just overwrite the pubkey dict with the same values.
-	alreadyRegisteredOperatorAddrs, alreadyRegisteredOperatorPubkeys, err := ops.avsRegistryReader.QueryExistingRegisteredOperatorPubKeys(ctx, nil, nil)
+	alreadyRegisteredOperatorAddrs, alreadyRegisteredOperatorPubkeys, err := ops.avsRegistryReader.QueryExistingRegisteredOperatorPubKeys(ctx, nil, nil, ops.logFilterQueryBlockRange)
 	if err != nil {
 		ops.logger.Error("Fatal error querying existing registered operators", "err", err, "service", "OperatorPubkeysServiceInMemory")
 		panic(err)
 	}
 	ops.logger.Debug("List of queried operator registration events in blsApkRegistry", "alreadyRegisteredOperatorAddr", alreadyRegisteredOperatorAddrs, "service", "OperatorPubkeysServiceInMemory")
 
-	socketsMap, err := ops.avsRegistryReader.QueryExistingRegisteredOperatorSockets(ctx, nil, nil)
+	socketsMap, err := ops.avsRegistryReader.QueryExistingRegisteredOperatorSockets(ctx, nil, nil, ops.logFilterQueryBlockRange)
 	if err != nil {
 		ops.logger.Error("Fatal error querying existing registered operator sockets", "err", err, "service", "OperatorPubkeysServiceInMemory")
 		panic(err)
