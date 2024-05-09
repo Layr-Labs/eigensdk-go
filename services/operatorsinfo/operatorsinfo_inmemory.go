@@ -10,6 +10,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/types"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -188,10 +189,10 @@ func (ops *OperatorsInfoServiceInMemory) queryPastRegisteredOperatorEventsAndFil
 
 	wg.Wait()
 	if pubkeysErr != nil {
-		return errors.Join(errors.New("error querying existing registered operators"), pubkeysErr)
+		return utils.WrapError(errors.New("error querying existing registered operators"), pubkeysErr)
 	}
 	if socketsErr != nil {
-		return errors.Join(errors.New("error querying existing registered operator sockets"), socketsErr)
+		return utils.WrapError(errors.New("error querying existing registered operator sockets"), socketsErr)
 	}
 	ops.logger.Debug("List of queried operator registration events in blsApkRegistry", "alreadyRegisteredOperatorAddr", alreadyRegisteredOperatorAddrs, "alreadyRegisteredOperatorPubkeys", alreadyRegisteredOperatorPubkeys, "service", "OperatorPubkeysServiceInMemory")
 	ops.logger.Debug("List of queried operator socket registration events", "socketsMap", socketsMap, "service", "OperatorPubkeysServiceInMemory")
