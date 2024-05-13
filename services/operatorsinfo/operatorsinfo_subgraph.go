@@ -15,8 +15,8 @@ import (
 )
 
 type (
-	QueryOperatorByIdGql struct {
-		Operator IndexedOperatorInfoGql `graphql:"operator(id: $id)"`
+	QueryOperatorByAddressGql struct {
+		Operator IndexedOperatorInfoGql `graphql:"operator(address: $address)"`
 	}
 	OperatorsInfoServiceSubgraph struct {
 		logger logging.Logger
@@ -26,7 +26,7 @@ type (
 		Socket graphql.String
 	}
 	IndexedOperatorInfoGql struct {
-		Id         graphql.String
+		Address    graphql.String
 		PubkeyG1_X graphql.String   `graphql:"pubkeyG1_X"`
 		PubkeyG1_Y graphql.String   `graphql:"pubkeyG1_Y"`
 		PubkeyG2_X []graphql.String `graphql:"pubkeyG2_X"`
@@ -80,7 +80,7 @@ func (ops *OperatorsInfoServiceSubgraph) GetOperatorInfo(ctx context.Context, op
 
 func (ops *OperatorsInfoServiceSubgraph) getIndexedOperatorInfoByOperatorId(ctx context.Context, operator common.Address) (*types.OperatorInfo, error) {
 	var (
-		query     QueryOperatorByIdGql
+		query     QueryOperatorByAddressGql
 		variables = map[string]any{
 			"id": graphql.String(fmt.Sprintf("0x%s", hex.EncodeToString(operator[:]))),
 		}
