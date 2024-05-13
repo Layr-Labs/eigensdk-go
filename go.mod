@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.11
 	github.com/consensys/gnark-crypto v0.12.1
-	github.com/ethereum/go-ethereum v1.14.0
+	github.com/ethereum/go-ethereum v1.14.3
 	github.com/google/uuid v1.6.0
 	github.com/lmittmann/tint v1.0.4
 	github.com/prometheus/client_golang v1.19.0
