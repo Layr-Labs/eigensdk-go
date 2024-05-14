@@ -7,3 +7,6 @@
 [submodule "services/operatorsinfo/integration_test_deployment/lib/eigenlayer-middleware"]
 	path = services/operatorsinfo/integration_test_deployment/lib/eigenlayer-middleware
 	url = https://github.com/Layr-Labs/eigenlayer-middleware
+[submodule "services/operatorsinfo/integration_test_deployment/lib/eigenlayer-middleware-offchain"]
+	path = services/operatorsinfo/integration_test_deployment/lib/eigenlayer-middleware-offchain
+	url = https://github.com/Layr-Labs/eigenlayer-middleware-offchain
