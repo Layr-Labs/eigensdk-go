@@ -15,18 +15,19 @@ import (
 )
 
 type (
-	QueryOperatorByIdGql struct {
-		Operator IndexedOperatorInfoGql `graphql:"operator(id: $id)"`
+	QueryOperatorByAddressGql struct {
+		Operator IndexedOperatorInfoGql `graphql:"operator(address: $address)"`
 	}
 	OperatorsInfoServiceSubgraph struct {
 		logger logging.Logger
-		client *graphql.Client
+		client GraphQLQuerier
+		name   string
 	}
 	SocketUpdates struct {
 		Socket graphql.String
 	}
 	IndexedOperatorInfoGql struct {
-		Id         graphql.String
+		Address    graphql.String
 		PubkeyG1_X graphql.String   `graphql:"pubkeyG1_X"`
 		PubkeyG1_Y graphql.String   `graphql:"pubkeyG1_Y"`
 		PubkeyG2_X []graphql.String `graphql:"pubkeyG2_X"`
@@ -47,6 +48,9 @@ type (
 	G1Point struct {
 		*bn254.G1Affine
 	}
+	GraphQLQuerier interface {
+		Query(ctx context.Context, q any, variables map[string]any) error
+	}
 )
 
 var _ OperatorsInfoService = (*OperatorsInfoServiceSubgraph)(nil)
@@ -58,14 +62,13 @@ var _ OperatorsInfoService = (*OperatorsInfoServiceSubgraph)(nil)
 // Using a separate initialize() function might lead to some users forgetting to call it and the service not behaving properly.
 func NewOperatorsInfoServiceSubgraph(
 	ctx context.Context,
-	url string,
+	client GraphQLQuerier,
 	logger logging.Logger,
 ) *OperatorsInfoServiceSubgraph {
-	client := graphql.NewClient(url, nil)
-
 	return &OperatorsInfoServiceSubgraph{
 		logger: logger,
 		client: client,
+		name:   "OperatorsInfoServiceSubgraph",
 	}
 }
 
@@ -80,12 +83,14 @@ func (ops *OperatorsInfoServiceSubgraph) GetOperatorInfo(ctx context.Context, op
 
 func (ops *OperatorsInfoServiceSubgraph) getIndexedOperatorInfoByOperatorId(ctx context.Context, operator common.Address) (*types.OperatorInfo, error) {
 	var (
-		query     QueryOperatorByIdGql
+		query     QueryOperatorByAddressGql
 		variables = map[string]any{
 			"id": graphql.String(fmt.Sprintf("0x%s", hex.EncodeToString(operator[:]))),
 		}
 	)
-	err := ops.client.Query(context.Background(), &query, variables)
+	fmt.Print("NAME OF SUBRAPH", ops.name)
+	fmt.Print("NAME OF SUBRAPH: ", ops.client)
+	err := ops.client.Query(ctx, &query, variables)
 	if err != nil {
 		ops.logger.Error("Error requesting info for operator", "err", err, "operator", hex.EncodeToString(operator[:]))
 		return nil, err
