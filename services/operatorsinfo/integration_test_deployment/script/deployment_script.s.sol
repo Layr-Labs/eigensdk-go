@@ -2,11 +2,11 @@
 pragma solidity ^0.8.12;
 
 import "forge-std/Script.sol";
-import {RegistryCoordinatorMock} from "../../../contracts/lib/eigenlayer-middleware/test/mocks/RegistryCoordinatorMock.sol";
-import {BLSApkRegistry} from "../../../contracts/lib/eigenlayer-middleware/src/BLSApkRegistry.sol";
+import {RegistryCoordinatorMock} from "eigenlayer-middleware/test/mocks/RegistryCoordinatorMock.sol";
+import {BLSApkRegistry} from "eigenlayer-middleware/src/BLSApkRegistry.sol";
 
-import {IBLSApkRegistry} from "../../../contracts/lib/eigenlayer-middleware/src/interfaces/IBLSApkRegistry.sol";
-import {BN254} from "../../../contracts/lib/eigenlayer-middleware/src/libraries/BN254.sol";
+import {IBLSApkRegistry} from "eigenlayer-middleware/src/interfaces/IBLSApkRegistry.sol";
+import {BN254} from "eigenlayer-middleware/src/libraries/BN254.sol";
 import "forge-std/Test.sol";
 
 import {BLSApkRegistryMock} from "../test/BLSApkRegistryMock.sol";

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity ^0.8.12;
 
-import {BLSApkRegistryStorage} from "../../../contracts/lib/eigenlayer-middleware/src/BLSApkRegistryStorage.sol";
+import {BLSApkRegistryStorage} from "eigenlayer-middleware/src/BLSApkRegistryStorage.sol";
 
-import {IRegistryCoordinator} from "../../../contracts/lib/eigenlayer-middleware/src/interfaces/IRegistryCoordinator.sol";
+import {IRegistryCoordinator} from "eigenlayer-middleware/src/interfaces/IRegistryCoordinator.sol";
 
-import {BN254} from "../../../contracts/lib/eigenlayer-middleware/src/libraries/BN254.sol";
+import {BN254} from "eigenlayer-middleware/src/libraries/BN254.sol";
 
 contract BLSApkRegistryMock is BLSApkRegistryStorage {
     using BN254 for BN254.G1Point;

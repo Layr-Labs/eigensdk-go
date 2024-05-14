@@ -4,3 +4,6 @@
 [submodule "services/operatorsinfo/integration_test_deployment/lib/forge-std"]
 	path = services/operatorsinfo/integration_test_deployment/lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
+[submodule "services/operatorsinfo/integration_test_deployment/lib/eigenlayer-middleware"]
+	path = services/operatorsinfo/integration_test_deployment/lib/eigenlayer-middleware
+	url = https://github.com/Layr-Labs/eigenlayer-middleware
