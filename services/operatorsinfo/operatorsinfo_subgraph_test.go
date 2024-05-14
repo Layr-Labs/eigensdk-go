@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/shurcooL/graphql"
 	"github.com/stretchr/testify/assert"
@@ -52,8 +53,8 @@ func TestIndexedChainState_GetIndexedOperatorState(t *testing.T) {
 		}
 	}
 
-	cs := NewOperatorsInfoServiceSubgraph(context.Background(), operatorAddress.String(), logger)
+	cs := NewOperatorsInfoServiceSubgraph(context.Background(), querier, logger)
 	operatorPubkeys, err := cs.GetOperatorInfo(context.Background(), operatorAddress)
 	assert.True(t, err)
-	assert.Equal(t, operatorPubkeys.Socket, "localhost:32006;32007")
+	assert.Equal(t, operatorPubkeys.Socket, types.Socket("localhost:32006;32007"))
 }
