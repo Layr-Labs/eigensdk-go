@@ -2,7 +2,6 @@ package blsagg
 
 import (
 	"context"
-	"crypto/sha256"
 	"errors"
 	"fmt"
 	"math/big"
@@ -91,7 +90,7 @@ type BlsAggregationService interface {
 		timeToExpiry time.Duration,
 	) error
 
-	// ProcessNewSignature processes a new signature over a taskResponseDigest (sha256 of the taskResponse) for a particular taskIndex by a particular operator
+	// ProcessNewSignature processes a new signature over a taskResponseDigest for a particular taskIndex by a particular operator
 	// It verifies that the signature is correct and returns an error if it is not, and then aggregates the signature and stake of
 	// the operator with all other signatures for the same taskIndex and taskResponseDigest pair.
 	// Note: This function currently only verifies signatures over the taskResponseDigest directly, so avs code needs to verify that the digest
@@ -139,11 +138,13 @@ type BlsAggregatorService struct {
 
 	// taskResponseMap is a map of taskResponseDigest to taskResponse
 	taskResponseMap map[types.TaskResponseDigest]types.TaskResponse
+
+	hashFunction types.TaskResponseHashFunction
 }
 
 var _ BlsAggregationService = (*BlsAggregatorService)(nil)
 
-func NewBlsAggregatorService(avsRegistryService avsregistry.AvsRegistryService, logger logging.Logger) *BlsAggregatorService {
+func NewBlsAggregatorService(avsRegistryService avsregistry.AvsRegistryService, hashFunction types.TaskResponseHashFunction, logger logging.Logger) *BlsAggregatorService {
 	return &BlsAggregatorService{
 		aggregatedResponsesC: make(chan BlsAggregationServiceResponse),
 		signedTaskRespsCs:    make(map[types.TaskIndex]chan types.SignedTaskResponseDigest),
@@ -151,6 +152,7 @@ func NewBlsAggregatorService(avsRegistryService avsregistry.AvsRegistryService, 
 		avsRegistryService:   avsRegistryService,
 		logger:               logger,
 		taskResponseMap:      make(map[types.TaskResponseDigest]types.TaskResponse),
+		hashFunction:         hashFunction,
 	}
 }
 
@@ -195,8 +197,8 @@ func (a *BlsAggregatorService) ProcessNewSignature(
 	if !taskInitialized {
 		return TaskNotFoundErrorFn(taskIndex)
 	}
-	// compute the taskResponseDigest, note that this is now enforcing a specific encoding for the taskResponse
-	taskResponseDigest := types.TaskResponseDigest(sha256.Sum256(taskResponse))
+	// compute the taskResponseDigest using the hash function
+	taskResponseDigest := a.hashFunction(taskResponse)
 
 	// check if the taskResponseDigest is already in the map
 	_, taskResponseExists := a.taskResponseMap[taskResponseDigest]
@@ -272,6 +274,7 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 		select {
 		case signedTaskResponseDigest := <-signedTaskRespsC:
 			a.logger.Debug("Task goroutine received new signed task response digest", "taskIndex", taskIndex, "signedTaskResponseDigest", signedTaskResponseDigest)
+
 			err := a.verifySignature(taskIndex, signedTaskResponseDigest, operatorsAvsStateDict)
 			signedTaskResponseDigest.SignatureVerificationErrorC <- err
 			if err != nil {
@@ -334,18 +337,6 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 					return
 				}
 
-				// Retrieve the TaskResponse from the map
-				taskResponse := a.taskResponseMap[signedTaskResponseDigest.TaskResponseDigest]
-
-				// verify that the taskResponseDigest that was signed is the digest of the taskResponse
-				taskResponseDigest := types.TaskResponseDigest(sha256.Sum256(taskResponse))
-				if signedTaskResponseDigest.TaskResponseDigest != taskResponseDigest {
-					a.aggregatedResponsesC <- BlsAggregationServiceResponse{
-						Err: fmt.Errorf("signedTaskResponseDigest.TaskResponseDigest %x is not the digest of the TaskResponse %x", signedTaskResponseDigest.TaskResponseDigest, taskResponseDigest),
-					}
-					return
-				}
-
 				blsAggregationServiceResponse := BlsAggregationServiceResponse{
 					Err:                          nil,
 					TaskIndex:                    taskIndex,
@@ -402,7 +393,7 @@ func (a *BlsAggregatorService) verifySignature(
 		return OperatorNotPartOfTaskQuorumErrorFn(signedTaskResponseDigest.OperatorId, taskIndex)
 	}
 
-	// 0. verify that the msg actually came from the correct operator
+	// verify that the msg actually came from the correct operator
 	operatorG2Pubkey := operatorsAvsStateDict[signedTaskResponseDigest.OperatorId].OperatorInfo.Pubkeys.G2Pubkey
 	if operatorG2Pubkey == nil {
 		a.logger.Error("Operator G2 pubkey not found", "operatorId", signedTaskResponseDigest.OperatorId, "taskId", taskIndex)
@@ -413,6 +404,9 @@ func (a *BlsAggregatorService) verifySignature(
 		"taskResponseDigest", signedTaskResponseDigest.TaskResponseDigest,
 		"blsSignature", signedTaskResponseDigest.BlsSignature,
 	)
+
+	// if the operator signs a digest that is not the digest of the TaskResponse submitted in ProcessNewTask
+	// then the signature will not be verified
 	signatureVerified, err := signedTaskResponseDigest.BlsSignature.Verify(operatorG2Pubkey, signedTaskResponseDigest.TaskResponseDigest)
 	if err != nil {
 		return SignatureVerificationError(err)

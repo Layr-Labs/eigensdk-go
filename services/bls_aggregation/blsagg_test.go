@@ -3,6 +3,7 @@ package blsagg
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/json"
 	"math/big"
 	"testing"
 	"time"
@@ -24,6 +25,28 @@ func TestBlsAgg(t *testing.T) {
 	// 1 second seems to be enough for tests to pass. Currently takes 5s to run all tests
 	tasksTimeToExpiry := 1 * time.Second
 
+	hashFunction := func(taskResponse types.TaskResponse) types.TaskResponseDigest {
+		taskResponseBytes, err := json.Marshal(taskResponse)
+		if err != nil {
+			panic(err)
+		}
+		return types.TaskResponseDigest(sha256.Sum256(taskResponseBytes))
+	}
+
+	wrongHashFunction := func(taskResponse types.TaskResponse) types.TaskResponseDigest {
+		taskResponseBytes, err := json.Marshal(taskResponse)
+		if err != nil {
+			panic(err)
+		}
+		// append something to the taskResponseBytes to make it different
+		taskResponseBytes = append(taskResponseBytes, []byte("something")...)
+		return types.TaskResponseDigest(sha256.Sum256(taskResponseBytes))
+	}
+
+	type mockTaskResponse struct {
+		Value int
+	}
+
 	t.Run("1 quorum 1 operator 1 correct signature", func(t *testing.T) {
 		testOperator1 := types.TestOperator{
 			OperatorId:     types.OperatorId{1},
@@ -34,16 +57,16 @@ func TestBlsAgg(t *testing.T) {
 		taskIndex := types.TaskIndex(0)
 		quorumNumbers := types.QuorumNums{0}
 		quorumThresholdPercentages := []types.QuorumThresholdPercentage{100}
-		taskResponse := types.TaskResponse{123} // Initialize with appropriate data
+		taskResponse := mockTaskResponse{123} // Initialize with appropriate data
 
 		// Compute the TaskResponseDigest as the SHA-256 sum of the TaskResponse
-		taskResponseDigest := types.TaskResponseDigest(sha256.Sum256(taskResponse))
+		taskResponseDigest := hashFunction(taskResponse)
 
 		blsSig := testOperator1.BlsKeypair.SignMessage(taskResponseDigest)
 
 		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1})
 		noopLogger := logging.NewNoopLogger()
-		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
+		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, hashFunction, noopLogger)
 
 		err := blsAggServ.InitializeNewTask(taskIndex, blockNum, quorumNumbers, quorumThresholdPercentages, tasksTimeToExpiry)
 		require.Nil(t, err)
@@ -83,13 +106,13 @@ func TestBlsAgg(t *testing.T) {
 		taskIndex := types.TaskIndex(0)
 		quorumNumbers := types.QuorumNums{0}
 		quorumThresholdPercentages := []types.QuorumThresholdPercentage{100}
-		taskResponse := types.TaskResponse{123}
+		taskResponse := mockTaskResponse{123}
 
-		taskResponseDigest := types.TaskResponseDigest(sha256.Sum256(taskResponse))
+		taskResponseDigest := hashFunction(taskResponse)
 
 		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1, testOperator2, testOperator3})
 		noopLogger := logging.NewNoopLogger()
-		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
+		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, hashFunction, noopLogger)
 
 		err := blsAggServ.InitializeNewTask(taskIndex, blockNum, quorumNumbers, quorumThresholdPercentages, tasksTimeToExpiry)
 		require.Nil(t, err)
@@ -139,12 +162,12 @@ func TestBlsAgg(t *testing.T) {
 		taskIndex := types.TaskIndex(0)
 		quorumNumbers := types.QuorumNums{0, 1}
 		quorumThresholdPercentages := []types.QuorumThresholdPercentage{100, 100}
-		taskResponse := types.TaskResponse{123}
-		taskResponseDigest := types.TaskResponseDigest(sha256.Sum256(taskResponse))
+		taskResponse := mockTaskResponse{123}
+		taskResponseDigest := hashFunction(taskResponse)
 
 		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1, testOperator2})
 		noopLogger := logging.NewNoopLogger()
-		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
+		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, hashFunction, noopLogger)
 
 		err := blsAggServ.InitializeNewTask(taskIndex, blockNum, quorumNumbers, quorumThresholdPercentages, tasksTimeToExpiry)
 		require.Nil(t, err)
@@ -189,17 +212,17 @@ func TestBlsAgg(t *testing.T) {
 
 		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1, testOperator2})
 		noopLogger := logging.NewNoopLogger()
-		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
+		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, hashFunction, noopLogger)
 
 		// initialize 2 concurrent tasks
 		task1Index := types.TaskIndex(1)
-		task1Response := types.TaskResponse{123}
-		task1ResponseDigest := types.TaskResponseDigest(sha256.Sum256(task1Response))
+		task1Response := mockTaskResponse{123}
+		task1ResponseDigest := hashFunction(task1Response)
 		err := blsAggServ.InitializeNewTask(task1Index, blockNum, quorumNumbers, quorumThresholdPercentages, tasksTimeToExpiry)
 		require.Nil(t, err)
 		task2Index := types.TaskIndex(2)
-		task2Response := types.TaskResponse{234}
-		task2ResponseDigest := types.TaskResponseDigest(sha256.Sum256(task2Response))
+		task2Response := mockTaskResponse{234}
+		task2ResponseDigest := hashFunction(task2Response)
 		err = blsAggServ.InitializeNewTask(task2Index, blockNum, quorumNumbers, quorumThresholdPercentages, tasksTimeToExpiry)
 		require.Nil(t, err)
 
@@ -269,7 +292,7 @@ func TestBlsAgg(t *testing.T) {
 
 		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1})
 		noopLogger := logging.NewNoopLogger()
-		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
+		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, hashFunction, noopLogger)
 
 		err := blsAggServ.InitializeNewTask(taskIndex, blockNum, quorumNumbers, quorumThresholdPercentages, tasksTimeToExpiry)
 		require.Nil(t, err)
@@ -294,14 +317,14 @@ func TestBlsAgg(t *testing.T) {
 		taskIndex := types.TaskIndex(0)
 		quorumNumbers := types.QuorumNums{0}
 		quorumThresholdPercentages := []types.QuorumThresholdPercentage{50}
-		taskResponse := types.TaskResponse{123}
-		taskResponseDigest := types.TaskResponseDigest(sha256.Sum256(taskResponse))
+		taskResponse := mockTaskResponse{123}
+		taskResponseDigest := hashFunction(taskResponse)
 		blsSig := testOperator1.BlsKeypair.SignMessage(taskResponseDigest)
 		blockNum := uint32(1)
 
 		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1, testOperator2})
 		noopLogger := logging.NewNoopLogger()
-		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
+		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, hashFunction, noopLogger)
 
 		err := blsAggServ.InitializeNewTask(taskIndex, blockNum, quorumNumbers, quorumThresholdPercentages, tasksTimeToExpiry)
 		require.Nil(t, err)
@@ -336,13 +359,13 @@ func TestBlsAgg(t *testing.T) {
 		taskIndex := types.TaskIndex(0)
 		quorumNumbers := types.QuorumNums{0}
 		quorumThresholdPercentages := []types.QuorumThresholdPercentage{60}
-		taskResponse := types.TaskResponse{123}
-		taskResponseDigest := types.TaskResponseDigest(sha256.Sum256(taskResponse))
+		taskResponse := mockTaskResponse{123}
+		taskResponseDigest := hashFunction(taskResponse)
 		blsSig := testOperator1.BlsKeypair.SignMessage(taskResponseDigest)
 
 		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1, testOperator2})
 		noopLogger := logging.NewNoopLogger()
-		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
+		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, hashFunction, noopLogger)
 
 		err := blsAggServ.InitializeNewTask(taskIndex, blockNum, quorumNumbers, quorumThresholdPercentages, tasksTimeToExpiry)
 		require.Nil(t, err)
@@ -371,13 +394,13 @@ func TestBlsAgg(t *testing.T) {
 		taskIndex := types.TaskIndex(0)
 		quorumNumbers := types.QuorumNums{0, 1}
 		quorumThresholdPercentages := []types.QuorumThresholdPercentage{100, 100}
-		taskResponse := types.TaskResponse{123}
-		taskResponseDigest := types.TaskResponseDigest(sha256.Sum256(taskResponse))
+		taskResponse := mockTaskResponse{123}
+		taskResponseDigest := hashFunction(taskResponse)
 		blockNum := uint32(1)
 
 		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1, testOperator2})
 		noopLogger := logging.NewNoopLogger()
-		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
+		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, hashFunction, noopLogger)
 
 		err := blsAggServ.InitializeNewTask(taskIndex, blockNum, quorumNumbers, quorumThresholdPercentages, tasksTimeToExpiry)
 		require.Nil(t, err)
@@ -426,13 +449,13 @@ func TestBlsAgg(t *testing.T) {
 		taskIndex := types.TaskIndex(0)
 		quorumNumbers := types.QuorumNums{0, 1}
 		quorumThresholdPercentages := []types.QuorumThresholdPercentage{50, 50}
-		taskResponse := types.TaskResponse{123}
-		taskResponseDigest := types.TaskResponseDigest(sha256.Sum256(taskResponse))
+		taskResponse := mockTaskResponse{123}
+		taskResponseDigest := hashFunction(taskResponse)
 		blockNum := uint32(1)
 
 		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1, testOperator2, testOperator3})
 		noopLogger := logging.NewNoopLogger()
-		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
+		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, hashFunction, noopLogger)
 
 		err := blsAggServ.InitializeNewTask(taskIndex, blockNum, quorumNumbers, quorumThresholdPercentages, tasksTimeToExpiry)
 		require.Nil(t, err)
@@ -483,13 +506,13 @@ func TestBlsAgg(t *testing.T) {
 		taskIndex := types.TaskIndex(0)
 		quorumNumbers := types.QuorumNums{0, 1}
 		quorumThresholdPercentages := []types.QuorumThresholdPercentage{60, 60}
-		taskResponse := types.TaskResponse{123}
-		taskResponseDigest := types.TaskResponseDigest(sha256.Sum256(taskResponse))
+		taskResponse := mockTaskResponse{123}
+		taskResponseDigest := hashFunction(taskResponse)
 		blockNum := uint32(1)
 
 		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1, testOperator2, testOperator3})
 		noopLogger := logging.NewNoopLogger()
-		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
+		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, hashFunction, noopLogger)
 
 		err := blsAggServ.InitializeNewTask(taskIndex, blockNum, quorumNumbers, quorumThresholdPercentages, tasksTimeToExpiry)
 		require.Nil(t, err)
@@ -517,13 +540,13 @@ func TestBlsAgg(t *testing.T) {
 		taskIndex := types.TaskIndex(0)
 		quorumNumbers := types.QuorumNums{0, 1}
 		quorumThresholdPercentages := []types.QuorumThresholdPercentage{100, 100}
-		taskResponse := types.TaskResponse{123}
-		taskResponseDigest := types.TaskResponseDigest(sha256.Sum256(taskResponse))
+		taskResponse := mockTaskResponse{123}
+		taskResponseDigest := hashFunction(taskResponse)
 		blockNum := uint32(1)
 
 		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1})
 		noopLogger := logging.NewNoopLogger()
-		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
+		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, hashFunction, noopLogger)
 
 		err := blsAggServ.InitializeNewTask(taskIndex, blockNum, quorumNumbers, quorumThresholdPercentages, tasksTimeToExpiry)
 		require.Nil(t, err)
@@ -553,13 +576,13 @@ func TestBlsAgg(t *testing.T) {
 		taskIndex := types.TaskIndex(0)
 		quorumNumbers := types.QuorumNums{0, 1}
 		quorumThresholdPercentages := []types.QuorumThresholdPercentage{100, 100}
-		taskResponse := types.TaskResponse{123}
-		taskResponseDigest := types.TaskResponseDigest(sha256.Sum256(taskResponse))
+		taskResponse := mockTaskResponse{123}
+		taskResponseDigest := hashFunction(taskResponse)
 		blockNum := uint32(1)
 
 		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1, testOperator2})
 		noopLogger := logging.NewNoopLogger()
-		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
+		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, hashFunction, noopLogger)
 
 		err := blsAggServ.InitializeNewTask(taskIndex, blockNum, quorumNumbers, quorumThresholdPercentages, tasksTimeToExpiry)
 		require.Nil(t, err)
@@ -582,13 +605,13 @@ func TestBlsAgg(t *testing.T) {
 		}
 		blockNum := uint32(1)
 		taskIndex := types.TaskIndex(0)
-		taskResponse := types.TaskResponse{123}
-		taskResponseDigest := types.TaskResponseDigest(sha256.Sum256(taskResponse))
+		taskResponse := mockTaskResponse{123}
+		taskResponseDigest := hashFunction(taskResponse)
 		blsSig := testOperator1.BlsKeypair.SignMessage(taskResponseDigest)
 
 		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1})
 		noopLogger := logging.NewNoopLogger()
-		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
+		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, hashFunction, noopLogger)
 
 		err := blsAggServ.ProcessNewSignature(context.Background(), taskIndex, taskResponse, blsSig, testOperator1.OperatorId)
 		require.Equal(t, TaskNotFoundErrorFn(taskIndex), err)
@@ -614,18 +637,18 @@ func TestBlsAgg(t *testing.T) {
 
 		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1})
 		noopLogger := logging.NewNoopLogger()
-		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
+		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, hashFunction, noopLogger)
 
 		err := blsAggServ.InitializeNewTask(taskIndex, blockNum, quorumNumbers, quorumThresholdPercentages, tasksTimeToExpiry)
 		require.Nil(t, err)
-		taskResponse1 := types.TaskResponse{1}
-		taskResponseDigest1 := types.TaskResponseDigest(sha256.Sum256(taskResponse1))
+		taskResponse1 := mockTaskResponse{1}
+		taskResponseDigest1 := hashFunction(taskResponse1)
 		blsSigOp1 := testOperator1.BlsKeypair.SignMessage(taskResponseDigest1)
 		err = blsAggServ.ProcessNewSignature(context.Background(), taskIndex, taskResponse1, blsSigOp1, testOperator1.OperatorId)
 		require.Nil(t, err)
 
-		taskResponse2 := types.TaskResponse{2}
-		taskResponseDigest2 := types.TaskResponseDigest(sha256.Sum256(taskResponse2))
+		taskResponse2 := mockTaskResponse{2}
+		taskResponseDigest2 := hashFunction(taskResponse2)
 		blsSigOp2 := testOperator2.BlsKeypair.SignMessage(taskResponseDigest2)
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
@@ -665,17 +688,17 @@ func TestBlsAgg(t *testing.T) {
 
 		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1, testOperator2})
 		noopLogger := logging.NewNoopLogger()
-		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, noopLogger)
+		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, hashFunction, noopLogger)
 
 		err := blsAggServ.InitializeNewTask(taskIndex, blockNum, quorumNumbers, quorumThresholdPercentages, tasksTimeToExpiry)
 		require.Nil(t, err)
-		taskResponse1 := types.TaskResponse{1}
-		taskResponseDigest1 := types.TaskResponseDigest(sha256.Sum256(taskResponse1))
+		taskResponse1 := mockTaskResponse{1}
+		taskResponseDigest1 := hashFunction(taskResponse1)
 		blsSigOp1 := testOperator1.BlsKeypair.SignMessage(taskResponseDigest1)
 		err = blsAggServ.ProcessNewSignature(context.Background(), taskIndex, taskResponse1, blsSigOp1, testOperator1.OperatorId)
 		require.Nil(t, err)
-		taskResponse2 := types.TaskResponse{2}
-		taskResponseDigest2 := types.TaskResponseDigest(sha256.Sum256(taskResponse2))
+		taskResponse2 := mockTaskResponse{2}
+		taskResponseDigest2 := hashFunction(taskResponse2)
 		blsSigOp2 := testOperator2.BlsKeypair.SignMessage(taskResponseDigest2)
 		err = blsAggServ.ProcessNewSignature(context.Background(), taskIndex, taskResponse2, blsSigOp2, testOperator2.OperatorId)
 		require.Nil(t, err)
@@ -684,6 +707,32 @@ func TestBlsAgg(t *testing.T) {
 		}
 		gotAggregationServiceResponse := <-blsAggServ.aggregatedResponsesC
 		require.Equal(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
+	})
+
+	t.Run("1 quorum 1 operator 1 invalid signature (TaskResponseDigest does not match TaskResponse)", func(t *testing.T) {
+		testOperator1 := types.TestOperator{
+			OperatorId:     types.OperatorId{1},
+			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100), 1: big.NewInt(200)},
+			BlsKeypair:     newBlsKeyPairPanics("0x1"),
+		}
+		blockNum := uint32(1)
+		taskIndex := types.TaskIndex(0)
+		quorumNumbers := types.QuorumNums{0}
+		quorumThresholdPercentages := []types.QuorumThresholdPercentage{100}
+		taskResponse := mockTaskResponse{123} // Initialize with appropriate data
+
+		taskResponseDigest := wrongHashFunction(taskResponse)
+
+		blsSig := testOperator1.BlsKeypair.SignMessage(taskResponseDigest)
+
+		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(blockNum, []types.TestOperator{testOperator1})
+		noopLogger := logging.NewNoopLogger()
+		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, hashFunction, noopLogger)
+
+		err := blsAggServ.InitializeNewTask(taskIndex, blockNum, quorumNumbers, quorumThresholdPercentages, tasksTimeToExpiry)
+		require.Nil(t, err)
+		err = blsAggServ.ProcessNewSignature(context.Background(), taskIndex, taskResponse, blsSig, testOperator1.OperatorId)
+		require.EqualError(t, err, "Signature verification failed. Incorrect Signature.")
 	})
 }
 

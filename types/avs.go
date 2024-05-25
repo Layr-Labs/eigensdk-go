@@ -8,7 +8,9 @@ import (
 
 type TaskIndex = uint32
 type TaskResponseDigest = Bytes32
-type TaskResponse = []byte
+type TaskResponse = interface{}
+
+type TaskResponseHashFunction func(taskResponse TaskResponse) TaskResponseDigest
 
 type SignedTaskResponseDigest struct {
 	TaskResponseDigest          TaskResponseDigest
