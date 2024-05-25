@@ -186,7 +186,6 @@ func (a *BlsAggregatorService) ProcessNewSignature(
 	ctx context.Context,
 	taskIndex types.TaskIndex,
 	taskResponse types.TaskResponse,
-	//taskResponseDigest types.TaskResponseDigest,
 	blsSignature *bls.Signature,
 	operatorId types.OperatorId,
 ) error {
@@ -199,8 +198,12 @@ func (a *BlsAggregatorService) ProcessNewSignature(
 	// compute the taskResponseDigest, note that this is now enforcing a specific encoding for the taskResponse
 	taskResponseDigest := types.TaskResponseDigest(sha256.Sum256(taskResponse))
 
-	// Store the TaskResponse in our mapping
-	a.taskResponseMap[taskResponseDigest] = taskResponse
+	// check if the taskResponseDigest is already in the map
+	_, taskResponseExists := a.taskResponseMap[taskResponseDigest]
+	if !taskResponseExists {
+		// Store the TaskResponse in our mapping
+		a.taskResponseMap[taskResponseDigest] = taskResponse
+	}
 
 	signatureVerificationErrorC := make(chan error)
 	// send the task to the goroutine processing this task
