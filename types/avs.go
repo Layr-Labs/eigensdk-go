@@ -8,6 +8,7 @@ import (
 
 type TaskIndex = uint32
 type TaskResponseDigest = Bytes32
+type TaskResponse = []byte
 
 type SignedTaskResponseDigest struct {
 	TaskResponseDigest          TaskResponseDigest
