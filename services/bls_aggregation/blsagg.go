@@ -2,6 +2,7 @@ package blsagg
 
 import (
 	"context"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"math/big"
@@ -45,6 +46,7 @@ var (
 type BlsAggregationServiceResponse struct {
 	Err                error                    // if Err is not nil, the other fields are not valid
 	TaskIndex          types.TaskIndex          // unique identifier of the task
+	TaskResponse       types.TaskResponse       // the task response that was signed
 	TaskResponseDigest types.TaskResponseDigest // digest of the task response that was signed
 	// The below 8 fields are the data needed to build the IBLSSignatureChecker.NonSignerStakesAndSignature struct
 	// users of this service will need to build the struct themselves by converting the bls points
@@ -89,7 +91,7 @@ type BlsAggregationService interface {
 		timeToExpiry time.Duration,
 	) error
 
-	// ProcessNewSignature processes a new signature over a taskResponseDigest for a particular taskIndex by a particular operator
+	// ProcessNewSignature processes a new signature over a taskResponseDigest (sha256 of the taskResponse) for a particular taskIndex by a particular operator
 	// It verifies that the signature is correct and returns an error if it is not, and then aggregates the signature and stake of
 	// the operator with all other signatures for the same taskIndex and taskResponseDigest pair.
 	// Note: This function currently only verifies signatures over the taskResponseDigest directly, so avs code needs to verify that the digest
@@ -97,7 +99,7 @@ type BlsAggregationService interface {
 	ProcessNewSignature(
 		ctx context.Context,
 		taskIndex types.TaskIndex,
-		taskResponseDigest types.TaskResponseDigest,
+		taskResponse types.TaskResponse,
 		blsSignature *bls.Signature,
 		operatorId types.OperatorId,
 	) error
@@ -134,6 +136,9 @@ type BlsAggregatorService struct {
 	taskChansMutex     sync.RWMutex
 	avsRegistryService avsregistry.AvsRegistryService
 	logger             logging.Logger
+
+	// taskResponseMap is a map of taskResponseDigest to taskResponse
+	taskResponseMap map[types.TaskResponseDigest]types.TaskResponse
 }
 
 var _ BlsAggregationService = (*BlsAggregatorService)(nil)
@@ -145,6 +150,7 @@ func NewBlsAggregatorService(avsRegistryService avsregistry.AvsRegistryService, 
 		taskChansMutex:       sync.RWMutex{},
 		avsRegistryService:   avsRegistryService,
 		logger:               logger,
+		taskResponseMap:      make(map[types.TaskResponseDigest]types.TaskResponse),
 	}
 }
 
@@ -179,7 +185,8 @@ func (a *BlsAggregatorService) InitializeNewTask(
 func (a *BlsAggregatorService) ProcessNewSignature(
 	ctx context.Context,
 	taskIndex types.TaskIndex,
-	taskResponseDigest types.TaskResponseDigest,
+	taskResponse types.TaskResponse,
+	//taskResponseDigest types.TaskResponseDigest,
 	blsSignature *bls.Signature,
 	operatorId types.OperatorId,
 ) error {
@@ -189,9 +196,16 @@ func (a *BlsAggregatorService) ProcessNewSignature(
 	if !taskInitialized {
 		return TaskNotFoundErrorFn(taskIndex)
 	}
+	// compute the taskResponseDigest, note that this is now enforcing a specific encoding for the taskResponse
+	taskResponseDigest := types.TaskResponseDigest(sha256.Sum256(taskResponse))
+
+	// Store the TaskResponse in our mapping
+	a.taskResponseMap[taskResponseDigest] = taskResponse
+
 	signatureVerificationErrorC := make(chan error)
 	// send the task to the goroutine processing this task
 	// and return the error (if any) returned by the signature verification routine
+
 	select {
 	// we need to send this as part of select because if the goroutine is processing another SignedTaskResponseDigest
 	// and cannot receive this one, we want the context to be able to cancel the request
@@ -316,9 +330,23 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 					}
 					return
 				}
+
+				// Retrieve the TaskResponse from the map
+				taskResponse := a.taskResponseMap[signedTaskResponseDigest.TaskResponseDigest]
+
+				// verify that the taskResponseDigest that was signed is the digest of the taskResponse
+				taskResponseDigest := types.TaskResponseDigest(sha256.Sum256(taskResponse))
+				if signedTaskResponseDigest.TaskResponseDigest != taskResponseDigest {
+					a.aggregatedResponsesC <- BlsAggregationServiceResponse{
+						Err: fmt.Errorf("signedTaskResponseDigest.TaskResponseDigest %x is not the digest of the TaskResponse %x", signedTaskResponseDigest.TaskResponseDigest, taskResponseDigest),
+					}
+					return
+				}
+
 				blsAggregationServiceResponse := BlsAggregationServiceResponse{
 					Err:                          nil,
 					TaskIndex:                    taskIndex,
+					TaskResponse:                 taskResponse,
 					TaskResponseDigest:           signedTaskResponseDigest.TaskResponseDigest,
 					NonSignersPubkeysG1:          nonSignersG1Pubkeys,
 					QuorumApksG1:                 quorumApksG1,
