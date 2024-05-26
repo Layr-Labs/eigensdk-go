@@ -8,7 +8,6 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/Layr-Labs/eigensdk-go/utils"
-	"gorm.io/gorm/logger"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -102,7 +101,7 @@ func (m *EigenMetrics) Start(ctx context.Context, reg prometheus.Gatherer) <-cha
 		if err := httpServer.Shutdown(context.Background()); err != nil {
 			errChan <- err
 		}
-		logger.Info("shutdown completed")
+		m.logger.Info("shutdown completed")
 	}()
 
 	go func() {
