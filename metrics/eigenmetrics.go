@@ -79,18 +79,38 @@ func (m *EigenMetrics) SetPerformanceScore(score float64) {
 // reg needs to be the prometheus registry that was passed in the NewEigenMetrics constructor
 func (m *EigenMetrics) Start(ctx context.Context, reg prometheus.Gatherer) <-chan error {
 	m.logger.Infof("Starting metrics server at port %v", m.ipPortAddress)
-	errC := make(chan error, 1)
+	errChan := make(chan error, 1)
+	mux := http.NewServeMux()
+	httpServer := http.Server{
+		Addr:    m.ipPortAddress,
+		Handler: mux,
+	}
+	mux.Handle("/metrics", promhttp.HandlerFor(
+		reg,
+		promhttp.HandlerOpts{},
+	))
+
+	// shutdown server on context done
 	go func() {
-		http.Handle("/metrics", promhttp.HandlerFor(
-			reg,
-			promhttp.HandlerOpts{},
-		))
-		err := http.ListenAndServe(m.ipPortAddress, nil)
-		if err != nil {
-			errC <- utils.WrapError("Prometheus server failed", err)
+		<-ctx.Done()
+		m.logger.Info("shutdown signal received")
+		defer func() {
+			close(errChan)
+		}()
+
+		if err := httpServer.Shutdown(context.Background()); err != nil {
+			errChan <- err
+		}
+		m.logger.Info("shutdown completed")
+	}()
+
+	go func() {
+		err := httpServer.ListenAndServe()
+		if err == http.ErrServerClosed {
+			m.logger.Info("server closed")
 		} else {
-			errC <- nil
+			errChan <- utils.WrapError("Prometheus server failed", err)
 		}
 	}()
-	return errC
+	return errChan
 }
