@@ -8,6 +8,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/Layr-Labs/eigensdk-go/utils"
+	"gorm.io/gorm/logger"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -79,23 +80,38 @@ func (m *EigenMetrics) SetPerformanceScore(score float64) {
 // reg needs to be the prometheus registry that was passed in the NewEigenMetrics constructor
 func (m *EigenMetrics) Start(ctx context.Context, reg prometheus.Gatherer) <-chan error {
 	m.logger.Infof("Starting metrics server at port %v", m.ipPortAddress)
-	errC := make(chan error, 1)
+	errChan := make(chan error, 1)
 	mux := http.NewServeMux()
 	httpServer := http.Server{
 		Addr:    m.ipPortAddress,
 		Handler: mux,
 	}
+	mux.Handle("/metrics", promhttp.HandlerFor(
+		reg,
+		promhttp.HandlerOpts{},
+	))
+
+	// shutdown server on context done
 	go func() {
-		mux.Handle("/metrics", promhttp.HandlerFor(
-			reg,
-			promhttp.HandlerOpts{},
-		))
+		<-ctx.Done()
+		m.logger.Info("shutdown signal received")
+		defer func() {
+			close(errChan)
+		}()
+
+		if err := httpServer.Shutdown(context.Background()); err != nil {
+			errChan <- err
+		}
+		logger.Info("shutdown completed")
+	}()
+
+	go func() {
 		err := httpServer.ListenAndServe()
 		if err != nil {
-			errC <- utils.WrapError("Prometheus server failed", err)
+			errChan <- utils.WrapError("Prometheus server failed", err)
 		} else {
-			errC <- nil
+			errChan <- nil
 		}
 	}()
-	return errC
+	return errChan
 }
