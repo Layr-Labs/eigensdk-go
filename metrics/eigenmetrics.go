@@ -107,10 +107,10 @@ func (m *EigenMetrics) Start(ctx context.Context, reg prometheus.Gatherer) <-cha
 
 	go func() {
 		err := httpServer.ListenAndServe()
-		if err != nil {
-			errChan <- utils.WrapError("Prometheus server failed", err)
+		if err == http.ErrServerClosed {
+			m.logger.Info("server closed")
 		} else {
-			errChan <- nil
+			errChan <- utils.WrapError("Prometheus server failed", err)
 		}
 	}()
 	return errChan
