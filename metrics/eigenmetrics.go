@@ -80,12 +80,17 @@ func (m *EigenMetrics) SetPerformanceScore(score float64) {
 func (m *EigenMetrics) Start(ctx context.Context, reg prometheus.Gatherer) <-chan error {
 	m.logger.Infof("Starting metrics server at port %v", m.ipPortAddress)
 	errC := make(chan error, 1)
+	mux := http.NewServeMux()
+	httpServer := http.Server{
+		Addr:    m.ipPortAddress,
+		Handler: mux,
+	}
 	go func() {
-		http.Handle("/metrics", promhttp.HandlerFor(
+		mux.Handle("/metrics", promhttp.HandlerFor(
 			reg,
 			promhttp.HandlerOpts{},
 		))
-		err := http.ListenAndServe(m.ipPortAddress, nil)
+		err := httpServer.ListenAndServe()
 		if err != nil {
 			errC <- utils.WrapError("Prometheus server failed", err)
 		} else {
