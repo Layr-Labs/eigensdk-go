@@ -20,7 +20,10 @@ func (m mockGraphQLQuerier) Query(ctx context.Context, q any, variables map[stri
 }
 
 func TestIndexedChainState_GetIndexedOperatorState(t *testing.T) {
-	logger := logging.NewNoopLogger()
+	logger, err := logging.NewZapLogger(logging.Development)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	operatorAddress := common.Address{0x1}
 
@@ -54,7 +57,7 @@ func TestIndexedChainState_GetIndexedOperatorState(t *testing.T) {
 	}
 
 	cs := NewOperatorsInfoServiceSubgraph(context.Background(), querier, logger)
-	operatorPubkeys, err := cs.GetOperatorInfo(context.Background(), operatorAddress)
-	assert.True(t, err)
+	operatorPubkeys, success := cs.GetOperatorInfo(context.Background(), operatorAddress)
+	assert.True(t, success)
 	assert.Equal(t, operatorPubkeys.Socket, types.Socket("localhost:32006;32007"))
 }

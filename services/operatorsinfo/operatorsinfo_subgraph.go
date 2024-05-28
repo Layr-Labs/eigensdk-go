@@ -88,8 +88,6 @@ func (ops *OperatorsInfoServiceSubgraph) getIndexedOperatorInfoByOperatorId(ctx 
 			"id": graphql.String(fmt.Sprintf("0x%s", hex.EncodeToString(operator[:]))),
 		}
 	)
-	fmt.Print("NAME OF SUBRAPH", ops.name)
-	fmt.Print("NAME OF SUBRAPH: ", ops.client)
 	err := ops.client.Query(ctx, &query, variables)
 	if err != nil {
 		ops.logger.Error("Error requesting info for operator", "err", err, "operator", hex.EncodeToString(operator[:]))
