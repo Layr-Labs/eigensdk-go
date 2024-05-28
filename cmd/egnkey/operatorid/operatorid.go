@@ -1,4 +1,4 @@
-package derive_operatorid
+package operatorid
 
 import (
 	"encoding/hex"

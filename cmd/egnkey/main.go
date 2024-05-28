@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Layr-Labs/eigensdk-go/cmd/egnkey/derive_operatorid"
+	"github.com/Layr-Labs/eigensdk-go/cmd/egnkey/operatorid"
 	"github.com/Layr-Labs/eigensdk-go/cmd/egnkey/generate"
 	"github.com/Layr-Labs/eigensdk-go/cmd/egnkey/store"
 	"github.com/urfave/cli/v2"
@@ -17,7 +17,7 @@ func main() {
 	app.Commands = []*cli.Command{
 		generate.Command,
 		store.Command,
-		derive_operatorid.Command,
+		operatorid.Command,
 	}
 
 	app.Usage = "Used to manage batch keys for testing"
