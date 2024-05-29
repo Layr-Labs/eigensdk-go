@@ -13,7 +13,7 @@ type TaskResponse = interface{}
 type TaskResponseHashFunction func(taskResponse TaskResponse) TaskResponseDigest
 
 type SignedTaskResponseDigest struct {
-	TaskResponseDigest          TaskResponseDigest
+	TaskResponse                TaskResponse
 	BlsSignature                *bls.Signature
 	OperatorId                  OperatorId
 	SignatureVerificationErrorC chan error `json:"-"` // removed from json because channels are not marshallable
@@ -21,7 +21,7 @@ type SignedTaskResponseDigest struct {
 
 func (strd SignedTaskResponseDigest) LogValue() slog.Value {
 	return slog.GroupValue(
-		slog.Any("taskResponseDigest", strd.TaskResponseDigest),
+		slog.Any("taskResponse", strd.TaskResponse),
 		slog.Any("blsSignature", strd.BlsSignature),
 		slog.Any("operatorId", strd.OperatorId),
 	)
