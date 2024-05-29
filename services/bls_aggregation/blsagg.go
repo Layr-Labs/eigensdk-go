@@ -197,15 +197,6 @@ func (a *BlsAggregatorService) ProcessNewSignature(
 	if !taskInitialized {
 		return TaskNotFoundErrorFn(taskIndex)
 	}
-	// compute the taskResponseDigest using the hash function
-	taskResponseDigest := a.hashFunction(taskResponse)
-
-	// check if the taskResponseDigest is already in the map
-	_, taskResponseExists := a.taskResponseMap[taskResponseDigest]
-	if !taskResponseExists {
-		// Store the TaskResponse in our mapping
-		a.taskResponseMap[taskResponseDigest] = taskResponse
-	}
 
 	signatureVerificationErrorC := make(chan error)
 	// send the task to the goroutine processing this task
@@ -215,7 +206,7 @@ func (a *BlsAggregatorService) ProcessNewSignature(
 	// we need to send this as part of select because if the goroutine is processing another SignedTaskResponseDigest
 	// and cannot receive this one, we want the context to be able to cancel the request
 	case taskC <- types.SignedTaskResponseDigest{
-		TaskResponseDigest:          taskResponseDigest,
+		TaskResponse:                taskResponse,
 		BlsSignature:                blsSignature,
 		OperatorId:                  operatorId,
 		SignatureVerificationErrorC: signatureVerificationErrorC,
@@ -274,8 +265,8 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 		select {
 		case signedTaskResponseDigest := <-signedTaskRespsC:
 			a.logger.Debug("Task goroutine received new signed task response digest", "taskIndex", taskIndex, "signedTaskResponseDigest", signedTaskResponseDigest)
-			// Retrieve the TaskResponse from the map
-			taskResponse := a.taskResponseMap[signedTaskResponseDigest.TaskResponseDigest]
+			// compute the taskResponseDigest using the hash function
+			taskResponseDigest := a.hashFunction(signedTaskResponseDigest.TaskResponse)
 
 			err := a.verifySignature(taskIndex, signedTaskResponseDigest, operatorsAvsStateDict)
 			signedTaskResponseDigest.SignatureVerificationErrorC <- err
@@ -283,7 +274,7 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 				continue
 			}
 			// after verifying signature we aggregate its sig and pubkey, and update the signed stake amount
-			digestAggregatedOperators, ok := aggregatedOperatorsDict[signedTaskResponseDigest.TaskResponseDigest]
+			digestAggregatedOperators, ok := aggregatedOperatorsDict[taskResponseDigest]
 			if !ok {
 				// first operator to sign on this digest
 				digestAggregatedOperators = aggregatedOperators{
@@ -308,7 +299,7 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 			}
 			// update the aggregatedOperatorsDict. Note that we need to assign the whole struct value at once,
 			// because of https://github.com/golang/go/issues/3117
-			aggregatedOperatorsDict[signedTaskResponseDigest.TaskResponseDigest] = digestAggregatedOperators
+			aggregatedOperatorsDict[taskResponseDigest] = digestAggregatedOperators
 
 			if checkIfStakeThresholdsMet(a.logger, digestAggregatedOperators.signersTotalStakePerQuorum, totalStakePerQuorum, quorumThresholdPercentagesMap) {
 				nonSignersOperatorIds := []types.OperatorId{}
@@ -342,8 +333,8 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 				blsAggregationServiceResponse := BlsAggregationServiceResponse{
 					Err:                          nil,
 					TaskIndex:                    taskIndex,
-					TaskResponse:                 taskResponse,
-					TaskResponseDigest:           signedTaskResponseDigest.TaskResponseDigest,
+					TaskResponse:                 signedTaskResponseDigest.TaskResponse,
+					TaskResponseDigest:           taskResponseDigest,
 					NonSignersPubkeysG1:          nonSignersG1Pubkeys,
 					QuorumApksG1:                 quorumApksG1,
 					SignersApkG2:                 digestAggregatedOperators.signersApkG2,
@@ -395,6 +386,8 @@ func (a *BlsAggregatorService) verifySignature(
 		return OperatorNotPartOfTaskQuorumErrorFn(signedTaskResponseDigest.OperatorId, taskIndex)
 	}
 
+	taskResponseDigest := a.hashFunction(signedTaskResponseDigest.TaskResponse)
+
 	// verify that the msg actually came from the correct operator
 	operatorG2Pubkey := operatorsAvsStateDict[signedTaskResponseDigest.OperatorId].OperatorInfo.Pubkeys.G2Pubkey
 	if operatorG2Pubkey == nil {
@@ -403,13 +396,13 @@ func (a *BlsAggregatorService) verifySignature(
 	}
 	a.logger.Debug("Verifying signed task response digest signature",
 		"operatorG2Pubkey", operatorG2Pubkey,
-		"taskResponseDigest", signedTaskResponseDigest.TaskResponseDigest,
+		"taskResponseDigest", taskResponseDigest,
 		"blsSignature", signedTaskResponseDigest.BlsSignature,
 	)
 
 	// if the operator signs a digest that is not the digest of the TaskResponse submitted in ProcessNewTask
 	// then the signature will not be verified
-	signatureVerified, err := signedTaskResponseDigest.BlsSignature.Verify(operatorG2Pubkey, signedTaskResponseDigest.TaskResponseDigest)
+	signatureVerified, err := signedTaskResponseDigest.BlsSignature.Verify(operatorG2Pubkey, taskResponseDigest)
 	if err != nil {
 		return SignatureVerificationError(err)
 	}
