@@ -1,12 +1,3 @@
 [submodule "contracts/lib/eigenlayer-middleware"]
 	path = contracts/lib/eigenlayer-middleware
 	url = git@github.com:Layr-Labs/eigenlayer-middleware.git
-[submodule "services/operatorsinfo/integration_test_deployment/lib/forge-std"]
-	path = services/operatorsinfo/integration_test_deployment/lib/forge-std
-	url = https://github.com/foundry-rs/forge-std
-[submodule "services/operatorsinfo/integration_test_deployment/lib/eigenlayer-middleware"]
-	path = services/operatorsinfo/integration_test_deployment/lib/eigenlayer-middleware
-	url = https://github.com/Layr-Labs/eigenlayer-middleware
-[submodule "services/operatorsinfo/integration_test_deployment/lib/eigenlayer-middleware-offchain"]
-	path = services/operatorsinfo/integration_test_deployment/lib/eigenlayer-middleware-offchain
-	url = https://github.com/Layr-Labs/eigenlayer-middleware-offchain
