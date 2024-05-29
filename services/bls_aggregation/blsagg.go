@@ -136,9 +136,6 @@ type BlsAggregatorService struct {
 	avsRegistryService avsregistry.AvsRegistryService
 	logger             logging.Logger
 
-	// taskResponseMap is a map of taskResponseDigest to taskResponse
-	taskResponseMap map[types.TaskResponseDigest]types.TaskResponse
-
 	hashFunction types.TaskResponseHashFunction
 }
 
@@ -151,7 +148,6 @@ func NewBlsAggregatorService(avsRegistryService avsregistry.AvsRegistryService, 
 		taskChansMutex:       sync.RWMutex{},
 		avsRegistryService:   avsRegistryService,
 		logger:               logger,
-		taskResponseMap:      make(map[types.TaskResponseDigest]types.TaskResponse),
 		hashFunction:         hashFunction,
 	}
 }
