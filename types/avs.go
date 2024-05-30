@@ -10,7 +10,7 @@ type TaskIndex = uint32
 type TaskResponseDigest = Bytes32
 type TaskResponse = interface{}
 
-type TaskResponseHashFunction func(taskResponse TaskResponse) TaskResponseDigest
+type TaskResponseHashFunction func(taskResponse TaskResponse) (TaskResponseDigest, error)
 
 type SignedTaskResponseDigest struct {
 	TaskResponse                TaskResponse
