@@ -35,6 +35,9 @@ var (
 	OperatorNotPartOfTaskQuorumErrorFn = func(operatorId types.OperatorId, taskIndex types.TaskIndex) error {
 		return fmt.Errorf("operator %x not part of task %d's quorum", operatorId, taskIndex)
 	}
+	HashFunctionError = func(err error) error {
+		return fmt.Errorf("Failed to hash task response: %w", err)
+	}
 	SignatureVerificationError = func(err error) error {
 		return fmt.Errorf("Failed to verify signature: %w", err)
 	}
@@ -261,12 +264,17 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 		select {
 		case signedTaskResponseDigest := <-signedTaskRespsC:
 			a.logger.Debug("Task goroutine received new signed task response digest", "taskIndex", taskIndex, "signedTaskResponseDigest", signedTaskResponseDigest)
-			// compute the taskResponseDigest using the hash function
-			taskResponseDigest := a.hashFunction(signedTaskResponseDigest.TaskResponse)
 
 			err := a.verifySignature(taskIndex, signedTaskResponseDigest, operatorsAvsStateDict)
 			signedTaskResponseDigest.SignatureVerificationErrorC <- err
 			if err != nil {
+				continue
+			}
+
+			// compute the taskResponseDigest using the hash function
+			taskResponseDigest, err := a.hashFunction(signedTaskResponseDigest.TaskResponse)
+			if err != nil {
+				a.logger.Error("Failed to hash task response, skipping.", "taskIndex", taskIndex, "signedTaskResponseDigest", signedTaskResponseDigest, "err", err)
 				continue
 			}
 			// after verifying signature we aggregate its sig and pubkey, and update the signed stake amount
@@ -382,7 +390,10 @@ func (a *BlsAggregatorService) verifySignature(
 		return OperatorNotPartOfTaskQuorumErrorFn(signedTaskResponseDigest.OperatorId, taskIndex)
 	}
 
-	taskResponseDigest := a.hashFunction(signedTaskResponseDigest.TaskResponse)
+	taskResponseDigest, err := a.hashFunction(signedTaskResponseDigest.TaskResponse)
+	if err != nil {
+		return HashFunctionError(err)
+	}
 
 	// verify that the msg actually came from the correct operator
 	operatorG2Pubkey := operatorsAvsStateDict[signedTaskResponseDigest.OperatorId].OperatorInfo.Pubkeys.G2Pubkey
