@@ -1,4 +1,4 @@
-package main
+package store
 
 import (
 	"github.com/Layr-Labs/eigensdk-go/crypto/ecdsa"
@@ -25,7 +25,7 @@ var (
 	}
 )
 
-var commandStore = &cli.Command{
+var Command = &cli.Command{
 	Name:        "convert",
 	Aliases:     []string{"c"},
 	Description: `Stores an ecdsa key to a file, in web3 secret storage format.`,

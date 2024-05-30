@@ -1,4 +1,4 @@
-package main
+package generate
 
 import (
 	"encoding/hex"
@@ -42,7 +42,7 @@ var (
 	}
 )
 
-var commandGenerate = &cli.Command{
+var Command = &cli.Command{
 	Name:    "generate",
 	Aliases: []string{"g"},
 	Description: `Generate keys for testing purpose.
