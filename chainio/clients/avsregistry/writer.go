@@ -374,7 +374,7 @@ func (w *AvsRegistryChainWriter) UpdateSocket(
 	if err != nil {
 		return nil, err
 	}
-	tx, err := w.registryCoordinator.UpdateSocket(noSendTxOpts, socket.ToString())
+	tx, err := w.registryCoordinator.UpdateSocket(noSendTxOpts, socket.String())
 	if err != nil {
 		return nil, err
 	}

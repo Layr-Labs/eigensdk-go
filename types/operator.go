@@ -71,7 +71,7 @@ func (o Operator) Validate() error {
 // or whatever an avs decides to use
 type Socket string
 
-func (s Socket) ToString() string {
+func (s Socket) String() string {
 	return string(s)
 }
 
