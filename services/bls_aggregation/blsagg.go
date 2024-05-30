@@ -274,7 +274,8 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 			// compute the taskResponseDigest using the hash function
 			taskResponseDigest, err := a.hashFunction(signedTaskResponseDigest.TaskResponse)
 			if err != nil {
-				a.logger.Error("Failed to hash task response, skipping.", "taskIndex", taskIndex, "signedTaskResponseDigest", signedTaskResponseDigest, "err", err)
+				// this error should never happen, because we've already hashed the taskResponse in verifySignature,
+				// but keeping here in case the verifySignature implementation ever changes or some catastrophic bug happens..
 				continue
 			}
 			// after verifying signature we aggregate its sig and pubkey, and update the signed stake amount
@@ -392,6 +393,7 @@ func (a *BlsAggregatorService) verifySignature(
 
 	taskResponseDigest, err := a.hashFunction(signedTaskResponseDigest.TaskResponse)
 	if err != nil {
+		a.logger.Error("Failed to hash task response, skipping.", "taskIndex", taskIndex, "signedTaskResponseDigest", signedTaskResponseDigest, "err", err)
 		return HashFunctionError(err)
 	}
 
