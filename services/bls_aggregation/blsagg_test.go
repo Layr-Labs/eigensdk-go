@@ -85,6 +85,7 @@ func TestBlsAgg(t *testing.T) {
 		}
 		gotAggregationServiceResponse := <-blsAggServ.aggregatedResponsesC
 		require.Equal(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
+		require.EqualValues(t, taskIndex, gotAggregationServiceResponse.TaskIndex)
 	})
 
 	t.Run("1 quorum 3 operator 3 correct signatures", func(t *testing.T) {
@@ -147,6 +148,7 @@ func TestBlsAgg(t *testing.T) {
 		}
 		gotAggregationServiceResponse := <-blsAggServ.aggregatedResponsesC
 		require.Equal(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
+		require.EqualValues(t, taskIndex, gotAggregationServiceResponse.TaskIndex)
 	})
 
 	t.Run("2 quorums 2 operators 2 correct signatures", func(t *testing.T) {
@@ -538,6 +540,7 @@ func TestBlsAgg(t *testing.T) {
 		}
 		gotAggregationServiceResponse := <-blsAggServ.aggregatedResponsesC
 		require.EqualValues(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
+		require.EqualValues(t, taskIndex, gotAggregationServiceResponse.TaskIndex)
 	})
 
 	t.Run("2 quorums 1 operators which just stake one quorum; 1 signatures - task expired", func(t *testing.T) {
@@ -570,6 +573,7 @@ func TestBlsAgg(t *testing.T) {
 		}
 		gotAggregationServiceResponse := <-blsAggServ.aggregatedResponsesC
 		require.EqualValues(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
+		require.EqualValues(t, taskIndex, gotAggregationServiceResponse.TaskIndex)
 	})
 
 	t.Run("2 quorums 2 operators, 1 operator which just stake one quorum; 1 signatures - task expired", func(t *testing.T) {
@@ -607,6 +611,7 @@ func TestBlsAgg(t *testing.T) {
 		}
 		gotAggregationServiceResponse := <-blsAggServ.aggregatedResponsesC
 		require.EqualValues(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
+		require.EqualValues(t, taskIndex, gotAggregationServiceResponse.TaskIndex)
 	})
 
 	t.Run("send signature of task that isn't initialized - task not found error", func(t *testing.T) {
@@ -683,6 +688,7 @@ func TestBlsAgg(t *testing.T) {
 		}
 		gotAggregationServiceResponse := <-blsAggServ.aggregatedResponsesC
 		require.Equal(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
+		require.EqualValues(t, taskIndex, gotAggregationServiceResponse.TaskIndex)
 	})
 
 	t.Run("1 quorum 2 operator 2 signatures on 2 different msgs - task expired", func(t *testing.T) {
@@ -724,6 +730,7 @@ func TestBlsAgg(t *testing.T) {
 		}
 		gotAggregationServiceResponse := <-blsAggServ.aggregatedResponsesC
 		require.Equal(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
+		require.EqualValues(t, taskIndex, gotAggregationServiceResponse.TaskIndex)
 	})
 
 	t.Run("1 quorum 1 operator 1 invalid signature (TaskResponseDigest does not match TaskResponse)", func(t *testing.T) {

@@ -235,14 +235,16 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 	operatorsAvsStateDict, err := a.avsRegistryService.GetOperatorsAvsStateAtBlock(context.Background(), quorumNumbers, taskCreatedBlock)
 	if err != nil {
 		a.aggregatedResponsesC <- BlsAggregationServiceResponse{
-			Err: TaskInitializationErrorFn(fmt.Errorf("AggregatorService failed to get operators state from avs registry at blockNum %d: %w", taskCreatedBlock, err), taskIndex),
+			Err:       TaskInitializationErrorFn(fmt.Errorf("AggregatorService failed to get operators state from avs registry at blockNum %d: %w", taskCreatedBlock, err), taskIndex),
+			TaskIndex: taskIndex,
 		}
 		return
 	}
 	quorumsAvsStakeDict, err := a.avsRegistryService.GetQuorumsAvsStateAtBlock(context.Background(), quorumNumbers, taskCreatedBlock)
 	if err != nil {
 		a.aggregatedResponsesC <- BlsAggregationServiceResponse{
-			Err: TaskInitializationErrorFn(fmt.Errorf("Aggregator failed to get quorums state from avs registry: %w", err), taskIndex),
+			Err:       TaskInitializationErrorFn(fmt.Errorf("Aggregator failed to get quorums state from avs registry: %w", err), taskIndex),
+			TaskIndex: taskIndex,
 		}
 		return
 	}
@@ -330,7 +332,8 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 				indices, err := a.avsRegistryService.GetCheckSignaturesIndices(&bind.CallOpts{}, taskCreatedBlock, quorumNumbers, nonSignersOperatorIds)
 				if err != nil {
 					a.aggregatedResponsesC <- BlsAggregationServiceResponse{
-						Err: utils.WrapError(errors.New("Failed to get check signatures indices"), err),
+						Err:       utils.WrapError(errors.New("Failed to get check signatures indices"), err),
+						TaskIndex: taskIndex,
 					}
 					return
 				}
@@ -355,7 +358,8 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 			}
 		case <-taskExpiredTimer.C:
 			a.aggregatedResponsesC <- BlsAggregationServiceResponse{
-				Err: TaskExpiredErrorFn(taskIndex),
+				Err:       TaskExpiredErrorFn(taskIndex),
+				TaskIndex: taskIndex,
 			}
 			return
 		}
