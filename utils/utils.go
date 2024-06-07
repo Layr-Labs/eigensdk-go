@@ -26,7 +26,7 @@ import (
 const (
 	PngMimeType = "image/png"
 
-	TextRegex = `^[a-zA-Z0-9 +.,;:?!'"\-_/()\[\]~&#$—%]+$`
+	TextRegex = `^[a-zA-Z0-9 +.,;:?!'’"\-_/()\[\]~&#$—%]+$`
 
 	// Limit Http response to 1 MB
 	httpResponseLimitBytes = 1 * 1024 * 1024

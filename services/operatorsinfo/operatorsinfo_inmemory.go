@@ -195,7 +195,12 @@ func (ops *OperatorsInfoServiceInMemory) queryPastRegisteredOperatorEventsAndFil
 		return utils.WrapError(errors.New("error querying existing registered operator sockets"), socketsErr)
 	}
 	ops.logger.Debug("List of queried operator registration events in blsApkRegistry", "alreadyRegisteredOperatorAddr", alreadyRegisteredOperatorAddrs, "alreadyRegisteredOperatorPubkeys", alreadyRegisteredOperatorPubkeys, "service", "OperatorPubkeysServiceInMemory")
-	ops.logger.Debug("List of queried operator socket registration events", "socketsMap", socketsMap, "service", "OperatorPubkeysServiceInMemory")
+	for operatorId, socket := range socketsMap {
+		// we print each socket info on a separate line because slog for some reason doesn't pass map keys via their LogValue() function,
+		// so operatorId (of custom type Bytes32) prints as a byte array instead of its hex representation from LogValue()
+		// passing the Bytes32 directly to an slog log statements does call LogValue() and prints the hex representation
+		ops.logger.Debug("operator socket returned from registration events query", "operatorId", operatorId, "socket", socket, "service", "OperatorPubkeysServiceInMemory")
+	}
 
 	// Fill the pubkeydict db with the operators and pubkeys found
 	for i, operatorAddr := range alreadyRegisteredOperatorAddrs {

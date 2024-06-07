@@ -365,3 +365,22 @@ func (w *AvsRegistryChainWriter) DeregisterOperator(
 	)
 	return receipt, nil
 }
+
+func (w *AvsRegistryChainWriter) UpdateSocket(
+	ctx context.Context,
+	socket types.Socket,
+) (*gethtypes.Receipt, error) {
+	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
+	if err != nil {
+		return nil, err
+	}
+	tx, err := w.registryCoordinator.UpdateSocket(noSendTxOpts, socket.String())
+	if err != nil {
+		return nil, err
+	}
+	receipt, err := w.txMgr.Send(ctx, tx)
+	if err != nil {
+		return nil, errors.New("failed to send UpdateSocket tx with err: " + err.Error())
+	}
+	return receipt, nil
+}

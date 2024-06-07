@@ -35,6 +35,9 @@ var (
 	OperatorNotPartOfTaskQuorumErrorFn = func(operatorId types.OperatorId, taskIndex types.TaskIndex) error {
 		return fmt.Errorf("operator %x not part of task %d's quorum", operatorId, taskIndex)
 	}
+	HashFunctionError = func(err error) error {
+		return fmt.Errorf("Failed to hash task response: %w", err)
+	}
 	SignatureVerificationError = func(err error) error {
 		return fmt.Errorf("Failed to verify signature: %w", err)
 	}
@@ -45,6 +48,7 @@ var (
 type BlsAggregationServiceResponse struct {
 	Err                error                    // if Err is not nil, the other fields are not valid
 	TaskIndex          types.TaskIndex          // unique identifier of the task
+	TaskResponse       types.TaskResponse       // the task response that was signed
 	TaskResponseDigest types.TaskResponseDigest // digest of the task response that was signed
 	// The below 8 fields are the data needed to build the IBLSSignatureChecker.NonSignerStakesAndSignature struct
 	// users of this service will need to build the struct themselves by converting the bls points
@@ -97,7 +101,7 @@ type BlsAggregationService interface {
 	ProcessNewSignature(
 		ctx context.Context,
 		taskIndex types.TaskIndex,
-		taskResponseDigest types.TaskResponseDigest,
+		taskResponse types.TaskResponse,
 		blsSignature *bls.Signature,
 		operatorId types.OperatorId,
 	) error
@@ -134,17 +138,20 @@ type BlsAggregatorService struct {
 	taskChansMutex     sync.RWMutex
 	avsRegistryService avsregistry.AvsRegistryService
 	logger             logging.Logger
+
+	hashFunction types.TaskResponseHashFunction
 }
 
 var _ BlsAggregationService = (*BlsAggregatorService)(nil)
 
-func NewBlsAggregatorService(avsRegistryService avsregistry.AvsRegistryService, logger logging.Logger) *BlsAggregatorService {
+func NewBlsAggregatorService(avsRegistryService avsregistry.AvsRegistryService, hashFunction types.TaskResponseHashFunction, logger logging.Logger) *BlsAggregatorService {
 	return &BlsAggregatorService{
 		aggregatedResponsesC: make(chan BlsAggregationServiceResponse),
 		signedTaskRespsCs:    make(map[types.TaskIndex]chan types.SignedTaskResponseDigest),
 		taskChansMutex:       sync.RWMutex{},
 		avsRegistryService:   avsRegistryService,
 		logger:               logger,
+		hashFunction:         hashFunction,
 	}
 }
 
@@ -179,7 +186,7 @@ func (a *BlsAggregatorService) InitializeNewTask(
 func (a *BlsAggregatorService) ProcessNewSignature(
 	ctx context.Context,
 	taskIndex types.TaskIndex,
-	taskResponseDigest types.TaskResponseDigest,
+	taskResponse types.TaskResponse,
 	blsSignature *bls.Signature,
 	operatorId types.OperatorId,
 ) error {
@@ -189,14 +196,16 @@ func (a *BlsAggregatorService) ProcessNewSignature(
 	if !taskInitialized {
 		return TaskNotFoundErrorFn(taskIndex)
 	}
+
 	signatureVerificationErrorC := make(chan error)
 	// send the task to the goroutine processing this task
 	// and return the error (if any) returned by the signature verification routine
+
 	select {
 	// we need to send this as part of select because if the goroutine is processing another SignedTaskResponseDigest
 	// and cannot receive this one, we want the context to be able to cancel the request
 	case taskC <- types.SignedTaskResponseDigest{
-		TaskResponseDigest:          taskResponseDigest,
+		TaskResponse:                taskResponse,
 		BlsSignature:                blsSignature,
 		OperatorId:                  operatorId,
 		SignatureVerificationErrorC: signatureVerificationErrorC,
@@ -226,14 +235,16 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 	operatorsAvsStateDict, err := a.avsRegistryService.GetOperatorsAvsStateAtBlock(context.Background(), quorumNumbers, taskCreatedBlock)
 	if err != nil {
 		a.aggregatedResponsesC <- BlsAggregationServiceResponse{
-			Err: TaskInitializationErrorFn(fmt.Errorf("AggregatorService failed to get operators state from avs registry at blockNum %d: %w", taskCreatedBlock, err), taskIndex),
+			Err:       TaskInitializationErrorFn(fmt.Errorf("AggregatorService failed to get operators state from avs registry at blockNum %d: %w", taskCreatedBlock, err), taskIndex),
+			TaskIndex: taskIndex,
 		}
 		return
 	}
 	quorumsAvsStakeDict, err := a.avsRegistryService.GetQuorumsAvsStateAtBlock(context.Background(), quorumNumbers, taskCreatedBlock)
 	if err != nil {
 		a.aggregatedResponsesC <- BlsAggregationServiceResponse{
-			Err: TaskInitializationErrorFn(fmt.Errorf("Aggregator failed to get quorums state from avs registry: %w", err), taskIndex),
+			Err:       TaskInitializationErrorFn(fmt.Errorf("Aggregator failed to get quorums state from avs registry: %w", err), taskIndex),
+			TaskIndex: taskIndex,
 		}
 		return
 	}
@@ -255,13 +266,22 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 		select {
 		case signedTaskResponseDigest := <-signedTaskRespsC:
 			a.logger.Debug("Task goroutine received new signed task response digest", "taskIndex", taskIndex, "signedTaskResponseDigest", signedTaskResponseDigest)
+
 			err := a.verifySignature(taskIndex, signedTaskResponseDigest, operatorsAvsStateDict)
 			signedTaskResponseDigest.SignatureVerificationErrorC <- err
 			if err != nil {
 				continue
 			}
+
+			// compute the taskResponseDigest using the hash function
+			taskResponseDigest, err := a.hashFunction(signedTaskResponseDigest.TaskResponse)
+			if err != nil {
+				// this error should never happen, because we've already hashed the taskResponse in verifySignature,
+				// but keeping here in case the verifySignature implementation ever changes or some catastrophic bug happens..
+				continue
+			}
 			// after verifying signature we aggregate its sig and pubkey, and update the signed stake amount
-			digestAggregatedOperators, ok := aggregatedOperatorsDict[signedTaskResponseDigest.TaskResponseDigest]
+			digestAggregatedOperators, ok := aggregatedOperatorsDict[taskResponseDigest]
 			if !ok {
 				// first operator to sign on this digest
 				digestAggregatedOperators = aggregatedOperators{
@@ -286,7 +306,7 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 			}
 			// update the aggregatedOperatorsDict. Note that we need to assign the whole struct value at once,
 			// because of https://github.com/golang/go/issues/3117
-			aggregatedOperatorsDict[signedTaskResponseDigest.TaskResponseDigest] = digestAggregatedOperators
+			aggregatedOperatorsDict[taskResponseDigest] = digestAggregatedOperators
 
 			if checkIfStakeThresholdsMet(a.logger, digestAggregatedOperators.signersTotalStakePerQuorum, totalStakePerQuorum, quorumThresholdPercentagesMap) {
 				nonSignersOperatorIds := []types.OperatorId{}
@@ -312,14 +332,17 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 				indices, err := a.avsRegistryService.GetCheckSignaturesIndices(&bind.CallOpts{}, taskCreatedBlock, quorumNumbers, nonSignersOperatorIds)
 				if err != nil {
 					a.aggregatedResponsesC <- BlsAggregationServiceResponse{
-						Err: utils.WrapError(errors.New("Failed to get check signatures indices"), err),
+						Err:       utils.WrapError(errors.New("Failed to get check signatures indices"), err),
+						TaskIndex: taskIndex,
 					}
 					return
 				}
+
 				blsAggregationServiceResponse := BlsAggregationServiceResponse{
 					Err:                          nil,
 					TaskIndex:                    taskIndex,
-					TaskResponseDigest:           signedTaskResponseDigest.TaskResponseDigest,
+					TaskResponse:                 signedTaskResponseDigest.TaskResponse,
+					TaskResponseDigest:           taskResponseDigest,
 					NonSignersPubkeysG1:          nonSignersG1Pubkeys,
 					QuorumApksG1:                 quorumApksG1,
 					SignersApkG2:                 digestAggregatedOperators.signersApkG2,
@@ -335,7 +358,8 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 			}
 		case <-taskExpiredTimer.C:
 			a.aggregatedResponsesC <- BlsAggregationServiceResponse{
-				Err: TaskExpiredErrorFn(taskIndex),
+				Err:       TaskExpiredErrorFn(taskIndex),
+				TaskIndex: taskIndex,
 			}
 			return
 		}
@@ -371,7 +395,13 @@ func (a *BlsAggregatorService) verifySignature(
 		return OperatorNotPartOfTaskQuorumErrorFn(signedTaskResponseDigest.OperatorId, taskIndex)
 	}
 
-	// 0. verify that the msg actually came from the correct operator
+	taskResponseDigest, err := a.hashFunction(signedTaskResponseDigest.TaskResponse)
+	if err != nil {
+		a.logger.Error("Failed to hash task response, skipping.", "taskIndex", taskIndex, "signedTaskResponseDigest", signedTaskResponseDigest, "err", err)
+		return HashFunctionError(err)
+	}
+
+	// verify that the msg actually came from the correct operator
 	operatorG2Pubkey := operatorsAvsStateDict[signedTaskResponseDigest.OperatorId].OperatorInfo.Pubkeys.G2Pubkey
 	if operatorG2Pubkey == nil {
 		a.logger.Error("Operator G2 pubkey not found", "operatorId", signedTaskResponseDigest.OperatorId, "taskId", taskIndex)
@@ -379,10 +409,13 @@ func (a *BlsAggregatorService) verifySignature(
 	}
 	a.logger.Debug("Verifying signed task response digest signature",
 		"operatorG2Pubkey", operatorG2Pubkey,
-		"taskResponseDigest", signedTaskResponseDigest.TaskResponseDigest,
+		"taskResponseDigest", taskResponseDigest,
 		"blsSignature", signedTaskResponseDigest.BlsSignature,
 	)
-	signatureVerified, err := signedTaskResponseDigest.BlsSignature.Verify(operatorG2Pubkey, signedTaskResponseDigest.TaskResponseDigest)
+
+	// if the operator signs a digest that is not the digest of the TaskResponse submitted in ProcessNewTask
+	// then the signature will not be verified
+	signatureVerified, err := signedTaskResponseDigest.BlsSignature.Verify(operatorG2Pubkey, taskResponseDigest)
 	if err != nil {
 		return SignatureVerificationError(err)
 	}
