@@ -54,3 +54,6 @@ ___CONTRACTS___: ##
 
 deploy-contracts-to-anvil-and-save-state: ## 
 	./contracts/tests/anvil/deploy-contracts-save-anvil-state.sh
+
+start-anvil-with-contracts-deployed: ## 
+	./contracts/tests/anvil/start-anvil-chain-with-el-and-avs-deployed.sh

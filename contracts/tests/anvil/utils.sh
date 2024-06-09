@@ -7,7 +7,7 @@ parent_path=$(
     pwd -P
 )
 
-FOUNDRY_IMAGE=ghcr.io/foundry-rs/foundry:nightly-3fa02706ca732c994715ba42d923605692062375
+FOUNDRY_IMAGE=ghcr.io/foundry-rs/foundry:nightly-5b7e4cb3c882b28f3c32ba580de27ce7381f415a
 
 clean_up() {
     # Check if the exit status is non-zero
