@@ -114,9 +114,9 @@ func BuildELChainWriter(
 func (w *ELChainWriter) RegisterAsOperator(ctx context.Context, operator types.Operator) (*gethtypes.Receipt, error) {
 	w.logger.Infof("registering operator %s to EigenLayer", operator.Address)
 	opDetails := delegationmanager.IDelegationManagerOperatorDetails{
-		EarningsReceiver:         gethcommon.HexToAddress(operator.EarningsReceiverAddress),
-		StakerOptOutWindowBlocks: operator.StakerOptOutWindowBlocks,
-		DelegationApprover:       gethcommon.HexToAddress(operator.DelegationApproverAddress),
+		DeprecatedEarningsReceiver: gethcommon.HexToAddress(operator.EarningsReceiverAddress),
+		StakerOptOutWindowBlocks:   operator.StakerOptOutWindowBlocks,
+		DelegationApprover:         gethcommon.HexToAddress(operator.DelegationApproverAddress),
 	}
 
 	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
@@ -143,9 +143,9 @@ func (w *ELChainWriter) UpdateOperatorDetails(
 
 	w.logger.Infof("updating operator details of operator %s to EigenLayer", operator.Address)
 	opDetails := delegationmanager.IDelegationManagerOperatorDetails{
-		EarningsReceiver:         gethcommon.HexToAddress(operator.EarningsReceiverAddress),
-		DelegationApprover:       gethcommon.HexToAddress(operator.DelegationApproverAddress),
-		StakerOptOutWindowBlocks: operator.StakerOptOutWindowBlocks,
+		DeprecatedEarningsReceiver: gethcommon.HexToAddress(operator.EarningsReceiverAddress),
+		DelegationApprover:         gethcommon.HexToAddress(operator.DelegationApproverAddress),
+		StakerOptOutWindowBlocks:   operator.StakerOptOutWindowBlocks,
 	}
 
 	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()

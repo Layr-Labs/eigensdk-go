@@ -139,7 +139,7 @@ func (r *ELChainReader) GetOperatorDetails(opts *bind.CallOpts, operator types.O
 
 	return types.Operator{
 		Address:                   operator.Address,
-		EarningsReceiverAddress:   operatorDetails.EarningsReceiver.Hex(),
+		EarningsReceiverAddress:   operatorDetails.DeprecatedEarningsReceiver.Hex(),
 		StakerOptOutWindowBlocks:  operatorDetails.StakerOptOutWindowBlocks,
 		DelegationApproverAddress: operatorDetails.DelegationApprover.Hex(),
 	}, nil
