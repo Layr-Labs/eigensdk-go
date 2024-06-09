@@ -1,0 +1,52 @@
+name: check bindings up-to-date
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  make-bindings:
+    name: make bindings
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout EigenCert
+        uses: actions/checkout@v4
+
+      - name: Install go1.21
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Add Ethereum PPA
+        run: sudo add-apt-repository -y ppa:ethereum/ethereum
+
+      - name: Install Abigen
+        run:  sudo apt-get update && sudo apt-get install ethereum
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run make bindings and check for diffs
+        run: |  
+                make bindings > output.txt
+                if [ "$(grep -c -i "fatal" output.txt)" -ge 1 ]; then
+                  printf "Make binding run FAILED\n"
+                  rm output.txt
+                  exit 1
+                else
+                  echo "make_bindings_success=true" >> $GITHUB_ENV
+                  rm output.txt
+                fi
+
+                if [ ! -z "$(git status --porcelain)" ]; then
+                  printf "Current generated bindings not up to date\n"
+                  git diff
+                  git status
+                  exit 1
+                fi
