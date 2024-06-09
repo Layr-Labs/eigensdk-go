@@ -7,7 +7,7 @@ script_path=$(
 )
 
 # build abigen-with-interfaces docker image if it doesn't exist
-if [[ "$(docker images -q abigen-with-interfaces 2> /dev/null)" == "" ]]; then
+if [[ "$(docker images -q abigen-with-interfaces 2>/dev/null)" == "" ]]; then
     docker build -t abigen-with-interfaces -f abigen-with-interfaces.Dockerfile $script_path
 fi
 
@@ -47,7 +47,7 @@ cd $EIGENLAYER_CONTRACT_PATH
 forge build
 
 # No idea why but the ordering of the contracts matters, and for some orderings abigen fails...
-el_contracts="DelegationManager ISlasher StrategyManager EigenPod EigenPodManager IStrategy IERC20 AVSDirectory"
+el_contracts="DelegationManager ISlasher StrategyManager EigenPod EigenPodManager IStrategy AVSDirectory IERC20"
 for contract in $el_contracts; do
     create_binding . $contract ../../../../bindings
 done
