@@ -91,7 +91,7 @@ func TestSendTransaction(t *testing.T) {
 	keyAddr := crypto.PubkeyToAddress(*pk)
 	t.Logf("Public key address: %s", keyAddr.String())
 	assert.NotEqual(t, keyAddr, common.Address{0})
-	err = rpcClient.CallContext(context.Background(), nil, "anvil_setBalance", keyAddr, "2_000_000_000_000_000_000")
+	err = rpcClient.CallContext(context.Background(), nil, "anvil_setBalance", keyAddr, 2_000_000_000_000_000_000)
 	assert.Nil(t, err)
 
 	logger := &logging.NoopLogger{}

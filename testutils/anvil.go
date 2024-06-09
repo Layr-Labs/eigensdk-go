@@ -18,7 +18,8 @@ func StartAnvilContainer(anvilStateFileName string) (testcontainers.Container, e
 
 	ctx := context.Background()
 	req := testcontainers.ContainerRequest{
-		Image:        "ghcr.io/foundry-rs/foundry:latest",
+		// pinning at old foundry commit because of https://github.com/foundry-rs/foundry/issues/7502
+		Image:        "ghcr.io/foundry-rs/foundry:nightly-5b7e4cb3c882b28f3c32ba580de27ce7381f415a",
 		Entrypoint:   []string{"anvil"},
 		Cmd:          []string{"--host", "0.0.0.0", "--base-fee", "0", "--gas-price", "0"},
 		ExposedPorts: []string{"8545/tcp"},
