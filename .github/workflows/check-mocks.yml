@@ -10,10 +10,10 @@ permissions:
 
 jobs:
   make-mocks:
-    name: make mocks
+    name: make mocks and check for diffs
     runs-on: ubuntu-latest
     steps:
-      - name: checkout EigenCert
+      - name: checkout repo
         uses: actions/checkout@v4
 
       - name: install go1.21
@@ -21,7 +21,7 @@ jobs:
         with:
           go-version: '1.21'
 
-      - name: run make mocks
+      - name: run make mocks and check for diffs
         run: |
                 make mocks
                 if [ ! -z "$(git status --porcelain)" ]; then
