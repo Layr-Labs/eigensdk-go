@@ -1,9 +1,9 @@
 {
   "addresses": {
-    "mockAvsServiceManager": "0xE6E340D132b5f46d1e472DebcD681B2aBc16e57E",
-    "mockAvsServiceManagerImplementation": "0x8f86403A4DE0BB5791fa46B8e795C547942fE4Cf",
+    "mockAvsServiceManager": "0x67d269191c92Caf3cD7723F116c85e6E9bf55933",
+    "mockAvsServiceManagerImplementation": "0x0000000000000000000000000000000000000000",
     "operatorStateRetriever": "0x1613beB3B2C4f22Ee086B2b38C1476A3cE7f78E8",
-    "proxyAdmin": "0x09635F643e140090A9A8Dcd712eD6285858ceBef",
+    "proxyAdmin": "0xc5a5C42992dECbae36851359345FE25997F5C42d",
     "registryCoordinator": "0xc3e53F4d16Ae77Db1c982e75a937B9f60FE63690",
     "registryCoordinatorImplementation": "0x99bbA657f2BbC93c02D617f8bA121cB8Fc104Acf"
   }
