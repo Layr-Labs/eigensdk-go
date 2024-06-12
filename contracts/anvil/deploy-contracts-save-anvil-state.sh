@@ -19,20 +19,20 @@ clean_up() {
 trap 'clean_up $LINENO "$BASH_COMMAND"' EXIT
 
 # cd to the directory of this script so that this can be run from anywhere
-parent_path=$(
+anvil_dir=$(
     cd "$(dirname "${BASH_SOURCE[0]}")"
     pwd -P
 )
-root_dir=$parent_path/../../..
+root_dir=$(realpath $anvil_dir/../..)
 
 set -a
-source $parent_path/utils.sh
+source $anvil_dir/utils.sh
 # we overwrite some variables here because should always deploy to anvil (localhost)
 ETH_HTTP_URL=http://localhost:8545
 set +a
 
 # start an empty anvil chain in the background and dump its state to a json file upon exit
-start_anvil_docker "" $parent_path/contracts-deployed-anvil-state.json
+start_anvil_docker "" $anvil_dir/contracts-deployed-anvil-state.json
 sleep 1
 
 CHAIN_ID=$(cast chain-id)
@@ -42,7 +42,7 @@ CHAIN_ID=$(cast chain-id)
 # forge create src/ContractsRegistry.sol:ContractsRegistry --rpc-url ${ETH_HTTP_URL:?} --private-key ${DEPLOYER_PRIVATE_KEY:?}
 
 # DEPLOY EIGENLAYER
-EIGEN_CONTRACTS_DIR=$parent_path/../../lib/eigenlayer-middleware/lib/eigenlayer-contracts
+EIGEN_CONTRACTS_DIR=$root_dir/contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts
 DEVNET_OUTPUT_DIR=$EIGEN_CONTRACTS_DIR/script/output/devnet
 # deployment overwrites this file, so we save it as backup, because we want that output in our local files, and not in the eigenlayer-contracts submodule files
 mv $DEVNET_OUTPUT_DIR/M2_from_scratch_deployment_data.json $DEVNET_OUTPUT_DIR/M2_from_scratch_deployment_data.json.bak

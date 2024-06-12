@@ -28,9 +28,7 @@ start_anvil_docker() {
     LOAD_STATE_ANVIL_ARG=$([[ -z $LOAD_STATE_FILE ]] && echo "" || echo "--load-state /load-state.json")
     DUMP_STATE_ANVIL_ARG=$([[ -z $DUMP_STATE_FILE ]] && echo "" || echo "--dump-state /dump-state.json")
 
-    echo $LOAD_STATE_VOLUME_DOCKER_ARG $DUMP_STATE_VOLUME_DOCKER_ARG
-    echo $LOAD_STATE_ANVIL_ARG $DUMP_STATE_ANVIL_ARG
-    trap 'docker stop anvil' EXIT
+    trap 'docker stop anvil 2>/dev/null || true' EXIT
     set -o xtrace
     docker run --rm -d --name anvil -p 8545:8545 $LOAD_STATE_VOLUME_DOCKER_ARG $DUMP_STATE_VOLUME_DOCKER_ARG \
         --entrypoint anvil \

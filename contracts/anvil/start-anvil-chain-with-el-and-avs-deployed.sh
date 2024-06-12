@@ -3,19 +3,19 @@
 set -o errexit -o nounset -o pipefail
 
 # cd to the directory of this script so that this can be run from anywhere
-parent_path=$(
+anvil_dir=$(
     cd "$(dirname "${BASH_SOURCE[0]}")"
     pwd -P
 )
-root_dir=$parent_path/../../..
+root_dir=$(realpath $anvil_dir/../..)
 
 set -a
-source $parent_path/utils.sh
+source $anvil_dir/utils.sh
 set +a
 
 # start an anvil instance in the background that has eigenlayer contracts deployed
 # we start anvil in the background so that we can run the below script
-start_anvil_docker $parent_path/contracts-deployed-anvil-state.json ""
+start_anvil_docker $anvil_dir/contracts-deployed-anvil-state.json ""
 
 cd $root_dir/contracts
 # we need to restart the anvil chain at the correct block, otherwise the indexRegistry has a quorumUpdate at the block number
