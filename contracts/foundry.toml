@@ -14,5 +14,6 @@ remappings = [
     "openzeppelin-contracts-upgradeable/=lib/eigenlayer-middleware/lib/openzeppelin-contracts-upgradeable/",
     "openzeppelin-contracts/=lib/eigenlayer-middleware/lib/openzeppelin-contracts/",
 ]
+fs_permissions = [{ access = "read-write", path = "./" }]
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
