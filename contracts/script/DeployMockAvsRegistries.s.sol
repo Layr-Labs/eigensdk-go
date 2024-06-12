@@ -53,6 +53,21 @@ contract DeployMockAvsRegistries is
         address ejector;
     }
 
+    function _loadAvsOpsAddresses(
+        string memory opsAddressesFileName
+    ) internal view returns (MockAvsOpsAddresses memory) {
+        string memory opsAddresses = readInput(opsAddressesFileName);
+        MockAvsOpsAddresses memory addressConfig;
+        addressConfig.communityMultisig = stdJson.readAddress(
+            opsAddresses,
+            ".communityMultisig"
+        );
+        addressConfig.pauser = stdJson.readAddress(opsAddresses, ".pauser");
+        addressConfig.churner = stdJson.readAddress(opsAddresses, ".churner");
+        addressConfig.ejector = stdJson.readAddress(opsAddresses, ".ejector");
+        return addressConfig;
+    }
+
     function _deploymockAvsRegistryContracts(
         EigenlayerContracts memory eigenlayerContracts,
         MockAvsOpsAddresses memory addressConfig,

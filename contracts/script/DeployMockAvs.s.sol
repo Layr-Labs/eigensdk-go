@@ -17,23 +17,8 @@ contract DeployMockAvs is DeployMockAvsRegistries {
         );
         EigenlayerContracts
             memory eigenlayerContracts = _loadEigenlayerDeployedContracts();
-        string memory opsAddresses = readInput("ops_addresses");
-        MockAvsOpsAddresses memory addressConfig;
-        addressConfig.communityMultisig = stdJson.readAddress(
-            opsAddresses,
-            ".mockAvs.communityMultisig"
-        );
-        addressConfig.pauser = stdJson.readAddress(
-            opsAddresses,
-            ".mockAvs.pauser"
-        );
-        addressConfig.churner = stdJson.readAddress(
-            opsAddresses,
-            ".mockAvs.churner"
-        );
-        addressConfig.ejector = stdJson.readAddress(
-            opsAddresses,
-            ".mockAvs.ejector"
+        MockAvsOpsAddresses memory addressConfig = _loadAvsOpsAddresses(
+            "ops_addresses"
         );
 
         vm.startBroadcast();
