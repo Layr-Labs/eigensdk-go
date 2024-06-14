@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -o errexit -o nounset -o pipefail
+
 # cd to the directory of this script so that this can be run from anywhere
 script_path=$(
     cd "$(dirname "${BASH_SOURCE[0]}")"
@@ -7,7 +9,7 @@ script_path=$(
 )
 
 # build abigen-with-interfaces docker image if it doesn't exist
-if [[ "$(docker images -q abigen-with-interfaces 2> /dev/null)" == "" ]]; then
+if [[ "$(docker images -q abigen-with-interfaces 2>/dev/null)" == "" ]]; then
     docker build -t abigen-with-interfaces -f abigen-with-interfaces.Dockerfile $script_path
 fi
 
@@ -30,6 +32,13 @@ function create_binding {
     docker run -v $(realpath $binding_dir):/home/binding_dir -v .:/home/repo abigen-with-interfaces --bin=/home/repo/data/tmp.bin --abi=/home/repo/data/tmp.abi --pkg=contract${contract} --out=/home/binding_dir/${contract}/binding.go
     rm -rf data/tmp.abi data/tmp.bin
 }
+
+cd $script_path
+forge build
+sdk_contracts="ContractsRegistry"
+for contract in $sdk_contracts; do
+    create_binding . $contract ./bindings
+done
 
 EIGENLAYER_MIDDLEWARE_PATH=$script_path/lib/eigenlayer-middleware
 cd $EIGENLAYER_MIDDLEWARE_PATH
