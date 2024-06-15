@@ -56,7 +56,7 @@ cd $EIGENLAYER_CONTRACT_PATH
 forge build
 
 # No idea why but the ordering of the contracts matters, and for some orderings abigen fails...
-el_contracts="DelegationManager ISlasher StrategyManager EigenPod EigenPodManager IStrategy IERC20 AVSDirectory"
+el_contracts="DelegationManager IRewardsCoordinator ISlasher StrategyManager EigenPod EigenPodManager IStrategy IERC20 AVSDirectory"
 for contract in $el_contracts; do
     create_binding . $contract ../../../../bindings
 done
