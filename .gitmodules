@@ -3,4 +3,4 @@
 	url = git@github.com:Layr-Labs/eigenlayer-middleware.git
 [submodule "contracts/lib/forge-std"]
     path = contracts/lib/forge-std
-    url = git@github.com/foundry-rs/forge-std
+    url = git@github.com:foundry-rs/forge-std
