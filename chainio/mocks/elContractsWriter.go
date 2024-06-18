@@ -73,6 +73,21 @@ func (mr *MockELWriterMockRecorder) RegisterAsOperator(arg0, arg1 any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterAsOperator", reflect.TypeOf((*MockELWriter)(nil).RegisterAsOperator), arg0, arg1)
 }
 
+// UpdateMetadataURI mocks base method.
+func (m *MockELWriter) UpdateMetadataURI(arg0 context.Context, arg1 string) (*types0.Receipt, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateMetadataURI", arg0, arg1)
+	ret0, _ := ret[0].(*types0.Receipt)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateMetadataURI indicates an expected call of UpdateMetadataURI.
+func (mr *MockELWriterMockRecorder) UpdateMetadataURI(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateMetadataURI", reflect.TypeOf((*MockELWriter)(nil).UpdateMetadataURI), arg0, arg1)
+}
+
 // UpdateOperatorDetails mocks base method.
 func (m *MockELWriter) UpdateOperatorDetails(arg0 context.Context, arg1 types.Operator) (*types0.Receipt, error) {
 	m.ctrl.T.Helper()
