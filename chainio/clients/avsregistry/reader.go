@@ -21,7 +21,8 @@ import (
 	stakeregistry "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StakeRegistry"
 )
 
-// different node providers have different eth_getLogs range limits. 10k is an arbitrary choice that should work for most
+// different node providers have different eth_getLogs range limits. 10k is an arbitrary choice that should work for
+// most
 var DefaultQueryBlockRange = big.NewInt(10_000)
 
 type AvsRegistryReader interface {
