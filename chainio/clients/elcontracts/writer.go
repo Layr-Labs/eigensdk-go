@@ -5,26 +5,31 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
+	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	chainioutils "github.com/Layr-Labs/eigensdk-go/chainio/utils"
-	"github.com/Layr-Labs/eigensdk-go/logging"
-	"github.com/Layr-Labs/eigensdk-go/metrics"
-	"github.com/Layr-Labs/eigensdk-go/types"
-
 	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
 	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/ISlasher"
 	strategymanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StrategyManager"
+	"github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/metrics"
+	"github.com/Layr-Labs/eigensdk-go/types"
 )
 
 type ELWriter interface {
+	// RegisterAsOperator registers an operator onchain.
 	RegisterAsOperator(ctx context.Context, operator types.Operator) (*gethtypes.Receipt, error)
 
+	// UpdateOperatorDetails updates the operator details onchain.
+	// This doesn't update the metadata URI. Use UpdateMetadataURI for that.
 	UpdateOperatorDetails(ctx context.Context, operator types.Operator) (*gethtypes.Receipt, error)
+
+	// UpdateMetadataURI updates the operator metadata URI onchain
+	UpdateMetadataURI(ctx context.Context, uri string) (*gethtypes.Receipt, error)
 
 	// DepositERC20IntoStrategy deposits ERC20 tokens into a strategy contract.
 	DepositERC20IntoStrategy(
@@ -162,28 +167,36 @@ func (w *ELChainWriter) UpdateOperatorDetails(
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
 	w.logger.Info(
-		"successfully updated operator metadata URI",
-		"txHash",
-		receipt.TxHash.String(),
-		"operator",
-		operator.Address,
-	)
-
-	tx, err = w.delegationManager.UpdateOperatorMetadataURI(noSendTxOpts, operator.MetadataUrl)
-	if err != nil {
-		return nil, err
-	}
-	receipt, err = w.txMgr.Send(ctx, tx)
-	if err != nil {
-		return nil, errors.New("failed to send tx with err: " + err.Error())
-	}
-	w.logger.Info(
 		"successfully updated operator details",
 		"txHash",
 		receipt.TxHash.String(),
 		"operator",
 		operator.Address,
 	)
+
+	return receipt, nil
+}
+
+func (w *ELChainWriter) UpdateMetadataURI(ctx context.Context, uri string) (*gethtypes.Receipt, error) {
+	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
+	if err != nil {
+		return nil, err
+	}
+
+	tx, err := w.delegationManager.UpdateOperatorMetadataURI(noSendTxOpts, uri)
+	if err != nil {
+		return nil, err
+	}
+	receipt, err := w.txMgr.Send(ctx, tx)
+	if err != nil {
+		return nil, errors.New("failed to send tx with err: " + err.Error())
+	}
+	w.logger.Info(
+		"successfully updated operator metadata uri",
+		"txHash",
+		receipt.TxHash.String(),
+	)
+
 	return receipt, nil
 }
 
