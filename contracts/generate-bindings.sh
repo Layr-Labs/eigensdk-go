@@ -35,7 +35,7 @@ function create_binding {
 
 cd $script_path
 forge build
-sdk_contracts="ContractsRegistry"
+sdk_contracts="ContractsRegistry MockAvsServiceManager"
 for contract in $sdk_contracts; do
     create_binding . $contract ./bindings
 done
