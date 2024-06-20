@@ -3,6 +3,7 @@ package testutils
 import (
 	"context"
 	"fmt"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 
@@ -37,10 +38,24 @@ func StartAnvilContainer(anvilStateFileName string) (testcontainers.Container, e
 			},
 		}
 	}
-	return testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+	anvilC, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
 		ContainerRequest: req,
 		Started:          true,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	anvilHttpEndpoint, err := anvilC.Endpoint(context.Background(), "http")
+	if err != nil {
+		return nil, err
+	}
+	// Still need to advance the chain by at least 1 block b/c some tests need to query the latest block,
+	// and the blocks dumped/loaded by anvil don't contain full transactions, which leads to panics in tests.
+	// See https://github.com/foundry-rs/foundry/issues/8213, which will hopefully get fixed soon.
+	AdvanceChainByNBlocks(1, anvilHttpEndpoint)
+
+	return anvilC, nil
 }
 
 type ContractAddresses struct {
@@ -106,4 +121,17 @@ func GetContractAddressesFromContractRegistry(ethHttpUrl string) (mockAvsContrac
 		Erc20MockStrategy:      erc20MockStrategyAddr,
 	}
 	return mockAvsContracts
+}
+
+func AdvanceChainByNBlocks(n int, anvilEndpoint string) {
+	cmd := exec.Command("bash", "-c",
+		fmt.Sprintf(
+			// see https://book.getfoundry.sh/reference/anvil/#custom-methods
+			`cast rpc anvil_mine %d --rpc-url %s`,
+			n, anvilEndpoint),
+	)
+	err := cmd.Run()
+	if err != nil {
+		panic(err)
+	}
 }
