@@ -2,17 +2,29 @@ package blsagg
 
 import (
 	"context"
+	cryptorand "crypto/rand"
 	"crypto/sha256"
 	"encoding/json"
+	"log/slog"
 	"math/big"
+	"os"
 	"testing"
 	"time"
 
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients"
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
+	"github.com/Layr-Labs/eigensdk-go/chainio/utils"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/services/avsregistry"
+	"github.com/Layr-Labs/eigensdk-go/services/operatorsinfo"
+	"github.com/Layr-Labs/eigensdk-go/testutils"
 	"github.com/Layr-Labs/eigensdk-go/types"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
+
+	avssm "github.com/Layr-Labs/eigensdk-go/contracts/bindings/MockAvsServiceManager"
 )
 
 // TestBlsAgg is a suite of test that tests the main aggregation logic of the aggregation service
@@ -758,6 +770,129 @@ func TestBlsAgg(t *testing.T) {
 		require.Nil(t, err)
 		err = blsAggServ.ProcessNewSignature(context.Background(), taskIndex, taskResponse, blsSig, testOperator1.OperatorId)
 		require.EqualError(t, err, "Signature verification failed. Incorrect Signature.")
+	})
+}
+
+func TestIntegrationBlsAgg(t *testing.T) {
+
+	tasksTimeToExpiry := 10 * time.Second
+
+	hashFunction := func(taskResponse types.TaskResponse) (types.TaskResponseDigest, error) {
+		taskResponseBytes, err := json.Marshal(taskResponse)
+		if err != nil {
+			return types.TaskResponseDigest{}, err
+		}
+		return types.TaskResponseDigest(sha256.Sum256(taskResponseBytes)), nil
+	}
+	type mockTaskResponse struct {
+		Value int
+	}
+
+	anvilStateFileName := "contracts-deployed-anvil-state.json"
+	anvilC, err := testutils.StartAnvilContainer(anvilStateFileName)
+	if err != nil {
+		t.Fatal(err)
+	}
+	anvilHttpEndpoint, err := anvilC.Endpoint(context.Background(), "http")
+	if err != nil {
+		t.Error(err)
+	}
+	anvilWsEndpoint, err := anvilC.Endpoint(context.Background(), "ws")
+	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
+	t.Run("1 quorums 1 operator", func(t *testing.T) {
+		ecdsaPrivKeyHex := "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+		ecdsaPrivKey, err := crypto.HexToECDSA(ecdsaPrivKeyHex)
+		operatorAddr := crypto.PubkeyToAddress(ecdsaPrivKey.PublicKey)
+		_ = operatorAddr
+		require.NoError(t, err)
+		blsPrivKeyHex := "0x1"
+		blsKeyPair := newBlsKeyPairPanics(blsPrivKeyHex)
+		operatorId := types.OperatorIdFromG1Pubkey(blsKeyPair.GetPubKeyG1())
+
+		ethHttpClient, err := eth.NewClient(anvilHttpEndpoint)
+		require.NoError(t, err)
+
+		logger := logging.NewTextSLogger(os.Stdout, &logging.SLoggerOptions{Level: slog.LevelDebug})
+
+		avsClients, err := clients.BuildAll(clients.BuildAllConfig{
+			EthHttpUrl:                 anvilHttpEndpoint,
+			EthWsUrl:                   anvilWsEndpoint, // not used so doesn't matter that we pass an http url
+			RegistryCoordinatorAddr:    contractAddrs.RegistryCoordinator.String(),
+			OperatorStateRetrieverAddr: contractAddrs.OperatorStateRetriever.String(),
+			AvsName:                    "avs",
+			PromMetricsIpPortAddress:   "localhost:9090",
+		}, ecdsaPrivKey, logger)
+		require.NoError(t, err)
+
+		avsWriter := avsClients.AvsRegistryChainWriter
+
+		quorumNumbers := types.QuorumNums{0}
+		var operatorToAvsRegistrationSigSalt [32]byte
+		_, err = cryptorand.Read(operatorToAvsRegistrationSigSalt[:])
+		require.NoError(t, err)
+		curBlockNum, err := ethHttpClient.BlockNumber(context.Background())
+		require.NoError(t, err)
+		curBlock, err := ethHttpClient.BlockByNumber(context.Background(), big.NewInt(int64(curBlockNum)))
+		require.NoError(t, err)
+		sigValidForSeconds := int64(1_000_000)
+		operatorToAvsRegistrationSigExpiry := big.NewInt(int64(curBlock.Time()) + sigValidForSeconds)
+		_, err = avsWriter.RegisterOperatorInQuorumWithAVSRegistryCoordinator(
+			context.Background(),
+			ecdsaPrivKey, operatorToAvsRegistrationSigSalt, operatorToAvsRegistrationSigExpiry,
+			blsKeyPair, quorumNumbers, "socket",
+		)
+		require.NoError(t, err)
+		testutils.AdvanceChainByNBlocks(1, anvilHttpEndpoint)
+
+		curBlockNum, err = ethHttpClient.BlockNumber(context.Background())
+		referenceBlockNumber := uint32(curBlockNum) - 1
+		require.NoError(t, err)
+		taskIndex := types.TaskIndex(0)
+		quorumThresholdPercentages := []types.QuorumThresholdPercentage{100}
+		taskResponse := mockTaskResponse{123} // Initialize with appropriate data
+
+		// Compute the TaskResponseDigest as the SHA-256 sum of the TaskResponse
+		taskResponseDigest, err := hashFunction(taskResponse)
+		require.Nil(t, err)
+
+		blsSig := blsKeyPair.SignMessage(taskResponseDigest)
+
+		operatorsInfoService := operatorsinfo.NewOperatorsInfoServiceInMemory(context.TODO(), avsClients.AvsRegistryChainSubscriber, avsClients.AvsRegistryChainReader, nil, logger)
+		avsRegistryService := avsregistry.NewAvsRegistryServiceChainCaller(avsClients.AvsRegistryChainReader, operatorsInfoService, logger)
+		blsAggServ := NewBlsAggregatorService(avsRegistryService, hashFunction, logger)
+
+		err = blsAggServ.InitializeNewTask(taskIndex, uint32(referenceBlockNumber), quorumNumbers, quorumThresholdPercentages, tasksTimeToExpiry)
+		require.Nil(t, err)
+		err = blsAggServ.ProcessNewSignature(context.Background(), taskIndex, taskResponse, blsSig, operatorId)
+		require.Nil(t, err)
+		blsAggServiceResp := <-blsAggServ.aggregatedResponsesC
+
+		nonSignerPubkeys := []avssm.BN254G1Point{}
+		for _, nonSignerPubkey := range blsAggServiceResp.NonSignersPubkeysG1 {
+			nonSignerPubkeys = append(nonSignerPubkeys, avssm.BN254G1Point(utils.ConvertToBN254G1Point(nonSignerPubkey)))
+		}
+		quorumApks := []avssm.BN254G1Point{}
+		for _, quorumApk := range blsAggServiceResp.QuorumApksG1 {
+			quorumApks = append(quorumApks, avssm.BN254G1Point(utils.ConvertToBN254G1Point(quorumApk)))
+		}
+		nonSignerStakesAndSignature := avssm.IBLSSignatureCheckerNonSignerStakesAndSignature{
+			NonSignerPubkeys:             nonSignerPubkeys,
+			QuorumApks:                   quorumApks,
+			ApkG2:                        avssm.BN254G2Point(utils.ConvertToBN254G2Point(blsAggServiceResp.SignersApkG2)),
+			Sigma:                        avssm.BN254G1Point(utils.ConvertToBN254G1Point(blsAggServiceResp.SignersAggSigG1.G1Point)),
+			NonSignerQuorumBitmapIndices: blsAggServiceResp.NonSignerQuorumBitmapIndices,
+			QuorumApkIndices:             blsAggServiceResp.QuorumApkIndices,
+			TotalStakeIndices:            blsAggServiceResp.TotalStakeIndices,
+			NonSignerStakeIndices:        blsAggServiceResp.NonSignerStakeIndices,
+		}
+		avsServiceManager, err := avssm.NewContractMockAvsServiceManager(contractAddrs.ServiceManager, ethHttpClient)
+		require.NoError(t, err)
+		_, _, err = avsServiceManager.CheckSignatures(&bind.CallOpts{}, taskResponseDigest, quorumNumbers.UnderlyingType(), uint32(referenceBlockNumber), nonSignerStakesAndSignature)
+		require.NoError(t, err)
+	})
+
+	t.Run("2 quorums 1 operator", func(t *testing.T) {
+		// TODO: Implement this test
 	})
 }
 
