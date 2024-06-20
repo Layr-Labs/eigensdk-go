@@ -46,7 +46,7 @@ cd $EIGENLAYER_MIDDLEWARE_PATH
 forge build
 
 # No idea why but ordering of the contracts matters here... when I move them around sometimes bindings fail
-avs_contracts="RegistryCoordinator IndexRegistry OperatorStateRetriever StakeRegistry BLSApkRegistry IBLSSignatureChecker ServiceManagerBase"
+avs_contracts="RegistryCoordinator IndexRegistry OperatorStateRetriever StakeRegistry BLSApkRegistry IBLSSignatureChecker ServiceManagerBase IERC20"
 for contract in $avs_contracts; do
     create_binding . $contract ../../bindings
 done
@@ -56,7 +56,7 @@ cd $EIGENLAYER_CONTRACT_PATH
 forge build
 
 # No idea why but the ordering of the contracts matters, and for some orderings abigen fails...
-el_contracts="DelegationManager IRewardsCoordinator ISlasher StrategyManager EigenPod EigenPodManager IStrategy IERC20 AVSDirectory"
+el_contracts="DelegationManager IRewardsCoordinator ISlasher StrategyManager EigenPod EigenPodManager IStrategy AVSDirectory"
 for contract in $el_contracts; do
     create_binding . $contract ../../../../bindings
 done
