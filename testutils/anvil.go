@@ -3,6 +3,7 @@ package testutils
 import (
 	"context"
 	"fmt"
+	"log"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -46,14 +47,10 @@ func StartAnvilContainer(anvilStateFileName string) (testcontainers.Container, e
 		return nil, err
 	}
 
-	anvilHttpEndpoint, err := anvilC.Endpoint(context.Background(), "http")
-	if err != nil {
-		return nil, err
-	}
 	// Still need to advance the chain by at least 1 block b/c some tests need to query the latest block,
 	// and the blocks dumped/loaded by anvil don't contain full transactions, which leads to panics in tests.
 	// See https://github.com/foundry-rs/foundry/issues/8213, which will hopefully get fixed soon.
-	AdvanceChainByNBlocks(1, anvilHttpEndpoint)
+	AdvanceChainByNBlocksExecInContainer(ctx, 1, anvilC)
 
 	return anvilC, nil
 }
@@ -133,5 +130,16 @@ func AdvanceChainByNBlocks(n int, anvilEndpoint string) {
 	err := cmd.Run()
 	if err != nil {
 		panic(err)
+	}
+}
+
+// AdvanceChainByNBlocks requires cast to be installed on the host machine, whereas this one doesn't.
+func AdvanceChainByNBlocksExecInContainer(ctx context.Context, n int, anvilC testcontainers.Container) {
+	c, _, err := anvilC.Exec(ctx, []string{"cast", "rpc", "anvil_mine", fmt.Sprintf("%d", n), "--rpc-url", "http://localhost:8545"})
+	if err != nil {
+		panic(err)
+	}
+	if c != 0 {
+		log.Fatalf("Unable to advance anvil chain by n blocks. Expected return code 0, got %v", c)
 	}
 }
