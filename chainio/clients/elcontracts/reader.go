@@ -118,11 +118,6 @@ func BuildELChainReader(
 	), nil
 }
 
-type ElChainReaderConfig struct {
-	delegationManagerAddress gethcommon.Address
-	avsDirectoryAddress      gethcommon.Address
-}
-
 func BuildELChainReaderFromConfig(
 	cfg types.ElChainReaderConfig,
 	ethClient eth.Client,
