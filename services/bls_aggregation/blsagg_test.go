@@ -790,14 +790,11 @@ func TestIntegrationBlsAgg(t *testing.T) {
 
 	anvilStateFileName := "contracts-deployed-anvil-state.json"
 	anvilC, err := testutils.StartAnvilContainer(anvilStateFileName)
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	anvilHttpEndpoint, err := anvilC.Endpoint(context.Background(), "http")
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 	anvilWsEndpoint, err := anvilC.Endpoint(context.Background(), "ws")
+	require.NoError(t, err)
 	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
 	t.Run("1 quorums 1 operator", func(t *testing.T) {
 		ecdsaPrivKeyHex := "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
