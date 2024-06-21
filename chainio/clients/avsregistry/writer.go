@@ -3,6 +3,7 @@ package avsregistry
 import (
 	"context"
 	"crypto/ecdsa"
+	"crypto/rand"
 	"errors"
 	"math/big"
 
@@ -34,11 +35,25 @@ type AvsRegistryWriter interface {
 	// register operator in eigenlayer's delegation manager)
 	//  - operatorToAvsRegistrationSigSalt is a random salt used to prevent replay attacks
 	//  - operatorToAvsRegistrationSigExpiry is the expiry time of the signature
+	//
+	// Deprecated: use RegisterOperator instead.
+	// We will only keep high-level functionality such as RegisterOperator, and low level functionality 
+	// such as this function should eventually all be done with bindings directly instead.
 	RegisterOperatorInQuorumWithAVSRegistryCoordinator(
 		ctx context.Context,
 		operatorEcdsaPrivateKey *ecdsa.PrivateKey,
 		operatorToAvsRegistrationSigSalt [32]byte,
 		operatorToAvsRegistrationSigExpiry *big.Int,
+		blsKeyPair *bls.KeyPair,
+		quorumNumbers types.QuorumNums,
+		socket string,
+	) (*gethtypes.Receipt, error)
+
+	// RegisterOperator is similar to RegisterOperatorInQuorumWithAVSRegistryCoordinator but
+	// generates a random salt and expiry for the signature.
+	RegisterOperator(
+		ctx context.Context,
+		operatorEcdsaPrivateKey *ecdsa.PrivateKey,
 		blsKeyPair *bls.KeyPair,
 		quorumNumbers types.QuorumNums,
 		socket string,
@@ -176,13 +191,10 @@ func BuildAvsRegistryChainWriter(
 	)
 }
 
-// TODO(samlaf): clean up this function
 func (w *AvsRegistryChainWriter) RegisterOperatorInQuorumWithAVSRegistryCoordinator(
 	ctx context.Context,
 	// we need to pass the private key explicitly and can't use the signer because registering requires signing a
-	// message which isn't a transaction
-	// and the signer can only signs transactions
-	// see operatorSignature in
+	// message which isn't a transaction and the signer can only signs transactions see operatorSignature in
 	// https://github.com/Layr-Labs/eigenlayer-middleware/blob/m2-mainnet/docs/RegistryCoordinator.md#registeroperator
 	// TODO(madhur): check to see if we can make the signer and txmgr more flexible so we can use them (and remote
 	// signers) to sign non txs
@@ -236,7 +248,124 @@ func (w *AvsRegistryChainWriter) RegisterOperatorInQuorumWithAVSRegistryCoordina
 	if err != nil {
 		return nil, err
 	}
-	// this is annoying, and not sure why its needed, but seems like some historical baggage
+	// the crypto library is low level and deals with 0/1 v values, whereas ethereum expects 27/28, so we add 27
+	// see https://github.com/ethereum/go-ethereum/issues/28757#issuecomment-1874525854
+	// and https://twitter.com/pcaversaccio/status/1671488928262529031
+	operatorSignature[64] += 27
+	operatorSignatureWithSaltAndExpiry := regcoord.ISignatureUtilsSignatureWithSaltAndExpiry{
+		Signature: operatorSignature,
+		Salt:      operatorToAvsRegistrationSigSalt,
+		Expiry:    operatorToAvsRegistrationSigExpiry,
+	}
+
+	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
+	if err != nil {
+		return nil, err
+	}
+	// TODO: this call will fail if max number of operators are already registered
+	// in that case, need to call churner to kick out another operator. See eigenDA's node/operator.go implementation
+	tx, err := w.registryCoordinator.RegisterOperator(
+		noSendTxOpts,
+		quorumNumbers.UnderlyingType(),
+		socket,
+		pubkeyRegParams,
+		operatorSignatureWithSaltAndExpiry,
+	)
+	if err != nil {
+		return nil, err
+	}
+	receipt, err := w.txMgr.Send(ctx, tx)
+	if err != nil {
+		return nil, errors.New("failed to send tx with err: " + err.Error())
+	}
+	w.logger.Info(
+		"successfully registered operator with AVS registry coordinator",
+		"txHash",
+		receipt.TxHash.String(),
+		"avs-service-manager",
+		w.serviceManagerAddr,
+		"operator",
+		operatorAddr,
+		"quorumNumbers",
+		quorumNumbers,
+	)
+	return receipt, nil
+}
+
+func (w *AvsRegistryChainWriter) RegisterOperator(
+	ctx context.Context,
+	// we need to pass the private key explicitly and can't use the signer because registering requires signing a
+	// message which isn't a transaction and the signer can only signs transactions. See operatorSignature in
+	// https://github.com/Layr-Labs/eigenlayer-middleware/blob/m2-mainnet/docs/RegistryCoordinator.md#registeroperator
+	// TODO(madhur): check to see if we can make the signer and txmgr more flexible so we can use them (and remote
+	// signers) to sign non txs
+	operatorEcdsaPrivateKey *ecdsa.PrivateKey,
+	blsKeyPair *bls.KeyPair,
+	quorumNumbers types.QuorumNums,
+	socket string,
+) (*gethtypes.Receipt, error) {
+	operatorAddr := crypto.PubkeyToAddress(operatorEcdsaPrivateKey.PublicKey)
+	w.logger.Info(
+		"registering operator with the AVS's registry coordinator",
+		"avs-service-manager",
+		w.serviceManagerAddr,
+		"operator",
+		operatorAddr,
+		"quorumNumbers",
+		quorumNumbers,
+		"socket",
+		socket,
+	)
+	// params to register bls pubkey with bls apk registry
+	g1HashedMsgToSign, err := w.registryCoordinator.PubkeyRegistrationMessageHash(&bind.CallOpts{}, operatorAddr)
+	if err != nil {
+		return nil, err
+	}
+	signedMsg := chainioutils.ConvertToBN254G1Point(
+		blsKeyPair.SignHashedToCurveMessage(chainioutils.ConvertBn254GethToGnark(g1HashedMsgToSign)).G1Point,
+	)
+	G1pubkeyBN254 := chainioutils.ConvertToBN254G1Point(blsKeyPair.GetPubKeyG1())
+	G2pubkeyBN254 := chainioutils.ConvertToBN254G2Point(blsKeyPair.GetPubKeyG2())
+	pubkeyRegParams := regcoord.IBLSApkRegistryPubkeyRegistrationParams{
+		PubkeyRegistrationSignature: signedMsg,
+		PubkeyG1:                    G1pubkeyBN254,
+		PubkeyG2:                    G2pubkeyBN254,
+	}
+
+	// generate a random salt and 1 hour expiry for the signature
+	var operatorToAvsRegistrationSigSalt [32]byte
+	_, err = rand.Read(operatorToAvsRegistrationSigSalt[:])
+	if err != nil {
+		panic(err)
+	}
+
+	curBlockNum, err := w.ethClient.BlockNumber(context.Background())
+	if err != nil {
+		panic(err)
+	}
+	curBlock, err := w.ethClient.BlockByNumber(context.Background(), big.NewInt(int64(curBlockNum)))
+	if err != nil {
+		panic(err)
+	}
+	sigValidForSeconds := int64(60 * 60) // 1 hour
+	operatorToAvsRegistrationSigExpiry := big.NewInt(int64(curBlock.Time()) + sigValidForSeconds)
+
+	// params to register operator in delegation manager's operator-avs mapping
+	msgToSign, err := w.elReader.CalculateOperatorAVSRegistrationDigestHash(
+		&bind.CallOpts{},
+		operatorAddr,
+		w.serviceManagerAddr,
+		operatorToAvsRegistrationSigSalt,
+		operatorToAvsRegistrationSigExpiry,
+	)
+	if err != nil {
+		return nil, err
+	}
+	operatorSignature, err := crypto.Sign(msgToSign[:], operatorEcdsaPrivateKey)
+	if err != nil {
+		return nil, err
+	}
+	// the crypto library is low level and deals with 0/1 v values, whereas ethereum expects 27/28, so we add 27
 	// see https://github.com/ethereum/go-ethereum/issues/28757#issuecomment-1874525854
 	// and https://twitter.com/pcaversaccio/status/1671488928262529031
 	operatorSignature[64] += 27
