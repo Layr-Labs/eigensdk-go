@@ -174,15 +174,12 @@ func (a *BlsAggregatorService) InitializeNewTask(
 	a.logger.Debug("AggregatorService initializing new task", "taskIndex", taskIndex, "taskCreatedBlock", taskCreatedBlock, "quorumNumbers", quorumNumbers, "quorumThresholdPercentages", quorumThresholdPercentages, "timeToExpiry", timeToExpiry)
 
 	a.taskChansMutex.Lock()
-	signedTaskRespsC, taskExists := a.signedTaskRespsCs[taskIndex]
-	if !taskExists {
-		signedTaskRespsC = make(chan types.SignedTaskResponseDigest)
-		a.signedTaskRespsCs[taskIndex] = signedTaskRespsC
-	}
-	a.taskChansMutex.Unlock()
-	if taskExists {
+	defer a.taskChansMutex.Unlock()
+	if _, taskExists := a.signedTaskRespsCs[taskIndex]; taskExists {
 		return TaskAlreadyInitializedErrorFn(taskIndex)
 	}
+	signedTaskRespsC := make(chan types.SignedTaskResponseDigest)
+	a.signedTaskRespsCs[taskIndex] = signedTaskRespsC
 
 	go a.singleTaskAggregatorGoroutineFunc(taskIndex, taskCreatedBlock, quorumNumbers, quorumThresholdPercentages, timeToExpiry, signedTaskRespsC)
 	return nil
