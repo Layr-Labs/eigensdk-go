@@ -1,6 +1,7 @@
 package elcontracts
 
 import (
+	"errors"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -73,6 +74,7 @@ type ELChainReader struct {
 // forces EthReader to implement the chainio.Reader interface
 var _ ELReader = (*ELChainReader)(nil)
 
+// TODO(madhur): make this private. All clients should use build functions
 func NewELChainReader(
 	slasher slasher.ContractISlasherCalls,
 	delegationManager delegationmanager.ContractDelegationManagerCalls,
@@ -116,7 +118,39 @@ func BuildELChainReader(
 	), nil
 }
 
+type ElChainReaderConfig struct {
+	delegationManagerAddress gethcommon.Address
+	avsDirectoryAddress      gethcommon.Address
+}
+
+func BuildELChainReaderFromConfig(
+	cfg types.ElChainReaderConfig,
+	ethClient eth.Client,
+	logger logging.Logger,
+) (*ELChainReader, error) {
+	elContractBindings, err := chainioutils.NewEigenLayerContractBindingsFromConfig(
+		cfg,
+		ethClient,
+		logger,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return NewELChainReader(
+		elContractBindings.Slasher,
+		elContractBindings.DelegationManager,
+		elContractBindings.StrategyManager,
+		elContractBindings.AvsDirectory,
+		logger,
+		ethClient,
+	), nil
+}
+
 func (r *ELChainReader) IsOperatorRegistered(opts *bind.CallOpts, operator types.Operator) (bool, error) {
+	if r.delegationManager == nil {
+		return false, errors.New("DelegationManager contract not provided")
+	}
+
 	isOperator, err := r.delegationManager.IsOperator(
 		opts,
 		gethcommon.HexToAddress(operator.Address),
@@ -129,6 +163,10 @@ func (r *ELChainReader) IsOperatorRegistered(opts *bind.CallOpts, operator types
 }
 
 func (r *ELChainReader) GetOperatorDetails(opts *bind.CallOpts, operator types.Operator) (types.Operator, error) {
+	if r.delegationManager == nil {
+		return types.Operator{}, errors.New("DelegationManager contract not provided")
+	}
+
 	operatorDetails, err := r.delegationManager.OperatorDetails(
 		opts,
 		gethcommon.HexToAddress(operator.Address),
@@ -185,6 +223,10 @@ func (r *ELChainReader) ServiceManagerCanSlashOperatorUntilBlock(
 	operatorAddr gethcommon.Address,
 	serviceManagerAddr gethcommon.Address,
 ) (uint32, error) {
+	if r.slasher == nil {
+		return uint32(0), errors.New("slasher contract not provided")
+	}
+
 	serviceManagerCanSlashOperatorUntilBlock, err := r.slasher.ContractCanSlashOperatorUntilBlock(
 		opts, operatorAddr, serviceManagerAddr,
 	)
@@ -195,6 +237,10 @@ func (r *ELChainReader) ServiceManagerCanSlashOperatorUntilBlock(
 }
 
 func (r *ELChainReader) OperatorIsFrozen(opts *bind.CallOpts, operatorAddr gethcommon.Address) (bool, error) {
+	if r.slasher == nil {
+		return false, errors.New("slasher contract not provided")
+	}
+
 	operatorIsFrozen, err := r.slasher.IsFrozen(opts, operatorAddr)
 	if err != nil {
 		return false, err
@@ -207,6 +253,10 @@ func (r *ELChainReader) GetOperatorSharesInStrategy(
 	operatorAddr gethcommon.Address,
 	strategyAddr gethcommon.Address,
 ) (*big.Int, error) {
+	if r.delegationManager == nil {
+		return &big.Int{}, errors.New("DelegationManager contract not provided")
+	}
+
 	operatorSharesInStrategy, err := r.delegationManager.OperatorShares(
 		opts,
 		operatorAddr,
@@ -222,6 +272,10 @@ func (r *ELChainReader) CalculateDelegationApprovalDigestHash(
 	opts *bind.CallOpts, staker gethcommon.Address, operator gethcommon.Address,
 	delegationApprover gethcommon.Address, approverSalt [32]byte, expiry *big.Int,
 ) ([32]byte, error) {
+	if r.delegationManager == nil {
+		return [32]byte{}, errors.New("DelegationManager contract not provided")
+	}
+
 	return r.delegationManager.CalculateDelegationApprovalDigestHash(
 		opts, staker, operator, delegationApprover, approverSalt, expiry,
 	)
@@ -230,6 +284,10 @@ func (r *ELChainReader) CalculateDelegationApprovalDigestHash(
 func (r *ELChainReader) CalculateOperatorAVSRegistrationDigestHash(
 	opts *bind.CallOpts, operator gethcommon.Address, avs gethcommon.Address, salt [32]byte, expiry *big.Int,
 ) ([32]byte, error) {
+	if r.avsDirectory == nil {
+		return [32]byte{}, errors.New("AVSDirectory contract not provided")
+	}
+
 	return r.avsDirectory.CalculateOperatorAVSRegistrationDigestHash(
 		opts, operator, avs, salt, expiry,
 	)

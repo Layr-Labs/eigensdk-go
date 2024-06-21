@@ -4,6 +4,7 @@ package utils
 
 import (
 	"github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -32,6 +33,67 @@ type EigenlayerContractBindings struct {
 	DelegationManager     *delegationmanager.ContractDelegationManager
 	StrategyManager       *strategymanager.ContractStrategyManager
 	AvsDirectory          *avsdirectory.ContractAVSDirectory
+}
+
+func NewEigenLayerContractBindingsFromConfig(
+	cfg types.ElChainReaderConfig,
+	client eth.Client,
+	logger logging.Logger,
+) (*EigenlayerContractBindings, error) {
+	var contractDelegationManager *delegationmanager.ContractDelegationManager
+	var contractSlasher *slasher.ContractISlasher
+	var contractStrategyManager *strategymanager.ContractStrategyManager
+	var slasherAddr gethcommon.Address
+	var strategyManagerAddr gethcommon.Address
+	var avsDirectory *avsdirectory.ContractAVSDirectory
+	var err error
+
+	if cfg.DelegationManagerAddress == gethcommon.HexToAddress("") {
+		logger.Warn("DelegationManager address not provided, the calls to the contract will not work")
+	} else {
+		contractDelegationManager, err = delegationmanager.NewContractDelegationManager(cfg.DelegationManagerAddress, client)
+		if err != nil {
+			return nil, utils.WrapError("Failed to create DelegationManager contract", err)
+		}
+
+		slasherAddr, err = contractDelegationManager.Slasher(&bind.CallOpts{})
+		if err != nil {
+			return nil, utils.WrapError("Failed to fetch Slasher address", err)
+		}
+		contractSlasher, err = slasher.NewContractISlasher(slasherAddr, client)
+		if err != nil {
+			return nil, utils.WrapError("Failed to fetch Slasher contract", err)
+		}
+
+		strategyManagerAddr, err = contractDelegationManager.StrategyManager(&bind.CallOpts{})
+		if err != nil {
+			return nil, utils.WrapError("Failed to fetch StrategyManager address", err)
+		}
+		contractStrategyManager, err = strategymanager.NewContractStrategyManager(strategyManagerAddr, client)
+		if err != nil {
+			return nil, utils.WrapError("Failed to fetch StrategyManager contract", err)
+		}
+	}
+
+	if cfg.AvsDirectoryAddress == gethcommon.HexToAddress("") {
+		logger.Warn("AVSDirectory address not provided, the calls to the contract will not work")
+	} else {
+		avsDirectory, err = avsdirectory.NewContractAVSDirectory(cfg.AvsDirectoryAddress, client)
+		if err != nil {
+			return nil, utils.WrapError("Failed to fetch AVSDirectory contract", err)
+		}
+	}
+
+	return &EigenlayerContractBindings{
+		SlasherAddr:           slasherAddr,
+		StrategyManagerAddr:   strategyManagerAddr,
+		DelegationManagerAddr: cfg.DelegationManagerAddress,
+		AvsDirectoryAddr:      cfg.AvsDirectoryAddress,
+		Slasher:               contractSlasher,
+		StrategyManager:       contractStrategyManager,
+		DelegationManager:     contractDelegationManager,
+		AvsDirectory:          avsDirectory,
+	}, nil
 }
 
 func NewEigenlayerContractBindings(
