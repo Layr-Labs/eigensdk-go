@@ -133,7 +133,7 @@ func AdvanceChainByNBlocks(n int, anvilEndpoint string) {
 	}
 }
 
-// AdvanceChainByNBlocks requires cast to be installed on the host machine, whereas this one doesn't.
+// Prefer this function over AdvanceChainByNBlocks b/c it doesn't require cast to be installed on the host machine, whereas this one doesn't.
 func AdvanceChainByNBlocksExecInContainer(ctx context.Context, n int, anvilC testcontainers.Container) {
 	c, _, err := anvilC.Exec(ctx, []string{"cast", "rpc", "anvil_mine", fmt.Sprintf("%d", n), "--rpc-url", "http://localhost:8545"})
 	if err != nil {

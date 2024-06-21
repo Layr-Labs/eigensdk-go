@@ -839,7 +839,7 @@ func TestIntegrationBlsAgg(t *testing.T) {
 			blsKeyPair, quorumNumbers, "socket",
 		)
 		require.NoError(t, err)
-		testutils.AdvanceChainByNBlocks(1, anvilHttpEndpoint)
+		testutils.AdvanceChainByNBlocksExecInContainer(context.TODO(), 1, anvilC)
 
 		curBlockNum, err = ethHttpClient.BlockNumber(context.Background())
 		referenceBlockNumber := uint32(curBlockNum) - 1
