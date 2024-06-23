@@ -336,16 +336,16 @@ func (w *AvsRegistryChainWriter) RegisterOperator(
 	var operatorToAvsRegistrationSigSalt [32]byte
 	_, err = rand.Read(operatorToAvsRegistrationSigSalt[:])
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	curBlockNum, err := w.ethClient.BlockNumber(context.Background())
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	curBlock, err := w.ethClient.BlockByNumber(context.Background(), big.NewInt(int64(curBlockNum)))
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	sigValidForSeconds := int64(60 * 60) // 1 hour
 	operatorToAvsRegistrationSigExpiry := big.NewInt(int64(curBlock.Time()) + sigValidForSeconds)
