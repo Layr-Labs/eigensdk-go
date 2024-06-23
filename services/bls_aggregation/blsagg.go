@@ -172,13 +172,15 @@ func (a *BlsAggregatorService) InitializeNewTask(
 	timeToExpiry time.Duration,
 ) error {
 	a.logger.Debug("AggregatorService initializing new task", "taskIndex", taskIndex, "taskCreatedBlock", taskCreatedBlock, "quorumNumbers", quorumNumbers, "quorumThresholdPercentages", quorumThresholdPercentages, "timeToExpiry", timeToExpiry)
+
+	a.taskChansMutex.Lock()
+	defer a.taskChansMutex.Unlock()
 	if _, taskExists := a.signedTaskRespsCs[taskIndex]; taskExists {
 		return TaskAlreadyInitializedErrorFn(taskIndex)
 	}
 	signedTaskRespsC := make(chan types.SignedTaskResponseDigest)
-	a.taskChansMutex.Lock()
 	a.signedTaskRespsCs[taskIndex] = signedTaskRespsC
-	a.taskChansMutex.Unlock()
+
 	go a.singleTaskAggregatorGoroutineFunc(taskIndex, taskCreatedBlock, quorumNumbers, quorumThresholdPercentages, timeToExpiry, signedTaskRespsC)
 	return nil
 }
