@@ -61,6 +61,21 @@ func (mr *MockAvsRegistryWriterMockRecorder) DeregisterOperator(arg0, arg1, arg2
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeregisterOperator", reflect.TypeOf((*MockAvsRegistryWriter)(nil).DeregisterOperator), arg0, arg1, arg2)
 }
 
+// RegisterOperator mocks base method.
+func (m *MockAvsRegistryWriter) RegisterOperator(arg0 context.Context, arg1 *ecdsa.PrivateKey, arg2 *bls.KeyPair, arg3 types.QuorumNums, arg4 string) (*types0.Receipt, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RegisterOperator", arg0, arg1, arg2, arg3, arg4)
+	ret0, _ := ret[0].(*types0.Receipt)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RegisterOperator indicates an expected call of RegisterOperator.
+func (mr *MockAvsRegistryWriterMockRecorder) RegisterOperator(arg0, arg1, arg2, arg3, arg4 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterOperator", reflect.TypeOf((*MockAvsRegistryWriter)(nil).RegisterOperator), arg0, arg1, arg2, arg3, arg4)
+}
+
 // RegisterOperatorInQuorumWithAVSRegistryCoordinator mocks base method.
 func (m *MockAvsRegistryWriter) RegisterOperatorInQuorumWithAVSRegistryCoordinator(arg0 context.Context, arg1 *ecdsa.PrivateKey, arg2 [32]byte, arg3 *big.Int, arg4 *bls.KeyPair, arg5 types.QuorumNums, arg6 string) (*types0.Receipt, error) {
 	m.ctrl.T.Helper()
