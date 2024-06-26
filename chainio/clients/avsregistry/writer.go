@@ -37,7 +37,7 @@ type AvsRegistryWriter interface {
 	//  - operatorToAvsRegistrationSigExpiry is the expiry time of the signature
 	//
 	// Deprecated: use RegisterOperator instead.
-	// We will only keep high-level functionality such as RegisterOperator, and low level functionality 
+	// We will only keep high-level functionality such as RegisterOperator, and low level functionality
 	// such as this function should eventually all be done with bindings directly instead.
 	RegisterOperatorInQuorumWithAVSRegistryCoordinator(
 		ctx context.Context,
