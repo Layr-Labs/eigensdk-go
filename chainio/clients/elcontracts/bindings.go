@@ -90,6 +90,8 @@ func NewBindingsFromConfig(
 	}, nil
 }
 
+// NewEigenlayerContractBindings creates a new ContractBindings struct with the provided contract addresses
+// Deprecated: Use NewBindingsFromConfig instead
 func NewEigenlayerContractBindings(
 	delegationManagerAddr gethcommon.Address,
 	avsDirectoryAddr gethcommon.Address,
