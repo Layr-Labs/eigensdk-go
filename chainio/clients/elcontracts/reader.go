@@ -61,6 +61,11 @@ type ELReader interface {
 	) ([32]byte, error)
 }
 
+type ElChainReaderConfig struct {
+	DelegationManagerAddress common.Address
+	AvsDirectoryAddress      common.Address
+}
+
 type ELChainReader struct {
 	logger            logging.Logger
 	slasher           slasher.ContractISlasherCalls
@@ -73,7 +78,6 @@ type ELChainReader struct {
 // forces EthReader to implement the chainio.Reader interface
 var _ ELReader = (*ELChainReader)(nil)
 
-// TODO(madhur): make this private. All clients should use build functions
 func NewELChainReader(
 	slasher slasher.ContractISlasherCalls,
 	delegationManager delegationmanager.ContractDelegationManagerCalls,
@@ -82,6 +86,8 @@ func NewELChainReader(
 	logger logging.Logger,
 	ethClient eth.Client,
 ) *ELChainReader {
+	logger = logger.With("module", "elcontracts/reader")
+
 	return &ELChainReader{
 		slasher:           slasher,
 		delegationManager: delegationManager,
@@ -119,8 +125,8 @@ func BuildELChainReader(
 	), nil
 }
 
-func BuildFromConfig(
-	cfg types.ElChainReaderConfig,
+func NewReaderFromConfig(
+	cfg ElChainReaderConfig,
 	ethClient eth.Client,
 	logger logging.Logger,
 ) (*ELChainReader, error) {

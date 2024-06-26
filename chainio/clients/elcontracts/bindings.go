@@ -1,11 +1,8 @@
-// bindings.go contains functions that create contract bindings for the Eigenlayer and AVS contracts.
+// Package elcontracts bindings.go contains functions that create contract bindings for the Eigenlayer Core contracts
 // These functions are meant to be used by constructors of the chainio package.
 package elcontracts
 
 import (
-	"github.com/Layr-Labs/eigensdk-go/logging"
-	"github.com/Layr-Labs/eigensdk-go/types"
-	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
@@ -14,9 +11,13 @@ import (
 	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
 	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/ISlasher"
 	strategymanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StrategyManager"
+	"github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
-// ContractBindings Unclear to me why geth bindings don't store and expose the contract address...
+// ContractBindings contains the contract bindings for the EigenLayer Core contracts
+//
+// Unclear why geth bindings don't store and expose the contract address,
 // so we also store them here in case the different constructors that use this struct need them
 type ContractBindings struct {
 	SlasherAddr           gethcommon.Address
@@ -30,7 +31,7 @@ type ContractBindings struct {
 }
 
 func NewBindingsFromConfig(
-	cfg types.ElChainReaderConfig,
+	cfg ElChainReaderConfig,
 	client eth.Client,
 	logger logging.Logger,
 ) (*ContractBindings, error) {
