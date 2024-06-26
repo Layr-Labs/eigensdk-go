@@ -175,11 +175,11 @@ func (config *BuildAllConfig) BuildELClients(
 
 	delegationManagerAddr, err := avsRegistryContractBindings.StakeRegistry.Delegation(&bind.CallOpts{})
 	if err != nil {
-		logger.Fatal("Failed to fetch Slasher contract", "err", err)
+		logger.Fatal("Failed to fetch DelegationManager contract", "err", err)
 	}
 	avsDirectoryAddr, err := avsRegistryContractBindings.ServiceManager.AvsDirectory(&bind.CallOpts{})
 	if err != nil {
-		logger.Fatal("Failed to fetch Slasher contract", "err", err)
+		logger.Fatal("Failed to fetch AVSDirectory contract", "err", err)
 	}
 
 	elContractBindings, err := config.buildEigenLayerContractBindings(
@@ -206,6 +206,7 @@ func (config *BuildAllConfig) BuildELClients(
 		elContractBindings.Slasher,
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
+		nil,
 		elContractBindings.StrategyManagerAddr,
 		elChainReader,
 		ethHttpClient,

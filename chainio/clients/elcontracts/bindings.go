@@ -9,6 +9,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	avsdirectory "github.com/Layr-Labs/eigensdk-go/contracts/bindings/AVSDirectory"
 	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
+	rewardscoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IRewardsCoordinator"
 	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/ISlasher"
 	strategymanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StrategyManager"
 	"github.com/Layr-Labs/eigensdk-go/logging"
@@ -20,14 +21,16 @@ import (
 // Unclear why geth bindings don't store and expose the contract address,
 // so we also store them here in case the different constructors that use this struct need them
 type ContractBindings struct {
-	SlasherAddr           gethcommon.Address
-	StrategyManagerAddr   gethcommon.Address
-	DelegationManagerAddr gethcommon.Address
-	AvsDirectoryAddr      gethcommon.Address
-	Slasher               *slasher.ContractISlasher
-	DelegationManager     *delegationmanager.ContractDelegationManager
-	StrategyManager       *strategymanager.ContractStrategyManager
-	AvsDirectory          *avsdirectory.ContractAVSDirectory
+	SlasherAddr               gethcommon.Address
+	StrategyManagerAddr       gethcommon.Address
+	DelegationManagerAddr     gethcommon.Address
+	AvsDirectoryAddr          gethcommon.Address
+	RewardsCoordinatorAddress gethcommon.Address
+	Slasher                   *slasher.ContractISlasher
+	DelegationManager         *delegationmanager.ContractDelegationManager
+	StrategyManager           *strategymanager.ContractStrategyManager
+	AvsDirectory              *avsdirectory.ContractAVSDirectory
+	RewardsCoordinator        *rewardscoordinator.ContractIRewardsCoordinator
 }
 
 func NewBindingsFromConfig(
@@ -41,9 +44,10 @@ func NewBindingsFromConfig(
 	var slasherAddr gethcommon.Address
 	var strategyManagerAddr gethcommon.Address
 	var avsDirectory *avsdirectory.ContractAVSDirectory
+	var rewardsCoordinator *rewardscoordinator.ContractIRewardsCoordinator
 	var err error
 
-	if gethcommon.IsHexAddress(cfg.DelegationManagerAddress.String()) {
+	if isZeroAddress(cfg.DelegationManagerAddress) {
 		logger.Warn("DelegationManager address not provided, the calls to the contract will not work")
 	} else {
 		contractDelegationManager, err = delegationmanager.NewContractDelegationManager(cfg.DelegationManagerAddress, client)
@@ -70,7 +74,7 @@ func NewBindingsFromConfig(
 		}
 	}
 
-	if gethcommon.IsHexAddress(cfg.AvsDirectoryAddress.String()) {
+	if isZeroAddress(cfg.AvsDirectoryAddress) {
 		logger.Warn("AVSDirectory address not provided, the calls to the contract will not work")
 	} else {
 		avsDirectory, err = avsdirectory.NewContractAVSDirectory(cfg.AvsDirectoryAddress, client)
@@ -79,16 +83,30 @@ func NewBindingsFromConfig(
 		}
 	}
 
+	if isZeroAddress(cfg.RewardsCoordinatorAddress) {
+		logger.Warn("RewardsCoordinator address not provided, the calls to the contract will not work")
+	} else {
+		rewardsCoordinator, err = rewardscoordinator.NewContractIRewardsCoordinator(cfg.RewardsCoordinatorAddress, client)
+		if err != nil {
+			return nil, utils.WrapError("Failed to fetch RewardsCoordinator contract", err)
+		}
+	}
+
 	return &ContractBindings{
-		SlasherAddr:           slasherAddr,
-		StrategyManagerAddr:   strategyManagerAddr,
-		DelegationManagerAddr: cfg.DelegationManagerAddress,
-		AvsDirectoryAddr:      cfg.AvsDirectoryAddress,
-		Slasher:               contractSlasher,
-		StrategyManager:       contractStrategyManager,
-		DelegationManager:     contractDelegationManager,
-		AvsDirectory:          avsDirectory,
+		SlasherAddr:               slasherAddr,
+		StrategyManagerAddr:       strategyManagerAddr,
+		DelegationManagerAddr:     cfg.DelegationManagerAddress,
+		AvsDirectoryAddr:          cfg.AvsDirectoryAddress,
+		RewardsCoordinatorAddress: cfg.RewardsCoordinatorAddress,
+		Slasher:                   contractSlasher,
+		StrategyManager:           contractStrategyManager,
+		DelegationManager:         contractDelegationManager,
+		AvsDirectory:              avsDirectory,
+		RewardsCoordinator:        rewardsCoordinator,
 	}, nil
+}
+func isZeroAddress(address gethcommon.Address) bool {
+	return address == gethcommon.Address{}
 }
 
 // NewEigenlayerContractBindings creates a new ContractBindings struct with the provided contract addresses
