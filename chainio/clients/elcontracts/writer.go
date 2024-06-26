@@ -11,7 +11,6 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
-	chainioutils "github.com/Layr-Labs/eigensdk-go/chainio/utils"
 	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
 	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/ISlasher"
 	strategymanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StrategyManager"
@@ -63,6 +62,8 @@ func NewELChainWriter(
 	eigenMetrics metrics.Metrics,
 	txMgr txmgr.TxManager,
 ) *ELChainWriter {
+	logger = logger.With("module", "elcontracts/writer")
+
 	return &ELChainWriter{
 		slasher:             slasher,
 		delegationManager:   delegationManager,
@@ -75,6 +76,8 @@ func NewELChainWriter(
 	}
 }
 
+// BuildELChainWriter builds an ELChainWriter instance.
+// Deprecated: Use NewWriterFromConfig instead.
 func BuildELChainWriter(
 	delegationManagerAddr gethcommon.Address,
 	avsDirectoryAddr gethcommon.Address,
@@ -83,7 +86,7 @@ func BuildELChainWriter(
 	eigenMetrics metrics.Metrics,
 	txMgr txmgr.TxManager,
 ) (*ELChainWriter, error) {
-	elContractBindings, err := chainioutils.NewEigenlayerContractBindings(
+	elContractBindings, err := NewEigenlayerContractBindings(
 		delegationManagerAddr,
 		avsDirectoryAddr,
 		ethClient,
@@ -113,10 +116,47 @@ func BuildELChainWriter(
 	), nil
 }
 
-// TODO(madhur): we wait for txreceipts in these functions right now, but
-// this will be changed once we have a better tx manager design implemented
-// see https://github.com/Layr-Labs/eigensdk-go/pull/75
+func NewWriterFromConfig(
+	cfg Config,
+	ethClient eth.Client,
+	logger logging.Logger,
+	eigenMetrics metrics.Metrics,
+	txMgr txmgr.TxManager,
+) (*ELChainWriter, error) {
+	elContractBindings, err := NewBindingsFromConfig(
+		cfg,
+		ethClient,
+		logger,
+	)
+	if err != nil {
+		return nil, err
+	}
+	elChainReader := NewELChainReader(
+		elContractBindings.Slasher,
+		elContractBindings.DelegationManager,
+		elContractBindings.StrategyManager,
+		elContractBindings.AvsDirectory,
+		logger,
+		ethClient,
+	)
+	return NewELChainWriter(
+		elContractBindings.Slasher,
+		elContractBindings.DelegationManager,
+		elContractBindings.StrategyManager,
+		elContractBindings.StrategyManagerAddr,
+		elChainReader,
+		ethClient,
+		logger,
+		eigenMetrics,
+		txMgr,
+	), nil
+}
+
 func (w *ELChainWriter) RegisterAsOperator(ctx context.Context, operator types.Operator) (*gethtypes.Receipt, error) {
+	if w.delegationManager == nil {
+		return nil, errors.New("DelegationManager contract not provided")
+	}
+
 	w.logger.Infof("registering operator %s to EigenLayer", operator.Address)
 	opDetails := delegationmanager.IDelegationManagerOperatorDetails{
 		DeprecatedEarningsReceiver: gethcommon.HexToAddress(operator.EarningsReceiverAddress),
@@ -145,6 +185,9 @@ func (w *ELChainWriter) UpdateOperatorDetails(
 	ctx context.Context,
 	operator types.Operator,
 ) (*gethtypes.Receipt, error) {
+	if w.delegationManager == nil {
+		return nil, errors.New("DelegationManager contract not provided")
+	}
 
 	w.logger.Infof("updating operator details of operator %s to EigenLayer", operator.Address)
 	opDetails := delegationmanager.IDelegationManagerOperatorDetails{
@@ -178,6 +221,10 @@ func (w *ELChainWriter) UpdateOperatorDetails(
 }
 
 func (w *ELChainWriter) UpdateMetadataURI(ctx context.Context, uri string) (*gethtypes.Receipt, error) {
+	if w.delegationManager == nil {
+		return nil, errors.New("DelegationManager contract not provided")
+	}
+
 	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
 	if err != nil {
 		return nil, err
@@ -205,6 +252,10 @@ func (w *ELChainWriter) DepositERC20IntoStrategy(
 	strategyAddr gethcommon.Address,
 	amount *big.Int,
 ) (*gethtypes.Receipt, error) {
+	if w.strategyManager == nil {
+		return nil, errors.New("StrategyManager contract not provided")
+	}
+
 	w.logger.Infof("depositing %s tokens into strategy %s", amount.String(), strategyAddr)
 	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
 	if err != nil {
