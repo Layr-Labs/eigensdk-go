@@ -42,7 +42,7 @@ func NewBindingsFromConfig(
 	var avsDirectory *avsdirectory.ContractAVSDirectory
 	var err error
 
-	if cfg.DelegationManagerAddress == gethcommon.HexToAddress("") {
+	if gethcommon.IsHexAddress(cfg.DelegationManagerAddress.String()) {
 		logger.Warn("DelegationManager address not provided, the calls to the contract will not work")
 	} else {
 		contractDelegationManager, err = delegationmanager.NewContractDelegationManager(cfg.DelegationManagerAddress, client)
@@ -69,7 +69,7 @@ func NewBindingsFromConfig(
 		}
 	}
 
-	if cfg.AvsDirectoryAddress == gethcommon.HexToAddress("") {
+	if gethcommon.IsHexAddress(cfg.AvsDirectoryAddress.String()) {
 		logger.Warn("AVSDirectory address not provided, the calls to the contract will not work")
 	} else {
 		avsDirectory, err = avsdirectory.NewContractAVSDirectory(cfg.AvsDirectoryAddress, client)
