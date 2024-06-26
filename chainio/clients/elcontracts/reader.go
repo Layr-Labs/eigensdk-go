@@ -61,7 +61,7 @@ type ELReader interface {
 	) ([32]byte, error)
 }
 
-type ElChainReaderConfig struct {
+type Config struct {
 	DelegationManagerAddress common.Address
 	AvsDirectoryAddress      common.Address
 }
@@ -126,7 +126,7 @@ func BuildELChainReader(
 }
 
 func NewReaderFromConfig(
-	cfg ElChainReaderConfig,
+	cfg Config,
 	ethClient eth.Client,
 	logger logging.Logger,
 ) (*ELChainReader, error) {

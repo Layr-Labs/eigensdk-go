@@ -31,7 +31,7 @@ type ContractBindings struct {
 }
 
 func NewBindingsFromConfig(
-	cfg ElChainReaderConfig,
+	cfg Config,
 	client eth.Client,
 	logger logging.Logger,
 ) (*ContractBindings, error) {
