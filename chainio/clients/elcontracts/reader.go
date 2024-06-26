@@ -9,7 +9,6 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
-	chainioutils "github.com/Layr-Labs/eigensdk-go/chainio/utils"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/Layr-Labs/eigensdk-go/utils"
@@ -93,13 +92,15 @@ func NewELChainReader(
 	}
 }
 
+// BuildELChainReader creates a new ELChainReader
+// Deprecated: Use BuildFromConfig instead
 func BuildELChainReader(
 	delegationManagerAddr gethcommon.Address,
 	avsDirectoryAddr gethcommon.Address,
 	ethClient eth.Client,
 	logger logging.Logger,
 ) (*ELChainReader, error) {
-	elContractBindings, err := chainioutils.NewEigenlayerContractBindings(
+	elContractBindings, err := NewEigenlayerContractBindings(
 		delegationManagerAddr,
 		avsDirectoryAddr,
 		ethClient,
@@ -118,12 +119,12 @@ func BuildELChainReader(
 	), nil
 }
 
-func BuildELChainReaderFromConfig(
+func BuildFromConfig(
 	cfg types.ElChainReaderConfig,
 	ethClient eth.Client,
 	logger logging.Logger,
 ) (*ELChainReader, error) {
-	elContractBindings, err := chainioutils.NewEigenLayerContractBindingsFromConfig(
+	elContractBindings, err := NewBindingsFromConfig(
 		cfg,
 		ethClient,
 		logger,

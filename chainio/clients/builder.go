@@ -10,7 +10,6 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
-	chainioutils "github.com/Layr-Labs/eigensdk-go/chainio/utils"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/metrics"
 	"github.com/Layr-Labs/eigensdk-go/signerv2"
@@ -44,8 +43,8 @@ type Clients struct {
 	EthWsClient                 eth.Client
 	Wallet                      wallet.Wallet
 	TxManager                   txmgr.TxManager
-	AvsRegistryContractBindings *chainioutils.AvsRegistryContractBindings
-	EigenlayerContractBindings  *chainioutils.EigenlayerContractBindings
+	AvsRegistryContractBindings *avsregistry.ContractBindings
+	EigenlayerContractBindings  *elcontracts.ContractBindings
 	Metrics                     *metrics.EigenMetrics // exposes main avs node spec metrics that need to be incremented by avs code and used to start the metrics server
 	PrometheusRegistry          *prometheus.Registry  // Used if avs teams need to register avs-specific metrics
 }
@@ -132,8 +131,8 @@ func BuildAll(
 func (config *BuildAllConfig) buildAVSRegistryContractBindings(
 	ethHttpClient eth.Client,
 	logger logging.Logger,
-) (*chainioutils.AvsRegistryContractBindings, error) {
-	avsRegistryContractBindings, err := chainioutils.NewAVSRegistryContractBindings(
+) (*avsregistry.ContractBindings, error) {
+	avsRegistryContractBindings, err := avsregistry.NewAVSRegistryContractBindings(
 		gethcommon.HexToAddress(config.RegistryCoordinatorAddr),
 		gethcommon.HexToAddress(config.OperatorStateRetrieverAddr),
 		ethHttpClient,
@@ -149,16 +148,16 @@ func (config *BuildAllConfig) buildEigenLayerContractBindings(
 	delegationManagerAddr, avsDirectoryAddr gethcommon.Address,
 	ethHttpClient eth.Client,
 	logger logging.Logger,
-) (*chainioutils.EigenlayerContractBindings, error) {
+) (*elcontracts.ContractBindings, error) {
 
-	elContractBindings, err := chainioutils.NewEigenlayerContractBindings(
+	elContractBindings, err := elcontracts.NewEigenlayerContractBindings(
 		delegationManagerAddr,
 		avsDirectoryAddr,
 		ethHttpClient,
 		logger,
 	)
 	if err != nil {
-		return nil, utils.WrapError("Failed to create EigenlayerContractBindings", err)
+		return nil, utils.WrapError("Failed to create ContractBindings", err)
 	}
 	return elContractBindings, nil
 }
@@ -168,7 +167,7 @@ func (config *BuildAllConfig) BuildELClients(
 	txMgr txmgr.TxManager,
 	logger logging.Logger,
 	eigenMetrics *metrics.EigenMetrics,
-) (*elcontracts.ELChainReader, *elcontracts.ELChainWriter, *chainioutils.EigenlayerContractBindings, error) {
+) (*elcontracts.ELChainReader, *elcontracts.ELChainWriter, *elcontracts.ContractBindings, error) {
 	avsRegistryContractBindings, err := config.buildAVSRegistryContractBindings(ethHttpClient, logger)
 	if err != nil {
 		return nil, nil, nil, err
@@ -190,7 +189,7 @@ func (config *BuildAllConfig) BuildELClients(
 		logger,
 	)
 	if err != nil {
-		return nil, nil, nil, utils.WrapError("Failed to create EigenlayerContractBindings", err)
+		return nil, nil, nil, utils.WrapError("Failed to create ContractBindings", err)
 	}
 
 	// get the Reader for the EL contracts
@@ -224,9 +223,9 @@ func (config *BuildAllConfig) BuildAVSRegistryClients(
 	ethWsClient eth.Client,
 	txMgr txmgr.TxManager,
 	logger logging.Logger,
-) (*avsregistry.AvsRegistryChainReader, *avsregistry.AvsRegistryChainSubscriber, *avsregistry.AvsRegistryChainWriter, *chainioutils.AvsRegistryContractBindings, error) {
+) (*avsregistry.AvsRegistryChainReader, *avsregistry.AvsRegistryChainSubscriber, *avsregistry.AvsRegistryChainWriter, *avsregistry.ContractBindings, error) {
 
-	avsRegistryContractBindings, err := chainioutils.NewAVSRegistryContractBindings(
+	avsRegistryContractBindings, err := avsregistry.NewAVSRegistryContractBindings(
 		gethcommon.HexToAddress(config.RegistryCoordinatorAddr),
 		gethcommon.HexToAddress(config.OperatorStateRetrieverAddr),
 		ethHttpClient,
