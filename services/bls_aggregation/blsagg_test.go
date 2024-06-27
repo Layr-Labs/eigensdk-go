@@ -2,7 +2,6 @@ package blsagg
 
 import (
 	"context"
-	cryptorand "crypto/rand"
 	"crypto/sha256"
 	"encoding/json"
 	"log/slog"
@@ -797,20 +796,18 @@ func TestIntegrationBlsAgg(t *testing.T) {
 	require.NoError(t, err)
 	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
 	t.Run("1 quorums 1 operator", func(t *testing.T) {
+		// define operator ecdsa and bls private keys
 		ecdsaPrivKeyHex := "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
 		ecdsaPrivKey, err := crypto.HexToECDSA(ecdsaPrivKeyHex)
-		operatorAddr := crypto.PubkeyToAddress(ecdsaPrivKey.PublicKey)
-		_ = operatorAddr
 		require.NoError(t, err)
 		blsPrivKeyHex := "0x1"
 		blsKeyPair := newBlsKeyPairPanics(blsPrivKeyHex)
 		operatorId := types.OperatorIdFromG1Pubkey(blsKeyPair.GetPubKeyG1())
 
+		// create avs clients to interact with contracts deployed on anvil
 		ethHttpClient, err := eth.NewClient(anvilHttpEndpoint)
 		require.NoError(t, err)
-
 		logger := logging.NewTextSLogger(os.Stdout, &logging.SLoggerOptions{Level: slog.LevelDebug})
-
 		avsClients, err := clients.BuildAll(clients.BuildAllConfig{
 			EthHttpUrl:                 anvilHttpEndpoint,
 			EthWsUrl:                   anvilWsEndpoint, // not used so doesn't matter that we pass an http url
@@ -820,71 +817,44 @@ func TestIntegrationBlsAgg(t *testing.T) {
 			PromMetricsIpPortAddress:   "localhost:9090",
 		}, ecdsaPrivKey, logger)
 		require.NoError(t, err)
-
 		avsWriter := avsClients.AvsRegistryChainWriter
-
-		quorumNumbers := types.QuorumNums{0}
-		var operatorToAvsRegistrationSigSalt [32]byte
-		_, err = cryptorand.Read(operatorToAvsRegistrationSigSalt[:])
+		avsServiceManager, err := avssm.NewContractMockAvsServiceManager(contractAddrs.ServiceManager, ethHttpClient)
 		require.NoError(t, err)
-		curBlockNum, err := ethHttpClient.BlockNumber(context.Background())
-		require.NoError(t, err)
-		curBlock, err := ethHttpClient.BlockByNumber(context.Background(), big.NewInt(int64(curBlockNum)))
-		require.NoError(t, err)
-		sigValidForSeconds := int64(1_000_000)
-		operatorToAvsRegistrationSigExpiry := big.NewInt(int64(curBlock.Time()) + sigValidForSeconds)
-		_, err = avsWriter.RegisterOperatorInQuorumWithAVSRegistryCoordinator(
-			context.Background(),
-			ecdsaPrivKey, operatorToAvsRegistrationSigSalt, operatorToAvsRegistrationSigExpiry,
-			blsKeyPair, quorumNumbers, "socket",
-		)
-		require.NoError(t, err)
-		testutils.AdvanceChainByNBlocksExecInContainer(context.TODO(), 1, anvilC)
 
-		curBlockNum, err = ethHttpClient.BlockNumber(context.Background())
-		referenceBlockNumber := uint32(curBlockNum) - 1
-		require.NoError(t, err)
-		taskIndex := types.TaskIndex(0)
-		quorumThresholdPercentages := []types.QuorumThresholdPercentage{100}
-		taskResponse := mockTaskResponse{123} // Initialize with appropriate data
-
-		// Compute the TaskResponseDigest as the SHA-256 sum of the TaskResponse
-		taskResponseDigest, err := hashFunction(taskResponse)
-		require.Nil(t, err)
-
-		blsSig := blsKeyPair.SignMessage(taskResponseDigest)
-
+		// create aggregation service
 		operatorsInfoService := operatorsinfo.NewOperatorsInfoServiceInMemory(context.TODO(), avsClients.AvsRegistryChainSubscriber, avsClients.AvsRegistryChainReader, nil, logger)
 		avsRegistryService := avsregistry.NewAvsRegistryServiceChainCaller(avsClients.AvsRegistryChainReader, operatorsInfoService, logger)
 		blsAggServ := NewBlsAggregatorService(avsRegistryService, hashFunction, logger)
 
+		// register operator
+		quorumNumbers := types.QuorumNums{0}
+		_, err = avsWriter.RegisterOperator(context.Background(), ecdsaPrivKey, blsKeyPair, quorumNumbers, "socket")
+		require.NoError(t, err)
+
+		// create the task related parameters: RBN, quorumThresholdPercentages, taskIndex and taskResponse
+		curBlockNum, err := ethHttpClient.BlockNumber(context.Background())
+		require.NoError(t, err)
+		referenceBlockNumber := uint32(curBlockNum)
+		// need to advance chain by 1 block because of the check in signatureChecker where RBN must be < current block number
+		testutils.AdvanceChainByNBlocksExecInContainer(context.TODO(), 1, anvilC)
+		taskIndex := types.TaskIndex(0)
+		taskResponse := mockTaskResponse{123} // Initialize with appropriate data
+		quorumThresholdPercentages := []types.QuorumThresholdPercentage{100}
+
+		// initialize the task
 		err = blsAggServ.InitializeNewTask(taskIndex, uint32(referenceBlockNumber), quorumNumbers, quorumThresholdPercentages, tasksTimeToExpiry)
 		require.Nil(t, err)
+
+		// compute the signature and send it to the aggregation service
+		taskResponseDigest, err := hashFunction(taskResponse)
+		require.Nil(t, err)
+		blsSig := blsKeyPair.SignMessage(taskResponseDigest)
 		err = blsAggServ.ProcessNewSignature(context.Background(), taskIndex, taskResponse, blsSig, operatorId)
 		require.Nil(t, err)
-		blsAggServiceResp := <-blsAggServ.aggregatedResponsesC
 
-		nonSignerPubkeys := []avssm.BN254G1Point{}
-		for _, nonSignerPubkey := range blsAggServiceResp.NonSignersPubkeysG1 {
-			nonSignerPubkeys = append(nonSignerPubkeys, avssm.BN254G1Point(utils.ConvertToBN254G1Point(nonSignerPubkey)))
-		}
-		quorumApks := []avssm.BN254G1Point{}
-		for _, quorumApk := range blsAggServiceResp.QuorumApksG1 {
-			quorumApks = append(quorumApks, avssm.BN254G1Point(utils.ConvertToBN254G1Point(quorumApk)))
-		}
-		nonSignerStakesAndSignature := avssm.IBLSSignatureCheckerNonSignerStakesAndSignature{
-			NonSignerPubkeys:             nonSignerPubkeys,
-			QuorumApks:                   quorumApks,
-			ApkG2:                        avssm.BN254G2Point(utils.ConvertToBN254G2Point(blsAggServiceResp.SignersApkG2)),
-			Sigma:                        avssm.BN254G1Point(utils.ConvertToBN254G1Point(blsAggServiceResp.SignersAggSigG1.G1Point)),
-			NonSignerQuorumBitmapIndices: blsAggServiceResp.NonSignerQuorumBitmapIndices,
-			QuorumApkIndices:             blsAggServiceResp.QuorumApkIndices,
-			TotalStakeIndices:            blsAggServiceResp.TotalStakeIndices,
-			NonSignerStakeIndices:        blsAggServiceResp.NonSignerStakeIndices,
-		}
-		avsServiceManager, err := avssm.NewContractMockAvsServiceManager(contractAddrs.ServiceManager, ethHttpClient)
-		require.NoError(t, err)
-		_, _, err = avsServiceManager.CheckSignatures(&bind.CallOpts{}, taskResponseDigest, quorumNumbers.UnderlyingType(), uint32(referenceBlockNumber), nonSignerStakesAndSignature)
+		// wait for the response from the aggregation service and check the signature
+		blsAggServiceResp := <-blsAggServ.aggregatedResponsesC
+		_, _, err = avsServiceManager.CheckSignatures(&bind.CallOpts{}, taskResponseDigest, quorumNumbers.UnderlyingType(), uint32(referenceBlockNumber), blsAggServiceResp.toNonSignerStakesAndSignature())
 		require.NoError(t, err)
 	})
 
@@ -899,4 +869,26 @@ func newBlsKeyPairPanics(hexKey string) *bls.KeyPair {
 		panic(err)
 	}
 	return keypair
+}
+
+func (blsAggServiceResp *BlsAggregationServiceResponse) toNonSignerStakesAndSignature() avssm.IBLSSignatureCheckerNonSignerStakesAndSignature {
+	nonSignerPubkeys := []avssm.BN254G1Point{}
+	for _, nonSignerPubkey := range blsAggServiceResp.NonSignersPubkeysG1 {
+		nonSignerPubkeys = append(nonSignerPubkeys, avssm.BN254G1Point(utils.ConvertToBN254G1Point(nonSignerPubkey)))
+	}
+	quorumApks := []avssm.BN254G1Point{}
+	for _, quorumApk := range blsAggServiceResp.QuorumApksG1 {
+		quorumApks = append(quorumApks, avssm.BN254G1Point(utils.ConvertToBN254G1Point(quorumApk)))
+	}
+	nonSignerStakesAndSignature := avssm.IBLSSignatureCheckerNonSignerStakesAndSignature{
+		NonSignerPubkeys:             nonSignerPubkeys,
+		QuorumApks:                   quorumApks,
+		ApkG2:                        avssm.BN254G2Point(utils.ConvertToBN254G2Point(blsAggServiceResp.SignersApkG2)),
+		Sigma:                        avssm.BN254G1Point(utils.ConvertToBN254G1Point(blsAggServiceResp.SignersAggSigG1.G1Point)),
+		NonSignerQuorumBitmapIndices: blsAggServiceResp.NonSignerQuorumBitmapIndices,
+		QuorumApkIndices:             blsAggServiceResp.QuorumApkIndices,
+		TotalStakeIndices:            blsAggServiceResp.TotalStakeIndices,
+		NonSignerStakeIndices:        blsAggServiceResp.NonSignerStakeIndices,
+	}
+	return nonSignerStakesAndSignature
 }
