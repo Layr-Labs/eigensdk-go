@@ -3,6 +3,9 @@ package elcontracts
 import (
 	"context"
 	"errors"
+
+	"github.com/Layr-Labs/eigensdk-go/utils"
+
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -12,6 +15,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
+	rewardscoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IRewardsCoordinator"
 	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/ISlasher"
 	strategymanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StrategyManager"
 	"github.com/Layr-Labs/eigensdk-go/logging"
@@ -36,12 +40,18 @@ type ELWriter interface {
 		strategyAddr gethcommon.Address,
 		amount *big.Int,
 	) (*gethtypes.Receipt, error)
+
+	SetClaimerFor(
+		ctx context.Context,
+		claimer gethcommon.Address,
+	) (*gethtypes.Receipt, error)
 }
 
 type ELChainWriter struct {
-	slasher             slasher.ContractISlasherTransacts
-	delegationManager   delegationmanager.ContractDelegationManagerTransacts
-	strategyManager     strategymanager.ContractStrategyManagerTransacts
+	slasher             *slasher.ContractISlasher
+	delegationManager   *delegationmanager.ContractDelegationManager
+	strategyManager     *strategymanager.ContractStrategyManager
+	rewardsCoordinator  *rewardscoordinator.ContractIRewardsCoordinator
 	strategyManagerAddr gethcommon.Address
 	elChainReader       ELReader
 	ethClient           eth.Client
@@ -52,9 +62,10 @@ type ELChainWriter struct {
 var _ ELWriter = (*ELChainWriter)(nil)
 
 func NewELChainWriter(
-	slasher slasher.ContractISlasherTransacts,
-	delegationManager delegationmanager.ContractDelegationManagerTransacts,
-	strategyManager strategymanager.ContractStrategyManagerTransacts,
+	slasher *slasher.ContractISlasher,
+	delegationManager *delegationmanager.ContractDelegationManager,
+	strategyManager *strategymanager.ContractStrategyManager,
+	rewardsCoordinator *rewardscoordinator.ContractIRewardsCoordinator,
 	strategyManagerAddr gethcommon.Address,
 	elChainReader ELReader,
 	ethClient eth.Client,
@@ -69,6 +80,7 @@ func NewELChainWriter(
 		delegationManager:   delegationManager,
 		strategyManager:     strategyManager,
 		strategyManagerAddr: strategyManagerAddr,
+		rewardsCoordinator:  rewardsCoordinator,
 		elChainReader:       elChainReader,
 		logger:              logger,
 		ethClient:           ethClient,
@@ -107,6 +119,7 @@ func BuildELChainWriter(
 		elContractBindings.Slasher,
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
+		nil,
 		elContractBindings.StrategyManagerAddr,
 		elChainReader,
 		ethClient,
@@ -143,6 +156,7 @@ func NewWriterFromConfig(
 		elContractBindings.Slasher,
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
+		elContractBindings.RewardsCoordinator,
 		elContractBindings.StrategyManagerAddr,
 		elChainReader,
 		ethClient,
@@ -288,5 +302,30 @@ func (w *ELChainWriter) DepositERC20IntoStrategy(
 	}
 
 	w.logger.Infof("deposited %s into strategy %s", amount.String(), strategyAddr)
+	return receipt, nil
+}
+
+func (w *ELChainWriter) SetClaimerFor(
+	ctx context.Context,
+	claimer gethcommon.Address,
+) (*gethtypes.Receipt, error) {
+	if w.rewardsCoordinator == nil {
+		return nil, errors.New("RewardsCoordinator contract not provided")
+	}
+
+	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
+	if err != nil {
+		return nil, err
+	}
+
+	tx, err := w.rewardsCoordinator.SetClaimerFor(noSendTxOpts, claimer)
+	if err != nil {
+		return nil, err
+	}
+	receipt, err := w.txMgr.Send(ctx, tx)
+	if err != nil {
+		return nil, utils.WrapError("failed to send tx", err)
+	}
+
 	return receipt, nil
 }

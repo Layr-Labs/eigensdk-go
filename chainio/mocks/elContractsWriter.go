@@ -73,6 +73,21 @@ func (mr *MockELWriterMockRecorder) RegisterAsOperator(arg0, arg1 any) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterAsOperator", reflect.TypeOf((*MockELWriter)(nil).RegisterAsOperator), arg0, arg1)
 }
 
+// SetClaimerFor mocks base method.
+func (m *MockELWriter) SetClaimerFor(arg0 context.Context, arg1 common.Address) (*types0.Receipt, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetClaimerFor", arg0, arg1)
+	ret0, _ := ret[0].(*types0.Receipt)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SetClaimerFor indicates an expected call of SetClaimerFor.
+func (mr *MockELWriterMockRecorder) SetClaimerFor(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetClaimerFor", reflect.TypeOf((*MockELWriter)(nil).SetClaimerFor), arg0, arg1)
+}
+
 // UpdateMetadataURI mocks base method.
 func (m *MockELWriter) UpdateMetadataURI(arg0 context.Context, arg1 string) (*types0.Receipt, error) {
 	m.ctrl.T.Helper()

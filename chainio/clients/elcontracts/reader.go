@@ -9,16 +9,15 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
-	"github.com/Layr-Labs/eigensdk-go/logging"
-	"github.com/Layr-Labs/eigensdk-go/types"
-	"github.com/Layr-Labs/eigensdk-go/utils"
-
 	avsdirectory "github.com/Layr-Labs/eigensdk-go/contracts/bindings/AVSDirectory"
 	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
 	erc20 "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IERC20"
 	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/ISlasher"
 	strategy "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IStrategy"
 	strategymanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StrategyManager"
+	"github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/types"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
 type ELReader interface {
@@ -62,16 +61,17 @@ type ELReader interface {
 }
 
 type Config struct {
-	DelegationManagerAddress common.Address
-	AvsDirectoryAddress      common.Address
+	DelegationManagerAddress  common.Address
+	AvsDirectoryAddress       common.Address
+	RewardsCoordinatorAddress common.Address
 }
 
 type ELChainReader struct {
 	logger            logging.Logger
 	slasher           slasher.ContractISlasherCalls
-	delegationManager delegationmanager.ContractDelegationManagerCalls
-	strategyManager   strategymanager.ContractStrategyManagerCalls
-	avsDirectory      avsdirectory.ContractAVSDirectoryCalls
+	delegationManager *delegationmanager.ContractDelegationManager
+	strategyManager   *strategymanager.ContractStrategyManager
+	avsDirectory      *avsdirectory.ContractAVSDirectory
 	ethClient         eth.Client
 }
 
@@ -80,9 +80,9 @@ var _ ELReader = (*ELChainReader)(nil)
 
 func NewELChainReader(
 	slasher slasher.ContractISlasherCalls,
-	delegationManager delegationmanager.ContractDelegationManagerCalls,
-	strategyManager strategymanager.ContractStrategyManagerCalls,
-	avsDirectory avsdirectory.ContractAVSDirectoryCalls,
+	delegationManager *delegationmanager.ContractDelegationManager,
+	strategyManager *strategymanager.ContractStrategyManager,
+	avsDirectory *avsdirectory.ContractAVSDirectory,
 	logger logging.Logger,
 	ethClient eth.Client,
 ) *ELChainReader {
