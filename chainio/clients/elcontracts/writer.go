@@ -3,6 +3,7 @@ package elcontracts
 import (
 	"context"
 	"errors"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 
 	"math/big"
 
@@ -311,7 +312,6 @@ func (w *ELChainWriter) SetClaimerFor(
 		return nil, errors.New("RewardsCoordinator contract not provided")
 	}
 
-	w.logger.Infof("setting claimer %s", claimer)
 	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
 	if err != nil {
 		return nil, err
@@ -323,9 +323,8 @@ func (w *ELChainWriter) SetClaimerFor(
 	}
 	receipt, err := w.txMgr.Send(ctx, tx)
 	if err != nil {
-		return nil, errors.New("failed to send tx with err: " + err.Error())
+		return nil, utils.WrapError("failed to send tx", err)
 	}
 
-	w.logger.Infof("set claimer %s successful", claimer)
 	return receipt, nil
 }
