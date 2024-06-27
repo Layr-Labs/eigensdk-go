@@ -3,6 +3,7 @@ package elcontracts
 import (
 	"context"
 	"errors"
+
 	"github.com/Layr-Labs/eigensdk-go/utils"
 
 	"math/big"

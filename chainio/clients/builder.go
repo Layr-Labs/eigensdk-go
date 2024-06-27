@@ -206,7 +206,7 @@ func (config *BuildAllConfig) BuildELClients(
 		elContractBindings.Slasher,
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
-		nil,
+		nil, // this is nil because we don't have access to the rewards coordinator contract right now. we are going to refactor this method later
 		elContractBindings.StrategyManagerAddr,
 		elChainReader,
 		ethHttpClient,
