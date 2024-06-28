@@ -74,7 +74,7 @@ type GeometricTxManager struct {
 
 var _ AsyncTxManager = (*GeometricTxManager)(nil)
 
-func NewTxnManager(
+func NewGeometricTxnManager(
 	ethClient eth.Client,
 	gasOracle gasoracle.GasOracle,
 	wallet wallet.Wallet,
@@ -118,6 +118,9 @@ func (t *GeometricTxManager) Start(ctx context.Context) {
 			case <-ctx.Done():
 				return
 			case req := <-t.requestChan:
+				// TODO: we currently can only monitor one transaction at a time.
+				// so if gas spikes then we will only be bumping the gas of the first txn in the requestChan, and the
+				// others will have to wait until its been mined + confirmed before we can bump their gas
 				receipt, err := t.monitorTransaction(ctx, req)
 				if err != nil {
 					t.receiptChan <- &ReceiptOrErr{
