@@ -39,14 +39,14 @@ func TestAvsRegistryServiceChainCaller_getOperatorPubkeys(t *testing.T) {
 	// TODO(samlaf): add error test cases
 	var tests = []struct {
 		name                    string
-		mocksInitializationFunc func(*chainiomocks.MockAvsRegistryReader, *servicemocks.MockOperatorsInfoService)
+		mocksInitializationFunc func(*chainiomocks.MockAVSReader, *servicemocks.MockOperatorsInfoService)
 		queryOperatorId         types.OperatorId
 		wantErr                 error
 		wantOperatorInfo        types.OperatorInfo
 	}{
 		{
 			name: "should return operator info",
-			mocksInitializationFunc: func(mockAvsRegistryReader *chainiomocks.MockAvsRegistryReader, mockOperatorsInfoService *servicemocks.MockOperatorsInfoService) {
+			mocksInitializationFunc: func(mockAvsRegistryReader *chainiomocks.MockAVSReader, mockOperatorsInfoService *servicemocks.MockOperatorsInfoService) {
 				mockAvsRegistryReader.EXPECT().GetOperatorFromId(gomock.Any(), testOperator.operatorId).Return(testOperator.operatorAddr, nil)
 				mockOperatorsInfoService.EXPECT().GetOperatorInfo(gomock.Any(), testOperator.operatorAddr).Return(testOperator.operatorInfo, true)
 			},
@@ -60,7 +60,7 @@ func TestAvsRegistryServiceChainCaller_getOperatorPubkeys(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create mocks
 			mockCtrl := gomock.NewController(t)
-			mockAvsRegistryReader := chainiomocks.NewMockAvsRegistryReader(mockCtrl)
+			mockAvsRegistryReader := chainiomocks.NewMockAVSReader(mockCtrl)
 			mockOperatorsInfoService := servicemocks.NewMockOperatorsInfoService(mockCtrl)
 
 			if tt.mocksInitializationFunc != nil {
@@ -97,7 +97,7 @@ func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
 
 	var tests = []struct {
 		name                      string
-		mocksInitializationFunc   func(*chainiomocks.MockAvsRegistryReader, *servicemocks.MockOperatorsInfoService)
+		mocksInitializationFunc   func(*chainiomocks.MockAVSReader, *servicemocks.MockOperatorsInfoService)
 		queryQuorumNumbers        types.QuorumNums
 		queryBlockNum             types.BlockNum
 		wantErr                   error
@@ -105,7 +105,7 @@ func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
 	}{
 		{
 			name: "should return operatorsAvsState",
-			mocksInitializationFunc: func(mockAvsRegistryReader *chainiomocks.MockAvsRegistryReader, mockOperatorsInfoService *servicemocks.MockOperatorsInfoService) {
+			mocksInitializationFunc: func(mockAvsRegistryReader *chainiomocks.MockAVSReader, mockOperatorsInfoService *servicemocks.MockOperatorsInfoService) {
 				mockAvsRegistryReader.EXPECT().GetOperatorsStakeInQuorumsAtBlock(gomock.Any(), types.QuorumNums{1}, types.BlockNum(1)).Return([][]opstateretrievar.OperatorStateRetrieverOperator{
 					{
 						{
@@ -135,7 +135,7 @@ func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create mocks
 			mockCtrl := gomock.NewController(t)
-			mockAvsRegistryReader := chainiomocks.NewMockAvsRegistryReader(mockCtrl)
+			mockAvsRegistryReader := chainiomocks.NewMockAVSReader(mockCtrl)
 			mockOperatorsInfoService := servicemocks.NewMockOperatorsInfoService(mockCtrl)
 
 			if tt.mocksInitializationFunc != nil {
@@ -172,7 +172,7 @@ func TestAvsRegistryServiceChainCaller_GetQuorumsAvsState(t *testing.T) {
 
 	var tests = []struct {
 		name                    string
-		mocksInitializationFunc func(*chainiomocks.MockAvsRegistryReader, *servicemocks.MockOperatorsInfoService)
+		mocksInitializationFunc func(*chainiomocks.MockAVSReader, *servicemocks.MockOperatorsInfoService)
 		queryQuorumNumbers      types.QuorumNums
 		queryBlockNum           types.BlockNum
 		wantErr                 error
@@ -180,7 +180,7 @@ func TestAvsRegistryServiceChainCaller_GetQuorumsAvsState(t *testing.T) {
 	}{
 		{
 			name: "should return operatorsAvsState",
-			mocksInitializationFunc: func(mockAvsRegistryReader *chainiomocks.MockAvsRegistryReader, mockOperatorsInfoService *servicemocks.MockOperatorsInfoService) {
+			mocksInitializationFunc: func(mockAvsRegistryReader *chainiomocks.MockAVSReader, mockOperatorsInfoService *servicemocks.MockOperatorsInfoService) {
 				mockAvsRegistryReader.EXPECT().GetOperatorsStakeInQuorumsAtBlock(gomock.Any(), types.QuorumNums{1}, types.BlockNum(1)).Return([][]opstateretrievar.OperatorStateRetrieverOperator{
 					{
 						{
@@ -210,7 +210,7 @@ func TestAvsRegistryServiceChainCaller_GetQuorumsAvsState(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create mocks
 			mockCtrl := gomock.NewController(t)
-			mockAvsRegistryReader := chainiomocks.NewMockAvsRegistryReader(mockCtrl)
+			mockAvsRegistryReader := chainiomocks.NewMockAVSReader(mockCtrl)
 			mockOperatorsInfoService := servicemocks.NewMockOperatorsInfoService(mockCtrl)
 
 			if tt.mocksInitializationFunc != nil {

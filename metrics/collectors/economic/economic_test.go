@@ -28,7 +28,7 @@ func TestEconomicCollector(t *testing.T) {
 	elReader := mocks.NewMockELReader(mockCtrl)
 	elReader.EXPECT().OperatorIsFrozen(gomock.Any(), operatorAddr).Return(false, nil)
 
-	avsRegistryReader := mocks.NewMockAvsRegistryReader(mockCtrl)
+	avsRegistryReader := mocks.NewMockAVSReader(mockCtrl)
 	avsRegistryReader.EXPECT().GetOperatorId(gomock.Any(), operatorAddr).Return(operatorId, nil)
 	avsRegistryReader.EXPECT().GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(gomock.Any(), gomock.Any()).Return(
 		map[types.QuorumNum]*big.Int{

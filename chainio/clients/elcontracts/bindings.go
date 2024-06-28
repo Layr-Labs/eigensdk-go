@@ -38,14 +38,17 @@ func NewBindingsFromConfig(
 	client eth.Client,
 	logger logging.Logger,
 ) (*ContractBindings, error) {
-	var contractDelegationManager *delegationmanager.ContractDelegationManager
-	var contractSlasher *slasher.ContractISlasher
-	var contractStrategyManager *strategymanager.ContractStrategyManager
-	var slasherAddr gethcommon.Address
-	var strategyManagerAddr gethcommon.Address
-	var avsDirectory *avsdirectory.ContractAVSDirectory
-	var rewardsCoordinator *rewardscoordinator.ContractIRewardsCoordinator
-	var err error
+	var (
+		err error
+
+		contractDelegationManager *delegationmanager.ContractDelegationManager
+		contractSlasher           *slasher.ContractISlasher
+		contractStrategyManager   *strategymanager.ContractStrategyManager
+		slasherAddr               gethcommon.Address
+		strategyManagerAddr       gethcommon.Address
+		avsDirectory              *avsdirectory.ContractAVSDirectory
+		rewardsCoordinator        *rewardscoordinator.ContractIRewardsCoordinator
+	)
 
 	if isZeroAddress(cfg.DelegationManagerAddress) {
 		logger.Warn("DelegationManager address not provided, the calls to the contract will not work")

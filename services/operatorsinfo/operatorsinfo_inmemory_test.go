@@ -48,14 +48,14 @@ func TestGetOperatorInfo(t *testing.T) {
 	// Define tests
 	var tests = []struct {
 		name                    string
-		mocksInitializationFunc func(*mocks.MockAvsRegistrySubscriber, *mocks.MockAvsRegistryReader, *mocks.MockSubscription)
+		mocksInitializationFunc func(*mocks.MockAVSSubscriber, *mocks.MockAVSReader, *mocks.MockSubscription)
 		queryOperatorAddr       common.Address
 		wantOperatorFound       bool
 		wantOperatorInfo        types.OperatorInfo
 	}{
 		{
 			name: "should return false if operator not found",
-			mocksInitializationFunc: func(mockAvsRegistrySubscriber *mocks.MockAvsRegistrySubscriber, mockAvsReader *mocks.MockAvsRegistryReader, mockSubscription *mocks.MockSubscription) {
+			mocksInitializationFunc: func(mockAvsRegistrySubscriber *mocks.MockAVSSubscriber, mockAvsReader *mocks.MockAVSReader, mockSubscription *mocks.MockSubscription) {
 				errC := make(chan error)
 				mockSubscription.EXPECT().Err().AnyTimes().Return(errC)
 				mockAvsRegistrySubscriber.EXPECT().SubscribeToNewPubkeyRegistrations().Return(nil, mockSubscription, nil)
@@ -69,7 +69,7 @@ func TestGetOperatorInfo(t *testing.T) {
 		},
 		{
 			name: "should return operator info found via query",
-			mocksInitializationFunc: func(mockAvsRegistrySubscriber *mocks.MockAvsRegistrySubscriber, mockAvsReader *mocks.MockAvsRegistryReader, mockSubscription *mocks.MockSubscription) {
+			mocksInitializationFunc: func(mockAvsRegistrySubscriber *mocks.MockAVSSubscriber, mockAvsReader *mocks.MockAVSReader, mockSubscription *mocks.MockSubscription) {
 				errC := make(chan error)
 				mockSubscription.EXPECT().Err().AnyTimes().Return(errC)
 				mockAvsRegistrySubscriber.EXPECT().SubscribeToNewPubkeyRegistrations().Return(nil, mockSubscription, nil)
@@ -87,7 +87,7 @@ func TestGetOperatorInfo(t *testing.T) {
 		},
 		{
 			name: "should return operator info found via subscription",
-			mocksInitializationFunc: func(mockAvsRegistrySubscriber *mocks.MockAvsRegistrySubscriber, mockAvsReader *mocks.MockAvsRegistryReader, mockSubscription *mocks.MockSubscription) {
+			mocksInitializationFunc: func(mockAvsRegistrySubscriber *mocks.MockAVSSubscriber, mockAvsReader *mocks.MockAVSReader, mockSubscription *mocks.MockSubscription) {
 				errC := make(chan error)
 				pubkeyRegistrationEventC := make(chan *apkregistrybindings.ContractBLSApkRegistryNewPubkeyRegistration, 1)
 				pubkeyRegistrationEvent := &apkregistrybindings.ContractBLSApkRegistryNewPubkeyRegistration{
@@ -121,8 +121,8 @@ func TestGetOperatorInfo(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create mocks
 			mockCtrl := gomock.NewController(t)
-			mockAvsRegistrySubscriber := mocks.NewMockAvsRegistrySubscriber(mockCtrl)
-			mockAvsReader := mocks.NewMockAvsRegistryReader(mockCtrl)
+			mockAvsRegistrySubscriber := mocks.NewMockAVSSubscriber(mockCtrl)
+			mockAvsReader := mocks.NewMockAVSReader(mockCtrl)
 			mockSubscription := mocks.NewMockSubscription(mockCtrl)
 
 			if tt.mocksInitializationFunc != nil {

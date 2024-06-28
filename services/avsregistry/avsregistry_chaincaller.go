@@ -14,19 +14,19 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
-// AvsRegistryServiceChainCaller is a wrapper around AvsRegistryReader that transforms the data into
+// AvsRegistryServiceChainCaller is a wrapper around Reader that transforms the data into
 // nicer golang types that are easier to work with
 type AvsRegistryServiceChainCaller struct {
-	avsregistry.AvsRegistryReader
+	avsregistry.Reader
 	operatorInfoService opinfoservice.OperatorsInfoService
 	logger              logging.Logger
 }
 
 var _ AvsRegistryService = (*AvsRegistryServiceChainCaller)(nil)
 
-func NewAvsRegistryServiceChainCaller(avsRegistryReader avsregistry.AvsRegistryReader, operatorInfoService opinfoservice.OperatorsInfoService, logger logging.Logger) *AvsRegistryServiceChainCaller {
+func NewAvsRegistryServiceChainCaller(avsRegistryReader avsregistry.Reader, operatorInfoService opinfoservice.OperatorsInfoService, logger logging.Logger) *AvsRegistryServiceChainCaller {
 	return &AvsRegistryServiceChainCaller{
-		AvsRegistryReader:   avsRegistryReader,
+		Reader:              avsRegistryReader,
 		operatorInfoService: operatorInfoService,
 		logger:              logger,
 	}
@@ -35,7 +35,7 @@ func NewAvsRegistryServiceChainCaller(avsRegistryReader avsregistry.AvsRegistryR
 func (ar *AvsRegistryServiceChainCaller) GetOperatorsAvsStateAtBlock(ctx context.Context, quorumNumbers types.QuorumNums, blockNumber types.BlockNum) (map[types.OperatorId]types.OperatorAvsState, error) {
 	operatorsAvsState := make(map[types.OperatorId]types.OperatorAvsState)
 	// Get operator state for each quorum by querying BLSOperatorStateRetriever (this call is why this service implementation is called ChainCaller)
-	operatorsStakesInQuorums, err := ar.AvsRegistryReader.GetOperatorsStakeInQuorumsAtBlock(&bind.CallOpts{Context: ctx}, quorumNumbers, blockNumber)
+	operatorsStakesInQuorums, err := ar.Reader.GetOperatorsStakeInQuorumsAtBlock(&bind.CallOpts{Context: ctx}, quorumNumbers, blockNumber)
 	if err != nil {
 		return nil, utils.WrapError("Failed to get operator state", err)
 	}
@@ -96,7 +96,7 @@ func (ar *AvsRegistryServiceChainCaller) GetQuorumsAvsStateAtBlock(ctx context.C
 }
 
 func (ar *AvsRegistryServiceChainCaller) getOperatorInfo(ctx context.Context, operatorId types.OperatorId) (types.OperatorInfo, error) {
-	operatorAddr, err := ar.AvsRegistryReader.GetOperatorFromId(&bind.CallOpts{Context: ctx}, operatorId)
+	operatorAddr, err := ar.Reader.GetOperatorFromId(&bind.CallOpts{Context: ctx}, operatorId)
 	if err != nil {
 		return types.OperatorInfo{}, utils.WrapError("Failed to get operator address from pubkey hash", err)
 	}

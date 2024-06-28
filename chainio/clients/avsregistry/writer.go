@@ -7,27 +7,29 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
-	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
-	chainioutils "github.com/Layr-Labs/eigensdk-go/chainio/utils"
-	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
-	"github.com/Layr-Labs/eigensdk-go/logging"
-	"github.com/Layr-Labs/eigensdk-go/types"
-	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
+	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
+	chainioutils "github.com/Layr-Labs/eigensdk-go/chainio/utils"
 	blsapkregistry "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSApkRegistry"
 	opstateretriever "github.com/Layr-Labs/eigensdk-go/contracts/bindings/OperatorStateRetriever"
 	regcoord "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
 	smbase "github.com/Layr-Labs/eigensdk-go/contracts/bindings/ServiceManagerBase"
 	stakeregistry "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StakeRegistry"
+	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
+	"github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/types"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
-type AvsRegistryWriter interface {
+type Writer interface {
+
+	// RegisterOperatorInQuorumWithAVSRegistryCoordinator
 	// TODO(samlaf): an operator that is already registered in a quorum can register with another quorum without passing
 	// signatures perhaps we should add another sdk function for this purpose, that just takes in a quorumNumber and
 	// socket? RegisterOperatorInQuorumWithAVSRegistryCoordinator is used to register a single operator with the AVS's
@@ -86,7 +88,7 @@ type AvsRegistryWriter interface {
 	) (*gethtypes.Receipt, error)
 }
 
-type AvsRegistryChainWriter struct {
+type ChainWriter struct {
 	serviceManagerAddr     gethcommon.Address
 	registryCoordinator    *regcoord.ContractRegistryCoordinator
 	operatorStateRetriever *opstateretriever.ContractOperatorStateRetriever
@@ -98,9 +100,9 @@ type AvsRegistryChainWriter struct {
 	txMgr                  txmgr.TxManager
 }
 
-var _ AvsRegistryWriter = (*AvsRegistryChainWriter)(nil)
+var _ Writer = (*ChainWriter)(nil)
 
-func NewAvsRegistryChainWriter(
+func NewChainWriter(
 	serviceManagerAddr gethcommon.Address,
 	registryCoordinator *regcoord.ContractRegistryCoordinator,
 	operatorStateRetriever *opstateretriever.ContractOperatorStateRetriever,
@@ -110,8 +112,10 @@ func NewAvsRegistryChainWriter(
 	logger logging.Logger,
 	ethClient eth.Client,
 	txMgr txmgr.TxManager,
-) (*AvsRegistryChainWriter, error) {
-	return &AvsRegistryChainWriter{
+) (*ChainWriter, error) {
+	logger = logger.With(logging.ComponentKey, "avsregistry/ChainWriter")
+
+	return &ChainWriter{
 		serviceManagerAddr:     serviceManagerAddr,
 		registryCoordinator:    registryCoordinator,
 		operatorStateRetriever: operatorStateRetriever,
@@ -124,13 +128,15 @@ func NewAvsRegistryChainWriter(
 	}, nil
 }
 
+// BuildAvsRegistryChainWriter creates a new ChainWriter instance from the provided contract addresses
+// Deprecated: Use NewWriterFromConfig instead
 func BuildAvsRegistryChainWriter(
 	registryCoordinatorAddr gethcommon.Address,
 	operatorStateRetrieverAddr gethcommon.Address,
 	logger logging.Logger,
 	ethClient eth.Client,
 	txMgr txmgr.TxManager,
-) (*AvsRegistryChainWriter, error) {
+) (*ChainWriter, error) {
 	registryCoordinator, err := regcoord.NewContractRegistryCoordinator(registryCoordinatorAddr, ethClient)
 	if err != nil {
 		return nil, utils.WrapError("Failed to create RegistryCoordinator contract", err)
@@ -178,7 +184,7 @@ func BuildAvsRegistryChainWriter(
 	if err != nil {
 		return nil, utils.WrapError("Failed to create ELChainReader", err)
 	}
-	return NewAvsRegistryChainWriter(
+	return NewChainWriter(
 		serviceManagerAddr,
 		registryCoordinator,
 		operatorStateRetriever,
@@ -191,7 +197,39 @@ func BuildAvsRegistryChainWriter(
 	)
 }
 
-func (w *AvsRegistryChainWriter) RegisterOperatorInQuorumWithAVSRegistryCoordinator(
+// NewWriterFromConfig creates a new ChainWriter from the provided config
+func NewWriterFromConfig(
+	cfg Config,
+	client eth.Client,
+	txMgr txmgr.TxManager,
+	logger logging.Logger,
+) (*ChainWriter, error) {
+	bindings, err := NewBindingsFromConfig(cfg, client, logger)
+	if err != nil {
+		return nil, err
+	}
+	elReader, err := elcontracts.NewReaderFromConfig(elcontracts.Config{
+		DelegationManagerAddress: bindings.DelegationManagerAddr,
+		AvsDirectoryAddress:      bindings.AvsDirectoryAddr,
+	}, client, logger)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewChainWriter(
+		bindings.ServiceManagerAddr,
+		bindings.RegistryCoordinator,
+		bindings.OperatorStateRetriever,
+		bindings.StakeRegistry,
+		bindings.BlsApkRegistry,
+		elReader,
+		logger,
+		client,
+		txMgr,
+	)
+}
+
+func (w *ChainWriter) RegisterOperatorInQuorumWithAVSRegistryCoordinator(
 	ctx context.Context,
 	// we need to pass the private key explicitly and can't use the signer because registering requires signing a
 	// message which isn't a transaction and the signer can only signs transactions see operatorSignature in
@@ -292,7 +330,7 @@ func (w *AvsRegistryChainWriter) RegisterOperatorInQuorumWithAVSRegistryCoordina
 	return receipt, nil
 }
 
-func (w *AvsRegistryChainWriter) RegisterOperator(
+func (w *ChainWriter) RegisterOperator(
 	ctx context.Context,
 	// we need to pass the private key explicitly and can't use the signer because registering requires signing a
 	// message which isn't a transaction and the signer can only signs transactions. See operatorSignature in
@@ -409,7 +447,7 @@ func (w *AvsRegistryChainWriter) RegisterOperator(
 	return receipt, nil
 }
 
-func (w *AvsRegistryChainWriter) UpdateStakesOfEntireOperatorSetForQuorums(
+func (w *ChainWriter) UpdateStakesOfEntireOperatorSetForQuorums(
 	ctx context.Context,
 	operatorsPerQuorum [][]gethcommon.Address,
 	quorumNumbers types.QuorumNums,
@@ -442,7 +480,7 @@ func (w *AvsRegistryChainWriter) UpdateStakesOfEntireOperatorSetForQuorums(
 
 }
 
-func (w *AvsRegistryChainWriter) UpdateStakesOfOperatorSubsetForAllQuorums(
+func (w *ChainWriter) UpdateStakesOfOperatorSubsetForAllQuorums(
 	ctx context.Context,
 	operators []gethcommon.Address,
 ) (*gethtypes.Receipt, error) {
@@ -469,7 +507,7 @@ func (w *AvsRegistryChainWriter) UpdateStakesOfOperatorSubsetForAllQuorums(
 	return receipt, nil
 }
 
-func (w *AvsRegistryChainWriter) DeregisterOperator(
+func (w *ChainWriter) DeregisterOperator(
 	ctx context.Context,
 	quorumNumbers types.QuorumNums,
 	pubkey regcoord.BN254G1Point,
@@ -495,7 +533,7 @@ func (w *AvsRegistryChainWriter) DeregisterOperator(
 	return receipt, nil
 }
 
-func (w *AvsRegistryChainWriter) UpdateSocket(
+func (w *ChainWriter) UpdateSocket(
 	ctx context.Context,
 	socket types.Socket,
 ) (*gethtypes.Receipt, error) {

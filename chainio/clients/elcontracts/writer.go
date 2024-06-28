@@ -73,7 +73,7 @@ func NewELChainWriter(
 	eigenMetrics metrics.Metrics,
 	txMgr txmgr.TxManager,
 ) *ELChainWriter {
-	logger = logger.With("module", "elcontracts/writer")
+	logger = logger.With(logging.ComponentKey, "elcontracts/writer")
 
 	return &ELChainWriter{
 		slasher:             slasher,
