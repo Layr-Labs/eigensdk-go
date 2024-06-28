@@ -2,30 +2,30 @@ package avsregistry
 
 import (
 	"context"
+	"errors"
 	"math"
 	"math/big"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
-	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
-	"github.com/Layr-Labs/eigensdk-go/logging"
-	"github.com/Layr-Labs/eigensdk-go/types"
-	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	gethcommon "github.com/ethereum/go-ethereum/common"
 
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	apkreg "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSApkRegistry"
 	opstateretriever "github.com/Layr-Labs/eigensdk-go/contracts/bindings/OperatorStateRetriever"
 	regcoord "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
 	stakeregistry "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StakeRegistry"
+	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
+	"github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/types"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
 // DefaultQueryBlockRange different node providers have different eth_getLogs range limits.
 // 10k is an arbitrary choice that should work for most
 var DefaultQueryBlockRange = big.NewInt(10_000)
 
-type AvsRegistryReader interface {
+type Reader interface {
 	GetQuorumCount(opts *bind.CallOpts) (uint8, error)
 
 	GetOperatorsStakeInQuorumsAtCurrentBlock(
@@ -67,11 +67,11 @@ type AvsRegistryReader interface {
 		nonSignerOperatorIds []types.OperatorId,
 	) (opstateretriever.OperatorStateRetrieverCheckSignaturesIndices, error)
 
-	GetOperatorId(opts *bind.CallOpts, operatorAddress gethcommon.Address) ([32]byte, error)
+	GetOperatorId(opts *bind.CallOpts, operatorAddress common.Address) ([32]byte, error)
 
-	GetOperatorFromId(opts *bind.CallOpts, operatorId types.OperatorId) (gethcommon.Address, error)
+	GetOperatorFromId(opts *bind.CallOpts, operatorId types.OperatorId) (common.Address, error)
 
-	IsOperatorRegistered(opts *bind.CallOpts, operatorAddress gethcommon.Address) (bool, error)
+	IsOperatorRegistered(opts *bind.CallOpts, operatorAddress common.Address) (bool, error)
 
 	QueryExistingRegisteredOperatorPubKeys(
 		ctx context.Context,
@@ -88,10 +88,15 @@ type AvsRegistryReader interface {
 	) (map[types.OperatorId]types.Socket, error)
 }
 
-type AvsRegistryChainReader struct {
+type Config struct {
+	RegistryCoordinatorAddress    common.Address
+	OperatorStateRetrieverAddress common.Address
+}
+
+type ChainReader struct {
 	logger                  logging.Logger
-	blsApkRegistryAddr      gethcommon.Address
-	registryCoordinatorAddr gethcommon.Address
+	blsApkRegistryAddr      common.Address
+	registryCoordinatorAddr common.Address
 	registryCoordinator     *regcoord.ContractRegistryCoordinator
 	operatorStateRetriever  *opstateretriever.ContractOperatorStateRetriever
 	stakeRegistry           *stakeregistry.ContractStakeRegistry
@@ -99,18 +104,20 @@ type AvsRegistryChainReader struct {
 }
 
 // forces AvsReader to implement the clients.ReaderInterface interface
-var _ AvsRegistryReader = (*AvsRegistryChainReader)(nil)
+var _ Reader = (*ChainReader)(nil)
 
-func NewAvsRegistryChainReader(
-	registryCoordinatorAddr gethcommon.Address,
-	blsApkRegistryAddr gethcommon.Address,
+func NewChainReader(
+	registryCoordinatorAddr common.Address,
+	blsApkRegistryAddr common.Address,
 	registryCoordinator *regcoord.ContractRegistryCoordinator,
 	operatorStateRetriever *opstateretriever.ContractOperatorStateRetriever,
 	stakeRegistry *stakeregistry.ContractStakeRegistry,
 	logger logging.Logger,
 	ethClient eth.Client,
-) *AvsRegistryChainReader {
-	return &AvsRegistryChainReader{
+) *ChainReader {
+	logger = logger.With("module", "avsregistry/ChainReader")
+
+	return &ChainReader{
 		blsApkRegistryAddr:      blsApkRegistryAddr,
 		registryCoordinatorAddr: registryCoordinatorAddr,
 		registryCoordinator:     registryCoordinator,
@@ -121,12 +128,36 @@ func NewAvsRegistryChainReader(
 	}
 }
 
+// NewReaderFromConfig creates a new ChainReader
+func NewReaderFromConfig(
+	cfg Config,
+	client eth.Client,
+	logger logging.Logger,
+) (*ChainReader, error) {
+	bindings, err := NewBindingsFromConfig(cfg, client, logger)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewChainReader(
+		bindings.RegistryCoordinatorAddr,
+		bindings.BlsApkRegistryAddr,
+		bindings.RegistryCoordinator,
+		bindings.OperatorStateRetriever,
+		bindings.StakeRegistry,
+		logger,
+		client,
+	), nil
+}
+
+// BuildAvsRegistryChainReader creates a new ChainReader
+// Deprecated: Use NewReaderFromConfig instead
 func BuildAvsRegistryChainReader(
-	registryCoordinatorAddr gethcommon.Address,
-	operatorStateRetrieverAddr gethcommon.Address,
+	registryCoordinatorAddr common.Address,
+	operatorStateRetrieverAddr common.Address,
 	ethClient eth.Client,
 	logger logging.Logger,
-) (*AvsRegistryChainReader, error) {
+) (*ChainReader, error) {
 	contractRegistryCoordinator, err := regcoord.NewContractRegistryCoordinator(registryCoordinatorAddr, ethClient)
 	if err != nil {
 		return nil, utils.WrapError("Failed to create contractRegistryCoordinator", err)
@@ -150,7 +181,7 @@ func BuildAvsRegistryChainReader(
 	if err != nil {
 		return nil, utils.WrapError("Failed to create contractOperatorStateRetriever", err)
 	}
-	return NewAvsRegistryChainReader(
+	return NewChainReader(
 		registryCoordinatorAddr,
 		blsApkRegistryAddr,
 		contractRegistryCoordinator,
@@ -161,11 +192,14 @@ func BuildAvsRegistryChainReader(
 	), nil
 }
 
-func (r *AvsRegistryChainReader) GetQuorumCount(opts *bind.CallOpts) (uint8, error) {
+func (r *ChainReader) GetQuorumCount(opts *bind.CallOpts) (uint8, error) {
+	if r.registryCoordinator == nil {
+		return 0, errors.New("RegistryCoordinator contract not provided")
+	}
 	return r.registryCoordinator.QuorumCount(opts)
 }
 
-func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsAtCurrentBlock(
+func (r *ChainReader) GetOperatorsStakeInQuorumsAtCurrentBlock(
 	opts *bind.CallOpts,
 	quorumNumbers types.QuorumNums,
 ) ([][]opstateretriever.OperatorStateRetrieverOperator, error) {
@@ -184,11 +218,15 @@ func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsAtCurrentBlock(
 
 // the contract stores historical state, so blockNumber should be the block number of the state you want to query
 // and the blockNumber in opts should be the block number of the latest block (or set to nil, which is equivalent)
-func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsAtBlock(
+func (r *ChainReader) GetOperatorsStakeInQuorumsAtBlock(
 	opts *bind.CallOpts,
 	quorumNumbers types.QuorumNums,
 	blockNumber uint32,
 ) ([][]opstateretriever.OperatorStateRetrieverOperator, error) {
+	if r.operatorStateRetriever == nil {
+		return nil, errors.New("OperatorStateRetriever contract not provided")
+	}
+
 	operatorStakes, err := r.operatorStateRetriever.GetOperatorState(
 		opts,
 		r.registryCoordinatorAddr,
@@ -200,10 +238,14 @@ func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsAtBlock(
 	return operatorStakes, nil
 }
 
-func (r *AvsRegistryChainReader) GetOperatorAddrsInQuorumsAtCurrentBlock(
+func (r *ChainReader) GetOperatorAddrsInQuorumsAtCurrentBlock(
 	opts *bind.CallOpts,
 	quorumNumbers types.QuorumNums,
 ) ([][]common.Address, error) {
+	if r.operatorStateRetriever == nil {
+		return nil, errors.New("OperatorStateRetriever contract not provided")
+	}
+
 	if opts.Context == nil {
 		opts.Context = context.Background()
 	}
@@ -235,11 +277,15 @@ func (r *AvsRegistryChainReader) GetOperatorAddrsInQuorumsAtCurrentBlock(
 
 }
 
-func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsOfOperatorAtBlock(
+func (r *ChainReader) GetOperatorsStakeInQuorumsOfOperatorAtBlock(
 	opts *bind.CallOpts,
 	operatorId types.OperatorId,
 	blockNumber uint32,
 ) (types.QuorumNums, [][]opstateretriever.OperatorStateRetrieverOperator, error) {
+	if r.operatorStateRetriever == nil {
+		return nil, nil, errors.New("OperatorStateRetriever contract not provided")
+	}
+
 	quorumBitmap, operatorStakes, err := r.operatorStateRetriever.GetOperatorState0(
 		opts,
 		r.registryCoordinatorAddr,
@@ -254,7 +300,7 @@ func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsOfOperatorAtBlock(
 
 // opts will be modified to have the latest blockNumber, so make sure not to reuse it
 // blockNumber in opts will be ignored, and the chain will be queried to get the latest blockNumber
-func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsOfOperatorAtCurrentBlock(
+func (r *ChainReader) GetOperatorsStakeInQuorumsOfOperatorAtCurrentBlock(
 	opts *bind.CallOpts,
 	operatorId types.OperatorId,
 ) (types.QuorumNums, [][]opstateretriever.OperatorStateRetrieverOperator, error) {
@@ -275,10 +321,18 @@ func (r *AvsRegistryChainReader) GetOperatorsStakeInQuorumsOfOperatorAtCurrentBl
 // GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock could have race conditions
 // it currently makes a bunch of calls to fetch "current block" information,
 // so some of them could actually return information from different blocks
-func (r *AvsRegistryChainReader) GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(
+func (r *ChainReader) GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(
 	opts *bind.CallOpts,
 	operatorId types.OperatorId,
 ) (map[types.QuorumNum]types.StakeAmount, error) {
+	if r.registryCoordinator == nil {
+		return nil, errors.New("RegistryCoordinator contract not provided")
+	}
+
+	if r.stakeRegistry == nil {
+		return nil, errors.New("StakeRegistry contract not provided")
+	}
+
 	quorumBitmap, err := r.registryCoordinator.GetCurrentQuorumBitmap(opts, operatorId)
 	if err != nil {
 		return nil, utils.WrapError("Failed to get operator quorums", err)
@@ -299,12 +353,18 @@ func (r *AvsRegistryChainReader) GetOperatorStakeInQuorumsOfOperatorAtCurrentBlo
 	return quorumStakes, nil
 }
 
-func (r *AvsRegistryChainReader) GetCheckSignaturesIndices(
+func (r *ChainReader) GetCheckSignaturesIndices(
 	opts *bind.CallOpts,
 	referenceBlockNumber uint32,
 	quorumNumbers types.QuorumNums,
 	nonSignerOperatorIds []types.OperatorId,
 ) (opstateretriever.OperatorStateRetrieverCheckSignaturesIndices, error) {
+	if r.operatorStateRetriever == nil {
+		return opstateretriever.OperatorStateRetrieverCheckSignaturesIndices{}, errors.New(
+			"OperatorStateRetriever contract not provided",
+		)
+	}
+
 	nonSignerOperatorIdsBytes := make([][32]byte, len(nonSignerOperatorIds))
 	for i, id := range nonSignerOperatorIds {
 		nonSignerOperatorIdsBytes[i] = id
@@ -325,10 +385,14 @@ func (r *AvsRegistryChainReader) GetCheckSignaturesIndices(
 	return checkSignatureIndices, nil
 }
 
-func (r *AvsRegistryChainReader) GetOperatorId(
+func (r *ChainReader) GetOperatorId(
 	opts *bind.CallOpts,
-	operatorAddress gethcommon.Address,
+	operatorAddress common.Address,
 ) ([32]byte, error) {
+	if r.registryCoordinator == nil {
+		return [32]byte{}, errors.New("RegistryCoordinator contract not provided")
+	}
+
 	operatorId, err := r.registryCoordinator.GetOperatorId(
 		opts,
 		operatorAddress,
@@ -339,24 +403,32 @@ func (r *AvsRegistryChainReader) GetOperatorId(
 	return operatorId, nil
 }
 
-func (r *AvsRegistryChainReader) GetOperatorFromId(
+func (r *ChainReader) GetOperatorFromId(
 	opts *bind.CallOpts,
 	operatorId types.OperatorId,
-) (gethcommon.Address, error) {
+) (common.Address, error) {
+	if r.registryCoordinator == nil {
+		return common.Address{}, errors.New("RegistryCoordinator contract not provided")
+	}
+
 	operatorAddress, err := r.registryCoordinator.GetOperatorFromId(
 		opts,
 		operatorId,
 	)
 	if err != nil {
-		return gethcommon.Address{}, utils.WrapError("Failed to get operator address", err)
+		return common.Address{}, utils.WrapError("Failed to get operator address", err)
 	}
 	return operatorAddress, nil
 }
 
-func (r *AvsRegistryChainReader) IsOperatorRegistered(
+func (r *ChainReader) IsOperatorRegistered(
 	opts *bind.CallOpts,
-	operatorAddress gethcommon.Address,
+	operatorAddress common.Address,
 ) (bool, error) {
+	if r.registryCoordinator == nil {
+		return false, errors.New("RegistryCoordinator contract not provided")
+	}
+
 	operatorStatus, err := r.registryCoordinator.GetOperatorStatus(opts, operatorAddress)
 	if err != nil {
 		return false, utils.WrapError("Failed to get operator status", err)
@@ -367,7 +439,7 @@ func (r *AvsRegistryChainReader) IsOperatorRegistered(
 	return registeredWithAvs, nil
 }
 
-func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorPubKeys(
+func (r *ChainReader) QueryExistingRegisteredOperatorPubKeys(
 	ctx context.Context,
 	startBlock *big.Int,
 	stopBlock *big.Int,
@@ -403,10 +475,10 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorPubKeys(
 		query := ethereum.FilterQuery{
 			FromBlock: i,
 			ToBlock:   toBlock,
-			Addresses: []gethcommon.Address{
+			Addresses: []common.Address{
 				r.blsApkRegistryAddr,
 			},
-			Topics: [][]gethcommon.Hash{{blsApkRegistryAbi.Events["NewPubkeyRegistration"].ID}},
+			Topics: [][]common.Hash{{blsApkRegistryAbi.Events["NewPubkeyRegistration"].ID}},
 		}
 
 		logs, err := r.ethClient.FilterLogs(ctx, query)
@@ -425,7 +497,7 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorPubKeys(
 
 		for _, vLog := range logs {
 			// get the operator address
-			operatorAddr := gethcommon.HexToAddress(vLog.Topics[1].Hex())
+			operatorAddr := common.HexToAddress(vLog.Topics[1].Hex())
 			operatorAddresses = append(operatorAddresses, operatorAddr)
 
 			event, err := blsApkRegistryAbi.Unpack("NewPubkeyRegistration", vLog.Data)
@@ -461,12 +533,15 @@ func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorPubKeys(
 	return operatorAddresses, operatorPubkeys, nil
 }
 
-func (r *AvsRegistryChainReader) QueryExistingRegisteredOperatorSockets(
+func (r *ChainReader) QueryExistingRegisteredOperatorSockets(
 	ctx context.Context,
 	startBlock *big.Int,
 	stopBlock *big.Int,
 	blockRange *big.Int,
 ) (map[types.OperatorId]types.Socket, error) {
+	if r.registryCoordinator == nil {
+		return nil, errors.New("RegistryCoordinator contract not provided")
+	}
 
 	if startBlock == nil {
 		startBlock = big.NewInt(0)

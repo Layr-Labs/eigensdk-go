@@ -12,26 +12,28 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
-type AvsRegistrySubscriber interface {
+type Subscriber interface {
 	SubscribeToNewPubkeyRegistrations() (chan *blsapkreg.ContractBLSApkRegistryNewPubkeyRegistration, event.Subscription, error)
 	SubscribeToOperatorSocketUpdates() (chan *regcoord.ContractRegistryCoordinatorOperatorSocketUpdate, event.Subscription, error)
 }
 
-type AvsRegistryChainSubscriber struct {
+type ChainSubscriber struct {
 	logger         logging.Logger
 	regCoord       regcoord.ContractRegistryCoordinatorFilters
 	blsApkRegistry blsapkreg.ContractBLSApkRegistryFilters
 }
 
 // forces EthSubscriber to implement the chainio.Subscriber interface
-var _ AvsRegistrySubscriber = (*AvsRegistryChainSubscriber)(nil)
+var _ Subscriber = (*ChainSubscriber)(nil)
 
-func NewAvsRegistryChainSubscriber(
+func NewChainSubscriber(
 	logger logging.Logger,
 	regCoord regcoord.ContractRegistryCoordinatorFilters,
 	blsApkRegistry blsapkreg.ContractBLSApkRegistryFilters,
-) (*AvsRegistryChainSubscriber, error) {
-	return &AvsRegistryChainSubscriber{
+) (*ChainSubscriber, error) {
+	logger = logger.With("module", "avsregistry/ChainSubscriber")
+
+	return &ChainSubscriber{
 		logger:         logger,
 		regCoord:       regCoord,
 		blsApkRegistry: blsApkRegistry,
@@ -42,7 +44,7 @@ func BuildAvsRegistryChainSubscriber(
 	regCoordAddr common.Address,
 	ethWsClient eth.Client,
 	logger logging.Logger,
-) (*AvsRegistryChainSubscriber, error) {
+) (*ChainSubscriber, error) {
 	regCoord, err := regcoord.NewContractRegistryCoordinator(regCoordAddr, ethWsClient)
 	if err != nil {
 		return nil, utils.WrapError("Failed to create RegistryCoordinator contract", err)
@@ -55,10 +57,23 @@ func BuildAvsRegistryChainSubscriber(
 	if err != nil {
 		return nil, utils.WrapError("Failed to create BLSApkRegistry contract", err)
 	}
-	return NewAvsRegistryChainSubscriber(logger, regCoord, blsApkReg)
+	return NewChainSubscriber(logger, regCoord, blsApkReg)
 }
 
-func (s *AvsRegistryChainSubscriber) SubscribeToNewPubkeyRegistrations() (chan *blsapkreg.ContractBLSApkRegistryNewPubkeyRegistration, event.Subscription, error) {
+func NewSubscriberFromConfig(
+	cfg Config,
+	ethClient eth.Client,
+	logger logging.Logger,
+) (*ChainSubscriber, error) {
+	bindings, err := NewBindingsFromConfig(cfg, ethClient, logger)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewChainSubscriber(logger, bindings.RegistryCoordinator, bindings.BlsApkRegistry)
+}
+
+func (s *ChainSubscriber) SubscribeToNewPubkeyRegistrations() (chan *blsapkreg.ContractBLSApkRegistryNewPubkeyRegistration, event.Subscription, error) {
 	newPubkeyRegistrationChan := make(chan *blsapkreg.ContractBLSApkRegistryNewPubkeyRegistration)
 	sub, err := s.blsApkRegistry.WatchNewPubkeyRegistration(
 		&bind.WatchOpts{}, newPubkeyRegistrationChan, nil,
@@ -69,7 +84,7 @@ func (s *AvsRegistryChainSubscriber) SubscribeToNewPubkeyRegistrations() (chan *
 	return newPubkeyRegistrationChan, sub, nil
 }
 
-func (s *AvsRegistryChainSubscriber) SubscribeToOperatorSocketUpdates() (chan *regcoord.ContractRegistryCoordinatorOperatorSocketUpdate, event.Subscription, error) {
+func (s *ChainSubscriber) SubscribeToOperatorSocketUpdates() (chan *regcoord.ContractRegistryCoordinatorOperatorSocketUpdate, event.Subscription, error) {
 	operatorSocketUpdateChan := make(chan *regcoord.ContractRegistryCoordinatorOperatorSocketUpdate)
 	sub, err := s.regCoord.WatchOperatorSocketUpdate(
 		&bind.WatchOpts{}, operatorSocketUpdateChan, nil,

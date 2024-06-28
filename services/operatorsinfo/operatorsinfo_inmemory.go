@@ -29,8 +29,8 @@ var defaultLogFilterQueryBlockRange = big.NewInt(10_000)
 // to be replicated and load-balanced, so that when it fails traffic can be switched to the other aggregator.
 type OperatorsInfoServiceInMemory struct {
 	logFilterQueryBlockRange *big.Int
-	avsRegistrySubscriber    avsregistry.AvsRegistrySubscriber
-	avsRegistryReader        avsregistry.AvsRegistryReader
+	avsRegistrySubscriber    avsregistry.Subscriber
+	avsRegistryReader        avsregistry.Reader
 	logger                   logging.Logger
 	queryC                   chan<- query
 	// queried via the queryC channel, so don't need mutex to access
@@ -59,8 +59,8 @@ var _ OperatorsInfoService = (*OperatorsInfoServiceInMemory)(nil)
 // Using a separate initialize() function might lead to some users forgetting to call it and the service not behaving properly.
 func NewOperatorsInfoServiceInMemory(
 	ctx context.Context,
-	avsRegistrySubscriber avsregistry.AvsRegistrySubscriber,
-	avsRegistryReader avsregistry.AvsRegistryReader,
+	avsRegistrySubscriber avsregistry.Subscriber,
+	avsRegistryReader avsregistry.Reader,
 	logFilterQueryBlockRange *big.Int,
 	logger logging.Logger,
 ) *OperatorsInfoServiceInMemory {

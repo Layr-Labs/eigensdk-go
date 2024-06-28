@@ -34,9 +34,9 @@ type BuildAllConfig struct {
 // for non-instrumented clients that doesn't return metrics/reg, and another instrumented-constructor
 // that returns instrumented clients and the metrics/reg.
 type Clients struct {
-	AvsRegistryChainReader      *avsregistry.AvsRegistryChainReader
-	AvsRegistryChainSubscriber  *avsregistry.AvsRegistryChainSubscriber
-	AvsRegistryChainWriter      *avsregistry.AvsRegistryChainWriter
+	AvsRegistryChainReader      *avsregistry.ChainReader
+	AvsRegistryChainSubscriber  *avsregistry.ChainSubscriber
+	AvsRegistryChainWriter      *avsregistry.ChainWriter
 	ElChainReader               *elcontracts.ELChainReader
 	ElChainWriter               *elcontracts.ELChainWriter
 	EthHttpClient               eth.Client
@@ -224,7 +224,7 @@ func (config *BuildAllConfig) BuildAVSRegistryClients(
 	ethWsClient eth.Client,
 	txMgr txmgr.TxManager,
 	logger logging.Logger,
-) (*avsregistry.AvsRegistryChainReader, *avsregistry.AvsRegistryChainSubscriber, *avsregistry.AvsRegistryChainWriter, *avsregistry.ContractBindings, error) {
+) (*avsregistry.ChainReader, *avsregistry.ChainSubscriber, *avsregistry.ChainWriter, *avsregistry.ContractBindings, error) {
 
 	avsRegistryContractBindings, err := avsregistry.NewAVSRegistryContractBindings(
 		gethcommon.HexToAddress(config.RegistryCoordinatorAddr),
@@ -236,7 +236,7 @@ func (config *BuildAllConfig) BuildAVSRegistryClients(
 		return nil, nil, nil, nil, utils.WrapError("Failed to create AVSRegistryContractBindings", err)
 	}
 
-	avsRegistryChainReader := avsregistry.NewAvsRegistryChainReader(
+	avsRegistryChainReader := avsregistry.NewChainReader(
 		avsRegistryContractBindings.RegistryCoordinatorAddr,
 		avsRegistryContractBindings.BlsApkRegistryAddr,
 		avsRegistryContractBindings.RegistryCoordinator,
@@ -246,7 +246,7 @@ func (config *BuildAllConfig) BuildAVSRegistryClients(
 		ethHttpClient,
 	)
 
-	avsRegistryChainWriter, err := avsregistry.NewAvsRegistryChainWriter(
+	avsRegistryChainWriter, err := avsregistry.NewChainWriter(
 		avsRegistryContractBindings.ServiceManagerAddr,
 		avsRegistryContractBindings.RegistryCoordinator,
 		avsRegistryContractBindings.OperatorStateRetriever,
