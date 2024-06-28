@@ -86,7 +86,7 @@ func NewELChainReader(
 	logger logging.Logger,
 	ethClient eth.Client,
 ) *ELChainReader {
-	logger = logger.With("module", "elcontracts/reader")
+	logger = logger.With(logging.ComponentKey, "elcontracts/reader")
 
 	return &ELChainReader{
 		slasher:           slasher,

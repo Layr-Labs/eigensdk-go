@@ -113,7 +113,7 @@ func NewChainWriter(
 	ethClient eth.Client,
 	txMgr txmgr.TxManager,
 ) (*ChainWriter, error) {
-	logger = logger.With("module", "avsregistry/ChainWriter")
+	logger = logger.With(logging.ComponentKey, "avsregistry/ChainWriter")
 
 	return &ChainWriter{
 		serviceManagerAddr:     serviceManagerAddr,

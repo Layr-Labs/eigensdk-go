@@ -31,7 +31,7 @@ func NewChainSubscriber(
 	regCoord regcoord.ContractRegistryCoordinatorFilters,
 	blsApkRegistry blsapkreg.ContractBLSApkRegistryFilters,
 ) (*ChainSubscriber, error) {
-	logger = logger.With("module", "avsregistry/ChainSubscriber")
+	logger = logger.With(logging.ComponentKey, "avsregistry/ChainSubscriber")
 
 	return &ChainSubscriber{
 		logger:         logger,

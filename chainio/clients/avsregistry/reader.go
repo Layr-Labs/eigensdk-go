@@ -115,7 +115,7 @@ func NewChainReader(
 	logger logging.Logger,
 	ethClient eth.Client,
 ) *ChainReader {
-	logger = logger.With("module", "avsregistry/ChainReader")
+	logger = logger.With(logging.ComponentKey, "avsregistry/ChainReader")
 
 	return &ChainReader{
 		blsApkRegistryAddr:      blsApkRegistryAddr,
