@@ -27,7 +27,7 @@ var (
 type SimpleTxManager struct {
 	wallet             wallet.Wallet
 	client             eth.Client
-	log                logging.Logger
+	logger             logging.Logger
 	sender             common.Address
 	gasLimitMultiplier float64
 }
@@ -39,13 +39,13 @@ var _ TxManager = (*SimpleTxManager)(nil)
 func NewSimpleTxManager(
 	wallet wallet.Wallet,
 	client eth.Client,
-	log logging.Logger,
+	logger logging.Logger,
 	sender common.Address,
 ) *SimpleTxManager {
 	return &SimpleTxManager{
 		wallet:             wallet,
 		client:             client,
-		log:                log,
+		logger:             logger,
 		sender:             sender,
 		gasLimitMultiplier: FallbackGasLimitMultiplier,
 	}
@@ -66,7 +66,7 @@ func (m *SimpleTxManager) Send(ctx context.Context, tx *types.Transaction) (*typ
 	// Estimate gas and nonce
 	// can't print tx hash in logs because the tx changes below when we complete and sign it
 	// so the txHash is meaningless at this point
-	m.log.Debug("Estimating gas and nonce")
+	m.logger.Debug("Estimating gas and nonce")
 	tx, err := m.estimateGasAndNonce(ctx, tx)
 	if err != nil {
 		return nil, err
@@ -127,13 +127,13 @@ func (m *SimpleTxManager) waitForReceipt(ctx context.Context, txID wallet.TxID) 
 func (m *SimpleTxManager) queryReceipt(ctx context.Context, txID wallet.TxID) *types.Receipt {
 	receipt, err := m.wallet.GetTransactionReceipt(ctx, txID)
 	if errors.Is(err, ethereum.NotFound) {
-		m.log.Info("Transaction not yet mined", "txID", txID)
+		m.logger.Info("Transaction not yet mined", "txID", txID)
 		return nil
 	} else if err != nil {
-		m.log.Info("Receipt retrieval failed", "txID", txID, "err", err)
+		m.logger.Info("Receipt retrieval failed", "txID", txID, "err", err)
 		return nil
 	} else if receipt == nil {
-		m.log.Warn("Receipt and error are both nil", "txID", txID)
+		m.logger.Warn("Receipt and error are both nil", "txID", txID)
 		return nil
 	}
 
@@ -148,7 +148,7 @@ func (m *SimpleTxManager) estimateGasAndNonce(ctx context.Context, tx *types.Tra
 	if err != nil {
 		// If the transaction failed because the backend does not support
 		// eth_maxPriorityFeePerGas, fallback to using the default constant.
-		m.log.Info("eth_maxPriorityFeePerGas is unsupported by current backend, using fallback gasTipCap")
+		m.logger.Info("eth_maxPriorityFeePerGas is unsupported by current backend, using fallback gasTipCap")
 		gasTipCap = FallbackGasTipCap
 	}
 
