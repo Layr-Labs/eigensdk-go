@@ -9,7 +9,8 @@ import (
 
 type TxID = string
 
-// Wallet is an interface for signing and sending transactions to the network
+// Wallet is an interface for signing and sending transactions to the txpool.
+// For a higher-level interface that includes nonce management and gas bumping, use the TxManager interface.
 // This interface is used to abstract the process of sending transactions to the Ethereum network
 // For example, for an MPC signer, the transaction would be broadcasted via an external API endpoint
 // and the status is tracked via another external endpoint instead of being broadcasted
