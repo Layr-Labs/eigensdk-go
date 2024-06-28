@@ -1,4 +1,8 @@
 ## Signer
+
+> [!WARNING]
+> signer is deprecated. Please use [signerv2](../signerv2/README.md) instead.
+
 This module is used for initializing the signer used to sign smart contract transactions.
 
 There are two types of signer we support

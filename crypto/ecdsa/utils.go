@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/ethereum/go-ethereum/common"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
@@ -112,4 +113,17 @@ func GetAddressFromKeyStoreFile(keyStoreFile string) (gethcommon.Address, error)
 	} else {
 		return gethcommon.HexToAddress(address), nil
 	}
+}
+
+func KeyAndAddressFromHexKey(hexkey string) (*ecdsa.PrivateKey, common.Address, error) {
+	if len(hexkey) > 2 && hexkey[:2] == "0x" {
+		hexkey = hexkey[2:]
+	}
+	ecdsaSk, err := crypto.HexToECDSA(hexkey)
+	if err != nil {
+		return nil, common.Address{}, fmt.Errorf("failed to convert hexkey %s to ecdsa key: %w", hexkey, err)
+	}
+	pk := ecdsaSk.Public()
+	address := crypto.PubkeyToAddress(*pk.(*ecdsa.PublicKey))
+	return ecdsaSk, address, nil
 }
