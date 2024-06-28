@@ -72,7 +72,12 @@ func (o *GasOracle) GetLatestGasCaps(ctx context.Context) (gasTipCap, gasFeeCap 
 	return
 }
 
-func (o *GasOracle) UpdateGas(ctx context.Context, tx *types.Transaction, value, gasTipCap, gasFeeCap *big.Int, from common.Address) (*types.Transaction, error) {
+func (o *GasOracle) UpdateGas(
+	ctx context.Context,
+	tx *types.Transaction,
+	value, gasTipCap, gasFeeCap *big.Int,
+	from common.Address,
+) (*types.Transaction, error) {
 	gasLimit, err := o.client.EstimateGas(ctx, ethereum.CallMsg{
 		From:      from,
 		To:        tx.To(),
