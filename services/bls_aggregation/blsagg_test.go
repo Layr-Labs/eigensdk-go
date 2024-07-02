@@ -849,6 +849,8 @@ func TestIntegrationBlsAgg(t *testing.T) {
 		taskResponseDigest, err := hashFunction(taskResponse)
 		require.Nil(t, err)
 		blsSig := blsKeyPair.SignMessage(taskResponseDigest)
+		// Test will hang here b/c we aren't listening for the error response coming from blsAggServ.aggregatedResponsesC below
+		// we enter a deadlock...
 		err = blsAggServ.ProcessNewSignature(context.Background(), taskIndex, taskResponse, blsSig, operatorId)
 		require.Nil(t, err)
 

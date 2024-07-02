@@ -236,6 +236,7 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 	}
 	operatorsAvsStateDict, err := a.avsRegistryService.GetOperatorsAvsStateAtBlock(context.Background(), quorumNumbers, taskCreatedBlock)
 	if err != nil {
+		a.logger.Error("UNRECOVERABLE ERROR. If no one is listening on a.aggregatedResponsesC, this will never return...", "err", err)
 		a.aggregatedResponsesC <- BlsAggregationServiceResponse{
 			Err:       TaskInitializationErrorFn(fmt.Errorf("AggregatorService failed to get operators state from avs registry at blockNum %d: %w", taskCreatedBlock, err), taskIndex),
 			TaskIndex: taskIndex,
