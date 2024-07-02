@@ -74,6 +74,21 @@ func (mr *MockELReaderMockRecorder) CalculateOperatorAVSRegistrationDigestHash(a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CalculateOperatorAVSRegistrationDigestHash", reflect.TypeOf((*MockELReader)(nil).CalculateOperatorAVSRegistrationDigestHash), arg0, arg1, arg2, arg3, arg4)
 }
 
+// GetDistributionRootsLength mocks base method.
+func (m *MockELReader) GetDistributionRootsLength(arg0 *bind.CallOpts) (*big.Int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDistributionRootsLength", arg0)
+	ret0, _ := ret[0].(*big.Int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDistributionRootsLength indicates an expected call of GetDistributionRootsLength.
+func (mr *MockELReaderMockRecorder) GetDistributionRootsLength(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDistributionRootsLength", reflect.TypeOf((*MockELReader)(nil).GetDistributionRootsLength), arg0)
+}
+
 // GetOperatorDetails mocks base method.
 func (m *MockELReader) GetOperatorDetails(arg0 *bind.CallOpts, arg1 types.Operator) (types.Operator, error) {
 	m.ctrl.T.Helper()

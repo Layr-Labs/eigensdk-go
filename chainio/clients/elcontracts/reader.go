@@ -2,6 +2,7 @@ package elcontracts
 
 import (
 	"errors"
+
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -12,6 +13,7 @@ import (
 	avsdirectory "github.com/Layr-Labs/eigensdk-go/contracts/bindings/AVSDirectory"
 	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
 	erc20 "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IERC20"
+	rewardscoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IRewardsCoordinator"
 	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/ISlasher"
 	strategy "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IStrategy"
 	strategymanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StrategyManager"
@@ -58,6 +60,8 @@ type ELReader interface {
 	CalculateOperatorAVSRegistrationDigestHash(
 		opts *bind.CallOpts, operator gethcommon.Address, avs gethcommon.Address, salt [32]byte, expiry *big.Int,
 	) ([32]byte, error)
+
+	GetDistributionRootsLength(opts *bind.CallOpts) (*big.Int, error)
 }
 
 type Config struct {
@@ -67,12 +71,13 @@ type Config struct {
 }
 
 type ELChainReader struct {
-	logger            logging.Logger
-	slasher           slasher.ContractISlasherCalls
-	delegationManager *delegationmanager.ContractDelegationManager
-	strategyManager   *strategymanager.ContractStrategyManager
-	avsDirectory      *avsdirectory.ContractAVSDirectory
-	ethClient         eth.Client
+	logger             logging.Logger
+	slasher            slasher.ContractISlasherCalls
+	delegationManager  *delegationmanager.ContractDelegationManager
+	strategyManager    *strategymanager.ContractStrategyManager
+	avsDirectory       *avsdirectory.ContractAVSDirectory
+	rewardsCoordinator *rewardscoordinator.ContractIRewardsCoordinator
+	ethClient          eth.Client
 }
 
 // forces EthReader to implement the chainio.Reader interface
@@ -83,18 +88,20 @@ func NewELChainReader(
 	delegationManager *delegationmanager.ContractDelegationManager,
 	strategyManager *strategymanager.ContractStrategyManager,
 	avsDirectory *avsdirectory.ContractAVSDirectory,
+	rewardsCoordinator *rewardscoordinator.ContractIRewardsCoordinator,
 	logger logging.Logger,
 	ethClient eth.Client,
 ) *ELChainReader {
 	logger = logger.With(logging.ComponentKey, "elcontracts/reader")
 
 	return &ELChainReader{
-		slasher:           slasher,
-		delegationManager: delegationManager,
-		strategyManager:   strategyManager,
-		avsDirectory:      avsDirectory,
-		logger:            logger,
-		ethClient:         ethClient,
+		slasher:            slasher,
+		delegationManager:  delegationManager,
+		strategyManager:    strategyManager,
+		avsDirectory:       avsDirectory,
+		rewardsCoordinator: rewardsCoordinator,
+		logger:             logger,
+		ethClient:          ethClient,
 	}
 }
 
@@ -120,6 +127,7 @@ func BuildELChainReader(
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
 		elContractBindings.AvsDirectory,
+		elContractBindings.RewardsCoordinator,
 		logger,
 		ethClient,
 	), nil
@@ -143,6 +151,7 @@ func NewReaderFromConfig(
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
 		elContractBindings.AvsDirectory,
+		elContractBindings.RewardsCoordinator,
 		logger,
 		ethClient,
 	), nil
@@ -293,4 +302,12 @@ func (r *ELChainReader) CalculateOperatorAVSRegistrationDigestHash(
 	return r.avsDirectory.CalculateOperatorAVSRegistrationDigestHash(
 		opts, operator, avs, salt, expiry,
 	)
+}
+
+func (r *ELChainReader) GetDistributionRootsLength(opts *bind.CallOpts) (*big.Int, error) {
+	if r.rewardsCoordinator == nil {
+		return nil, errors.New("RewardsCoordinator contract not provided")
+	}
+
+	return r.rewardsCoordinator.GetDistributionRootsLength(opts)
 }
