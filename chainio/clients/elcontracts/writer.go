@@ -349,12 +349,12 @@ func (w *ELChainWriter) ProcessClaim(
 
 	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
 	if err != nil {
-		return nil, err
+		return nil, utils.WrapError("failed to get no send tx opts", err)
 	}
 
 	tx, err := w.rewardsCoordinator.ProcessClaim(noSendTxOpts, claim, earnerAddress)
 	if err != nil {
-		return nil, err
+		return nil, utils.WrapError("failed to create ProcessClaim tx", err)
 	}
 	receipt, err := w.txMgr.Send(ctx, tx)
 	if err != nil {
