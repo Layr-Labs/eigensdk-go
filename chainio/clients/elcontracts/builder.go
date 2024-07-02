@@ -9,37 +9,37 @@ import (
 
 func BuildClients(
 	config Config,
-	ethHttpClient eth.Client,
+	client eth.Client,
 	txMgr txmgr.TxManager,
 	logger logging.Logger,
 	eigenMetrics *metrics.EigenMetrics,
-) (*ELChainReader, *ELChainWriter, *ContractBindings, error) {
+) (*ChainReader, *ChainWriter, *ContractBindings, error) {
 	elContractBindings, err := NewBindingsFromConfig(
 		config,
-		ethHttpClient,
+		client,
 		logger,
 	)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	elChainReader := NewELChainReader(
+	elChainReader := NewChainReader(
 		elContractBindings.Slasher,
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
 		elContractBindings.AvsDirectory,
 		logger,
-		ethHttpClient,
+		client,
 	)
 
-	elChainWriter := NewELChainWriter(
+	elChainWriter := NewChainWriter(
 		elContractBindings.Slasher,
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
 		elContractBindings.RewardsCoordinator,
 		elContractBindings.StrategyManagerAddr,
 		elChainReader,
-		ethHttpClient,
+		client,
 		logger,
 		eigenMetrics,
 		txMgr,

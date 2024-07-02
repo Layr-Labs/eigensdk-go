@@ -27,17 +27,17 @@ type ChainSubscriber struct {
 var _ Subscriber = (*ChainSubscriber)(nil)
 
 func NewChainSubscriber(
-	logger logging.Logger,
 	regCoord regcoord.ContractRegistryCoordinatorFilters,
 	blsApkRegistry blsapkreg.ContractBLSApkRegistryFilters,
-) (*ChainSubscriber, error) {
+	logger logging.Logger,
+) *ChainSubscriber {
 	logger = logger.With(logging.ComponentKey, "avsregistry/ChainSubscriber")
 
 	return &ChainSubscriber{
-		logger:         logger,
 		regCoord:       regCoord,
 		blsApkRegistry: blsApkRegistry,
-	}, nil
+		logger:         logger,
+	}
 }
 
 func BuildAvsRegistryChainSubscriber(
@@ -57,7 +57,7 @@ func BuildAvsRegistryChainSubscriber(
 	if err != nil {
 		return nil, utils.WrapError("Failed to create BLSApkRegistry contract", err)
 	}
-	return NewChainSubscriber(logger, regCoord, blsApkReg)
+	return NewChainSubscriber(regCoord, blsApkReg, logger), nil
 }
 
 func NewSubscriberFromConfig(
@@ -70,7 +70,7 @@ func NewSubscriberFromConfig(
 		return nil, err
 	}
 
-	return NewChainSubscriber(logger, bindings.RegistryCoordinator, bindings.BlsApkRegistry)
+	return NewChainSubscriber(bindings.RegistryCoordinator, bindings.BlsApkRegistry, logger), nil
 }
 
 func (s *ChainSubscriber) SubscribeToNewPubkeyRegistrations() (chan *blsapkreg.ContractBLSApkRegistryNewPubkeyRegistration, event.Subscription, error) {

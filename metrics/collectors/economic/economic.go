@@ -25,7 +25,7 @@ import (
 // so that they are exported on the same port
 type Collector struct {
 	// TODO(samlaf): we use a chain as the backend for now, but should eventually move to a subgraph
-	elReader          elcontracts.ELReader
+	elReader          elcontracts.Reader
 	avsRegistryReader avsregistry.Reader
 	logger            logging.Logger
 	// params to query the metrics for
@@ -62,7 +62,7 @@ type Collector struct {
 var _ prometheus.Collector = (*Collector)(nil)
 
 func NewCollector(
-	elReader elcontracts.ELReader, avsRegistryReader avsregistry.Reader,
+	elReader elcontracts.Reader, avsRegistryReader avsregistry.Reader,
 	avsName string, logger logging.Logger,
 	operatorAddr common.Address, quorumNames map[types.QuorumNum]string,
 ) *Collector {

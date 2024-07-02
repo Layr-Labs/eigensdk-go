@@ -14,7 +14,6 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/metrics"
 	"github.com/Layr-Labs/eigensdk-go/signerv2"
 	"github.com/Layr-Labs/eigensdk-go/utils"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -28,6 +27,7 @@ type BuildAllConfig struct {
 	PromMetricsIpPortAddress   string
 }
 
+// Clients is a struct that holds all the clients that are needed to interact with the AVS and EL contracts.
 // TODO: this is confusing right now because clients are not instrumented clients, but
 // we return metrics and prometheus reg, so user has to build instrumented clients at the call
 // site if they need them. We should probably separate into two separate constructors, one
@@ -37,8 +37,8 @@ type Clients struct {
 	AvsRegistryChainReader      *avsregistry.ChainReader
 	AvsRegistryChainSubscriber  *avsregistry.ChainSubscriber
 	AvsRegistryChainWriter      *avsregistry.ChainWriter
-	ElChainReader               *elcontracts.ELChainReader
-	ElChainWriter               *elcontracts.ELChainWriter
+	ElChainReader               *elcontracts.ChainReader
+	ElChainWriter               *elcontracts.ChainWriter
 	EthHttpClient               eth.Client
 	EthWsClient                 eth.Client
 	Wallet                      wallet.Wallet
@@ -87,27 +87,34 @@ func BuildAll(
 		return nil, utils.WrapError("Failed to create transaction sender", err)
 	}
 	txMgr := txmgr.NewSimpleTxManager(pkWallet, ethHttpClient, logger, addr)
+
+	// creating AVS clients: Reader and Writer
+	avsRegistryChainReader, avsRegistryChainSubscriber, avsRegistryChainWriter, avsRegistryContractBindings, err := avsregistry.BuildClients(
+		avsregistry.Config{
+			RegistryCoordinatorAddress:    gethcommon.HexToAddress(config.RegistryCoordinatorAddr),
+			OperatorStateRetrieverAddress: gethcommon.HexToAddress(config.OperatorStateRetrieverAddr),
+		},
+		ethHttpClient,
+		txMgr,
+		logger,
+	)
+	if err != nil {
+		return nil, utils.WrapError("Failed to create AVS Registry Reader and Writer", err)
+	}
+
 	// creating EL clients: Reader, Writer and EigenLayer Contract Bindings
-	elChainReader, elChainWriter, elContractBindings, err := config.BuildELClients(
+	elChainReader, elChainWriter, elContractBindings, err := elcontracts.BuildClients(
+		elcontracts.Config{
+			DelegationManagerAddress: avsRegistryContractBindings.DelegationManagerAddr,
+			AvsDirectoryAddress:      avsRegistryContractBindings.AvsDirectoryAddr,
+		},
 		ethHttpClient,
 		txMgr,
 		logger,
 		eigenMetrics,
 	)
 	if err != nil {
-		return nil, utils.WrapError("Failed to create EL Reader, Writer and Subscriber", err)
-	}
-
-	// creating AVS clients: Reader and Writer
-	avsRegistryChainReader, avsRegistryChainSubscriber, avsRegistryChainWriter, avsRegistryContractBindings, err := config.BuildAVSRegistryClients(
-		elChainReader,
-		ethHttpClient,
-		ethWsClient,
-		txMgr,
-		logger,
-	)
-	if err != nil {
-		return nil, utils.WrapError("Failed to create AVS Registry Reader and Writer", err)
+		return nil, utils.WrapError("Failed to create EL Reader and Writer", err)
 	}
 
 	return &Clients{
@@ -126,153 +133,6 @@ func BuildAll(
 		PrometheusRegistry:          promReg,
 	}, nil
 
-}
-
-func (config *BuildAllConfig) buildAVSRegistryContractBindings(
-	ethHttpClient eth.Client,
-	logger logging.Logger,
-) (*avsregistry.ContractBindings, error) {
-	avsRegistryContractBindings, err := avsregistry.NewAVSRegistryContractBindings(
-		gethcommon.HexToAddress(config.RegistryCoordinatorAddr),
-		gethcommon.HexToAddress(config.OperatorStateRetrieverAddr),
-		ethHttpClient,
-		logger,
-	)
-	if err != nil {
-		return nil, utils.WrapError("Failed to create AVSRegistryContractBindings", err)
-	}
-	return avsRegistryContractBindings, nil
-}
-
-func (config *BuildAllConfig) buildEigenLayerContractBindings(
-	delegationManagerAddr, avsDirectoryAddr gethcommon.Address,
-	ethHttpClient eth.Client,
-	logger logging.Logger,
-) (*elcontracts.ContractBindings, error) {
-
-	elContractBindings, err := elcontracts.NewEigenlayerContractBindings(
-		delegationManagerAddr,
-		avsDirectoryAddr,
-		ethHttpClient,
-		logger,
-	)
-	if err != nil {
-		return nil, utils.WrapError("Failed to create ContractBindings", err)
-	}
-	return elContractBindings, nil
-}
-
-func (config *BuildAllConfig) BuildELClients(
-	ethHttpClient eth.Client,
-	txMgr txmgr.TxManager,
-	logger logging.Logger,
-	eigenMetrics *metrics.EigenMetrics,
-) (*elcontracts.ELChainReader, *elcontracts.ELChainWriter, *elcontracts.ContractBindings, error) {
-	avsRegistryContractBindings, err := config.buildAVSRegistryContractBindings(ethHttpClient, logger)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	delegationManagerAddr, err := avsRegistryContractBindings.StakeRegistry.Delegation(&bind.CallOpts{})
-	if err != nil {
-		logger.Fatal("Failed to fetch DelegationManager contract", "err", err)
-	}
-	avsDirectoryAddr, err := avsRegistryContractBindings.ServiceManager.AvsDirectory(&bind.CallOpts{})
-	if err != nil {
-		logger.Fatal("Failed to fetch AVSDirectory contract", "err", err)
-	}
-
-	elContractBindings, err := config.buildEigenLayerContractBindings(
-		delegationManagerAddr,
-		avsDirectoryAddr,
-		ethHttpClient,
-		logger,
-	)
-	if err != nil {
-		return nil, nil, nil, utils.WrapError("Failed to create ContractBindings", err)
-	}
-
-	// get the Reader for the EL contracts
-	elChainReader := elcontracts.NewELChainReader(
-		elContractBindings.Slasher,
-		elContractBindings.DelegationManager,
-		elContractBindings.StrategyManager,
-		elContractBindings.AvsDirectory,
-		logger,
-		ethHttpClient,
-	)
-
-	elChainWriter := elcontracts.NewELChainWriter(
-		elContractBindings.Slasher,
-		elContractBindings.DelegationManager,
-		elContractBindings.StrategyManager,
-		nil, // this is nil because we don't have access to the rewards coordinator contract right now. we are going to refactor this method later
-		elContractBindings.StrategyManagerAddr,
-		elChainReader,
-		ethHttpClient,
-		logger,
-		eigenMetrics,
-		txMgr,
-	)
-
-	return elChainReader, elChainWriter, elContractBindings, nil
-}
-
-func (config *BuildAllConfig) BuildAVSRegistryClients(
-	elReader elcontracts.ELReader,
-	ethHttpClient eth.Client,
-	ethWsClient eth.Client,
-	txMgr txmgr.TxManager,
-	logger logging.Logger,
-) (*avsregistry.ChainReader, *avsregistry.ChainSubscriber, *avsregistry.ChainWriter, *avsregistry.ContractBindings, error) {
-
-	avsRegistryContractBindings, err := avsregistry.NewAVSRegistryContractBindings(
-		gethcommon.HexToAddress(config.RegistryCoordinatorAddr),
-		gethcommon.HexToAddress(config.OperatorStateRetrieverAddr),
-		ethHttpClient,
-		logger,
-	)
-	if err != nil {
-		return nil, nil, nil, nil, utils.WrapError("Failed to create AVSRegistryContractBindings", err)
-	}
-
-	avsRegistryChainReader := avsregistry.NewChainReader(
-		avsRegistryContractBindings.RegistryCoordinatorAddr,
-		avsRegistryContractBindings.BlsApkRegistryAddr,
-		avsRegistryContractBindings.RegistryCoordinator,
-		avsRegistryContractBindings.OperatorStateRetriever,
-		avsRegistryContractBindings.StakeRegistry,
-		logger,
-		ethHttpClient,
-	)
-
-	avsRegistryChainWriter, err := avsregistry.NewChainWriter(
-		avsRegistryContractBindings.ServiceManagerAddr,
-		avsRegistryContractBindings.RegistryCoordinator,
-		avsRegistryContractBindings.OperatorStateRetriever,
-		avsRegistryContractBindings.StakeRegistry,
-		avsRegistryContractBindings.BlsApkRegistry,
-		elReader,
-		logger,
-		ethHttpClient,
-		txMgr,
-	)
-	if err != nil {
-		return nil, nil, nil, nil, utils.WrapError("Failed to create AVSRegistryChainWriter", err)
-	}
-
-	// get the Subscriber for Avs Registry contracts
-	// note that the subscriber needs a ws connection instead of http
-	avsRegistrySubscriber, err := avsregistry.BuildAvsRegistryChainSubscriber(
-		avsRegistryContractBindings.RegistryCoordinatorAddr,
-		ethWsClient,
-		logger,
-	)
-	if err != nil {
-		return nil, nil, nil, nil, utils.WrapError("Failed to create ELChainSubscriber", err)
-	}
-
-	return avsRegistryChainReader, avsRegistrySubscriber, avsRegistryChainWriter, avsRegistryContractBindings, nil
 }
 
 // Very basic validation that makes sure all fields are nonempty
