@@ -22,7 +22,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
-type ELReader interface {
+type Reader interface {
 	IsOperatorRegistered(opts *bind.CallOpts, operator types.Operator) (bool, error)
 
 	GetOperatorDetails(opts *bind.CallOpts, operator types.Operator) (types.Operator, error)
@@ -72,20 +72,19 @@ type Config struct {
 	RewardsCoordinatorAddress common.Address
 }
 
-type ELChainReader struct {
-	logger             logging.Logger
-	slasher            slasher.ContractISlasherCalls
-	delegationManager  *delegationmanager.ContractDelegationManager
-	strategyManager    *strategymanager.ContractStrategyManager
-	avsDirectory       *avsdirectory.ContractAVSDirectory
-	rewardsCoordinator *rewardscoordinator.ContractIRewardsCoordinator
-	ethClient          eth.Client
+type ChainReader struct {
+	logger            logging.Logger
+	slasher           slasher.ContractISlasherCalls
+	delegationManager *delegationmanager.ContractDelegationManager
+	strategyManager   *strategymanager.ContractStrategyManager
+	avsDirectory      *avsdirectory.ContractAVSDirectory
+	ethClient         eth.Client
 }
 
 // forces EthReader to implement the chainio.Reader interface
-var _ ELReader = (*ELChainReader)(nil)
+var _ Reader = (*ChainReader)(nil)
 
-func NewELChainReader(
+func NewChainReader(
 	slasher slasher.ContractISlasherCalls,
 	delegationManager *delegationmanager.ContractDelegationManager,
 	strategyManager *strategymanager.ContractStrategyManager,
@@ -93,17 +92,16 @@ func NewELChainReader(
 	rewardsCoordinator *rewardscoordinator.ContractIRewardsCoordinator,
 	logger logging.Logger,
 	ethClient eth.Client,
-) *ELChainReader {
+) *ChainReader {
 	logger = logger.With(logging.ComponentKey, "elcontracts/reader")
 
-	return &ELChainReader{
-		slasher:            slasher,
-		delegationManager:  delegationManager,
-		strategyManager:    strategyManager,
-		avsDirectory:       avsDirectory,
-		rewardsCoordinator: rewardsCoordinator,
-		logger:             logger,
-		ethClient:          ethClient,
+	return &ChainReader{
+		slasher:           slasher,
+		delegationManager: delegationManager,
+		strategyManager:   strategyManager,
+		avsDirectory:      avsDirectory,
+		logger:            logger,
+		ethClient:         ethClient,
 	}
 }
 
@@ -114,7 +112,7 @@ func BuildELChainReader(
 	avsDirectoryAddr gethcommon.Address,
 	ethClient eth.Client,
 	logger logging.Logger,
-) (*ELChainReader, error) {
+) (*ChainReader, error) {
 	elContractBindings, err := NewEigenlayerContractBindings(
 		delegationManagerAddr,
 		avsDirectoryAddr,
@@ -124,7 +122,7 @@ func BuildELChainReader(
 	if err != nil {
 		return nil, err
 	}
-	return NewELChainReader(
+	return NewChainReader(
 		elContractBindings.Slasher,
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
@@ -139,7 +137,7 @@ func NewReaderFromConfig(
 	cfg Config,
 	ethClient eth.Client,
 	logger logging.Logger,
-) (*ELChainReader, error) {
+) (*ChainReader, error) {
 	elContractBindings, err := NewBindingsFromConfig(
 		cfg,
 		ethClient,
@@ -148,7 +146,7 @@ func NewReaderFromConfig(
 	if err != nil {
 		return nil, err
 	}
-	return NewELChainReader(
+	return NewChainReader(
 		elContractBindings.Slasher,
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
@@ -159,7 +157,7 @@ func NewReaderFromConfig(
 	), nil
 }
 
-func (r *ELChainReader) IsOperatorRegistered(opts *bind.CallOpts, operator types.Operator) (bool, error) {
+func (r *ChainReader) IsOperatorRegistered(opts *bind.CallOpts, operator types.Operator) (bool, error) {
 	if r.delegationManager == nil {
 		return false, errors.New("DelegationManager contract not provided")
 	}
@@ -175,7 +173,7 @@ func (r *ELChainReader) IsOperatorRegistered(opts *bind.CallOpts, operator types
 	return isOperator, nil
 }
 
-func (r *ELChainReader) GetOperatorDetails(opts *bind.CallOpts, operator types.Operator) (types.Operator, error) {
+func (r *ChainReader) GetOperatorDetails(opts *bind.CallOpts, operator types.Operator) (types.Operator, error) {
 	if r.delegationManager == nil {
 		return types.Operator{}, errors.New("DelegationManager contract not provided")
 	}
@@ -197,7 +195,7 @@ func (r *ELChainReader) GetOperatorDetails(opts *bind.CallOpts, operator types.O
 }
 
 // GetStrategyAndUnderlyingToken returns the strategy contract and the underlying token address
-func (r *ELChainReader) GetStrategyAndUnderlyingToken(
+func (r *ChainReader) GetStrategyAndUnderlyingToken(
 	opts *bind.CallOpts, strategyAddr gethcommon.Address,
 ) (*strategy.ContractIStrategy, gethcommon.Address, error) {
 	contractStrategy, err := strategy.NewContractIStrategy(strategyAddr, r.ethClient)
@@ -213,7 +211,7 @@ func (r *ELChainReader) GetStrategyAndUnderlyingToken(
 
 // GetStrategyAndUnderlyingERC20Token returns the strategy contract, the erc20 bindings for the underlying token
 // and the underlying token address
-func (r *ELChainReader) GetStrategyAndUnderlyingERC20Token(
+func (r *ChainReader) GetStrategyAndUnderlyingERC20Token(
 	opts *bind.CallOpts, strategyAddr gethcommon.Address,
 ) (*strategy.ContractIStrategy, erc20.ContractIERC20Methods, gethcommon.Address, error) {
 	contractStrategy, err := strategy.NewContractIStrategy(strategyAddr, r.ethClient)
@@ -231,7 +229,7 @@ func (r *ELChainReader) GetStrategyAndUnderlyingERC20Token(
 	return contractStrategy, contractUnderlyingToken, underlyingTokenAddr, nil
 }
 
-func (r *ELChainReader) ServiceManagerCanSlashOperatorUntilBlock(
+func (r *ChainReader) ServiceManagerCanSlashOperatorUntilBlock(
 	opts *bind.CallOpts,
 	operatorAddr gethcommon.Address,
 	serviceManagerAddr gethcommon.Address,
@@ -245,7 +243,7 @@ func (r *ELChainReader) ServiceManagerCanSlashOperatorUntilBlock(
 	)
 }
 
-func (r *ELChainReader) OperatorIsFrozen(opts *bind.CallOpts, operatorAddr gethcommon.Address) (bool, error) {
+func (r *ChainReader) OperatorIsFrozen(opts *bind.CallOpts, operatorAddr gethcommon.Address) (bool, error) {
 	if r.slasher == nil {
 		return false, errors.New("slasher contract not provided")
 	}
@@ -253,7 +251,7 @@ func (r *ELChainReader) OperatorIsFrozen(opts *bind.CallOpts, operatorAddr gethc
 	return r.slasher.IsFrozen(opts, operatorAddr)
 }
 
-func (r *ELChainReader) GetOperatorSharesInStrategy(
+func (r *ChainReader) GetOperatorSharesInStrategy(
 	opts *bind.CallOpts,
 	operatorAddr gethcommon.Address,
 	strategyAddr gethcommon.Address,
@@ -269,7 +267,7 @@ func (r *ELChainReader) GetOperatorSharesInStrategy(
 	)
 }
 
-func (r *ELChainReader) CalculateDelegationApprovalDigestHash(
+func (r *ChainReader) CalculateDelegationApprovalDigestHash(
 	opts *bind.CallOpts, staker gethcommon.Address, operator gethcommon.Address,
 	delegationApprover gethcommon.Address, approverSalt [32]byte, expiry *big.Int,
 ) ([32]byte, error) {
@@ -282,7 +280,7 @@ func (r *ELChainReader) CalculateDelegationApprovalDigestHash(
 	)
 }
 
-func (r *ELChainReader) CalculateOperatorAVSRegistrationDigestHash(
+func (r *ChainReader) CalculateOperatorAVSRegistrationDigestHash(
 	opts *bind.CallOpts, operator gethcommon.Address, avs gethcommon.Address, salt [32]byte, expiry *big.Int,
 ) ([32]byte, error) {
 	if r.avsDirectory == nil {
@@ -294,7 +292,7 @@ func (r *ELChainReader) CalculateOperatorAVSRegistrationDigestHash(
 	)
 }
 
-func (r *ELChainReader) GetDistributionRootsLength(opts *bind.CallOpts) (*big.Int, error) {
+func (r *ChainReader) GetDistributionRootsLength(opts *bind.CallOpts) (*big.Int, error) {
 	if r.rewardsCoordinator == nil {
 		return nil, errors.New("RewardsCoordinator contract not provided")
 	}
@@ -302,7 +300,7 @@ func (r *ELChainReader) GetDistributionRootsLength(opts *bind.CallOpts) (*big.In
 	return r.rewardsCoordinator.GetDistributionRootsLength(opts)
 }
 
-func (r *ELChainReader) CurrRewardsCalculationEndTimestamp(opts *bind.CallOpts) (uint32, error) {
+func (r *ChainReader) CurrRewardsCalculationEndTimestamp(opts *bind.CallOpts) (uint32, error) {
 	if r.rewardsCoordinator == nil {
 		return 0, errors.New("RewardsCoordinator contract not provided")
 	}

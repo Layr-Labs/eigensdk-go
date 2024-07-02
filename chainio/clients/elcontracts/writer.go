@@ -23,7 +23,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/types"
 )
 
-type ELWriter interface {
+type Writer interface {
 	// RegisterAsOperator registers an operator onchain.
 	RegisterAsOperator(ctx context.Context, operator types.Operator) (*gethtypes.Receipt, error)
 
@@ -53,35 +53,35 @@ type ELWriter interface {
 	) (*gethtypes.Receipt, error)
 }
 
-type ELChainWriter struct {
+type ChainWriter struct {
 	slasher             *slasher.ContractISlasher
 	delegationManager   *delegationmanager.ContractDelegationManager
 	strategyManager     *strategymanager.ContractStrategyManager
 	rewardsCoordinator  *rewardscoordinator.ContractIRewardsCoordinator
 	strategyManagerAddr gethcommon.Address
-	elChainReader       ELReader
+	elChainReader       Reader
 	ethClient           eth.Client
 	logger              logging.Logger
 	txMgr               txmgr.TxManager
 }
 
-var _ ELWriter = (*ELChainWriter)(nil)
+var _ Writer = (*ChainWriter)(nil)
 
-func NewELChainWriter(
+func NewChainWriter(
 	slasher *slasher.ContractISlasher,
 	delegationManager *delegationmanager.ContractDelegationManager,
 	strategyManager *strategymanager.ContractStrategyManager,
 	rewardsCoordinator *rewardscoordinator.ContractIRewardsCoordinator,
 	strategyManagerAddr gethcommon.Address,
-	elChainReader ELReader,
+	elChainReader Reader,
 	ethClient eth.Client,
 	logger logging.Logger,
 	eigenMetrics metrics.Metrics,
 	txMgr txmgr.TxManager,
-) *ELChainWriter {
+) *ChainWriter {
 	logger = logger.With(logging.ComponentKey, "elcontracts/writer")
 
-	return &ELChainWriter{
+	return &ChainWriter{
 		slasher:             slasher,
 		delegationManager:   delegationManager,
 		strategyManager:     strategyManager,
@@ -94,7 +94,7 @@ func NewELChainWriter(
 	}
 }
 
-// BuildELChainWriter builds an ELChainWriter instance.
+// BuildELChainWriter builds an ChainWriter instance.
 // Deprecated: Use NewWriterFromConfig instead.
 func BuildELChainWriter(
 	delegationManagerAddr gethcommon.Address,
@@ -103,7 +103,7 @@ func BuildELChainWriter(
 	logger logging.Logger,
 	eigenMetrics metrics.Metrics,
 	txMgr txmgr.TxManager,
-) (*ELChainWriter, error) {
+) (*ChainWriter, error) {
 	elContractBindings, err := NewEigenlayerContractBindings(
 		delegationManagerAddr,
 		avsDirectoryAddr,
@@ -113,7 +113,7 @@ func BuildELChainWriter(
 	if err != nil {
 		return nil, err
 	}
-	elChainReader := NewELChainReader(
+	elChainReader := NewChainReader(
 		elContractBindings.Slasher,
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
@@ -122,7 +122,7 @@ func BuildELChainWriter(
 		logger,
 		ethClient,
 	)
-	return NewELChainWriter(
+	return NewChainWriter(
 		elContractBindings.Slasher,
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
@@ -142,7 +142,7 @@ func NewWriterFromConfig(
 	logger logging.Logger,
 	eigenMetrics metrics.Metrics,
 	txMgr txmgr.TxManager,
-) (*ELChainWriter, error) {
+) (*ChainWriter, error) {
 	elContractBindings, err := NewBindingsFromConfig(
 		cfg,
 		ethClient,
@@ -151,7 +151,7 @@ func NewWriterFromConfig(
 	if err != nil {
 		return nil, err
 	}
-	elChainReader := NewELChainReader(
+	elChainReader := NewChainReader(
 		elContractBindings.Slasher,
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
@@ -160,7 +160,7 @@ func NewWriterFromConfig(
 		logger,
 		ethClient,
 	)
-	return NewELChainWriter(
+	return NewChainWriter(
 		elContractBindings.Slasher,
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
@@ -174,7 +174,7 @@ func NewWriterFromConfig(
 	), nil
 }
 
-func (w *ELChainWriter) RegisterAsOperator(ctx context.Context, operator types.Operator) (*gethtypes.Receipt, error) {
+func (w *ChainWriter) RegisterAsOperator(ctx context.Context, operator types.Operator) (*gethtypes.Receipt, error) {
 	if w.delegationManager == nil {
 		return nil, errors.New("DelegationManager contract not provided")
 	}
@@ -203,7 +203,7 @@ func (w *ELChainWriter) RegisterAsOperator(ctx context.Context, operator types.O
 	return receipt, nil
 }
 
-func (w *ELChainWriter) UpdateOperatorDetails(
+func (w *ChainWriter) UpdateOperatorDetails(
 	ctx context.Context,
 	operator types.Operator,
 ) (*gethtypes.Receipt, error) {
@@ -242,7 +242,7 @@ func (w *ELChainWriter) UpdateOperatorDetails(
 	return receipt, nil
 }
 
-func (w *ELChainWriter) UpdateMetadataURI(ctx context.Context, uri string) (*gethtypes.Receipt, error) {
+func (w *ChainWriter) UpdateMetadataURI(ctx context.Context, uri string) (*gethtypes.Receipt, error) {
 	if w.delegationManager == nil {
 		return nil, errors.New("DelegationManager contract not provided")
 	}
@@ -269,7 +269,7 @@ func (w *ELChainWriter) UpdateMetadataURI(ctx context.Context, uri string) (*get
 	return receipt, nil
 }
 
-func (w *ELChainWriter) DepositERC20IntoStrategy(
+func (w *ChainWriter) DepositERC20IntoStrategy(
 	ctx context.Context,
 	strategyAddr gethcommon.Address,
 	amount *big.Int,
@@ -313,7 +313,7 @@ func (w *ELChainWriter) DepositERC20IntoStrategy(
 	return receipt, nil
 }
 
-func (w *ELChainWriter) SetClaimerFor(
+func (w *ChainWriter) SetClaimerFor(
 	ctx context.Context,
 	claimer gethcommon.Address,
 ) (*gethtypes.Receipt, error) {
