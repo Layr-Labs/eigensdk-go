@@ -14,6 +14,7 @@ import (
 	big "math/big"
 	reflect "reflect"
 
+	contractIRewardsCoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IRewardsCoordinator"
 	types "github.com/Layr-Labs/eigensdk-go/types"
 	common "github.com/ethereum/go-ethereum/common"
 	types0 "github.com/ethereum/go-ethereum/core/types"
@@ -56,6 +57,21 @@ func (m *MockELWriter) DepositERC20IntoStrategy(arg0 context.Context, arg1 commo
 func (mr *MockELWriterMockRecorder) DepositERC20IntoStrategy(arg0, arg1, arg2 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DepositERC20IntoStrategy", reflect.TypeOf((*MockELWriter)(nil).DepositERC20IntoStrategy), arg0, arg1, arg2)
+}
+
+// ProcessClaim mocks base method.
+func (m *MockELWriter) ProcessClaim(arg0 context.Context, arg1 contractIRewardsCoordinator.IRewardsCoordinatorRewardsMerkleClaim, arg2 common.Address) (*types0.Receipt, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProcessClaim", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*types0.Receipt)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProcessClaim indicates an expected call of ProcessClaim.
+func (mr *MockELWriterMockRecorder) ProcessClaim(arg0, arg1, arg2 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProcessClaim", reflect.TypeOf((*MockELWriter)(nil).ProcessClaim), arg0, arg1, arg2)
 }
 
 // RegisterAsOperator mocks base method.
