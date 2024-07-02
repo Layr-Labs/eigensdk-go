@@ -45,6 +45,12 @@ type ELWriter interface {
 		ctx context.Context,
 		claimer gethcommon.Address,
 	) (*gethtypes.Receipt, error)
+
+	ProcessClaim(
+		ctx context.Context,
+		claim rewardscoordinator.IRewardsCoordinatorRewardsMerkleClaim,
+		earnerAddress gethcommon.Address,
+	) (*gethtypes.Receipt, error)
 }
 
 type ELChainWriter struct {
@@ -112,6 +118,7 @@ func BuildELChainWriter(
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
 		elContractBindings.AvsDirectory,
+		elContractBindings.RewardsCoordinator,
 		logger,
 		ethClient,
 	)
@@ -119,7 +126,7 @@ func BuildELChainWriter(
 		elContractBindings.Slasher,
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
-		nil,
+		elContractBindings.RewardsCoordinator,
 		elContractBindings.StrategyManagerAddr,
 		elChainReader,
 		ethClient,
@@ -149,6 +156,7 @@ func NewWriterFromConfig(
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
 		elContractBindings.AvsDirectory,
+		elContractBindings.RewardsCoordinator,
 		logger,
 		ethClient,
 	)
@@ -319,6 +327,32 @@ func (w *ELChainWriter) SetClaimerFor(
 	}
 
 	tx, err := w.rewardsCoordinator.SetClaimerFor(noSendTxOpts, claimer)
+	if err != nil {
+		return nil, err
+	}
+	receipt, err := w.txMgr.Send(ctx, tx)
+	if err != nil {
+		return nil, utils.WrapError("failed to send tx", err)
+	}
+
+	return receipt, nil
+}
+
+func (w *ELChainWriter) ProcessClaim(
+	ctx context.Context,
+	claim rewardscoordinator.IRewardsCoordinatorRewardsMerkleClaim,
+	earnerAddress gethcommon.Address,
+) (*gethtypes.Receipt, error) {
+	if w.rewardsCoordinator == nil {
+		return nil, errors.New("RewardsCoordinator contract not provided")
+	}
+
+	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
+	if err != nil {
+		return nil, err
+	}
+
+	tx, err := w.rewardsCoordinator.ProcessClaim(noSendTxOpts, claim, earnerAddress)
 	if err != nil {
 		return nil, err
 	}

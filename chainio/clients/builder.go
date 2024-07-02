@@ -198,6 +198,7 @@ func (config *BuildAllConfig) BuildELClients(
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
 		elContractBindings.AvsDirectory,
+		elContractBindings.RewardsCoordinator,
 		logger,
 		ethHttpClient,
 	)
