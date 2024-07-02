@@ -65,6 +65,7 @@ func BuildAvsRegistryChainSubscriber(
 }
 
 // NewSubscriberFromConfig creates a new instance of ChainSubscriber
+// A websocket ETH Client must be provided
 func NewSubscriberFromConfig(
 	cfg Config,
 	wsClient eth.Client,
