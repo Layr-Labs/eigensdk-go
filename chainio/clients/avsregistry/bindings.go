@@ -130,14 +130,12 @@ func NewBindingsFromConfig(
 	var (
 		err error
 
-		serviceManagerAddr         gethcommon.Address
-		registryCoordinatorAddr    gethcommon.Address
-		stakeRegistryAddr          gethcommon.Address
-		blsApkRegistryAddr         gethcommon.Address
-		indexRegistryAddr          gethcommon.Address
-		operatorStateRetrieverAddr gethcommon.Address
-		delegationManagerAddr      gethcommon.Address
-		avsDirectoryAddr           gethcommon.Address
+		serviceManagerAddr    gethcommon.Address
+		stakeRegistryAddr     gethcommon.Address
+		blsApkRegistryAddr    gethcommon.Address
+		indexRegistryAddr     gethcommon.Address
+		delegationManagerAddr gethcommon.Address
+		avsDirectoryAddr      gethcommon.Address
 
 		contractBlsRegistryCoordinator *regcoordinator.ContractRegistryCoordinator
 		contractServiceManager         *servicemanager.ContractServiceManagerBase
@@ -228,11 +226,11 @@ func NewBindingsFromConfig(
 
 	return &ContractBindings{
 		ServiceManagerAddr:         serviceManagerAddr,
-		RegistryCoordinatorAddr:    registryCoordinatorAddr,
+		RegistryCoordinatorAddr:    cfg.RegistryCoordinatorAddress,
 		StakeRegistryAddr:          stakeRegistryAddr,
 		BlsApkRegistryAddr:         blsApkRegistryAddr,
 		IndexRegistryAddr:          indexRegistryAddr,
-		OperatorStateRetrieverAddr: operatorStateRetrieverAddr,
+		OperatorStateRetrieverAddr: cfg.OperatorStateRetrieverAddress,
 		DelegationManagerAddr:      delegationManagerAddr,
 		AvsDirectoryAddr:           avsDirectoryAddr,
 		ServiceManager:             contractServiceManager,
