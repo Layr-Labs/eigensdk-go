@@ -2,7 +2,7 @@ name: check mocks up-to-date
 on:
   push:
     branches:
-      - master
+      - dev
   pull_request:
 
 permissions:
