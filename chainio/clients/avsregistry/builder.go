@@ -10,6 +10,7 @@ import (
 func BuildClients(
 	config Config,
 	client eth.Client,
+	wsClient eth.Client,
 	txMgr txmgr.TxManager,
 	logger logging.Logger,
 ) (*ChainReader, *ChainSubscriber, *ChainWriter, *ContractBindings, error) {
@@ -33,13 +34,16 @@ func BuildClients(
 		client,
 	)
 
-	chainSubscriber := NewChainSubscriber(
-		avsBindings.RegistryCoordinator,
-		avsBindings.BlsApkRegistry,
+	chainSubscriber, err := NewSubscriberFromConfig(
+		config,
+		wsClient,
 		logger,
 	)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
 
-	// This is ugly but we need elReader to be able to create the AVS writer
+	// This is ugly, but we need elReader to be able to create the AVS writer
 	elChainReader, err := elcontracts.NewReaderFromConfig(
 		elcontracts.Config{
 			DelegationManagerAddress: avsBindings.DelegationManagerAddr,

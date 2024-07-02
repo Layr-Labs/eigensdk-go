@@ -95,6 +95,7 @@ func BuildAll(
 			OperatorStateRetrieverAddress: gethcommon.HexToAddress(config.OperatorStateRetrieverAddr),
 		},
 		ethHttpClient,
+		ethWsClient,
 		txMgr,
 		logger,
 	)

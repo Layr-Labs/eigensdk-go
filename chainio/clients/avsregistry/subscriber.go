@@ -26,6 +26,8 @@ type ChainSubscriber struct {
 // forces EthSubscriber to implement the chainio.Subscriber interface
 var _ Subscriber = (*ChainSubscriber)(nil)
 
+// NewChainSubscriber creates a new instance of ChainSubscriber
+// The bindings must be created using websocket ETH Client
 func NewChainSubscriber(
 	regCoord regcoord.ContractRegistryCoordinatorFilters,
 	blsApkRegistry blsapkreg.ContractBLSApkRegistryFilters,
@@ -40,6 +42,8 @@ func NewChainSubscriber(
 	}
 }
 
+// BuildAvsRegistryChainSubscriber creates a new instance of ChainSubscriber
+// Deprecated: Use NewSubscriberFromConfig instead
 func BuildAvsRegistryChainSubscriber(
 	regCoordAddr common.Address,
 	ethWsClient eth.Client,
@@ -60,12 +64,13 @@ func BuildAvsRegistryChainSubscriber(
 	return NewChainSubscriber(regCoord, blsApkReg, logger), nil
 }
 
+// NewSubscriberFromConfig creates a new instance of ChainSubscriber
 func NewSubscriberFromConfig(
 	cfg Config,
-	ethClient eth.Client,
+	wsClient eth.Client,
 	logger logging.Logger,
 ) (*ChainSubscriber, error) {
-	bindings, err := NewBindingsFromConfig(cfg, ethClient, logger)
+	bindings, err := NewBindingsFromConfig(cfg, wsClient, logger)
 	if err != nil {
 		return nil, err
 	}
