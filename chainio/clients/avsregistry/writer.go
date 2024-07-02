@@ -94,7 +94,7 @@ type ChainWriter struct {
 	operatorStateRetriever *opstateretriever.ContractOperatorStateRetriever
 	stakeRegistry          *stakeregistry.ContractStakeRegistry
 	blsApkRegistry         *blsapkregistry.ContractBLSApkRegistry
-	elReader               elcontracts.ELReader
+	elReader               elcontracts.Reader
 	logger                 logging.Logger
 	ethClient              eth.Client
 	txMgr                  txmgr.TxManager
@@ -108,11 +108,11 @@ func NewChainWriter(
 	operatorStateRetriever *opstateretriever.ContractOperatorStateRetriever,
 	stakeRegistry *stakeregistry.ContractStakeRegistry,
 	blsApkRegistry *blsapkregistry.ContractBLSApkRegistry,
-	elReader elcontracts.ELReader,
+	elReader elcontracts.Reader,
 	logger logging.Logger,
 	ethClient eth.Client,
 	txMgr txmgr.TxManager,
-) (*ChainWriter, error) {
+) *ChainWriter {
 	logger = logger.With(logging.ComponentKey, "avsregistry/ChainWriter")
 
 	return &ChainWriter{
@@ -125,7 +125,7 @@ func NewChainWriter(
 		logger:                 logger,
 		ethClient:              ethClient,
 		txMgr:                  txMgr,
-	}, nil
+	}
 }
 
 // BuildAvsRegistryChainWriter creates a new ChainWriter instance from the provided contract addresses
@@ -194,7 +194,7 @@ func BuildAvsRegistryChainWriter(
 		logger,
 		ethClient,
 		txMgr,
-	)
+	), nil
 }
 
 // NewWriterFromConfig creates a new ChainWriter from the provided config
@@ -226,7 +226,7 @@ func NewWriterFromConfig(
 		logger,
 		client,
 		txMgr,
-	)
+	), nil
 }
 
 func (w *ChainWriter) RegisterOperatorInQuorumWithAVSRegistryCoordinator(
