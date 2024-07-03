@@ -73,12 +73,13 @@ type Config struct {
 }
 
 type ChainReader struct {
-	logger            logging.Logger
-	slasher           slasher.ContractISlasherCalls
-	delegationManager *delegationmanager.ContractDelegationManager
-	strategyManager   *strategymanager.ContractStrategyManager
-	avsDirectory      *avsdirectory.ContractAVSDirectory
-	ethClient         eth.Client
+	logger             logging.Logger
+	slasher            slasher.ContractISlasherCalls
+	delegationManager  *delegationmanager.ContractDelegationManager
+	strategyManager    *strategymanager.ContractStrategyManager
+	avsDirectory       *avsdirectory.ContractAVSDirectory
+	rewardsCoordinator *rewardscoordinator.ContractIRewardsCoordinator
+	ethClient          eth.Client
 }
 
 // forces EthReader to implement the chainio.Reader interface
@@ -96,12 +97,13 @@ func NewChainReader(
 	logger = logger.With(logging.ComponentKey, "elcontracts/reader")
 
 	return &ChainReader{
-		slasher:           slasher,
-		delegationManager: delegationManager,
-		strategyManager:   strategyManager,
-		avsDirectory:      avsDirectory,
-		logger:            logger,
-		ethClient:         ethClient,
+		slasher:            slasher,
+		delegationManager:  delegationManager,
+		strategyManager:    strategyManager,
+		avsDirectory:       avsDirectory,
+		rewardsCoordinator: rewardsCoordinator,
+		logger:             logger,
+		ethClient:          ethClient,
 	}
 }
 

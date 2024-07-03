@@ -338,7 +338,7 @@ func (w *ChainWriter) SetClaimerFor(
 	return receipt, nil
 }
 
-func (w *ELChainWriter) ProcessClaim(
+func (w *ChainWriter) ProcessClaim(
 	ctx context.Context,
 	claim rewardscoordinator.IRewardsCoordinatorRewardsMerkleClaim,
 	earnerAddress gethcommon.Address,

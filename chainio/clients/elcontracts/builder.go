@@ -28,6 +28,7 @@ func BuildClients(
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
 		elContractBindings.AvsDirectory,
+		elContractBindings.RewardsCoordinator,
 		logger,
 		client,
 	)
