@@ -62,6 +62,8 @@ type ELReader interface {
 	) ([32]byte, error)
 
 	GetDistributionRootsLength(opts *bind.CallOpts) (*big.Int, error)
+
+	CurrRewardsCalculationEndTimestamp(opts *bind.CallOpts) (uint32, error)
 }
 
 type Config struct {

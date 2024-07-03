@@ -74,6 +74,21 @@ func (mr *MockELReaderMockRecorder) CalculateOperatorAVSRegistrationDigestHash(a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CalculateOperatorAVSRegistrationDigestHash", reflect.TypeOf((*MockELReader)(nil).CalculateOperatorAVSRegistrationDigestHash), arg0, arg1, arg2, arg3, arg4)
 }
 
+// CurrRewardsCalculationEndTimestamp mocks base method.
+func (m *MockELReader) CurrRewardsCalculationEndTimestamp(arg0 *bind.CallOpts) (uint32, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CurrRewardsCalculationEndTimestamp", arg0)
+	ret0, _ := ret[0].(uint32)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CurrRewardsCalculationEndTimestamp indicates an expected call of CurrRewardsCalculationEndTimestamp.
+func (mr *MockELReaderMockRecorder) CurrRewardsCalculationEndTimestamp(arg0 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CurrRewardsCalculationEndTimestamp", reflect.TypeOf((*MockELReader)(nil).CurrRewardsCalculationEndTimestamp), arg0)
+}
+
 // GetDistributionRootsLength mocks base method.
 func (m *MockELReader) GetDistributionRootsLength(arg0 *bind.CallOpts) (*big.Int, error) {
 	m.ctrl.T.Helper()
