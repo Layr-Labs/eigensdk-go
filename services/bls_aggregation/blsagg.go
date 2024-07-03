@@ -229,13 +229,13 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 	signedTaskRespsC <-chan types.SignedTaskResponseDigest,
 ) {
 	defer a.closeTaskGoroutine(taskIndex)
-
 	quorumThresholdPercentagesMap := make(map[types.QuorumNum]types.QuorumThresholdPercentage)
 	for i, quorumNumber := range quorumNumbers {
 		quorumThresholdPercentagesMap[quorumNumber] = quorumThresholdPercentages[i]
 	}
 	operatorsAvsStateDict, err := a.avsRegistryService.GetOperatorsAvsStateAtBlock(context.Background(), quorumNumbers, taskCreatedBlock)
 	if err != nil {
+		a.logger.Error("Task goroutine failed to get operators state from avs registry", "taskIndex", taskIndex, "err", err)
 		a.aggregatedResponsesC <- BlsAggregationServiceResponse{
 			Err:       TaskInitializationErrorFn(fmt.Errorf("AggregatorService failed to get operators state from avs registry at blockNum %d: %w", taskCreatedBlock, err), taskIndex),
 			TaskIndex: taskIndex,
@@ -244,6 +244,7 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 	}
 	quorumsAvsStakeDict, err := a.avsRegistryService.GetQuorumsAvsStateAtBlock(context.Background(), quorumNumbers, taskCreatedBlock)
 	if err != nil {
+		a.logger.Error("Task goroutine failed to get quorums state from avs registry", "taskIndex", taskIndex, "err", err)
 		a.aggregatedResponsesC <- BlsAggregationServiceResponse{
 			Err:       TaskInitializationErrorFn(fmt.Errorf("Aggregator failed to get quorums state from avs registry: %w", err), taskIndex),
 			TaskIndex: taskIndex,
