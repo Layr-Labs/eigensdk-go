@@ -238,13 +238,9 @@ func (r *ELChainReader) ServiceManagerCanSlashOperatorUntilBlock(
 		return uint32(0), errors.New("slasher contract not provided")
 	}
 
-	serviceManagerCanSlashOperatorUntilBlock, err := r.slasher.ContractCanSlashOperatorUntilBlock(
+	return r.slasher.ContractCanSlashOperatorUntilBlock(
 		opts, operatorAddr, serviceManagerAddr,
 	)
-	if err != nil {
-		return 0, err
-	}
-	return serviceManagerCanSlashOperatorUntilBlock, nil
 }
 
 func (r *ELChainReader) OperatorIsFrozen(opts *bind.CallOpts, operatorAddr gethcommon.Address) (bool, error) {
@@ -252,11 +248,7 @@ func (r *ELChainReader) OperatorIsFrozen(opts *bind.CallOpts, operatorAddr gethc
 		return false, errors.New("slasher contract not provided")
 	}
 
-	operatorIsFrozen, err := r.slasher.IsFrozen(opts, operatorAddr)
-	if err != nil {
-		return false, err
-	}
-	return operatorIsFrozen, nil
+	return r.slasher.IsFrozen(opts, operatorAddr)
 }
 
 func (r *ELChainReader) GetOperatorSharesInStrategy(
@@ -268,15 +260,11 @@ func (r *ELChainReader) GetOperatorSharesInStrategy(
 		return &big.Int{}, errors.New("DelegationManager contract not provided")
 	}
 
-	operatorSharesInStrategy, err := r.delegationManager.OperatorShares(
+	return r.delegationManager.OperatorShares(
 		opts,
 		operatorAddr,
 		strategyAddr,
 	)
-	if err != nil {
-		return nil, err
-	}
-	return operatorSharesInStrategy, nil
 }
 
 func (r *ELChainReader) CalculateDelegationApprovalDigestHash(
@@ -310,4 +298,12 @@ func (r *ELChainReader) GetDistributionRootsLength(opts *bind.CallOpts) (*big.In
 	}
 
 	return r.rewardsCoordinator.GetDistributionRootsLength(opts)
+}
+
+func (r *ELChainReader) CurrRewardsCalculationEndTimestamp(opts *bind.CallOpts) (uint32, error) {
+	if r.rewardsCoordinator == nil {
+		return 0, errors.New("RewardsCoordinator contract not provided")
+	}
+
+	return r.rewardsCoordinator.CurrRewardsCalculationEndTimestamp(opts)
 }
