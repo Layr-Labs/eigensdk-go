@@ -146,7 +146,7 @@ func NewBindingsFromConfig(
 	)
 
 	if isZeroAddress(cfg.RegistryCoordinatorAddress) {
-		logger.Warn("RegistryCoordinator address not provided, the calls to the contract will not work")
+		logger.Debug("RegistryCoordinator address not provided, the calls to the contract will not work")
 	} else {
 		contractBlsRegistryCoordinator, err = regcoordinator.NewContractRegistryCoordinator(
 			cfg.RegistryCoordinatorAddress,
@@ -212,7 +212,7 @@ func NewBindingsFromConfig(
 	}
 
 	if isZeroAddress(cfg.OperatorStateRetrieverAddress) {
-		logger.Warn("OperatorStateRetriever address not provided, the calls to the contract will not work")
+		logger.Debug("OperatorStateRetriever address not provided, the calls to the contract will not work")
 	} else {
 		contractOperatorStateRetriever, err = opstateretriever.NewContractOperatorStateRetriever(
 			cfg.OperatorStateRetrieverAddress,
