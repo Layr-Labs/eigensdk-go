@@ -51,7 +51,7 @@ func NewBindingsFromConfig(
 	)
 
 	if isZeroAddress(cfg.DelegationManagerAddress) {
-		logger.Warn("DelegationManager address not provided, the calls to the contract will not work")
+		logger.Debug("DelegationManager address not provided, the calls to the contract will not work")
 	} else {
 		contractDelegationManager, err = delegationmanager.NewContractDelegationManager(cfg.DelegationManagerAddress, client)
 		if err != nil {
@@ -78,7 +78,7 @@ func NewBindingsFromConfig(
 	}
 
 	if isZeroAddress(cfg.AvsDirectoryAddress) {
-		logger.Warn("AVSDirectory address not provided, the calls to the contract will not work")
+		logger.Debug("AVSDirectory address not provided, the calls to the contract will not work")
 	} else {
 		avsDirectory, err = avsdirectory.NewContractAVSDirectory(cfg.AvsDirectoryAddress, client)
 		if err != nil {
@@ -87,7 +87,7 @@ func NewBindingsFromConfig(
 	}
 
 	if isZeroAddress(cfg.RewardsCoordinatorAddress) {
-		logger.Warn("RewardsCoordinator address not provided, the calls to the contract will not work")
+		logger.Debug("RewardsCoordinator address not provided, the calls to the contract will not work")
 	} else {
 		rewardsCoordinator, err = rewardscoordinator.NewContractIRewardsCoordinator(cfg.RewardsCoordinatorAddress, client)
 		if err != nil {
