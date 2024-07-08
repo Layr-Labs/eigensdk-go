@@ -129,7 +129,7 @@ func (m *SimpleTxManager) waitForReceipt(ctx context.Context, txID wallet.TxID) 
 	for {
 		select {
 		case <-ctx.Done():
-			return nil, ctx.Err()
+			return nil, errors.Join(errors.New("Context done before tx was mined"), ctx.Err())
 		case <-queryTicker.C:
 			if receipt := m.queryReceipt(ctx, txID); receipt != nil {
 				return receipt, nil
