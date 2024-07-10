@@ -77,17 +77,13 @@ contract EigenlayerContractsParser is ConfigsReadWriter {
                     ".addresses.baseStrategyImplementation"
                 )
             );
-        // TODO: Update this to read from the eigenlayerDeployedContracts
-        // right now M2_Deploy_from_scratch.s.sol deployment script doesnt deploy rewardsCoordinator
+
         IRewardsCoordinator rewardsCoordinator = IRewardsCoordinator(
-            address(0x0)
+             stdJson.readAddress(
+                 eigenlayerDeployedContracts,
+                 ".addresses.rewardsCoordinator"
+             )
         );
-        // IRewardsCoordinator rewardsCoordinator = IRewardsCoordinator(
-        //     stdJson.readAddress(
-        //         eigenlayerDeployedContracts,
-        //         ".addresses.rewardsCoordinator"
-        //     )
-        // );
         return
             EigenlayerContracts(
                 eigenlayerProxyAdmin,

@@ -301,5 +301,9 @@ contract DeployMockAvsRegistries is
             "strategyManager",
             address(eigenlayerContracts.strategyManager)
         );
+        contractsRegistry.registerContract(
+            "rewardsCoordinator",
+            address(eigenlayerContracts.rewardsCoordinator)
+        );
     }
 }
