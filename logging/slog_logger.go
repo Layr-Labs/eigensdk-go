@@ -42,17 +42,32 @@ type SLoggerOptions struct {
 	NoColor bool
 }
 
+// default SLogger options are used when no options are provided
+// they are the development options (debug logs with source)
+var defaultTintOptions = tint.Options{
+	AddSource:   true,
+	Level:       slog.LevelDebug,
+	ReplaceAttr: nil,
+	TimeFormat:  time.StampMilli,
+	NoColor:     false,
+}
+
 // NewSlogTextLogger creates a new SLogger with a text handler
 // Default behavior is colored log outputs. To disable colors, set opts.NoColor to true.
 func NewTextSLogger(outputWriter io.Writer, opts *SLoggerOptions) *SLogger {
-	tintOptions := &tint.Options{
-		AddSource:   opts.AddSource,
-		Level:       opts.Level,
-		ReplaceAttr: opts.ReplaceAttr,
-		TimeFormat:  opts.TimeFormat,
-		NoColor:     opts.NoColor,
+	var tintOptions tint.Options
+	if opts == nil {
+		tintOptions = defaultTintOptions
+	} else {
+		tintOptions = tint.Options{
+			AddSource:   opts.AddSource,
+			Level:       opts.Level,
+			ReplaceAttr: opts.ReplaceAttr,
+			TimeFormat:  opts.TimeFormat,
+			NoColor:     opts.NoColor,
+		}
 	}
-	handler := tint.NewHandler(outputWriter, tintOptions)
+	handler := tint.NewHandler(outputWriter, &tintOptions)
 	logger := slog.New(handler)
 	return &SLogger{
 		logger,
@@ -63,10 +78,15 @@ func NewTextSLogger(outputWriter io.Writer, opts *SLoggerOptions) *SLogger {
 // Currently colors are not supported with json handler. If colors are required,
 // use NewTextSLogger instead.
 func NewJsonSLogger(outputWriter io.Writer, opts *SLoggerOptions) *SLogger {
-	handlerOpts := &slog.HandlerOptions{
-		AddSource:   opts.AddSource,
-		Level:       opts.Level,
-		ReplaceAttr: opts.ReplaceAttr,
+	var handlerOpts *slog.HandlerOptions
+	if opts == nil {
+		handlerOpts = &slog.HandlerOptions{}
+	} else {
+		handlerOpts = &slog.HandlerOptions{
+			AddSource:   opts.AddSource,
+			Level:       opts.Level,
+			ReplaceAttr: opts.ReplaceAttr,
+		}
 	}
 	handler := slog.NewJSONHandler(outputWriter, handlerOpts)
 	logger := slog.New(handler)
