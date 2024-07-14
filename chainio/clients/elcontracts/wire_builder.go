@@ -42,12 +42,12 @@ type ClientsAndBindings struct {
 	ContractBindings *ContractBindings
 }
 
-func BuildClientsFromConfig(
+func buildClientsFromConfig(
 	cfg Config,
 	ethClient eth.Client,
+	txMgr txmgr.TxManager,
 	logger logging.Logger,
 	eigenMetrics *metrics.EigenMetrics,
-	txMgr txmgr.TxManager,
 ) (*ClientsAndBindings, error) {
 	wire.Build(
 		NewBindingsFromConfig,
@@ -58,4 +58,18 @@ func BuildClientsFromConfig(
 		wire.Struct(new(ClientsAndBindings), "*"),
 	)
 	return &ClientsAndBindings{}, nil
+}
+
+func BuildClientsFromConfig(
+	cfg Config,
+	ethClient eth.Client,
+	txMgr txmgr.TxManager,
+	logger logging.Logger,
+	eigenMetrics *metrics.EigenMetrics,
+) (*ChainReader, *ChainWriter, *ContractBindings, error) {
+	clientsAndBindings, err := buildClientsFromConfig(cfg, ethClient, txMgr, logger, eigenMetrics)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	return clientsAndBindings.ChainReader, clientsAndBindings.ChainWriter, clientsAndBindings.ContractBindings, nil
 }

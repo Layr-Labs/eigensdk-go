@@ -104,7 +104,7 @@ func BuildAll(
 	}
 
 	// creating EL clients: Reader, Writer and EigenLayer Contract Bindings
-	elChainReader, elChainWriter, elContractBindings, err := elcontracts.BuildClients(
+	elChainReader, elChainWriter, elContractBindings, err := elcontracts.BuildClientsFromConfig(
 		elcontracts.Config{
 			DelegationManagerAddress: avsRegistryContractBindings.DelegationManagerAddr,
 			AvsDirectoryAddress:      avsRegistryContractBindings.AvsDirectoryAddr,

@@ -34,7 +34,7 @@ func NewWriterFromConfig(cfg Config, ethClient eth.Client, logger logging.Logger
 	return chainWriter, nil
 }
 
-func BuildClientsFromConfig(cfg Config, ethClient eth.Client, logger logging.Logger, eigenMetrics *metrics.EigenMetrics, txMgr txmgr.TxManager) (*ClientsAndBindings, error) {
+func buildClientsFromConfig(cfg Config, ethClient eth.Client, txMgr txmgr.TxManager, logger logging.Logger, eigenMetrics *metrics.EigenMetrics) (*ClientsAndBindings, error) {
 	contractBindings, err := NewBindingsFromConfig(cfg, ethClient, logger)
 	if err != nil {
 		return nil, err
@@ -55,4 +55,18 @@ type ClientsAndBindings struct {
 	ChainReader      *ChainReader
 	ChainWriter      *ChainWriter
 	ContractBindings *ContractBindings
+}
+
+func BuildClientsFromConfig(
+	cfg Config,
+	ethClient eth.Client,
+	txMgr txmgr.TxManager,
+	logger logging.Logger,
+	eigenMetrics *metrics.EigenMetrics,
+) (*ChainReader, *ChainWriter, *ContractBindings, error) {
+	clientsAndBindings, err := buildClientsFromConfig(cfg, ethClient, txMgr, logger, eigenMetrics)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	return clientsAndBindings.ChainReader, clientsAndBindings.ChainWriter, clientsAndBindings.ContractBindings, nil
 }
