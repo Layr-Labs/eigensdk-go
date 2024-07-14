@@ -128,6 +128,26 @@ func NewChainWriter(
 	}
 }
 
+func NewChainWriterFromBindings(
+	bindings *ContractBindings,
+	elReader elcontracts.Reader,
+	logger logging.Logger,
+	ethClient eth.Client,
+	txMgr txmgr.TxManager,
+) *ChainWriter {
+	return NewChainWriter(
+		bindings.ServiceManagerAddr,
+		bindings.RegistryCoordinator,
+		bindings.OperatorStateRetriever,
+		bindings.StakeRegistry,
+		bindings.BlsApkRegistry,
+		elReader,
+		logger,
+		ethClient,
+		txMgr,
+	)
+}
+
 // BuildAvsRegistryChainWriter creates a new ChainWriter instance from the provided contract addresses
 // Deprecated: Use NewWriterFromConfig instead
 func BuildAvsRegistryChainWriter(
@@ -193,38 +213,6 @@ func BuildAvsRegistryChainWriter(
 		elReader,
 		logger,
 		ethClient,
-		txMgr,
-	), nil
-}
-
-// NewWriterFromConfig creates a new ChainWriter from the provided config
-func NewWriterFromConfig(
-	cfg Config,
-	client eth.Client,
-	txMgr txmgr.TxManager,
-	logger logging.Logger,
-) (*ChainWriter, error) {
-	bindings, err := NewBindingsFromConfig(cfg, client, logger)
-	if err != nil {
-		return nil, err
-	}
-	elReader, err := elcontracts.NewReaderFromConfig(elcontracts.Config{
-		DelegationManagerAddress: bindings.DelegationManagerAddr,
-		AvsDirectoryAddress:      bindings.AvsDirectoryAddr,
-	}, client, logger)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewChainWriter(
-		bindings.ServiceManagerAddr,
-		bindings.RegistryCoordinator,
-		bindings.OperatorStateRetriever,
-		bindings.StakeRegistry,
-		bindings.BlsApkRegistry,
-		elReader,
-		logger,
-		client,
 		txMgr,
 	), nil
 }

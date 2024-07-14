@@ -42,6 +42,13 @@ func NewChainSubscriber(
 	}
 }
 
+func NewChainSubscriberFromBindings(
+	bindings *ContractBindings,
+	logger logging.Logger,
+) *ChainSubscriber {
+	return NewChainSubscriber(bindings.RegistryCoordinator, bindings.BlsApkRegistry, logger)
+}
+
 // BuildAvsRegistryChainSubscriber creates a new instance of ChainSubscriber
 // Deprecated: Use NewSubscriberFromConfig instead
 func BuildAvsRegistryChainSubscriber(
@@ -62,21 +69,6 @@ func BuildAvsRegistryChainSubscriber(
 		return nil, utils.WrapError("Failed to create BLSApkRegistry contract", err)
 	}
 	return NewChainSubscriber(regCoord, blsApkReg, logger), nil
-}
-
-// NewSubscriberFromConfig creates a new instance of ChainSubscriber
-// A websocket ETH Client must be provided
-func NewSubscriberFromConfig(
-	cfg Config,
-	wsClient eth.Client,
-	logger logging.Logger,
-) (*ChainSubscriber, error) {
-	bindings, err := NewBindingsFromConfig(cfg, wsClient, logger)
-	if err != nil {
-		return nil, err
-	}
-
-	return NewChainSubscriber(bindings.RegistryCoordinator, bindings.BlsApkRegistry, logger), nil
 }
 
 func (s *ChainSubscriber) SubscribeToNewPubkeyRegistrations() (chan *blsapkreg.ContractBLSApkRegistryNewPubkeyRegistration, event.Subscription, error) {

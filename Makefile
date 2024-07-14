@@ -13,8 +13,9 @@ help:
 bindings: ## generates contract bindings
 	cd contracts && rm -rf bindings/* && ./generate-bindings.sh 
 
-mocks: ## generates mocks
+generate: ## generates mocks and wire files
 	go install go.uber.org/mock/mockgen@v0.4.0
+	go install github.com/google/wire/cmd/wire@v0.6.0
 	go generate ./...
 
 tests: ## runs all tests

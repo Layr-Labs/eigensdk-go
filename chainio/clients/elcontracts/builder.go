@@ -7,6 +7,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/metrics"
 )
 
+// Deprecated: Use BuildClientsFromConfig instead.
 func BuildClients(
 	config Config,
 	client eth.Client,

@@ -1,4 +1,4 @@
-name: check mocks up-to-date
+name: check generated files (mocks+wire) up-to-date
 on:
   push:
     branches:
@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   make-mocks:
-    name: make mocks and check for diffs
+    name: make generate (mocks+wire) and check for diffs
     runs-on: ubuntu-latest
     steps:
       - name: checkout repo
@@ -21,9 +21,9 @@ jobs:
         with:
           go-version: "1.21"
 
-      - name: run make mocks and check for diffs
+      - name: run make generate and check for diffs
         run: |
-          make mocks
+          make generate
           if [ ! -z "$(git status --porcelain)" ]; then
             printf "Current generated mocks not up to date\n"
             git diff

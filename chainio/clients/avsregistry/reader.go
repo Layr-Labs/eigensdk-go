@@ -128,17 +128,11 @@ func NewChainReader(
 	}
 }
 
-// NewReaderFromConfig creates a new ChainReader
-func NewReaderFromConfig(
-	cfg Config,
-	client eth.Client,
+func NewChainReaderFromBindings(
+	bindings *ContractBindings,
+	ethClient eth.Client,
 	logger logging.Logger,
-) (*ChainReader, error) {
-	bindings, err := NewBindingsFromConfig(cfg, client, logger)
-	if err != nil {
-		return nil, err
-	}
-
+) *ChainReader {
 	return NewChainReader(
 		bindings.RegistryCoordinatorAddr,
 		bindings.BlsApkRegistryAddr,
@@ -146,8 +140,8 @@ func NewReaderFromConfig(
 		bindings.OperatorStateRetriever,
 		bindings.StakeRegistry,
 		logger,
-		client,
-	), nil
+		ethClient,
+	)
 }
 
 // BuildAvsRegistryChainReader creates a new ChainReader
