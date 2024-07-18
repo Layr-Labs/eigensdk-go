@@ -9,8 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/mocks"
+	chainioMocks "github.com/Layr-Labs/eigensdk-go/chainio/mocks"
 	"github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/metrics/collectors/economic/mocks"
 	"github.com/Layr-Labs/eigensdk-go/types"
 )
 
@@ -27,8 +28,7 @@ func TestEconomicCollector(t *testing.T) {
 
 	elReader := mocks.NewMockELReader(mockCtrl)
 	elReader.EXPECT().OperatorIsFrozen(gomock.Any(), operatorAddr).Return(false, nil)
-
-	avsRegistryReader := mocks.NewMockAVSReader(mockCtrl)
+	avsRegistryReader := chainioMocks.NewMockAVSReader(mockCtrl)
 	avsRegistryReader.EXPECT().GetOperatorId(gomock.Any(), operatorAddr).Return(operatorId, nil)
 	avsRegistryReader.EXPECT().GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(gomock.Any(), gomock.Any()).Return(
 		map[types.QuorumNum]*big.Int{

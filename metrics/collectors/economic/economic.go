@@ -24,7 +24,7 @@ import (
 // so that they are exported on the same port
 type Collector struct {
 	// TODO(samlaf): we use a chain as the backend for now, but should eventually move to a subgraph
-	elReader          Reader
+	elReader          ELReader
 	avsRegistryReader avsregistry.Reader
 	logger            logging.Logger
 	// params to query the metrics for
@@ -60,12 +60,13 @@ type Collector struct {
 
 var _ prometheus.Collector = (*Collector)(nil)
 
-type Reader interface {
+//go:generate mockgen -destination=./mocks/elReader.go -package=mocks github.com/Layr-Labs/eigensdk-go/metrics/collectors/economic ELReader
+type ELReader interface {
 	OperatorIsFrozen(opts *bind.CallOpts, operatorAddr common.Address) (bool, error)
 }
 
 func NewCollector(
-	elReader Reader, avsRegistryReader avsregistry.Reader,
+	elReader ELReader, avsRegistryReader avsregistry.Reader,
 	avsName string, logger logging.Logger,
 	operatorAddr common.Address, quorumNames map[types.QuorumNum]string,
 ) *Collector {
