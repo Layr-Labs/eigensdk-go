@@ -60,7 +60,6 @@ type Collector struct {
 
 var _ prometheus.Collector = (*Collector)(nil)
 
-//go:generate mockgen -destination=./mocks/elReader.go -package=mocks github.com/Layr-Labs/eigensdk-go/metrics/collectors/economic ELReader
 type ELReader interface {
 	OperatorIsFrozen(opts *bind.CallOpts, operatorAddr common.Address) (bool, error)
 }
