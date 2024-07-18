@@ -25,69 +25,6 @@ import (
 // 10k is an arbitrary choice that should work for most
 var DefaultQueryBlockRange = big.NewInt(10_000)
 
-type Reader interface {
-	GetQuorumCount(opts *bind.CallOpts) (uint8, error)
-
-	GetOperatorsStakeInQuorumsAtCurrentBlock(
-		opts *bind.CallOpts,
-		quorumNumbers types.QuorumNums,
-	) ([][]opstateretriever.OperatorStateRetrieverOperator, error)
-
-	GetOperatorsStakeInQuorumsAtBlock(
-		opts *bind.CallOpts,
-		quorumNumbers types.QuorumNums,
-		blockNumber uint32,
-	) ([][]opstateretriever.OperatorStateRetrieverOperator, error)
-
-	GetOperatorAddrsInQuorumsAtCurrentBlock(
-		opts *bind.CallOpts,
-		quorumNumbers types.QuorumNums,
-	) ([][]common.Address, error)
-
-	GetOperatorsStakeInQuorumsOfOperatorAtBlock(
-		opts *bind.CallOpts,
-		operatorId types.OperatorId,
-		blockNumber uint32,
-	) (types.QuorumNums, [][]opstateretriever.OperatorStateRetrieverOperator, error)
-
-	GetOperatorsStakeInQuorumsOfOperatorAtCurrentBlock(
-		opts *bind.CallOpts,
-		operatorId types.OperatorId,
-	) (types.QuorumNums, [][]opstateretriever.OperatorStateRetrieverOperator, error)
-
-	GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(
-		opts *bind.CallOpts,
-		operatorId types.OperatorId,
-	) (map[types.QuorumNum]types.StakeAmount, error)
-
-	GetCheckSignaturesIndices(
-		opts *bind.CallOpts,
-		referenceBlockNumber uint32,
-		quorumNumbers types.QuorumNums,
-		nonSignerOperatorIds []types.OperatorId,
-	) (opstateretriever.OperatorStateRetrieverCheckSignaturesIndices, error)
-
-	GetOperatorId(opts *bind.CallOpts, operatorAddress common.Address) ([32]byte, error)
-
-	GetOperatorFromId(opts *bind.CallOpts, operatorId types.OperatorId) (common.Address, error)
-
-	IsOperatorRegistered(opts *bind.CallOpts, operatorAddress common.Address) (bool, error)
-
-	QueryExistingRegisteredOperatorPubKeys(
-		ctx context.Context,
-		startBlock *big.Int,
-		stopBlock *big.Int,
-		blockRange *big.Int,
-	) ([]types.OperatorAddr, []types.OperatorPubkeys, error)
-
-	QueryExistingRegisteredOperatorSockets(
-		ctx context.Context,
-		startBlock *big.Int,
-		stopBlock *big.Int,
-		blockRange *big.Int,
-	) (map[types.OperatorId]types.Socket, error)
-}
-
 type Config struct {
 	RegistryCoordinatorAddress    common.Address
 	OperatorStateRetrieverAddress common.Address
@@ -102,9 +39,6 @@ type ChainReader struct {
 	stakeRegistry           *stakeregistry.ContractStakeRegistry
 	ethClient               eth.Client
 }
-
-// forces AvsReader to implement the clients.ReaderInterface interface
-var _ Reader = (*ChainReader)(nil)
 
 func NewChainReader(
 	registryCoordinatorAddr common.Address,

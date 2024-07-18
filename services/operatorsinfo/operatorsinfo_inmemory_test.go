@@ -2,6 +2,7 @@ package operatorsinfo
 
 import (
 	"context"
+	"github.com/ethereum/go-ethereum/event"
 	"log/slog"
 	"math/big"
 	"os"
@@ -9,17 +10,109 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/mocks"
+	apkregistrybindings "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSApkRegistry"
+	blsapkreg "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSApkRegistry"
+	regcoord "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum/common"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
-	"go.uber.org/mock/gomock"
-
-	apkregistrybindings "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSApkRegistry"
-	regcoordbindings "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
 )
+
+type fakeAVSRegistryReader struct {
+	filterQueryRange *big.Int
+	opAddress        []types.OperatorAddr
+	opPubKeys        []types.OperatorPubkeys
+	socket           types.Socket
+	err              error
+}
+
+func newFakeAVSRegistryReader(
+	opr *testOperator,
+	err error,
+) *fakeAVSRegistryReader {
+	if opr == nil {
+		return &fakeAVSRegistryReader{}
+	}
+	return &fakeAVSRegistryReader{
+		opAddress: []common.Address{opr.operatorAddr},
+		opPubKeys: []types.OperatorPubkeys{opr.operatorInfo.Pubkeys},
+		socket:    opr.operatorInfo.Socket,
+		err:       err,
+	}
+}
+
+func (f *fakeAVSRegistryReader) QueryExistingRegisteredOperatorPubKeys(
+	ctx context.Context,
+	startBlock *big.Int,
+	stopBlock *big.Int,
+	blockRange *big.Int,
+) ([]types.OperatorAddr, []types.OperatorPubkeys, error) {
+	return f.opAddress, f.opPubKeys, f.err
+}
+
+func (f *fakeAVSRegistryReader) QueryExistingRegisteredOperatorSockets(
+	ctx context.Context,
+	startBlock *big.Int,
+	stopBlock *big.Int,
+	blockRange *big.Int,
+) (map[types.OperatorId]types.Socket, error) {
+	if len(f.opPubKeys) == 0 {
+		return nil, nil
+	}
+
+	return map[types.OperatorId]types.Socket{
+		types.OperatorIdFromG1Pubkey(f.opPubKeys[0].G1Pubkey): f.socket,
+	}, nil
+}
+
+type fakeAVSRegistrySubscriber struct {
+	pubkeyRegistrationEventC   chan *apkregistrybindings.ContractBLSApkRegistryNewPubkeyRegistration
+	operatorSocketUpdateEventC chan *regcoord.ContractRegistryCoordinatorOperatorSocketUpdate
+	eventSubscription          *fakeEventSubscription
+}
+
+func newFakeAVSRegistrySubscriber(
+	eventSubscription *fakeEventSubscription,
+	pubkeyRegistrationEventC chan *apkregistrybindings.ContractBLSApkRegistryNewPubkeyRegistration,
+	operatorSocketUpdateEventC chan *regcoord.ContractRegistryCoordinatorOperatorSocketUpdate,
+) *fakeAVSRegistrySubscriber {
+	return &fakeAVSRegistrySubscriber{
+		pubkeyRegistrationEventC:   pubkeyRegistrationEventC,
+		operatorSocketUpdateEventC: operatorSocketUpdateEventC,
+		eventSubscription:          eventSubscription,
+	}
+}
+
+func (f *fakeAVSRegistrySubscriber) SubscribeToNewPubkeyRegistrations() (chan *blsapkreg.ContractBLSApkRegistryNewPubkeyRegistration, event.Subscription, error) {
+	return f.pubkeyRegistrationEventC, f.eventSubscription, nil
+}
+
+func (f *fakeAVSRegistrySubscriber) SubscribeToOperatorSocketUpdates() (chan *regcoord.ContractRegistryCoordinatorOperatorSocketUpdate, event.Subscription, error) {
+	return f.operatorSocketUpdateEventC, f.eventSubscription, nil
+}
+
+type fakeEventSubscription struct {
+	pubkeyRegistrationEventC   chan *apkregistrybindings.ContractBLSApkRegistryNewPubkeyRegistration
+	operatorSocketUpdateEventC chan *regcoord.ContractRegistryCoordinatorOperatorSocketUpdate
+	errC                       chan error
+}
+
+func newFakeEventSubscription(
+	errC chan error) *fakeEventSubscription {
+	return &fakeEventSubscription{
+		errC: errC,
+	}
+}
+
+func (f *fakeEventSubscription) Err() <-chan error {
+	return f.errC
+}
+
+func (f *fakeEventSubscription) Unsubscribe() {
+
+}
 
 type testOperator struct {
 	operatorAddr     common.Address
@@ -45,89 +138,63 @@ func TestGetOperatorInfo(t *testing.T) {
 		contractG2Pubkey: contractG2Pubkey,
 	}
 
+	pubkeyRegistrationEventC := make(chan *apkregistrybindings.ContractBLSApkRegistryNewPubkeyRegistration, 1)
+	pubkeyRegistrationEvent := &apkregistrybindings.ContractBLSApkRegistryNewPubkeyRegistration{
+		Operator: testOperator1.operatorAddr,
+		PubkeyG1: testOperator1.contractG1Pubkey,
+		PubkeyG2: testOperator1.contractG2Pubkey,
+		Raw:      gethtypes.Log{},
+	}
+	pubkeyRegistrationEventC <- pubkeyRegistrationEvent
+	operatorSocketUpdateEventC := make(chan *regcoord.ContractRegistryCoordinatorOperatorSocketUpdate, 1)
+	operatorSocketUpdateEvent := &regcoord.ContractRegistryCoordinatorOperatorSocketUpdate{
+		OperatorId: types.OperatorIdFromG1Pubkey(testOperator1.operatorInfo.Pubkeys.G1Pubkey),
+		Socket:     string(testOperator1.operatorInfo.Socket),
+		Raw:        gethtypes.Log{},
+	}
+	operatorSocketUpdateEventC <- operatorSocketUpdateEvent
+
 	// Define tests
 	var tests = []struct {
-		name                    string
-		mocksInitializationFunc func(*mocks.MockAVSSubscriber, *mocks.MockAVSReader, *mocks.MockSubscription)
-		queryOperatorAddr       common.Address
-		wantOperatorFound       bool
-		wantOperatorInfo        types.OperatorInfo
+		name                       string
+		operator                   *testOperator
+		pubkeyRegistrationEventC   chan *apkregistrybindings.ContractBLSApkRegistryNewPubkeyRegistration
+		operatorSocketUpdateEventC chan *regcoord.ContractRegistryCoordinatorOperatorSocketUpdate
+		eventErrC                  chan error
+		queryOperatorAddr          common.Address
+		wantOperatorFound          bool
+		wantOperatorInfo           types.OperatorInfo
 	}{
 		{
-			name: "should return false if operator not found",
-			mocksInitializationFunc: func(mockAvsRegistrySubscriber *mocks.MockAVSSubscriber, mockAvsReader *mocks.MockAVSReader, mockSubscription *mocks.MockSubscription) {
-				errC := make(chan error)
-				mockSubscription.EXPECT().Err().AnyTimes().Return(errC)
-				mockAvsRegistrySubscriber.EXPECT().SubscribeToNewPubkeyRegistrations().Return(nil, mockSubscription, nil)
-				mockAvsReader.EXPECT().QueryExistingRegisteredOperatorPubKeys(gomock.Any(), nil, nil, defaultLogFilterQueryBlockRange).Return(nil, nil, nil)
-				mockAvsRegistrySubscriber.EXPECT().SubscribeToOperatorSocketUpdates().Return(nil, mockSubscription, nil)
-				mockAvsReader.EXPECT().QueryExistingRegisteredOperatorSockets(gomock.Any(), nil, nil, defaultLogFilterQueryBlockRange).Return(nil, nil)
-			},
+			name:              "should return false if operator not found",
 			queryOperatorAddr: testOperator1.operatorAddr,
 			wantOperatorFound: false,
 			wantOperatorInfo:  types.OperatorInfo{},
 		},
 		{
-			name: "should return operator info found via query",
-			mocksInitializationFunc: func(mockAvsRegistrySubscriber *mocks.MockAVSSubscriber, mockAvsReader *mocks.MockAVSReader, mockSubscription *mocks.MockSubscription) {
-				errC := make(chan error)
-				mockSubscription.EXPECT().Err().AnyTimes().Return(errC)
-				mockAvsRegistrySubscriber.EXPECT().SubscribeToNewPubkeyRegistrations().Return(nil, mockSubscription, nil)
-				mockAvsReader.EXPECT().QueryExistingRegisteredOperatorPubKeys(gomock.Any(), nil, nil, defaultLogFilterQueryBlockRange).
-					Return([]common.Address{testOperator1.operatorAddr}, []types.OperatorPubkeys{testOperator1.operatorInfo.Pubkeys}, nil)
-				mockAvsRegistrySubscriber.EXPECT().SubscribeToOperatorSocketUpdates().Return(nil, mockSubscription, nil)
-				mockAvsReader.EXPECT().QueryExistingRegisteredOperatorSockets(gomock.Any(), nil, nil, defaultLogFilterQueryBlockRange).
-					Return(map[types.OperatorId]types.Socket{
-						types.OperatorIdFromG1Pubkey(testOperator1.operatorInfo.Pubkeys.G1Pubkey): testOperator1.operatorInfo.Socket,
-					}, nil)
-			},
+			name:              "should return operator info found via query",
+			operator:          &testOperator1,
 			queryOperatorAddr: testOperator1.operatorAddr,
 			wantOperatorFound: true,
 			wantOperatorInfo:  testOperator1.operatorInfo,
 		},
 		{
-			name: "should return operator info found via subscription",
-			mocksInitializationFunc: func(mockAvsRegistrySubscriber *mocks.MockAVSSubscriber, mockAvsReader *mocks.MockAVSReader, mockSubscription *mocks.MockSubscription) {
-				errC := make(chan error)
-				pubkeyRegistrationEventC := make(chan *apkregistrybindings.ContractBLSApkRegistryNewPubkeyRegistration, 1)
-				pubkeyRegistrationEvent := &apkregistrybindings.ContractBLSApkRegistryNewPubkeyRegistration{
-					Operator: testOperator1.operatorAddr,
-					PubkeyG1: testOperator1.contractG1Pubkey,
-					PubkeyG2: testOperator1.contractG2Pubkey,
-					Raw:      gethtypes.Log{},
-				}
-				pubkeyRegistrationEventC <- pubkeyRegistrationEvent
-				operatorSocketUpdateEventC := make(chan *regcoordbindings.ContractRegistryCoordinatorOperatorSocketUpdate, 1)
-				operatorSocketUpdateEvent := &regcoordbindings.ContractRegistryCoordinatorOperatorSocketUpdate{
-					OperatorId: types.OperatorIdFromG1Pubkey(testOperator1.operatorInfo.Pubkeys.G1Pubkey),
-					Socket:     string(testOperator1.operatorInfo.Socket),
-					Raw:        gethtypes.Log{},
-				}
-				operatorSocketUpdateEventC <- operatorSocketUpdateEvent
-				mockSubscription.EXPECT().Err().AnyTimes().Return(errC)
-				mockAvsRegistrySubscriber.EXPECT().SubscribeToNewPubkeyRegistrations().Return(pubkeyRegistrationEventC, mockSubscription, nil)
-				mockAvsReader.EXPECT().QueryExistingRegisteredOperatorPubKeys(gomock.Any(), nil, nil, defaultLogFilterQueryBlockRange).
-					Return([]common.Address{}, []types.OperatorPubkeys{}, nil)
-				mockAvsRegistrySubscriber.EXPECT().SubscribeToOperatorSocketUpdates().Return(operatorSocketUpdateEventC, mockSubscription, nil)
-				mockAvsReader.EXPECT().QueryExistingRegisteredOperatorSockets(gomock.Any(), nil, nil, defaultLogFilterQueryBlockRange).Return(nil, nil)
-			},
-			queryOperatorAddr: testOperator1.operatorAddr,
-			wantOperatorFound: true,
-			wantOperatorInfo:  testOperator1.operatorInfo,
+			name:                       "should return operator info found via subscription",
+			queryOperatorAddr:          testOperator1.operatorAddr,
+			pubkeyRegistrationEventC:   pubkeyRegistrationEventC,
+			operatorSocketUpdateEventC: operatorSocketUpdateEventC,
+			wantOperatorFound:          true,
+			wantOperatorInfo:           testOperator1.operatorInfo,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create mocks
-			mockCtrl := gomock.NewController(t)
-			mockAvsRegistrySubscriber := mocks.NewMockAVSSubscriber(mockCtrl)
-			mockAvsReader := mocks.NewMockAVSReader(mockCtrl)
-			mockSubscription := mocks.NewMockSubscription(mockCtrl)
+			mockSubscription := newFakeEventSubscription(tt.eventErrC)
+			mockAvsRegistrySubscriber := newFakeAVSRegistrySubscriber(mockSubscription, tt.pubkeyRegistrationEventC, tt.operatorSocketUpdateEventC)
+			mockAvsReader := newFakeAVSRegistryReader(tt.operator, nil)
 
-			if tt.mocksInitializationFunc != nil {
-				tt.mocksInitializationFunc(mockAvsRegistrySubscriber, mockAvsReader, mockSubscription)
-			}
 			// Create a new instance of the operatorpubkeys service
 			service := NewOperatorsInfoServiceInMemory(context.Background(), mockAvsRegistrySubscriber, mockAvsReader, nil, logger)
 			time.Sleep(2 * time.Second) // need to give it time to process the subscription events.. not sure if there's a better way to do this.

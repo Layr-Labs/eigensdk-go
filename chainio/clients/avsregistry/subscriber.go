@@ -12,19 +12,11 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
-type Subscriber interface {
-	SubscribeToNewPubkeyRegistrations() (chan *blsapkreg.ContractBLSApkRegistryNewPubkeyRegistration, event.Subscription, error)
-	SubscribeToOperatorSocketUpdates() (chan *regcoord.ContractRegistryCoordinatorOperatorSocketUpdate, event.Subscription, error)
-}
-
 type ChainSubscriber struct {
 	logger         logging.Logger
 	regCoord       regcoord.ContractRegistryCoordinatorFilters
 	blsApkRegistry blsapkreg.ContractBLSApkRegistryFilters
 }
-
-// forces EthSubscriber to implement the chainio.Subscriber interface
-var _ Subscriber = (*ChainSubscriber)(nil)
 
 // NewChainSubscriber creates a new instance of ChainSubscriber
 // The bindings must be created using websocket ETH Client
