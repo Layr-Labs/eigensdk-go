@@ -88,6 +88,16 @@ type Writer interface {
 	) (*gethtypes.Receipt, error)
 }
 
+type ELReader interface {
+	CalculateOperatorAVSRegistrationDigestHash(
+		opts *bind.CallOpts,
+		operatorAddr gethcommon.Address,
+		serviceManagerAddr gethcommon.Address,
+		operatorToAvsRegistrationSigSalt [32]byte,
+		operatorToAvsRegistrationSigExpiry *big.Int,
+	) ([32]byte, error)
+}
+
 type ChainWriter struct {
 	serviceManagerAddr     gethcommon.Address
 	registryCoordinator    *regcoord.ContractRegistryCoordinator
@@ -101,16 +111,6 @@ type ChainWriter struct {
 }
 
 var _ Writer = (*ChainWriter)(nil)
-
-type ELReader interface {
-	CalculateOperatorAVSRegistrationDigestHash(
-		opts *bind.CallOpts,
-		operatorAddr gethcommon.Address,
-		serviceManagerAddr gethcommon.Address,
-		operatorToAvsRegistrationSigSalt [32]byte,
-		operatorToAvsRegistrationSigExpiry *big.Int,
-	) ([32]byte, error)
-}
 
 func NewChainWriter(
 	serviceManagerAddr gethcommon.Address,
