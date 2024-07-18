@@ -21,11 +21,10 @@ import (
 )
 
 type fakeAVSRegistryReader struct {
-	filterQueryRange *big.Int
-	opAddress        []types.OperatorAddr
-	opPubKeys        []types.OperatorPubkeys
-	socket           types.Socket
-	err              error
+	opAddress []types.OperatorAddr
+	opPubKeys []types.OperatorPubkeys
+	socket    types.Socket
+	err       error
 }
 
 func newFakeAVSRegistryReader(
@@ -94,9 +93,7 @@ func (f *fakeAVSRegistrySubscriber) SubscribeToOperatorSocketUpdates() (chan *re
 }
 
 type fakeEventSubscription struct {
-	pubkeyRegistrationEventC   chan *apkregistrybindings.ContractBLSApkRegistryNewPubkeyRegistration
-	operatorSocketUpdateEventC chan *regcoord.ContractRegistryCoordinatorOperatorSocketUpdate
-	errC                       chan error
+	errC chan error
 }
 
 func newFakeEventSubscription(

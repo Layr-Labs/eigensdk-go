@@ -17,12 +17,11 @@ import (
 )
 
 type fakeAVSRegistryReader struct {
-	filterQueryRange *big.Int
-	opAddress        []types.OperatorAddr
-	opPubKeys        []types.OperatorPubkeys
-	operatorId       types.OperatorId
-	socket           types.Socket
-	err              error
+	opAddress  []types.OperatorAddr
+	opPubKeys  []types.OperatorPubkeys
+	operatorId types.OperatorId
+	socket     types.Socket
+	err        error
 }
 
 func newFakeAVSRegistryReader(
