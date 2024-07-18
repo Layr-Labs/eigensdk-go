@@ -4,9 +4,6 @@ import (
 	"context"
 	"errors"
 
-	erc20 "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IERC20"
-	strategy "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IStrategy"
-
 	"github.com/Layr-Labs/eigensdk-go/utils"
 
 	"math/big"
@@ -18,8 +15,10 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
+	erc20 "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IERC20"
 	rewardscoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IRewardsCoordinator"
 	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/ISlasher"
+	strategy "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IStrategy"
 	strategymanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StrategyManager"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/metrics"
