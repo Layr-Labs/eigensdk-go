@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/Layr-Labs/eigensdk-go/utils"
@@ -25,7 +24,7 @@ import (
 // so that they are exported on the same port
 type Collector struct {
 	// TODO(samlaf): we use a chain as the backend for now, but should eventually move to a subgraph
-	elReader          elcontracts.Reader
+	elReader          Reader
 	avsRegistryReader avsregistry.Reader
 	logger            logging.Logger
 	// params to query the metrics for
@@ -61,8 +60,12 @@ type Collector struct {
 
 var _ prometheus.Collector = (*Collector)(nil)
 
+type Reader interface {
+	OperatorIsFrozen(opts *bind.CallOpts, operatorAddr common.Address) (bool, error)
+}
+
 func NewCollector(
-	elReader elcontracts.Reader, avsRegistryReader avsregistry.Reader,
+	elReader Reader, avsRegistryReader avsregistry.Reader,
 	avsName string, logger logging.Logger,
 	operatorAddr common.Address, quorumNames map[types.QuorumNum]string,
 ) *Collector {

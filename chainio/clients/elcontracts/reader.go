@@ -22,50 +22,6 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
-type Reader interface {
-	IsOperatorRegistered(opts *bind.CallOpts, operator types.Operator) (bool, error)
-
-	GetOperatorDetails(opts *bind.CallOpts, operator types.Operator) (types.Operator, error)
-
-	// GetStrategyAndUnderlyingToken returns the strategy contract and the underlying token address
-	// use GetStrategyAndUnderlyingERC20Token if the contract address confirms with ERC20 standard
-	GetStrategyAndUnderlyingToken(
-		opts *bind.CallOpts, strategyAddr gethcommon.Address,
-	) (*strategy.ContractIStrategy, gethcommon.Address, error)
-
-	// GetStrategyAndUnderlyingERC20Token returns the strategy contract and the underlying ERC20 token address
-	GetStrategyAndUnderlyingERC20Token(
-		opts *bind.CallOpts, strategyAddr gethcommon.Address,
-	) (*strategy.ContractIStrategy, erc20.ContractIERC20Methods, gethcommon.Address, error)
-
-	ServiceManagerCanSlashOperatorUntilBlock(
-		opts *bind.CallOpts,
-		operatorAddr gethcommon.Address,
-		serviceManagerAddr gethcommon.Address,
-	) (uint32, error)
-
-	OperatorIsFrozen(opts *bind.CallOpts, operatorAddr gethcommon.Address) (bool, error)
-
-	GetOperatorSharesInStrategy(
-		opts *bind.CallOpts,
-		operatorAddr gethcommon.Address,
-		strategyAddr gethcommon.Address,
-	) (*big.Int, error)
-
-	CalculateDelegationApprovalDigestHash(
-		opts *bind.CallOpts, staker gethcommon.Address, operator gethcommon.Address,
-		delegationApprover gethcommon.Address, approverSalt [32]byte, expiry *big.Int,
-	) ([32]byte, error)
-
-	CalculateOperatorAVSRegistrationDigestHash(
-		opts *bind.CallOpts, operator gethcommon.Address, avs gethcommon.Address, salt [32]byte, expiry *big.Int,
-	) ([32]byte, error)
-
-	GetDistributionRootsLength(opts *bind.CallOpts) (*big.Int, error)
-
-	CurrRewardsCalculationEndTimestamp(opts *bind.CallOpts) (uint32, error)
-}
-
 type Config struct {
 	DelegationManagerAddress  common.Address
 	AvsDirectoryAddress       common.Address
@@ -81,9 +37,6 @@ type ChainReader struct {
 	rewardsCoordinator *rewardscoordinator.ContractIRewardsCoordinator
 	ethClient          eth.Client
 }
-
-// forces EthReader to implement the chainio.Reader interface
-var _ Reader = (*ChainReader)(nil)
 
 func NewChainReader(
 	slasher slasher.ContractISlasherCalls,
