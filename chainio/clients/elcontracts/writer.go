@@ -15,42 +15,20 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
+	erc20 "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IERC20"
 	rewardscoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IRewardsCoordinator"
 	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/ISlasher"
+	strategy "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IStrategy"
 	strategymanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StrategyManager"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/metrics"
 	"github.com/Layr-Labs/eigensdk-go/types"
 )
 
-type Writer interface {
-	// RegisterAsOperator registers an operator onchain.
-	RegisterAsOperator(ctx context.Context, operator types.Operator) (*gethtypes.Receipt, error)
-
-	// UpdateOperatorDetails updates the operator details onchain.
-	// This doesn't update the metadata URI. Use UpdateMetadataURI for that.
-	UpdateOperatorDetails(ctx context.Context, operator types.Operator) (*gethtypes.Receipt, error)
-
-	// UpdateMetadataURI updates the operator metadata URI onchain
-	UpdateMetadataURI(ctx context.Context, uri string) (*gethtypes.Receipt, error)
-
-	// DepositERC20IntoStrategy deposits ERC20 tokens into a strategy contract.
-	DepositERC20IntoStrategy(
-		ctx context.Context,
-		strategyAddr gethcommon.Address,
-		amount *big.Int,
-	) (*gethtypes.Receipt, error)
-
-	SetClaimerFor(
-		ctx context.Context,
-		claimer gethcommon.Address,
-	) (*gethtypes.Receipt, error)
-
-	ProcessClaim(
-		ctx context.Context,
-		claim rewardscoordinator.IRewardsCoordinatorRewardsMerkleClaim,
-		earnerAddress gethcommon.Address,
-	) (*gethtypes.Receipt, error)
+type Reader interface {
+	GetStrategyAndUnderlyingERC20Token(
+		opts *bind.CallOpts, strategyAddr gethcommon.Address,
+	) (*strategy.ContractIStrategy, erc20.ContractIERC20Methods, gethcommon.Address, error)
 }
 
 type ChainWriter struct {
@@ -64,8 +42,6 @@ type ChainWriter struct {
 	logger              logging.Logger
 	txMgr               txmgr.TxManager
 }
-
-var _ Writer = (*ChainWriter)(nil)
 
 func NewChainWriter(
 	slasher *slasher.ContractISlasher,
