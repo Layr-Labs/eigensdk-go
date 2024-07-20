@@ -5,7 +5,7 @@ import (
 	"math/big"
 
 	apkregistrybindings "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSApkRegistry"
-	opstateretrievar "github.com/Layr-Labs/eigensdk-go/contracts/bindings/OperatorStateRetriever"
+	opstateretriever "github.com/Layr-Labs/eigensdk-go/contracts/bindings/OperatorStateRetriever"
 	"github.com/Layr-Labs/eigensdk-go/types"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -79,8 +79,8 @@ func (f *FakeAVSRegistryReader) GetOperatorsStakeInQuorumsAtBlock(
 	opts *bind.CallOpts,
 	quorumNumbers types.QuorumNums,
 	blockNumber types.BlockNum,
-) ([][]opstateretrievar.OperatorStateRetrieverOperator, error) {
-	return [][]opstateretrievar.OperatorStateRetrieverOperator{
+) ([][]opstateretriever.OperatorStateRetrieverOperator, error) {
+	return [][]opstateretriever.OperatorStateRetrieverOperator{
 		{
 			{
 				OperatorId: f.operatorId,
@@ -95,6 +95,6 @@ func (f *FakeAVSRegistryReader) GetCheckSignaturesIndices(
 	referenceBlockNumber uint32,
 	quorumNumbers types.QuorumNums,
 	nonSignerOperatorIds []types.OperatorId,
-) (opstateretrievar.OperatorStateRetrieverCheckSignaturesIndices, error) {
-	return opstateretrievar.OperatorStateRetrieverCheckSignaturesIndices{}, nil
+) (opstateretriever.OperatorStateRetrieverCheckSignaturesIndices, error) {
+	return opstateretriever.OperatorStateRetrieverCheckSignaturesIndices{}, nil
 }
