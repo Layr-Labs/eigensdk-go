@@ -20,6 +20,7 @@ import (
 // exported as the default so that users can call NewBasicSigner with it if they don't know any better
 var FallbackGasTipCap = big.NewInt(15000000000)
 
+// Deprecated: Use SignerV2 instead
 type BasicSigner struct {
 	logger            logging.Logger
 	ethClient         sdkethclient.Client

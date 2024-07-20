@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
+// Deprecated: Use SignerV2 instead
 type PrivateKeySigner struct {
 	txOpts *bind.TransactOpts
 }
