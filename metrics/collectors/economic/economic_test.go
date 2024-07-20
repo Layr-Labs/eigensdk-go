@@ -11,32 +11,58 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
-	chainioMocks "github.com/Layr-Labs/eigensdk-go/chainio/mocks"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/types"
 )
 
-const registeredOpAddress = "\"0xb81b18c988bfc7d131fca985a9c531f325e98a2f\""
+const registeredOpAddress = "0xb81b18c988bfc7d131fca985a9c531f325e98a2f"
 
-type FakeELReader struct {
+type fakeELReader struct {
 	registeredOperators map[common.Address]bool
 }
 
-func NewFakeELReader() *FakeELReader {
+func newFakeELReader() *fakeELReader {
 	registeredOperators := make(map[common.Address]bool)
 	registeredOperators[common.HexToAddress(registeredOpAddress)] = false
-	return &FakeELReader{
+	return &fakeELReader{
 		registeredOperators: registeredOperators,
 	}
 }
 
-func (f *FakeELReader) OperatorIsFrozen(opts *bind.CallOpts, operatorAddr common.Address) (bool, error) {
+func (f *fakeELReader) OperatorIsFrozen(opts *bind.CallOpts, operatorAddr common.Address) (bool, error) {
 	return f.registeredOperators[operatorAddr], nil
+}
+
+type fakeAVSRegistryReader struct {
+	operatorId types.OperatorId
+	stakes     map[types.QuorumNum]*big.Int
+}
+
+func (f *fakeAVSRegistryReader) GetOperatorId(opts *bind.CallOpts, operatorAddr common.Address) ([32]byte, error) {
+	return f.operatorId, nil
+}
+
+func (f *fakeAVSRegistryReader) GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(
+	opts *bind.CallOpts,
+	operatorId types.OperatorId,
+) (map[types.QuorumNum]*big.Int, error) {
+	return f.stakes, nil
+}
+
+func newFakeAVSRegistryReader() *fakeAVSRegistryReader {
+	operatorId := types.OperatorId{1}
+	stakes := map[types.QuorumNum]*big.Int{
+		0: big.NewInt(1000),
+		1: big.NewInt(2000),
+	}
+	return &fakeAVSRegistryReader{
+		operatorId: operatorId,
+		stakes:     stakes,
+	}
 }
 
 func TestEconomicCollector(t *testing.T) {
 	operatorAddr := common.HexToAddress(registeredOpAddress)
-	operatorId := types.OperatorId{1}
 	quorumNames := map[types.QuorumNum]string{
 		0: "ethQuorum",
 		1: "someOtherTokenQuorum",
@@ -45,16 +71,8 @@ func TestEconomicCollector(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	elReader := NewFakeELReader()
-	avsRegistryReader := chainioMocks.NewMockAVSReader(mockCtrl)
-	avsRegistryReader.EXPECT().GetOperatorId(gomock.Any(), operatorAddr).Return(operatorId, nil)
-	avsRegistryReader.EXPECT().GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(gomock.Any(), gomock.Any()).Return(
-		map[types.QuorumNum]*big.Int{
-			0: big.NewInt(1000),
-			1: big.NewInt(2000),
-		},
-		nil,
-	)
+	elReader := newFakeELReader()
+	avsRegistryReader := newFakeAVSRegistryReader()
 
 	logger := logging.NewNoopLogger()
 	economicCollector := NewCollector(elReader, avsRegistryReader, "testavs", logger, operatorAddr, quorumNames)

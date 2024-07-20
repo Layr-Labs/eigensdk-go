@@ -27,68 +27,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
-type Writer interface {
-
-	// RegisterOperatorInQuorumWithAVSRegistryCoordinator
-	// TODO(samlaf): an operator that is already registered in a quorum can register with another quorum without passing
-	// signatures perhaps we should add another sdk function for this purpose, that just takes in a quorumNumber and
-	// socket? RegisterOperatorInQuorumWithAVSRegistryCoordinator is used to register a single operator with the AVS's
-	// registry coordinator. - operatorEcdsaPrivateKey is the operator's ecdsa private key (used to sign a message to
-	// register operator in eigenlayer's delegation manager)
-	//  - operatorToAvsRegistrationSigSalt is a random salt used to prevent replay attacks
-	//  - operatorToAvsRegistrationSigExpiry is the expiry time of the signature
-	//
-	// Deprecated: use RegisterOperator instead.
-	// We will only keep high-level functionality such as RegisterOperator, and low level functionality
-	// such as this function should eventually all be done with bindings directly instead.
-	RegisterOperatorInQuorumWithAVSRegistryCoordinator(
-		ctx context.Context,
-		operatorEcdsaPrivateKey *ecdsa.PrivateKey,
-		operatorToAvsRegistrationSigSalt [32]byte,
-		operatorToAvsRegistrationSigExpiry *big.Int,
-		blsKeyPair *bls.KeyPair,
-		quorumNumbers types.QuorumNums,
-		socket string,
-	) (*gethtypes.Receipt, error)
-
-	// RegisterOperator is similar to RegisterOperatorInQuorumWithAVSRegistryCoordinator but
-	// generates a random salt and expiry for the signature.
-	RegisterOperator(
-		ctx context.Context,
-		operatorEcdsaPrivateKey *ecdsa.PrivateKey,
-		blsKeyPair *bls.KeyPair,
-		quorumNumbers types.QuorumNums,
-		socket string,
-	) (*gethtypes.Receipt, error)
-
-	// UpdateStakesOfEntireOperatorSetForQuorums is used by avs teams running https://github.com/Layr-Labs/avs-sync
-	// to updates the stake of their entire operator set.
-	// Because of high gas costs of this operation, it typically needs to be called for every quorum, or perhaps for a
-	// small grouping of quorums
-	// (highly dependent on number of operators per quorum)
-	UpdateStakesOfEntireOperatorSetForQuorums(
-		ctx context.Context,
-		operatorsPerQuorum [][]gethcommon.Address,
-		quorumNumbers types.QuorumNums,
-	) (*gethtypes.Receipt, error)
-
-	// UpdateStakesOfOperatorSubsetForAllQuorums is meant to be used by single operators (or teams of operators,
-	// possibly running https://github.com/Layr-Labs/avs-sync) to update the stake of their own operator(s). This might
-	// be needed in the case that they received a lot of new stake delegations, and want this to be reflected
-	// in the AVS's registry coordinator.
-	UpdateStakesOfOperatorSubsetForAllQuorums(
-		ctx context.Context,
-		operators []gethcommon.Address,
-	) (*gethtypes.Receipt, error)
-
-	DeregisterOperator(
-		ctx context.Context,
-		quorumNumbers types.QuorumNums,
-		pubkey regcoord.BN254G1Point,
-	) (*gethtypes.Receipt, error)
-}
-
-type ELReader interface {
+type eLReader interface {
 	CalculateOperatorAVSRegistrationDigestHash(
 		opts *bind.CallOpts,
 		operatorAddr gethcommon.Address,
@@ -104,13 +43,11 @@ type ChainWriter struct {
 	operatorStateRetriever *opstateretriever.ContractOperatorStateRetriever
 	stakeRegistry          *stakeregistry.ContractStakeRegistry
 	blsApkRegistry         *blsapkregistry.ContractBLSApkRegistry
-	elReader               ELReader
+	elReader               eLReader
 	logger                 logging.Logger
 	ethClient              eth.Client
 	txMgr                  txmgr.TxManager
 }
-
-var _ Writer = (*ChainWriter)(nil)
 
 func NewChainWriter(
 	serviceManagerAddr gethcommon.Address,
@@ -118,7 +55,7 @@ func NewChainWriter(
 	operatorStateRetriever *opstateretriever.ContractOperatorStateRetriever,
 	stakeRegistry *stakeregistry.ContractStakeRegistry,
 	blsApkRegistry *blsapkregistry.ContractBLSApkRegistry,
-	elReader ELReader,
+	elReader eLReader,
 	logger logging.Logger,
 	ethClient eth.Client,
 	txMgr txmgr.TxManager,
@@ -239,6 +176,18 @@ func NewWriterFromConfig(
 	), nil
 }
 
+// RegisterOperatorInQuorumWithAVSRegistryCoordinator
+// TODO(samlaf): an operator that is already registered in a quorum can register with another quorum without passing
+// signatures perhaps we should add another sdk function for this purpose, that just takes in a quorumNumber and
+// socket? RegisterOperatorInQuorumWithAVSRegistryCoordinator is used to register a single operator with the AVS's
+// registry coordinator. - operatorEcdsaPrivateKey is the operator's ecdsa private key (used to sign a message to
+// register operator in eigenlayer's delegation manager)
+//   - operatorToAvsRegistrationSigSalt is a random salt used to prevent replay attacks
+//   - operatorToAvsRegistrationSigExpiry is the expiry time of the signature
+//
+// Deprecated: use RegisterOperator instead.
+// We will only keep high-level functionality such as RegisterOperator, and low level functionality
+// such as this function should eventually all be done with bindings directly instead.
 func (w *ChainWriter) RegisterOperatorInQuorumWithAVSRegistryCoordinator(
 	ctx context.Context,
 	// we need to pass the private key explicitly and can't use the signer because registering requires signing a
@@ -340,6 +289,8 @@ func (w *ChainWriter) RegisterOperatorInQuorumWithAVSRegistryCoordinator(
 	return receipt, nil
 }
 
+// RegisterOperator is similar to RegisterOperatorInQuorumWithAVSRegistryCoordinator but
+// generates a random salt and expiry for the signature.
 func (w *ChainWriter) RegisterOperator(
 	ctx context.Context,
 	// we need to pass the private key explicitly and can't use the signer because registering requires signing a
@@ -457,6 +408,11 @@ func (w *ChainWriter) RegisterOperator(
 	return receipt, nil
 }
 
+// UpdateStakesOfEntireOperatorSetForQuorums is used by avs teams running https://github.com/Layr-Labs/avs-sync
+// to updates the stake of their entire operator set.
+// Because of high gas costs of this operation, it typically needs to be called for every quorum, or perhaps for a
+// small grouping of quorums
+// (highly dependent on number of operators per quorum)
 func (w *ChainWriter) UpdateStakesOfEntireOperatorSetForQuorums(
 	ctx context.Context,
 	operatorsPerQuorum [][]gethcommon.Address,

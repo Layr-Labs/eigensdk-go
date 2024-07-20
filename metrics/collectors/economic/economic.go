@@ -5,7 +5,6 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/Layr-Labs/eigensdk-go/utils"
@@ -13,6 +12,19 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
 )
+
+type eLReader interface {
+	OperatorIsFrozen(opts *bind.CallOpts, operatorAddr common.Address) (bool, error)
+}
+
+type avsRegistryReader interface {
+	GetOperatorId(opts *bind.CallOpts, operatorAddr common.Address) ([32]byte, error)
+
+	GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(
+		opts *bind.CallOpts,
+		operatorId types.OperatorId,
+	) (map[types.QuorumNum]types.StakeAmount, error)
+}
 
 // Collector exports the economic metrics listed at
 //
@@ -24,8 +36,8 @@ import (
 // so that they are exported on the same port
 type Collector struct {
 	// TODO(samlaf): we use a chain as the backend for now, but should eventually move to a subgraph
-	elReader          ELReader
-	avsRegistryReader avsregistry.Reader
+	elReader          eLReader
+	avsRegistryReader avsRegistryReader
 	logger            logging.Logger
 	// params to query the metrics for
 	operatorAddr common.Address
@@ -60,14 +72,13 @@ type Collector struct {
 
 var _ prometheus.Collector = (*Collector)(nil)
 
-type ELReader interface {
-	OperatorIsFrozen(opts *bind.CallOpts, operatorAddr common.Address) (bool, error)
-}
-
 func NewCollector(
-	elReader ELReader, avsRegistryReader avsregistry.Reader,
-	avsName string, logger logging.Logger,
-	operatorAddr common.Address, quorumNames map[types.QuorumNum]string,
+	elReader eLReader,
+	avsRegistryReader avsRegistryReader,
+	avsName string,
+	logger logging.Logger,
+	operatorAddr common.Address,
+	quorumNames map[types.QuorumNum]string,
 ) *Collector {
 	return &Collector{
 		elReader:          elReader,
