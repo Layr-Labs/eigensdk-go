@@ -5,6 +5,8 @@ import (
 	"crypto/ecdsa"
 	"time"
 
+	"github.com/ethereum/go-ethereum/ethclient"
+
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
@@ -39,8 +41,8 @@ type Clients struct {
 	AvsRegistryChainWriter      *avsregistry.ChainWriter
 	ElChainReader               *elcontracts.ChainReader
 	ElChainWriter               *elcontracts.ChainWriter
-	EthHttpClient               eth.Client
-	EthWsClient                 eth.Client
+	EthHttpClient               eth.HttpBackend
+	EthWsClient                 eth.WsBackend
 	Wallet                      wallet.Wallet
 	TxManager                   txmgr.TxManager
 	AvsRegistryContractBindings *avsregistry.ContractBindings
@@ -61,12 +63,12 @@ func BuildAll(
 	eigenMetrics := metrics.NewEigenMetrics(config.AvsName, config.PromMetricsIpPortAddress, promReg, logger)
 
 	// creating two types of Eth clients: HTTP and WS
-	ethHttpClient, err := eth.NewClient(config.EthHttpUrl)
+	ethHttpClient, err := ethclient.Dial(config.EthHttpUrl)
 	if err != nil {
 		return nil, utils.WrapError("Failed to create Eth Http client", err)
 	}
 
-	ethWsClient, err := eth.NewClient(config.EthWsUrl)
+	ethWsClient, err := ethclient.Dial(config.EthWsUrl)
 	if err != nil {
 		return nil, utils.WrapError("Failed to create Eth WS client", err)
 	}

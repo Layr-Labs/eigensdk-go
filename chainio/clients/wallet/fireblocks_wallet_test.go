@@ -5,12 +5,12 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/Layr-Labs/eigensdk-go/internal/fakes"
+
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/fireblocks"
 	cmocks "github.com/Layr-Labs/eigensdk-go/chainio/clients/mocks"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
-	"github.com/Layr-Labs/eigensdk-go/chainio/mocks"
 	"github.com/Layr-Labs/eigensdk-go/logging"
-	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/assert"
@@ -27,10 +27,9 @@ func TestSendTransaction(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	fireblocksClient := cmocks.NewMockFireblocksClient(ctrl)
-	ethClient := mocks.NewMockEthClient(ctrl)
+	ethClient := fakes.NewEthClient()
 	logger, err := logging.NewZapLogger(logging.Development)
 	assert.NoError(t, err)
-	ethClient.EXPECT().ChainID(gomock.Any()).Return(big.NewInt(5), nil)
 	sender, err := wallet.NewFireblocksWallet(fireblocksClient, ethClient, vaultAccountName, logger)
 	assert.NoError(t, err)
 
@@ -87,10 +86,9 @@ func TestTransfer(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	fireblocksClient := cmocks.NewMockFireblocksClient(ctrl)
-	ethClient := mocks.NewMockEthClient(ctrl)
+	ethClient := fakes.NewEthClient()
 	logger, err := logging.NewZapLogger(logging.Development)
 	assert.NoError(t, err)
-	ethClient.EXPECT().ChainID(gomock.Any()).Return(big.NewInt(5), nil)
 	sender, err := wallet.NewFireblocksWallet(fireblocksClient, ethClient, vaultAccountName, logger)
 	assert.NoError(t, err)
 
@@ -175,10 +173,9 @@ func TestSendTransactionNoValidContract(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	fireblocksClient := cmocks.NewMockFireblocksClient(ctrl)
-	ethClient := mocks.NewMockEthClient(ctrl)
+	ethClient := fakes.NewEthClient()
 	logger, err := logging.NewZapLogger(logging.Development)
 	assert.NoError(t, err)
-	ethClient.EXPECT().ChainID(gomock.Any()).Return(big.NewInt(5), nil)
 	sender, err := wallet.NewFireblocksWallet(fireblocksClient, ethClient, vaultAccountName, logger)
 	assert.NoError(t, err)
 
@@ -231,10 +228,9 @@ func TestSendTransactionNoValidExternalAccount(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	fireblocksClient := cmocks.NewMockFireblocksClient(ctrl)
-	ethClient := mocks.NewMockEthClient(ctrl)
+	ethClient := fakes.NewEthClient()
 	logger, err := logging.NewZapLogger(logging.Development)
 	assert.NoError(t, err)
-	ethClient.EXPECT().ChainID(gomock.Any()).Return(big.NewInt(5), nil)
 	sender, err := wallet.NewFireblocksWallet(fireblocksClient, ethClient, vaultAccountName, logger)
 	assert.NoError(t, err)
 
@@ -291,10 +287,9 @@ func TestSendTransactionInvalidVault(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	fireblocksClient := cmocks.NewMockFireblocksClient(ctrl)
-	ethClient := mocks.NewMockEthClient(ctrl)
+	ethClient := fakes.NewEthClient()
 	logger, err := logging.NewZapLogger(logging.Development)
 	assert.NoError(t, err)
-	ethClient.EXPECT().ChainID(gomock.Any()).Return(big.NewInt(5), nil)
 	sender, err := wallet.NewFireblocksWallet(fireblocksClient, ethClient, vaultAccountName, logger)
 	assert.NoError(t, err)
 
@@ -329,10 +324,9 @@ func TestSendTransactionReplaceTx(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	fireblocksClient := cmocks.NewMockFireblocksClient(ctrl)
-	ethClient := mocks.NewMockEthClient(ctrl)
+	ethClient := fakes.NewEthClient()
 	logger, err := logging.NewZapLogger(logging.Development)
 	assert.NoError(t, err)
-	ethClient.EXPECT().ChainID(gomock.Any()).Return(big.NewInt(5), nil)
 	sender, err := wallet.NewFireblocksWallet(fireblocksClient, ethClient, vaultAccountName, logger)
 	assert.NoError(t, err)
 
@@ -429,27 +423,21 @@ func TestWaitForTransactionReceipt(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	fireblocksClient := cmocks.NewMockFireblocksClient(ctrl)
-	ethClient := mocks.NewMockEthClient(ctrl)
+	ethClient := fakes.NewEthClient()
 	logger, err := logging.NewZapLogger(logging.Development)
 	assert.NoError(t, err)
-	ethClient.EXPECT().ChainID(gomock.Any()).Return(big.NewInt(5), nil)
 	sender, err := wallet.NewFireblocksWallet(fireblocksClient, ethClient, vaultAccountName, logger)
 	assert.NoError(t, err)
 
-	expectedTxHash := "0x0000000000000000000000000000000000000000000000000000000000001234"
-	fireblocksClient.EXPECT().GetTransaction(gomock.Any(), expectedTxHash).Return(&fireblocks.Transaction{
-		ID:     expectedTxHash,
+	fireblocksClient.EXPECT().GetTransaction(gomock.Any(), fakes.TransactionHash).Return(&fireblocks.Transaction{
+		ID:     fakes.TransactionHash,
 		Status: fireblocks.Completed,
-		TxHash: expectedTxHash,
-	}, nil)
-	ethClient.EXPECT().TransactionReceipt(gomock.Any(), common.HexToHash(expectedTxHash)).Return(&types.Receipt{
-		TxHash:      common.HexToHash(expectedTxHash),
-		BlockNumber: big.NewInt(1234),
+		TxHash: fakes.TransactionHash,
 	}, nil)
 
-	receipt, err := sender.GetTransactionReceipt(context.Background(), expectedTxHash)
+	receipt, err := sender.GetTransactionReceipt(context.Background(), fakes.TransactionHash)
 	assert.NoError(t, err)
-	assert.Equal(t, expectedTxHash, receipt.TxHash.String())
+	assert.Equal(t, fakes.TransactionHash, receipt.TxHash.String())
 	assert.Equal(t, big.NewInt(1234), receipt.BlockNumber)
 }
 
@@ -457,21 +445,19 @@ func TestWaitForTransactionReceiptFailFromFireblocks(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	fireblocksClient := cmocks.NewMockFireblocksClient(ctrl)
-	ethClient := mocks.NewMockEthClient(ctrl)
+	ethClient := fakes.NewEthClient()
 	logger, err := logging.NewZapLogger(logging.Development)
 	assert.NoError(t, err)
-	ethClient.EXPECT().ChainID(gomock.Any()).Return(big.NewInt(5), nil)
 	sender, err := wallet.NewFireblocksWallet(fireblocksClient, ethClient, vaultAccountName, logger)
 	assert.NoError(t, err)
 
-	expectedTxHash := "0x0000000000000000000000000000000000000000000000000000000000001234"
-	fireblocksClient.EXPECT().GetTransaction(gomock.Any(), expectedTxHash).Return(&fireblocks.Transaction{
-		ID:     expectedTxHash,
+	fireblocksClient.EXPECT().GetTransaction(gomock.Any(), fakes.TransactionHash).Return(&fireblocks.Transaction{
+		ID:     fakes.TransactionHash,
 		Status: fireblocks.Confirming, // not completed
-		TxHash: expectedTxHash,
+		TxHash: fakes.TransactionHash,
 	}, nil)
 
-	receipt, err := sender.GetTransactionReceipt(context.Background(), expectedTxHash)
+	receipt, err := sender.GetTransactionReceipt(context.Background(), fakes.TransactionHash)
 	assert.ErrorAs(t, err, &wallet.ErrReceiptNotYetAvailable)
 	assert.Nil(t, receipt)
 }
@@ -480,21 +466,19 @@ func TestWaitForTransactionReceiptStuckAtFireblocks(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	fireblocksClient := cmocks.NewMockFireblocksClient(ctrl)
-	ethClient := mocks.NewMockEthClient(ctrl)
+	ethClient := fakes.NewEthClient()
 	logger, err := logging.NewZapLogger(logging.Development)
 	assert.NoError(t, err)
-	ethClient.EXPECT().ChainID(gomock.Any()).Return(big.NewInt(5), nil)
 	sender, err := wallet.NewFireblocksWallet(fireblocksClient, ethClient, vaultAccountName, logger)
 	assert.NoError(t, err)
 
-	expectedTxHash := "0x0000000000000000000000000000000000000000000000000000000000001234"
-	fireblocksClient.EXPECT().GetTransaction(gomock.Any(), expectedTxHash).Return(&fireblocks.Transaction{
-		ID:     expectedTxHash,
+	fireblocksClient.EXPECT().GetTransaction(gomock.Any(), fakes.TransactionHash).Return(&fireblocks.Transaction{
+		ID:     fakes.TransactionHash,
 		Status: fireblocks.PendingSignature, // not completed
-		TxHash: expectedTxHash,
+		TxHash: fakes.TransactionHash,
 	}, nil)
 
-	receipt, err := sender.GetTransactionReceipt(context.Background(), expectedTxHash)
+	receipt, err := sender.GetTransactionReceipt(context.Background(), fakes.TransactionHash)
 	assert.ErrorAs(t, err, &wallet.ErrNotYetBroadcasted)
 	assert.Nil(t, receipt)
 }
@@ -503,22 +487,21 @@ func TestWaitForTransactionReceiptFailFromChain(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	fireblocksClient := cmocks.NewMockFireblocksClient(ctrl)
-	ethClient := mocks.NewMockEthClient(ctrl)
+	ethClient := fakes.NewEthClient()
 	logger, err := logging.NewZapLogger(logging.Development)
 	assert.NoError(t, err)
-	ethClient.EXPECT().ChainID(gomock.Any()).Return(big.NewInt(5), nil)
 	sender, err := wallet.NewFireblocksWallet(fireblocksClient, ethClient, vaultAccountName, logger)
 	assert.NoError(t, err)
 
-	expectedTxHash := "0x0000000000000000000000000000000000000000000000000000000000001234"
-	fireblocksClient.EXPECT().GetTransaction(gomock.Any(), expectedTxHash).Return(&fireblocks.Transaction{
-		ID:     expectedTxHash,
-		Status: fireblocks.Completed,
-		TxHash: expectedTxHash,
-	}, nil)
-	ethClient.EXPECT().TransactionReceipt(gomock.Any(), common.HexToHash(expectedTxHash)).Return(nil, ethereum.NotFound)
+	fireblocksClient.EXPECT().
+		GetTransaction(gomock.Any(), fakes.TransactionNashNotInFake).
+		Return(&fireblocks.Transaction{
+			ID:     fakes.TransactionNashNotInFake,
+			Status: fireblocks.Completed,
+			TxHash: fakes.TransactionNashNotInFake,
+		}, nil)
 
-	receipt, err := sender.GetTransactionReceipt(context.Background(), expectedTxHash)
+	receipt, err := sender.GetTransactionReceipt(context.Background(), fakes.TransactionNashNotInFake)
 	assert.Error(t, err)
 	assert.Nil(t, receipt)
 }
@@ -527,10 +510,9 @@ func TestSenderAddress(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	fireblocksClient := cmocks.NewMockFireblocksClient(ctrl)
-	ethClient := mocks.NewMockEthClient(ctrl)
+	ethClient := fakes.NewEthClient()
 	logger, err := logging.NewZapLogger(logging.Development)
 	assert.NoError(t, err)
-	ethClient.EXPECT().ChainID(gomock.Any()).Return(big.NewInt(5), nil)
 	w, err := wallet.NewFireblocksWallet(fireblocksClient, ethClient, vaultAccountName, logger)
 	assert.NoError(t, err)
 	assetID := fireblocks.AssetIDByChain[5]

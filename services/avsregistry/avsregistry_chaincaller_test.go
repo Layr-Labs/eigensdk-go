@@ -3,8 +3,9 @@ package avsregistry
 import (
 	"context"
 	"errors"
-
+	"log/slog"
 	"math/big"
+	"os"
 	"reflect"
 	"testing"
 
@@ -31,7 +32,7 @@ func (f *fakeOperatorInfoService) GetOperatorInfo(ctx context.Context, operator 
 }
 
 func TestAvsRegistryServiceChainCaller_getOperatorPubkeys(t *testing.T) {
-	logger := logging.NewNoopLogger()
+	logger := logging.NewTextSLogger(os.Stdout, &logging.SLoggerOptions{Level: slog.LevelDebug})
 	testOperator1 := fakes.TestOperator{
 		OperatorAddr: common.HexToAddress("0x1"),
 		OperatorId:   types.OperatorId{1},
@@ -83,7 +84,7 @@ func TestAvsRegistryServiceChainCaller_getOperatorPubkeys(t *testing.T) {
 }
 
 func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
-	logger := logging.NewNoopLogger()
+	logger := logging.NewTextSLogger(os.Stdout, &logging.SLoggerOptions{Level: slog.LevelDebug})
 	testOperator1 := fakes.TestOperator{
 		OperatorAddr: common.HexToAddress("0x1"),
 		OperatorId:   types.OperatorId{1},
@@ -143,7 +144,7 @@ func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
 }
 
 func TestAvsRegistryServiceChainCaller_GetQuorumsAvsState(t *testing.T) {
-	logger := logging.NewNoopLogger()
+	logger := logging.NewTextSLogger(os.Stdout, &logging.SLoggerOptions{Level: slog.LevelDebug})
 	testOperator1 := fakes.TestOperator{
 		OperatorAddr: common.HexToAddress("0x1"),
 		OperatorId:   types.OperatorId{1},

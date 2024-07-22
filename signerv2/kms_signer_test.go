@@ -7,8 +7,9 @@ import (
 	"os"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/ethclient"
+
 	eigenkms "github.com/Layr-Labs/eigensdk-go/aws/kms"
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/logging"
@@ -94,8 +95,8 @@ func TestSendTransaction(t *testing.T) {
 	err = rpcClient.CallContext(context.Background(), nil, "anvil_setBalance", keyAddr, 2_000_000_000_000_000_000)
 	assert.Nil(t, err)
 
-	logger := &logging.NoopLogger{}
-	ethClient, err := eth.NewClient(anvilEndpoint)
+	logger := &logging.SLogger{}
+	ethClient, err := ethclient.Dial(anvilEndpoint)
 	assert.Nil(t, err)
 	chainID, err := ethClient.ChainID(context.Background())
 	assert.Nil(t, err)

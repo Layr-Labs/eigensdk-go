@@ -9,8 +9,8 @@ import (
 
 func BuildClients(
 	config Config,
-	client eth.Client,
-	wsClient eth.Client,
+	client eth.HttpBackend,
+	wsClient eth.WsBackend,
 	txMgr txmgr.TxManager,
 	logger logging.Logger,
 ) (*ChainReader, *ChainSubscriber, *ChainWriter, *ContractBindings, error) {

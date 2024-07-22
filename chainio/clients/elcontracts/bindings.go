@@ -35,7 +35,7 @@ type ContractBindings struct {
 
 func NewBindingsFromConfig(
 	cfg Config,
-	client eth.Client,
+	client eth.HttpBackend,
 	logger logging.Logger,
 ) (*ContractBindings, error) {
 	var (
@@ -117,7 +117,7 @@ func isZeroAddress(address gethcommon.Address) bool {
 func NewEigenlayerContractBindings(
 	delegationManagerAddr gethcommon.Address,
 	avsDirectoryAddr gethcommon.Address,
-	ethclient eth.Client,
+	ethclient eth.HttpBackend,
 	logger logging.Logger,
 ) (*ContractBindings, error) {
 	contractDelegationManager, err := delegationmanager.NewContractDelegationManager(delegationManagerAddr, ethclient)

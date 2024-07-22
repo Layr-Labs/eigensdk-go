@@ -3,7 +3,9 @@ package metrics
 import (
 	"context"
 	"io"
+	"log/slog"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
@@ -23,7 +25,7 @@ type MetricsTestSuite struct {
 
 // this runs before all tests to initialize reg and metrics
 func (suite *MetricsTestSuite) SetupTest() {
-	logger := logging.NewNoopLogger()
+	logger := logging.NewTextSLogger(os.Stdout, &logging.SLoggerOptions{Level: slog.LevelDebug})
 	// create and start the metrics server
 	suite.reg = prometheus.NewRegistry()
 	suite.metrics = NewEigenMetrics("testavs", "localhost:9090", suite.reg, logger)

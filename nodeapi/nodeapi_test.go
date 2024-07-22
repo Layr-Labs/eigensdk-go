@@ -2,8 +2,10 @@ package nodeapi
 
 import (
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -12,8 +14,8 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/logging"
 )
 
-var noopLogger = logging.NewNoopLogger()
-var testNodeApi = NewNodeApi("testAvs", "v0.0.1", "localhost:8080", noopLogger)
+var logger = logging.NewTextSLogger(os.Stdout, &logging.SLoggerOptions{Level: slog.LevelDebug})
+var testNodeApi = NewNodeApi("testAvs", "v0.0.1", "localhost:8080", logger)
 
 // just making sure that the nodeapi starts without any errors
 func TestStart(t *testing.T) {
@@ -56,7 +58,7 @@ func TestHealthHandler(t *testing.T) {
 		},
 		"partially healthy": {
 			nodeApi: func() *NodeApi {
-				nodeApi := NewNodeApi("testAvs", "v0.0.1", "localhost:8080", noopLogger)
+				nodeApi := NewNodeApi("testAvs", "v0.0.1", "localhost:8080", logger)
 				nodeApi.UpdateHealth(PartiallyHealthy)
 				return nodeApi
 			}(),
@@ -65,7 +67,7 @@ func TestHealthHandler(t *testing.T) {
 		},
 		"unhealthy": {
 			nodeApi: func() *NodeApi {
-				nodeApi := NewNodeApi("testAvs", "v0.0.1", "localhost:8080", noopLogger)
+				nodeApi := NewNodeApi("testAvs", "v0.0.1", "localhost:8080", logger)
 				nodeApi.UpdateHealth(Unhealthy)
 				return nodeApi
 			}(),
@@ -106,7 +108,7 @@ func TestServicesHandler(t *testing.T) {
 		},
 		"one service": {
 			nodeApi: func() *NodeApi {
-				nodeApi := NewNodeApi("testAvs", "v0.0.1", "localhost:8080", noopLogger)
+				nodeApi := NewNodeApi("testAvs", "v0.0.1", "localhost:8080", logger)
 				nodeApi.RegisterNewService("testServiceId", "testServiceName", "testServiceDescription", ServiceStatusUp)
 				return nodeApi
 			}(),
@@ -115,7 +117,7 @@ func TestServicesHandler(t *testing.T) {
 		},
 		"two services": {
 			nodeApi: func() *NodeApi {
-				nodeApi := NewNodeApi("testAvs", "v0.0.1", "localhost:8080", noopLogger)
+				nodeApi := NewNodeApi("testAvs", "v0.0.1", "localhost:8080", logger)
 				nodeApi.RegisterNewService("testServiceId", "testServiceName", "testServiceDescription", ServiceStatusUp)
 				nodeApi.RegisterNewService("testServiceId2", "testServiceName2", "testServiceDescription2", ServiceStatusDown)
 				return nodeApi

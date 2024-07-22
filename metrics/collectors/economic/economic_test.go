@@ -1,7 +1,9 @@
 package economic
 
 import (
+	"log/slog"
 	"math/big"
+	"os"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -74,7 +76,7 @@ func TestEconomicCollector(t *testing.T) {
 	elReader := newFakeELReader()
 	avsRegistryReader := newFakeAVSRegistryReader()
 
-	logger := logging.NewNoopLogger()
+	logger := logging.NewTextSLogger(os.Stdout, &logging.SLoggerOptions{Level: slog.LevelDebug})
 	economicCollector := NewCollector(elReader, avsRegistryReader, "testavs", logger, operatorAddr, quorumNames)
 
 	count := testutil.CollectAndCount(economicCollector, "eigen_slashing_status", "eigen_registered_stakes")

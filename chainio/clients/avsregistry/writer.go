@@ -45,7 +45,7 @@ type ChainWriter struct {
 	blsApkRegistry         *blsapkregistry.ContractBLSApkRegistry
 	elReader               eLReader
 	logger                 logging.Logger
-	ethClient              eth.Client
+	ethClient              eth.HttpBackend
 	txMgr                  txmgr.TxManager
 }
 
@@ -57,7 +57,7 @@ func NewChainWriter(
 	blsApkRegistry *blsapkregistry.ContractBLSApkRegistry,
 	elReader eLReader,
 	logger logging.Logger,
-	ethClient eth.Client,
+	ethClient eth.HttpBackend,
 	txMgr txmgr.TxManager,
 ) *ChainWriter {
 	logger = logger.With(logging.ComponentKey, "avsregistry/ChainWriter")
@@ -81,7 +81,7 @@ func BuildAvsRegistryChainWriter(
 	registryCoordinatorAddr gethcommon.Address,
 	operatorStateRetrieverAddr gethcommon.Address,
 	logger logging.Logger,
-	ethClient eth.Client,
+	ethClient eth.HttpBackend,
 	txMgr txmgr.TxManager,
 ) (*ChainWriter, error) {
 	registryCoordinator, err := regcoord.NewContractRegistryCoordinator(registryCoordinatorAddr, ethClient)
@@ -147,7 +147,7 @@ func BuildAvsRegistryChainWriter(
 // NewWriterFromConfig creates a new ChainWriter from the provided config
 func NewWriterFromConfig(
 	cfg Config,
-	client eth.Client,
+	client eth.HttpBackend,
 	txMgr txmgr.TxManager,
 	logger logging.Logger,
 ) (*ChainWriter, error) {
