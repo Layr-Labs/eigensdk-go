@@ -42,7 +42,6 @@ func (f *client) ListVaultAccounts(ctx context.Context) ([]VaultAccount, error) 
 		q.Set("before", p.Before)
 		q.Set("after", p.After)
 		u.RawQuery = q.Encode()
-		fmt.Println("URL: ", u.String())
 		res, err := f.makeRequest(ctx, "GET", u.String(), nil)
 		if err != nil {
 			return accounts, fmt.Errorf("error making request: %w", err)
