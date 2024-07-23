@@ -8,5 +8,10 @@ import (
 )
 
 func GetTestLogger() logging.Logger {
-	return logging.NewTextSLogger(os.Stdout, &logging.SLoggerOptions{Level: slog.LevelDebug})
+	return logging.NewTextSLogger(os.Stdout,
+		&logging.SLoggerOptions{
+			Level:     slog.LevelDebug,
+			AddSource: true,
+		},
+	)
 }
