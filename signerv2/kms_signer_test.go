@@ -3,6 +3,7 @@ package signerv2_test
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"math/big"
 	"os"
 	"testing"
@@ -95,7 +96,7 @@ func TestSendTransaction(t *testing.T) {
 	err = rpcClient.CallContext(context.Background(), nil, "anvil_setBalance", keyAddr, 2_000_000_000_000_000_000)
 	assert.Nil(t, err)
 
-	logger := &logging.SLogger{}
+	logger := logging.NewTextSLogger(os.Stdout, &logging.SLoggerOptions{Level: slog.LevelDebug})
 	ethClient, err := ethclient.Dial(anvilEndpoint)
 	assert.Nil(t, err)
 	chainID, err := ethClient.ChainID(context.Background())
