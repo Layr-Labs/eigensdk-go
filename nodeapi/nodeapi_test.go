@@ -2,19 +2,17 @@ package nodeapi
 
 import (
 	"io"
-	"log/slog"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/Layr-Labs/eigensdk-go/testutils"
 
-	"github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/stretchr/testify/assert"
 )
 
-var logger = logging.NewTextSLogger(os.Stdout, &logging.SLoggerOptions{Level: slog.LevelDebug})
+var logger = testutils.GetTestLogger()
 var testNodeApi = NewNodeApi("testAvs", "v0.0.1", "localhost:8080", logger)
 
 // just making sure that the nodeapi starts without any errors

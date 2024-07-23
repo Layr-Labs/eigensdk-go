@@ -3,25 +3,26 @@ package signerv2_test
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"math/big"
 	"os"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/ethclient"
-
 	eigenkms "github.com/Layr-Labs/eigensdk-go/aws/kms"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
-	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/signerv2"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
+
 	"github.com/aws/aws-sdk-go-v2/service/kms/types"
+
 	"github.com/ethereum/go-ethereum/common"
 	gtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
+
 	"github.com/stretchr/testify/assert"
+
 	"github.com/testcontainers/testcontainers-go"
 )
 
@@ -96,7 +97,7 @@ func TestSendTransaction(t *testing.T) {
 	err = rpcClient.CallContext(context.Background(), nil, "anvil_setBalance", keyAddr, 2_000_000_000_000_000_000)
 	assert.Nil(t, err)
 
-	logger := logging.NewTextSLogger(os.Stdout, &logging.SLoggerOptions{Level: slog.LevelDebug})
+	logger := testutils.GetTestLogger()
 	ethClient, err := ethclient.Dial(anvilEndpoint)
 	assert.Nil(t, err)
 	chainID, err := ethClient.ChainID(context.Background())

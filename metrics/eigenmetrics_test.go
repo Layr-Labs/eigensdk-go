@@ -3,18 +3,17 @@ package metrics
 import (
 	"context"
 	"io"
-	"log/slog"
 	"net/http"
-	"os"
 	"testing"
 	"time"
 
+	"github.com/Layr-Labs/eigensdk-go/testutils"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-
-	"github.com/Layr-Labs/eigensdk-go/logging"
 )
 
 type MetricsTestSuite struct {
@@ -25,7 +24,7 @@ type MetricsTestSuite struct {
 
 // this runs before all tests to initialize reg and metrics
 func (suite *MetricsTestSuite) SetupTest() {
-	logger := logging.NewTextSLogger(os.Stdout, &logging.SLoggerOptions{Level: slog.LevelDebug})
+	logger := testutils.GetTestLogger()
 	// create and start the metrics server
 	suite.reg = prometheus.NewRegistry()
 	suite.metrics = NewEigenMetrics("testavs", "localhost:9090", suite.reg, logger)
