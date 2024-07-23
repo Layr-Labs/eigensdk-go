@@ -45,8 +45,8 @@ type SLoggerOptions struct {
 // default SLogger options are used when no options are provided
 // they are the development options (debug logs with source)
 var defaultTintOptions = tint.Options{
-	AddSource:   true,
-	Level:       slog.LevelDebug,
+	AddSource:   false,
+	Level:       slog.LevelInfo,
 	ReplaceAttr: nil,
 	TimeFormat:  time.StampMilli,
 	NoColor:     false,
