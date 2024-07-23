@@ -9,7 +9,7 @@ import (
 
 func BuildClients(
 	config Config,
-	client eth.Client,
+	client eth.HttpBackend,
 	txMgr txmgr.TxManager,
 	logger logging.Logger,
 	eigenMetrics *metrics.EigenMetrics,

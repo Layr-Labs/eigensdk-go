@@ -10,7 +10,7 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/internal/fakes"
-	"github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/testutils"
 	"github.com/Layr-Labs/eigensdk-go/types"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -31,7 +31,7 @@ func (f *fakeOperatorInfoService) GetOperatorInfo(ctx context.Context, operator 
 }
 
 func TestAvsRegistryServiceChainCaller_getOperatorPubkeys(t *testing.T) {
-	logger := logging.NewNoopLogger()
+	logger := testutils.GetTestLogger()
 	testOperator1 := fakes.TestOperator{
 		OperatorAddr: common.HexToAddress("0x1"),
 		OperatorId:   types.OperatorId{1},
@@ -83,7 +83,7 @@ func TestAvsRegistryServiceChainCaller_getOperatorPubkeys(t *testing.T) {
 }
 
 func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
-	logger := logging.NewNoopLogger()
+	logger := testutils.GetTestLogger()
 	testOperator1 := fakes.TestOperator{
 		OperatorAddr: common.HexToAddress("0x1"),
 		OperatorId:   types.OperatorId{1},
@@ -143,7 +143,7 @@ func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
 }
 
 func TestAvsRegistryServiceChainCaller_GetQuorumsAvsState(t *testing.T) {
-	logger := logging.NewNoopLogger()
+	logger := testutils.GetTestLogger()
 	testOperator1 := fakes.TestOperator{
 		OperatorAddr: common.HexToAddress("0x1"),
 		OperatorId:   types.OperatorId{1},

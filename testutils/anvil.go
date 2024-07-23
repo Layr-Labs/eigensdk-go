@@ -3,12 +3,12 @@ package testutils
 import (
 	"context"
 	"fmt"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"log"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/testcontainers/testcontainers-go"
@@ -64,7 +64,7 @@ type ContractAddresses struct {
 }
 
 func GetContractAddressesFromContractRegistry(ethHttpUrl string) (mockAvsContracts ContractAddresses) {
-	ethHttpClient, err := eth.NewClient(ethHttpUrl)
+	ethHttpClient, err := ethclient.Dial(ethHttpUrl)
 	if err != nil {
 		panic(err)
 	}

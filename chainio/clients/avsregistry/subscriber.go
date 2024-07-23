@@ -38,7 +38,7 @@ func NewChainSubscriber(
 // Deprecated: Use NewSubscriberFromConfig instead
 func BuildAvsRegistryChainSubscriber(
 	regCoordAddr common.Address,
-	ethWsClient eth.Client,
+	ethWsClient eth.WsBackend,
 	logger logging.Logger,
 ) (*ChainSubscriber, error) {
 	regCoord, err := regcoord.NewContractRegistryCoordinator(regCoordAddr, ethWsClient)
@@ -60,7 +60,7 @@ func BuildAvsRegistryChainSubscriber(
 // A websocket ETH Client must be provided
 func NewSubscriberFromConfig(
 	cfg Config,
-	wsClient eth.Client,
+	wsClient eth.WsBackend,
 	logger logging.Logger,
 ) (*ChainSubscriber, error) {
 	bindings, err := NewBindingsFromConfig(cfg, wsClient, logger)

@@ -35,7 +35,7 @@ type ChainReader struct {
 	strategyManager    *strategymanager.ContractStrategyManager
 	avsDirectory       *avsdirectory.ContractAVSDirectory
 	rewardsCoordinator *rewardscoordinator.ContractIRewardsCoordinator
-	ethClient          eth.Client
+	ethClient          eth.HttpBackend
 }
 
 func NewChainReader(
@@ -45,7 +45,7 @@ func NewChainReader(
 	avsDirectory *avsdirectory.ContractAVSDirectory,
 	rewardsCoordinator *rewardscoordinator.ContractIRewardsCoordinator,
 	logger logging.Logger,
-	ethClient eth.Client,
+	ethClient eth.HttpBackend,
 ) *ChainReader {
 	logger = logger.With(logging.ComponentKey, "elcontracts/reader")
 
@@ -65,7 +65,7 @@ func NewChainReader(
 func BuildELChainReader(
 	delegationManagerAddr gethcommon.Address,
 	avsDirectoryAddr gethcommon.Address,
-	ethClient eth.Client,
+	ethClient eth.HttpBackend,
 	logger logging.Logger,
 ) (*ChainReader, error) {
 	elContractBindings, err := NewEigenlayerContractBindings(
@@ -90,7 +90,7 @@ func BuildELChainReader(
 
 func NewReaderFromConfig(
 	cfg Config,
-	ethClient eth.Client,
+	ethClient eth.HttpBackend,
 	logger logging.Logger,
 ) (*ChainReader, error) {
 	elContractBindings, err := NewBindingsFromConfig(

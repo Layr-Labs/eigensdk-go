@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
-	"github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/testutils"
 	"github.com/Layr-Labs/eigensdk-go/types"
 )
 
@@ -74,7 +74,7 @@ func TestEconomicCollector(t *testing.T) {
 	elReader := newFakeELReader()
 	avsRegistryReader := newFakeAVSRegistryReader()
 
-	logger := logging.NewNoopLogger()
+	logger := testutils.GetTestLogger()
 	economicCollector := NewCollector(elReader, avsRegistryReader, "testavs", logger, operatorAddr, quorumNames)
 
 	count := testutil.CollectAndCount(economicCollector, "eigen_slashing_status", "eigen_registered_stakes")

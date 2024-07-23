@@ -37,7 +37,7 @@ type ChainReader struct {
 	registryCoordinator     *regcoord.ContractRegistryCoordinator
 	operatorStateRetriever  *opstateretriever.ContractOperatorStateRetriever
 	stakeRegistry           *stakeregistry.ContractStakeRegistry
-	ethClient               eth.Client
+	ethClient               eth.HttpBackend
 }
 
 func NewChainReader(
@@ -47,7 +47,7 @@ func NewChainReader(
 	operatorStateRetriever *opstateretriever.ContractOperatorStateRetriever,
 	stakeRegistry *stakeregistry.ContractStakeRegistry,
 	logger logging.Logger,
-	ethClient eth.Client,
+	ethClient eth.HttpBackend,
 ) *ChainReader {
 	logger = logger.With(logging.ComponentKey, "avsregistry/ChainReader")
 
@@ -65,7 +65,7 @@ func NewChainReader(
 // NewReaderFromConfig creates a new ChainReader
 func NewReaderFromConfig(
 	cfg Config,
-	client eth.Client,
+	client eth.HttpBackend,
 	logger logging.Logger,
 ) (*ChainReader, error) {
 	bindings, err := NewBindingsFromConfig(cfg, client, logger)
@@ -89,7 +89,7 @@ func NewReaderFromConfig(
 func BuildAvsRegistryChainReader(
 	registryCoordinatorAddr common.Address,
 	operatorStateRetrieverAddr common.Address,
-	ethClient eth.Client,
+	ethClient eth.HttpBackend,
 	logger logging.Logger,
 ) (*ChainReader, error) {
 	contractRegistryCoordinator, err := regcoord.NewContractRegistryCoordinator(registryCoordinatorAddr, ethClient)

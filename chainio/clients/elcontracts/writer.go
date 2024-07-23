@@ -38,7 +38,7 @@ type ChainWriter struct {
 	rewardsCoordinator  *rewardscoordinator.ContractIRewardsCoordinator
 	strategyManagerAddr gethcommon.Address
 	elChainReader       Reader
-	ethClient           eth.Client
+	ethClient           eth.HttpBackend
 	logger              logging.Logger
 	txMgr               txmgr.TxManager
 }
@@ -50,7 +50,7 @@ func NewChainWriter(
 	rewardsCoordinator *rewardscoordinator.ContractIRewardsCoordinator,
 	strategyManagerAddr gethcommon.Address,
 	elChainReader Reader,
-	ethClient eth.Client,
+	ethClient eth.HttpBackend,
 	logger logging.Logger,
 	eigenMetrics metrics.Metrics,
 	txMgr txmgr.TxManager,
@@ -75,7 +75,7 @@ func NewChainWriter(
 func BuildELChainWriter(
 	delegationManagerAddr gethcommon.Address,
 	avsDirectoryAddr gethcommon.Address,
-	ethClient eth.Client,
+	ethClient eth.HttpBackend,
 	logger logging.Logger,
 	eigenMetrics metrics.Metrics,
 	txMgr txmgr.TxManager,
@@ -114,7 +114,7 @@ func BuildELChainWriter(
 
 func NewWriterFromConfig(
 	cfg Config,
-	ethClient eth.Client,
+	ethClient eth.HttpBackend,
 	logger logging.Logger,
 	eigenMetrics metrics.Metrics,
 	txMgr txmgr.TxManager,
