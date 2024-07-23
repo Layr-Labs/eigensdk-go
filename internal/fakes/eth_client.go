@@ -20,6 +20,12 @@ type EthClient struct {
 	successfulTxs map[common.Hash]bool
 }
 
+// NewEthClient returns a new instance of the EthClient
+// Right now this client is hardcoded with some values to satisfy current
+// testing requirements, but it can be extended to support more features and
+// can be made more generic over time when we add more tests.
+// Currently used in
+// - chainio/clients/wallet/fireblocks_wallet_test.go
 func NewEthClient() *EthClient {
 	return &EthClient{
 		chainId: big.NewInt(5),
