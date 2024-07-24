@@ -11,11 +11,14 @@ import (
 type AssetAddress struct {
 	AssetID           AssetID `json:"assetId"`
 	Address           string  `json:"address"`
-	Tag               string  `json:"tag"`
 	Description       string  `json:"description"`
+	Tag               string  `json:"tag"`
 	Type              string  `json:"type"`
+	CustomerRefID     string  `json:"customerRefId"`
+	AddressFormat     string  `json:"addressFormat"`
 	LegacyAddress     string  `json:"legacyAddress"`
 	EnterpriseAddress string  `json:"enterpriseAddress"`
+	BIP44AddressIndex int     `json:"bip44AddressIndex"`
 	UserDefined       bool    `json:"userDefined"`
 }
 
