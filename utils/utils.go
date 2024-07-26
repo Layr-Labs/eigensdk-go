@@ -283,3 +283,7 @@ func Add0x(address string) string {
 func Trim0x(address string) string {
 	return strings.TrimPrefix(address, "0x")
 }
+
+func IsZeroAddress(address gethcommon.Address) bool {
+	return address == gethcommon.Address{}
+}
