@@ -1,6 +1,12 @@
 #!/bin/bash
 
-TMP_DIR=tmp
+# This script generates Go bindings for the EigenPods contracts
+# The reason this script is separate from the bindings generation in the ~/contracts directory
+# is because they are in a separate branch in eigenlayer-contracts and to unblock the development
+# of the EigenPods client, we need to generate the bindings for the contracts in the feat/partial-withdrawal-batching branch.
+# Once eigenlayer-contracts repo is stable and features are on single branch, we can move the bindings back to normal process
+
+TMP_DIR=$(mktemp -d)
 BINDINGS_DIR=bindings
 
 cleanup_bindings_dir() {
@@ -8,23 +14,20 @@ cleanup_bindings_dir() {
   rm -rf ${BINDINGS_DIR}
 }
 
-create_tmp_dir() {
-  echo "Creating a temporary directory"
-  mkdir -p ${TMP_DIR}
-}
-
 clone() {
   echo "Cloning the EigenLayer contracts repository"
-  git clone -b feat/partial-withdrawal-batching --depth=1 git@github.com:Layr-Labs/eigenlayer-contracts.git ${TMP_DIR}
+  git clone -b feat/partial-withdrawal-batching --depth=1 git@github.com:Layr-Labs/eigenlayer-contracts.git "${TMP_DIR}"
 }
 
 generate_bindings() {
   echo "Generating bindings for the EigenPods contracts"
-  cd ${TMP_DIR} && make bindings
-  cd ..
+  current_dir=$(pwd)
+  cd "${TMP_DIR}" && make bindings
+  # shellcheck disable=SC2164
+  cd "$current_dir"
   mkdir -p ${BINDINGS_DIR}
-  generate_go ${TMP_DIR}/out/IEigenPod.sol/IEigenPod.json IEigenPod
-  generate_go ${TMP_DIR}/out/IEigenPodManager.sol/IEigenPodManager.json IEigenPodManager
+  generate_go "${TMP_DIR}"/out/IEigenPod.sol/IEigenPod.json IEigenPod
+  generate_go "${TMP_DIR}"/out/IEigenPodManager.sol/IEigenPodManager.json IEigenPodManager
 }
 
 generate_go() {
@@ -43,12 +46,11 @@ generate_go() {
 
 cleanup() {
   echo "Cleaning up the temporary directory"
-  rm -rf ${TMP_DIR}
+  rm -rf "${TMP_DIR}"
 }
 
 main() {
   cleanup_bindings_dir
-  create_tmp_dir
   clone
   generate_bindings
   cleanup
