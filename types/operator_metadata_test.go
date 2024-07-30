@@ -111,7 +111,7 @@ func TestOperatorMetadata(t *testing.T) {
 			expectedError: utils.WrapError(ErrInvalidName, utils.ErrTextTooLong(utils.TextCharsLimit)),
 		},
 		{
-			name: "Invalid metadata - description > 200 characters",
+			name: "Invalid metadata - description > 500 characters",
 			metadata: OperatorMetadata{
 				Name:        "test",
 				Description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
@@ -119,7 +119,7 @@ func TestOperatorMetadata(t *testing.T) {
 				Twitter:     "https://twitter.com/test",
 				Website:     "https://test.com",
 			},
-			expectedError: utils.WrapError(ErrInvalidDescription, utils.ErrTextTooLong),
+			expectedError: utils.WrapError(ErrInvalidDescription, utils.ErrTextTooLong(utils.TextCharsLimit)),
 		},
 		{
 			name: "Invalid metadata - no logo",
