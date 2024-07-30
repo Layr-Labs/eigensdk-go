@@ -11,7 +11,10 @@ help:
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 bindings: ## generates contract bindings
-	cd contracts && rm -rf bindings/* && ./generate-bindings.sh 
+	cd contracts && rm -rf bindings/* && ./generate-bindings.sh
+
+eigenpod-bindings: ## generates contract bindings for eigenpod
+	cd chainio/clients/eigenpod && ./generate.sh
 
 mocks: ## generates mocks
 	go install go.uber.org/mock/mockgen@v0.4.0
