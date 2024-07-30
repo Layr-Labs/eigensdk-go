@@ -7,10 +7,12 @@ import (
 )
 
 var (
-	ErrInvalidUrl            = errors.New("invalid url")
-	ErrInvalidGithubRawUrl   = errors.New("invalid github raw url")
-	ErrInvalidText           = fmt.Errorf("invalid text format, doesn't conform to regex %s", TextRegex)
-	ErrTextTooLong           = errors.New("text should be less than 500 characters")
+	ErrInvalidUrl          = errors.New("invalid url")
+	ErrInvalidGithubRawUrl = errors.New("invalid github raw url")
+	ErrInvalidText         = fmt.Errorf("invalid text format, doesn't conform to regex %s", TextRegex)
+	ErrTextTooLong         = func(limit int) error {
+		return fmt.Errorf("text should be less than %d characters", limit)
+	}
 	ErrEmptyText             = errors.New("text is empty")
 	ErrInvalidImageExtension = errors.New(
 		"invalid image extension. only " + strings.Join(ImageExtensions, ",") + " is supported",

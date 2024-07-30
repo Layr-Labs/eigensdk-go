@@ -26,10 +26,12 @@ import (
 const (
 	PngMimeType = "image/png"
 
-	TextRegex = `^[a-zA-Z0-9 +.,;:?!'’"\-_/()\[\]~&#$—%]+$`
+	TextRegex = `^[a-zA-Z0-9 +.,;:?!'’"“”\-_/()\[\]~&#$—%]+$`
 
 	// Limit Http response to 1 MB
 	httpResponseLimitBytes = 1 * 1024 * 1024
+
+	TextCharsLimit = 500
 )
 
 var (
@@ -240,8 +242,8 @@ func ValidateText(text string) error {
 		return ErrEmptyText
 	}
 
-	if len(text) > 500 {
-		return ErrTextTooLong
+	if len(text) > TextCharsLimit {
+		return ErrTextTooLong(TextCharsLimit)
 	}
 
 	// Regular expression to validate text
