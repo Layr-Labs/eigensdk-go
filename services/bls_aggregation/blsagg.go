@@ -307,7 +307,7 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 					signersTotalStakePerQuorum: cloneStakePerQuorumMap(operatorsAvsStateDict[signedTaskResponseDigest.OperatorId].StakePerQuorum),
 				}
 			} else {
-				a.logger.Debug("Task goroutine updating existing aggregated operators",
+				a.logger.Debug("Task goroutine updating existing aggregated operator signatures",
 					"taskIndex", taskIndex,
 					"taskResponseDigest", taskResponseDigest)
 
@@ -328,7 +328,7 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 			aggregatedOperatorsDict[taskResponseDigest] = digestAggregatedOperators
 
 			if checkIfStakeThresholdsMet(a.logger, digestAggregatedOperators.signersTotalStakePerQuorum, totalStakePerQuorum, quorumThresholdPercentagesMap) {
-				a.logger.Debug("Task goroutine found enough stake to aggregate",
+				a.logger.Debug("Task goroutine stake threshold reached",
 					"taskIndex", taskIndex,
 					"taskResponseDigest", taskResponseDigest)
 
