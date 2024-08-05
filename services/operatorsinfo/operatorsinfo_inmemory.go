@@ -3,10 +3,12 @@ package operatorsinfo
 import (
 	"context"
 	"errors"
+	blsapkreg "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSApkRegistry"
+	regcoord "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
+	"github.com/ethereum/go-ethereum/event"
 	"math/big"
 	"sync"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/types"
@@ -15,6 +17,27 @@ import (
 )
 
 var defaultLogFilterQueryBlockRange = big.NewInt(10_000)
+
+type avsRegistryReader interface {
+	QueryExistingRegisteredOperatorSockets(
+		ctx context.Context,
+		startBlock *big.Int,
+		stopBlock *big.Int,
+		blockRange *big.Int,
+	) (map[types.OperatorId]types.Socket, error)
+
+	QueryExistingRegisteredOperatorPubKeys(
+		ctx context.Context,
+		startBlock *big.Int,
+		stopBlock *big.Int,
+		blockRange *big.Int,
+	) ([]types.OperatorAddr, []types.OperatorPubkeys, error)
+}
+
+type avsRegistrySubscriber interface {
+	SubscribeToNewPubkeyRegistrations() (chan *blsapkreg.ContractBLSApkRegistryNewPubkeyRegistration, event.Subscription, error)
+	SubscribeToOperatorSocketUpdates() (chan *regcoord.ContractRegistryCoordinatorOperatorSocketUpdate, event.Subscription, error)
+}
 
 // OperatorsInfoServiceInMemory is a stateful goroutine (see https://gobyexample.com/stateful-goroutines)
 // implementation of OperatorsInfoService that listen for the NewPubkeyRegistration and OperatorSocketUpdate events using a websocket connection
@@ -29,8 +52,8 @@ var defaultLogFilterQueryBlockRange = big.NewInt(10_000)
 // to be replicated and load-balanced, so that when it fails traffic can be switched to the other aggregator.
 type OperatorsInfoServiceInMemory struct {
 	logFilterQueryBlockRange *big.Int
-	avsRegistrySubscriber    avsregistry.Subscriber
-	avsRegistryReader        avsregistry.Reader
+	avsRegistrySubscriber    avsRegistrySubscriber
+	avsRegistryReader        avsRegistryReader
 	logger                   logging.Logger
 	queryC                   chan<- query
 	// queried via the queryC channel, so don't need mutex to access
@@ -59,8 +82,8 @@ var _ OperatorsInfoService = (*OperatorsInfoServiceInMemory)(nil)
 // Using a separate initialize() function might lead to some users forgetting to call it and the service not behaving properly.
 func NewOperatorsInfoServiceInMemory(
 	ctx context.Context,
-	avsRegistrySubscriber avsregistry.Subscriber,
-	avsRegistryReader avsregistry.Reader,
+	avsRegistrySubscriber avsRegistrySubscriber,
+	avsRegistryReader avsRegistryReader,
 	logFilterQueryBlockRange *big.Int,
 	logger logging.Logger,
 ) *OperatorsInfoServiceInMemory {

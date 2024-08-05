@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math/big"
 
-	sdkethclient "github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 
@@ -20,9 +19,17 @@ import (
 // exported as the default so that users can call NewBasicSigner with it if they don't know any better
 var FallbackGasTipCap = big.NewInt(15000000000)
 
+type ethClient interface {
+	bind.ContractBackend
+
+	ChainID(ctx context.Context) (*big.Int, error)
+	TransactionReceipt(ctx context.Context, txHash gethcommon.Hash) (*gethtypes.Receipt, error)
+}
+
+// Deprecated: Use SignerV2 instead
 type BasicSigner struct {
 	logger            logging.Logger
-	ethClient         sdkethclient.Client
+	ethClient         ethClient
 	privateKey        *ecdsa.PrivateKey
 	accountAddress    gethcommon.Address
 	contracts         map[gethcommon.Address]*bind.BoundContract
@@ -31,7 +38,7 @@ type BasicSigner struct {
 
 func NewBasicSigner(
 	privateKey *ecdsa.PrivateKey,
-	ethClient sdkethclient.Client,
+	client ethClient,
 	logger logging.Logger,
 	fallbackGasTipCap *big.Int,
 ) (*BasicSigner, error) {
@@ -43,7 +50,7 @@ func NewBasicSigner(
 
 	return &BasicSigner{
 		logger:            logger,
-		ethClient:         ethClient,
+		ethClient:         client,
 		privateKey:        privateKey,
 		accountAddress:    accountAddress,
 		contracts:         make(map[gethcommon.Address]*bind.BoundContract),

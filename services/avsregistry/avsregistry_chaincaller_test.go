@@ -2,32 +2,40 @@ package avsregistry
 
 import (
 	"context"
+	"errors"
+
 	"math/big"
 	"reflect"
 	"testing"
 
-	chainiomocks "github.com/Layr-Labs/eigensdk-go/chainio/mocks"
-	opstateretrievar "github.com/Layr-Labs/eigensdk-go/contracts/bindings/OperatorStateRetriever"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
-	"github.com/Layr-Labs/eigensdk-go/logging"
-	servicemocks "github.com/Layr-Labs/eigensdk-go/services/mocks"
+	"github.com/Layr-Labs/eigensdk-go/internal/fakes"
+	"github.com/Layr-Labs/eigensdk-go/testutils"
 	"github.com/Layr-Labs/eigensdk-go/types"
+
 	"github.com/ethereum/go-ethereum/common"
-	"go.uber.org/mock/gomock"
 )
 
-type testOperator struct {
-	operatorAddr common.Address
-	operatorId   types.OperatorId
+type fakeOperatorInfoService struct {
 	operatorInfo types.OperatorInfo
 }
 
+func newFakeOperatorInfoService(operatorInfo types.OperatorInfo) *fakeOperatorInfoService {
+	return &fakeOperatorInfoService{
+		operatorInfo: operatorInfo,
+	}
+}
+
+func (f *fakeOperatorInfoService) GetOperatorInfo(ctx context.Context, operator common.Address) (operatorInfo types.OperatorInfo, operatorFound bool) {
+	return f.operatorInfo, true
+}
+
 func TestAvsRegistryServiceChainCaller_getOperatorPubkeys(t *testing.T) {
-	logger := logging.NewNoopLogger()
-	testOperator := testOperator{
-		operatorAddr: common.HexToAddress("0x1"),
-		operatorId:   types.OperatorId{1},
-		operatorInfo: types.OperatorInfo{
+	logger := testutils.GetTestLogger()
+	testOperator1 := fakes.TestOperator{
+		OperatorAddr: common.HexToAddress("0x1"),
+		OperatorId:   types.OperatorId{1},
+		OperatorInfo: types.OperatorInfo{
 			Pubkeys: types.OperatorPubkeys{
 				G1Pubkey: bls.NewG1Point(big.NewInt(1), big.NewInt(1)),
 				G2Pubkey: bls.NewG2Point([2]*big.Int{big.NewInt(1), big.NewInt(1)}, [2]*big.Int{big.NewInt(1), big.NewInt(1)}),
@@ -38,40 +46,33 @@ func TestAvsRegistryServiceChainCaller_getOperatorPubkeys(t *testing.T) {
 
 	// TODO(samlaf): add error test cases
 	var tests = []struct {
-		name                    string
-		mocksInitializationFunc func(*chainiomocks.MockAVSReader, *servicemocks.MockOperatorsInfoService)
-		queryOperatorId         types.OperatorId
-		wantErr                 error
-		wantOperatorInfo        types.OperatorInfo
+		name             string
+		operator         *fakes.TestOperator
+		queryOperatorId  types.OperatorId
+		wantErr          error
+		wantOperatorInfo types.OperatorInfo
 	}{
 		{
-			name: "should return operator info",
-			mocksInitializationFunc: func(mockAvsRegistryReader *chainiomocks.MockAVSReader, mockOperatorsInfoService *servicemocks.MockOperatorsInfoService) {
-				mockAvsRegistryReader.EXPECT().GetOperatorFromId(gomock.Any(), testOperator.operatorId).Return(testOperator.operatorAddr, nil)
-				mockOperatorsInfoService.EXPECT().GetOperatorInfo(gomock.Any(), testOperator.operatorAddr).Return(testOperator.operatorInfo, true)
-			},
-			queryOperatorId:  testOperator.operatorId,
+			name:             "should return operator info",
+			operator:         &testOperator1,
+			queryOperatorId:  testOperator1.OperatorId,
 			wantErr:          nil,
-			wantOperatorInfo: testOperator.operatorInfo,
+			wantOperatorInfo: testOperator1.OperatorInfo,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create mocks
-			mockCtrl := gomock.NewController(t)
-			mockAvsRegistryReader := chainiomocks.NewMockAVSReader(mockCtrl)
-			mockOperatorsInfoService := servicemocks.NewMockOperatorsInfoService(mockCtrl)
+			mockAvsRegistryReader := fakes.NewFakeAVSRegistryReader(tt.operator, nil)
+			mockOperatorsInfoService := newFakeOperatorInfoService(tt.operator.OperatorInfo)
 
-			if tt.mocksInitializationFunc != nil {
-				tt.mocksInitializationFunc(mockAvsRegistryReader, mockOperatorsInfoService)
-			}
 			// Create a new instance of the avsregistry service
 			service := NewAvsRegistryServiceChainCaller(mockAvsRegistryReader, mockOperatorsInfoService, logger)
 
 			// Call the GetOperatorPubkeys method with the test operator address
 			gotOperatorInfo, gotErr := service.getOperatorInfo(context.Background(), tt.queryOperatorId)
-			if tt.wantErr != gotErr {
+			if !errors.Is(gotErr, tt.wantErr) {
 				t.Fatalf("GetOperatorPubkeys returned wrong error. Got: %v, want: %v.", gotErr, tt.wantErr)
 			}
 			if tt.wantErr == nil && !reflect.DeepEqual(tt.wantOperatorInfo, gotOperatorInfo) {
@@ -82,11 +83,11 @@ func TestAvsRegistryServiceChainCaller_getOperatorPubkeys(t *testing.T) {
 }
 
 func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
-	logger := logging.NewNoopLogger()
-	testOperator := testOperator{
-		operatorAddr: common.HexToAddress("0x1"),
-		operatorId:   types.OperatorId{1},
-		operatorInfo: types.OperatorInfo{
+	logger := testutils.GetTestLogger()
+	testOperator1 := fakes.TestOperator{
+		OperatorAddr: common.HexToAddress("0x1"),
+		OperatorId:   types.OperatorId{1},
+		OperatorInfo: types.OperatorInfo{
 			Pubkeys: types.OperatorPubkeys{
 				G1Pubkey: bls.NewG1Point(big.NewInt(1), big.NewInt(1)),
 				G2Pubkey: bls.NewG2Point([2]*big.Int{big.NewInt(1), big.NewInt(1)}, [2]*big.Int{big.NewInt(1), big.NewInt(1)}),
@@ -97,33 +98,22 @@ func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
 
 	var tests = []struct {
 		name                      string
-		mocksInitializationFunc   func(*chainiomocks.MockAVSReader, *servicemocks.MockOperatorsInfoService)
 		queryQuorumNumbers        types.QuorumNums
 		queryBlockNum             types.BlockNum
 		wantErr                   error
 		wantOperatorsAvsStateDict map[types.OperatorId]types.OperatorAvsState
+		operator                  *fakes.TestOperator
 	}{
 		{
-			name: "should return operatorsAvsState",
-			mocksInitializationFunc: func(mockAvsRegistryReader *chainiomocks.MockAVSReader, mockOperatorsInfoService *servicemocks.MockOperatorsInfoService) {
-				mockAvsRegistryReader.EXPECT().GetOperatorsStakeInQuorumsAtBlock(gomock.Any(), types.QuorumNums{1}, types.BlockNum(1)).Return([][]opstateretrievar.OperatorStateRetrieverOperator{
-					{
-						{
-							OperatorId: testOperator.operatorId,
-							Stake:      big.NewInt(123),
-						},
-					},
-				}, nil)
-				mockAvsRegistryReader.EXPECT().GetOperatorFromId(gomock.Any(), testOperator.operatorId).Return(testOperator.operatorAddr, nil)
-				mockOperatorsInfoService.EXPECT().GetOperatorInfo(gomock.Any(), testOperator.operatorAddr).Return(testOperator.operatorInfo, true)
-			},
+			name:               "should return operatorsAvsState",
 			queryQuorumNumbers: types.QuorumNums{1},
+			operator:           &testOperator1,
 			queryBlockNum:      1,
 			wantErr:            nil,
 			wantOperatorsAvsStateDict: map[types.OperatorId]types.OperatorAvsState{
-				testOperator.operatorId: {
-					OperatorId:     testOperator.operatorId,
-					OperatorInfo:   testOperator.operatorInfo,
+				testOperator1.OperatorId: {
+					OperatorId:     testOperator1.OperatorId,
+					OperatorInfo:   testOperator1.OperatorInfo,
 					StakePerQuorum: map[types.QuorumNum]types.StakeAmount{1: big.NewInt(123)},
 					BlockNumber:    1,
 				},
@@ -134,19 +124,15 @@ func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create mocks
-			mockCtrl := gomock.NewController(t)
-			mockAvsRegistryReader := chainiomocks.NewMockAVSReader(mockCtrl)
-			mockOperatorsInfoService := servicemocks.NewMockOperatorsInfoService(mockCtrl)
+			mockAvsRegistryReader := fakes.NewFakeAVSRegistryReader(tt.operator, nil)
+			mockOperatorsInfoService := newFakeOperatorInfoService(tt.operator.OperatorInfo)
 
-			if tt.mocksInitializationFunc != nil {
-				tt.mocksInitializationFunc(mockAvsRegistryReader, mockOperatorsInfoService)
-			}
 			// Create a new instance of the avsregistry service
 			service := NewAvsRegistryServiceChainCaller(mockAvsRegistryReader, mockOperatorsInfoService, logger)
 
 			// Call the GetOperatorPubkeys method with the test operator address
 			gotOperatorsAvsStateDict, gotErr := service.GetOperatorsAvsStateAtBlock(context.Background(), tt.queryQuorumNumbers, tt.queryBlockNum)
-			if tt.wantErr != gotErr {
+			if !errors.Is(gotErr, tt.wantErr) {
 				t.Fatalf("GetOperatorsAvsState returned wrong error. Got: %v, want: %v.", gotErr, tt.wantErr)
 			}
 			if tt.wantErr == nil && !reflect.DeepEqual(tt.wantOperatorsAvsStateDict, gotOperatorsAvsStateDict) {
@@ -157,11 +143,11 @@ func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
 }
 
 func TestAvsRegistryServiceChainCaller_GetQuorumsAvsState(t *testing.T) {
-	logger := logging.NewNoopLogger()
-	testOperator := testOperator{
-		operatorAddr: common.HexToAddress("0x1"),
-		operatorId:   types.OperatorId{1},
-		operatorInfo: types.OperatorInfo{
+	logger := testutils.GetTestLogger()
+	testOperator1 := fakes.TestOperator{
+		OperatorAddr: common.HexToAddress("0x1"),
+		OperatorId:   types.OperatorId{1},
+		OperatorInfo: types.OperatorInfo{
 			Pubkeys: types.OperatorPubkeys{
 				G1Pubkey: bls.NewG1Point(big.NewInt(1), big.NewInt(1)),
 				G2Pubkey: bls.NewG2Point([2]*big.Int{big.NewInt(1), big.NewInt(1)}, [2]*big.Int{big.NewInt(1), big.NewInt(1)}),
@@ -172,27 +158,16 @@ func TestAvsRegistryServiceChainCaller_GetQuorumsAvsState(t *testing.T) {
 
 	var tests = []struct {
 		name                    string
-		mocksInitializationFunc func(*chainiomocks.MockAVSReader, *servicemocks.MockOperatorsInfoService)
 		queryQuorumNumbers      types.QuorumNums
 		queryBlockNum           types.BlockNum
 		wantErr                 error
 		wantQuorumsAvsStateDict map[types.QuorumNum]types.QuorumAvsState
+		operator                *fakes.TestOperator
 	}{
 		{
-			name: "should return operatorsAvsState",
-			mocksInitializationFunc: func(mockAvsRegistryReader *chainiomocks.MockAVSReader, mockOperatorsInfoService *servicemocks.MockOperatorsInfoService) {
-				mockAvsRegistryReader.EXPECT().GetOperatorsStakeInQuorumsAtBlock(gomock.Any(), types.QuorumNums{1}, types.BlockNum(1)).Return([][]opstateretrievar.OperatorStateRetrieverOperator{
-					{
-						{
-							OperatorId: testOperator.operatorId,
-							Stake:      big.NewInt(123),
-						},
-					},
-				}, nil)
-				mockAvsRegistryReader.EXPECT().GetOperatorFromId(gomock.Any(), testOperator.operatorId).Return(testOperator.operatorAddr, nil)
-				mockOperatorsInfoService.EXPECT().GetOperatorInfo(gomock.Any(), testOperator.operatorAddr).Return(testOperator.operatorInfo, true)
-			},
+			name:               "should return operatorsAvsState",
 			queryQuorumNumbers: types.QuorumNums{1},
+			operator:           &testOperator1,
 			queryBlockNum:      1,
 			wantErr:            nil,
 			wantQuorumsAvsStateDict: map[types.QuorumNum]types.QuorumAvsState{
@@ -209,19 +184,15 @@ func TestAvsRegistryServiceChainCaller_GetQuorumsAvsState(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create mocks
-			mockCtrl := gomock.NewController(t)
-			mockAvsRegistryReader := chainiomocks.NewMockAVSReader(mockCtrl)
-			mockOperatorsInfoService := servicemocks.NewMockOperatorsInfoService(mockCtrl)
+			mockAvsRegistryReader := fakes.NewFakeAVSRegistryReader(tt.operator, nil)
+			mockOperatorsInfoService := newFakeOperatorInfoService(tt.operator.OperatorInfo)
 
-			if tt.mocksInitializationFunc != nil {
-				tt.mocksInitializationFunc(mockAvsRegistryReader, mockOperatorsInfoService)
-			}
 			// Create a new instance of the avsregistry service
 			service := NewAvsRegistryServiceChainCaller(mockAvsRegistryReader, mockOperatorsInfoService, logger)
 
 			// Call the GetOperatorPubkeys method with the test operator address
 			aggG1PubkeyPerQuorum, gotErr := service.GetQuorumsAvsStateAtBlock(context.Background(), tt.queryQuorumNumbers, tt.queryBlockNum)
-			if tt.wantErr != gotErr {
+			if !errors.Is(gotErr, tt.wantErr) {
 				t.Fatalf("GetOperatorsAvsState returned wrong error. Got: %v, want: %v.", gotErr, tt.wantErr)
 			}
 			if tt.wantErr == nil && !reflect.DeepEqual(tt.wantQuorumsAvsStateDict, aggG1PubkeyPerQuorum) {

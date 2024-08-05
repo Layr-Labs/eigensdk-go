@@ -3,9 +3,10 @@ package avsregistry
 import (
 	"context"
 	"fmt"
+	opstateretriever "github.com/Layr-Labs/eigensdk-go/contracts/bindings/OperatorStateRetriever"
+	"github.com/ethereum/go-ethereum/common"
 	"math/big"
 
-	avsregistry "github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	opinfoservice "github.com/Layr-Labs/eigensdk-go/services/operatorsinfo"
@@ -14,19 +15,39 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 )
 
+type avsRegistryReader interface {
+	GetOperatorsStakeInQuorumsAtBlock(
+		opts *bind.CallOpts,
+		quorumNumbers types.QuorumNums,
+		blockNumber types.BlockNum,
+	) ([][]opstateretriever.OperatorStateRetrieverOperator, error)
+
+	GetOperatorFromId(
+		opts *bind.CallOpts,
+		operatorId types.OperatorId,
+	) (common.Address, error)
+
+	GetCheckSignaturesIndices(
+		opts *bind.CallOpts,
+		referenceBlockNumber uint32,
+		quorumNumbers types.QuorumNums,
+		nonSignerOperatorIds []types.OperatorId,
+	) (opstateretriever.OperatorStateRetrieverCheckSignaturesIndices, error)
+}
+
 // AvsRegistryServiceChainCaller is a wrapper around Reader that transforms the data into
 // nicer golang types that are easier to work with
 type AvsRegistryServiceChainCaller struct {
-	avsregistry.Reader
+	avsRegistryReader
 	operatorInfoService opinfoservice.OperatorsInfoService
 	logger              logging.Logger
 }
 
 var _ AvsRegistryService = (*AvsRegistryServiceChainCaller)(nil)
 
-func NewAvsRegistryServiceChainCaller(avsRegistryReader avsregistry.Reader, operatorInfoService opinfoservice.OperatorsInfoService, logger logging.Logger) *AvsRegistryServiceChainCaller {
+func NewAvsRegistryServiceChainCaller(reader avsRegistryReader, operatorInfoService opinfoservice.OperatorsInfoService, logger logging.Logger) *AvsRegistryServiceChainCaller {
 	return &AvsRegistryServiceChainCaller{
-		Reader:              avsRegistryReader,
+		avsRegistryReader:   reader,
 		operatorInfoService: operatorInfoService,
 		logger:              logger,
 	}
@@ -35,7 +56,7 @@ func NewAvsRegistryServiceChainCaller(avsRegistryReader avsregistry.Reader, oper
 func (ar *AvsRegistryServiceChainCaller) GetOperatorsAvsStateAtBlock(ctx context.Context, quorumNumbers types.QuorumNums, blockNumber types.BlockNum) (map[types.OperatorId]types.OperatorAvsState, error) {
 	operatorsAvsState := make(map[types.OperatorId]types.OperatorAvsState)
 	// Get operator state for each quorum by querying BLSOperatorStateRetriever (this call is why this service implementation is called ChainCaller)
-	operatorsStakesInQuorums, err := ar.Reader.GetOperatorsStakeInQuorumsAtBlock(&bind.CallOpts{Context: ctx}, quorumNumbers, blockNumber)
+	operatorsStakesInQuorums, err := ar.avsRegistryReader.GetOperatorsStakeInQuorumsAtBlock(&bind.CallOpts{Context: ctx}, quorumNumbers, blockNumber)
 	if err != nil {
 		return nil, utils.WrapError("Failed to get operator state", err)
 	}
@@ -96,7 +117,7 @@ func (ar *AvsRegistryServiceChainCaller) GetQuorumsAvsStateAtBlock(ctx context.C
 }
 
 func (ar *AvsRegistryServiceChainCaller) getOperatorInfo(ctx context.Context, operatorId types.OperatorId) (types.OperatorInfo, error) {
-	operatorAddr, err := ar.Reader.GetOperatorFromId(&bind.CallOpts{Context: ctx}, operatorId)
+	operatorAddr, err := ar.avsRegistryReader.GetOperatorFromId(&bind.CallOpts{Context: ctx}, operatorId)
 	if err != nil {
 		return types.OperatorInfo{}, utils.WrapError("Failed to get operator address from pubkey hash", err)
 	}

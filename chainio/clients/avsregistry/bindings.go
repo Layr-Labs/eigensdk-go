@@ -41,7 +41,7 @@ type ContractBindings struct {
 func NewAVSRegistryContractBindings(
 	registryCoordinatorAddr gethcommon.Address,
 	operatorStateRetrieverAddr gethcommon.Address,
-	ethclient eth.Client,
+	ethclient eth.HttpBackend,
 	logger logging.Logger,
 ) (*ContractBindings, error) {
 	contractBlsRegistryCoordinator, err := regcoordinator.NewContractRegistryCoordinator(
@@ -124,7 +124,7 @@ func NewAVSRegistryContractBindings(
 // NewBindingsFromConfig creates a new instance of ContractBindings
 func NewBindingsFromConfig(
 	cfg Config,
-	client eth.Client,
+	client eth.HttpBackend,
 	logger logging.Logger,
 ) (*ContractBindings, error) {
 	var (

@@ -6,7 +6,6 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/ethereum/go-ethereum"
@@ -38,9 +37,15 @@ type TxManager interface {
 	GetNoSendTxOpts() (*bind.TransactOpts, error)
 }
 
+type ethClient interface {
+	SuggestGasTipCap(ctx context.Context) (*big.Int, error)
+	HeaderByNumber(ctx context.Context, number *big.Int) (*types.Header, error)
+	EstimateGas(ctx context.Context, msg ethereum.CallMsg) (uint64, error)
+}
+
 type SimpleTxManager struct {
 	wallet             wallet.Wallet
-	client             eth.Client
+	client             ethClient
 	log                logging.Logger
 	sender             common.Address
 	gasLimitMultiplier float64
@@ -52,7 +57,7 @@ var _ TxManager = (*SimpleTxManager)(nil)
 // to send a transaction to smart contracts on the Ethereum node
 func NewSimpleTxManager(
 	wallet wallet.Wallet,
-	client eth.Client,
+	client ethClient,
 	log logging.Logger,
 	sender common.Address,
 ) *SimpleTxManager {

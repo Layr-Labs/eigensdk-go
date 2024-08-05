@@ -12,19 +12,11 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
-type Subscriber interface {
-	SubscribeToNewPubkeyRegistrations() (chan *blsapkreg.ContractBLSApkRegistryNewPubkeyRegistration, event.Subscription, error)
-	SubscribeToOperatorSocketUpdates() (chan *regcoord.ContractRegistryCoordinatorOperatorSocketUpdate, event.Subscription, error)
-}
-
 type ChainSubscriber struct {
 	logger         logging.Logger
 	regCoord       regcoord.ContractRegistryCoordinatorFilters
 	blsApkRegistry blsapkreg.ContractBLSApkRegistryFilters
 }
-
-// forces EthSubscriber to implement the chainio.Subscriber interface
-var _ Subscriber = (*ChainSubscriber)(nil)
 
 // NewChainSubscriber creates a new instance of ChainSubscriber
 // The bindings must be created using websocket ETH Client
@@ -46,7 +38,7 @@ func NewChainSubscriber(
 // Deprecated: Use NewSubscriberFromConfig instead
 func BuildAvsRegistryChainSubscriber(
 	regCoordAddr common.Address,
-	ethWsClient eth.Client,
+	ethWsClient eth.WsBackend,
 	logger logging.Logger,
 ) (*ChainSubscriber, error) {
 	regCoord, err := regcoord.NewContractRegistryCoordinator(regCoordAddr, ethWsClient)
@@ -68,7 +60,7 @@ func BuildAvsRegistryChainSubscriber(
 // A websocket ETH Client must be provided
 func NewSubscriberFromConfig(
 	cfg Config,
-	wsClient eth.Client,
+	wsClient eth.WsBackend,
 	logger logging.Logger,
 ) (*ChainSubscriber, error) {
 	bindings, err := NewBindingsFromConfig(cfg, wsClient, logger)

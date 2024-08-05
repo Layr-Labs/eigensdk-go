@@ -15,6 +15,7 @@ import (
 //
 // 2. A signer (remote signer) that we will send to an external rpc which takes care of signing and broadcasting the
 // signed transaction. They need to implement SendToExternal() function and leave GetSigner() unimplemented.
+// Deprecated: Use SignerV2 instead
 type Signer interface {
 	GetTxOpts() *bind.TransactOpts
 	SendToExternal(ctx context.Context, tx *types.Transaction) (common.Hash, error)

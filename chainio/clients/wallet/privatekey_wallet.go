@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/signerv2"
 	"github.com/Layr-Labs/eigensdk-go/utils"
@@ -18,7 +17,7 @@ import (
 var _ Wallet = (*privateKeyWallet)(nil)
 
 type privateKeyWallet struct {
-	ethClient eth.Client
+	ethClient ethClient
 	address   common.Address
 	signerFn  signerv2.SignerFn
 	logger    logging.Logger
@@ -28,7 +27,7 @@ type privateKeyWallet struct {
 }
 
 func NewPrivateKeyWallet(
-	ethClient eth.Client,
+	ethClient ethClient,
 	signer signerv2.SignerFn,
 	signerAddress common.Address,
 	logger logging.Logger,
