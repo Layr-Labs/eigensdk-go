@@ -7,8 +7,8 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
-	avsdirectory "github.com/Layr-Labs/eigensdk-go/contracts/bindings/AVSDirectory"
 	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
+	avsdirectory "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IAVSDirectory"
 	rewardscoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IRewardsCoordinator"
 	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/ISlasher"
 	strategymanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StrategyManager"
@@ -29,7 +29,7 @@ type ContractBindings struct {
 	Slasher                   *slasher.ContractISlasher
 	DelegationManager         *delegationmanager.ContractDelegationManager
 	StrategyManager           *strategymanager.ContractStrategyManager
-	AvsDirectory              *avsdirectory.ContractAVSDirectory
+	AvsDirectory              *avsdirectory.ContractIAVSDirectory
 	RewardsCoordinator        *rewardscoordinator.ContractIRewardsCoordinator
 }
 
@@ -46,7 +46,7 @@ func NewBindingsFromConfig(
 		contractStrategyManager   *strategymanager.ContractStrategyManager
 		slasherAddr               gethcommon.Address
 		strategyManagerAddr       gethcommon.Address
-		avsDirectory              *avsdirectory.ContractAVSDirectory
+		avsDirectory              *avsdirectory.ContractIAVSDirectory
 		rewardsCoordinator        *rewardscoordinator.ContractIRewardsCoordinator
 	)
 
@@ -80,7 +80,7 @@ func NewBindingsFromConfig(
 	if isZeroAddress(cfg.AvsDirectoryAddress) {
 		logger.Debug("AVSDirectory address not provided, the calls to the contract will not work")
 	} else {
-		avsDirectory, err = avsdirectory.NewContractAVSDirectory(cfg.AvsDirectoryAddress, client)
+		avsDirectory, err = avsdirectory.NewContractIAVSDirectory(cfg.AvsDirectoryAddress, client)
 		if err != nil {
 			return nil, utils.WrapError("Failed to fetch AVSDirectory contract", err)
 		}
@@ -143,7 +143,7 @@ func NewEigenlayerContractBindings(
 		return nil, utils.WrapError("Failed to fetch StrategyManager contract", err)
 	}
 
-	avsDirectory, err := avsdirectory.NewContractAVSDirectory(avsDirectoryAddr, ethclient)
+	avsDirectory, err := avsdirectory.NewContractIAVSDirectory(avsDirectoryAddr, ethclient)
 	if err != nil {
 		return nil, utils.WrapError("Failed to fetch AVSDirectory contract", err)
 	}
