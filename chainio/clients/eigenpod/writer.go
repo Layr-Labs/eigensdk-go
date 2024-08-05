@@ -2,7 +2,6 @@ package eigenpod
 
 import (
 	"context"
-	"errors"
 	"math/big"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eigenpod/bindings"
@@ -111,12 +110,64 @@ func (w *ChainWriter) VerifyWithdrawalCredentials(
 		validatorFields,
 	)
 	if err != nil {
-		return nil, err
+		return nil, utils.WrapError("failed to create tx", err)
 	}
 
 	receipt, err := w.txMgr.Send(ctx, tx)
 	if err != nil {
-		return nil, errors.New("failed to send tx with err: " + err.Error())
+		return nil, utils.WrapError("failed to send tx", err)
+	}
+
+	return receipt, nil
+}
+
+func (w *ChainWriter) VerifyCheckpointProofs(
+	ctx context.Context,
+	balanceContainerProof bindings.BeaconChainProofsBalanceContainerProof,
+	balanceProof []bindings.BeaconChainProofsBalanceProof,
+) (*types.Receipt, error) {
+	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
+	if err != nil {
+		return nil, err
+	}
+
+	tx, err := w.eigenPod.VerifyCheckpointProofs(
+		noSendTxOpts,
+		balanceContainerProof,
+		balanceProof,
+	)
+	if err != nil {
+		return nil, utils.WrapError("failed to create tx", err)
+	}
+
+	receipt, err := w.txMgr.Send(ctx, tx)
+	if err != nil {
+		return nil, utils.WrapError("failed to send tx", err)
+	}
+
+	return receipt, nil
+}
+
+func (w *ChainWriter) StartCheckpoint(
+	ctx context.Context,
+	revertIfNoBalance bool,
+) (*types.Receipt, error) {
+	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
+	if err != nil {
+		return nil, err
+	}
+
+	tx, err := w.eigenPod.StartCheckpoint(
+		noSendTxOpts,
+		revertIfNoBalance,
+	)
+	if err != nil {
+		return nil, utils.WrapError("failed to create tx", err)
+	}
+
+	receipt, err := w.txMgr.Send(ctx, tx)
+	if err != nil {
+		return nil, utils.WrapError("failed to send tx", err)
 	}
 
 	return receipt, nil
