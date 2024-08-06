@@ -186,27 +186,7 @@ func GenRandomBlsKeys() (*KeyPair, error) {
 
 // SaveToFile saves the private key in an encrypted keystore file
 func (k *KeyPair) SaveToFile(path string, password string) error {
-	sk32Bytes := k.PrivKey.Bytes()
-	skBytes := make([]byte, 32)
-	for i := 0; i < 32; i++ {
-		skBytes[i] = sk32Bytes[i]
-	}
-
-	cryptoStruct, err := keystore.EncryptDataV3(
-		skBytes,
-		[]byte(password),
-		keystore.StandardScryptN,
-		keystore.StandardScryptP,
-	)
-	if err != nil {
-		return err
-	}
-
-	encryptedBLSStruct := encryptedBLSKeyJSONV3{
-		k.PubKey.String(),
-		cryptoStruct,
-	}
-	data, err := json.Marshal(encryptedBLSStruct)
+	data, err := k.EncryptedString(path, password)
 	if err != nil {
 		return err
 	}
@@ -221,6 +201,34 @@ func (k *KeyPair) SaveToFile(path string, password string) error {
 		return err
 	}
 	return nil
+}
+
+func (k *KeyPair) EncryptedString(path string, password string) ([]byte, error) {
+	sk32Bytes := k.PrivKey.Bytes()
+	skBytes := make([]byte, 32)
+	for i := 0; i < 32; i++ {
+		skBytes[i] = sk32Bytes[i]
+	}
+
+	cryptoStruct, err := keystore.EncryptDataV3(
+		skBytes,
+		[]byte(password),
+		keystore.StandardScryptN,
+		keystore.StandardScryptP,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	encryptedBLSStruct := encryptedBLSKeyJSONV3{
+		k.PubKey.String(),
+		cryptoStruct,
+	}
+	data, err := json.Marshal(encryptedBLSStruct)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
 }
 
 func ReadPrivateKeyFromFile(path string, password string) (*KeyPair, error) {
