@@ -44,7 +44,8 @@ type Collector struct {
 	operatorId   types.OperatorId
 	quorumNames  map[types.QuorumNum]string
 	// metrics
-	// TODO(samlaf): I feel like eigenlayer-core metrics like slashingStatus and delegatedShares, which are not avs specific,
+	// TODO(samlaf): I feel like eigenlayer-core metrics like slashingStatus and delegatedShares, which are not avs
+	// specific,
 	// should not be here, and should instead be collected by some eigenlayer-cli daemon or something, since
 	// otherwise every avs will be exporting these same metrics for no reason.
 
@@ -85,8 +86,9 @@ func NewCollector(
 		avsRegistryReader: avsRegistryReader,
 		logger:            logger,
 		operatorAddr:      operatorAddr,
-		// we don't fetch operatorId here because operator might not yet be registered (and hence not have an operatorId)
-		// we cache operatorId dynamically in the collect function() inside, which allows constructing collector before registering operator
+		// we don't fetch operatorId here because operator might not yet be registered (and hence not have an
+		// operatorId) we cache operatorId dynamically in the collect function() inside, which allows constructing
+		// collector before registering operator
 		operatorId:  [32]byte{},
 		quorumNames: quorumNames,
 		slashingStatus: prometheus.NewDesc(
@@ -145,10 +147,12 @@ func (ec *Collector) initOperatorId() error {
 // constant metrics with the results
 func (ec *Collector) Collect(ch chan<- prometheus.Metric) {
 	// collect slashingStatus metric
-	// TODO(samlaf): note that this call is not avs specific, so every avs will have the same value if the operator has been slashed
+	// TODO(samlaf): note that this call is not avs specific, so every avs will have the same value if the operator has
+	// been slashed
 	// if we want instead to only output 1 if the operator has been slashed for a specific avs, we have 2 choices:
 	// 1. keep this collector format but query the OperatorFrozen event from a subgraph
-	// 2. subscribe to the event and keep a local state of whether the operator has been slashed, exporting it via normal prometheus instrumentation
+	// 2. subscribe to the event and keep a local state of whether the operator has been slashed, exporting it via
+	// normal prometheus instrumentation
 	operatorIsFrozen, err := ec.elReader.OperatorIsFrozen(nil, ec.operatorAddr)
 	if err != nil {
 		ec.logger.Error("Failed to get slashing incurred", "err", err)
@@ -163,7 +167,11 @@ func (ec *Collector) Collect(ch chan<- prometheus.Metric) {
 	// collect registeredStake metric
 	err = ec.initOperatorId()
 	if err != nil {
-		ec.logger.Warn("Failed to fetch and cache operator id. Skipping collection of registeredStake metric.", "err", err)
+		ec.logger.Warn(
+			"Failed to fetch and cache operator id. Skipping collection of registeredStake metric.",
+			"err",
+			err,
+		)
 	} else {
 		// probably should start using the avsregistry service instead of avsRegistryReader so that we can
 		// swap out backend for a subgraph eventually
@@ -189,14 +197,18 @@ func (ec *Collector) Collect(ch chan<- prometheus.Metric) {
 	// 		// We'll emit all 3 units in case this is needed for whatever reason
 	// 		// might want to change this behavior if this is emitting too many metrics
 	// 		sharesWeiFloat, _ := sharesWei.Float64()
-	// 		// TODO(samlaf): add the token name.. probably need to have a hardcoded dict per env (mainnet, goerli, etc)? Is it really that important..?
-	// 		ch <- prometheus.MustNewConstMetric(ec.delegatedShares, prometheus.GaugeValue, sharesWeiFloat, strategyAddr.String(), "wei", "token")
+	// 		// TODO(samlaf): add the token name.. probably need to have a hardcoded dict per env (mainnet, goerli, etc)? Is
+	// 		it really that important..?
+	//		ch <- prometheus.MustNewConstMetric(ec.delegatedShares, prometheus.GaugeValue,
+	// 		sharesWeiFloat, strategyAddr.String(), "wei", "token")
 
 	// 		sharesGweiFloat, _ := sharesWei.Div(sharesWei, big.NewInt(1e9)).Float64()
-	// 		ch <- prometheus.MustNewConstMetric(ec.delegatedShares, prometheus.GaugeValue, sharesGweiFloat, strategyAddr.String(), "gwei", "token")
+	// 		ch <- prometheus.MustNewConstMetric(ec.delegatedShares, prometheus.GaugeValue, sharesGweiFloat,
+	// 		strategyAddr.String(), "gwei", "token")
 
 	// 		sharesEtherFloat, _ := sharesWei.Div(sharesWei, big.NewInt(1e18)).Float64()
-	// 		ch <- prometheus.MustNewConstMetric(ec.delegatedShares, prometheus.GaugeValue, sharesEtherFloat, strategyAddr.String(), "ether", "token")
+	// 		ch <- prometheus.MustNewConstMetric(ec.delegatedShares, prometheus.GaugeValue, sharesEtherFloat,
+	// 		strategyAddr.String(), "ether", "token")
 	// 	}
 	// }
 }

@@ -55,9 +55,17 @@ func ExampleEigenMetrics() {
 		0: "ethQuorum",
 		1: "someOtherTokenQuorum",
 	}
-	// We must register the economic metrics separately because they are exported metrics (from jsonrpc or subgraph calls)
+	// We must register the economic metrics separately because they are exported metrics (from jsonrpc or subgraph
+	// calls)
 	// and not instrumented metrics: see https://prometheus.io/docs/instrumenting/writing_clientlibs/#overall-structure
-	economicMetricsCollector := economic.NewCollector(clients.ElChainReader, clients.AvsRegistryChainReader, "exampleAvs", logger, operatorEcdsaAddr, quorumNames)
+	economicMetricsCollector := economic.NewCollector(
+		clients.ElChainReader,
+		clients.AvsRegistryChainReader,
+		"exampleAvs",
+		logger,
+		operatorEcdsaAddr,
+		quorumNames,
+	)
 	reg.MustRegister(economicMetricsCollector)
 
 	rpcCallsCollector := rpccalls.NewCollector("exampleAvs", reg)

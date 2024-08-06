@@ -3,13 +3,14 @@ package operatorsinfo
 import (
 	"context"
 
-	"github.com/ethereum/go-ethereum/event"
 	"log/slog"
 	"math/big"
 	"os"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/ethereum/go-ethereum/event"
 
 	apkregistrybindings "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSApkRegistry"
 	blsapkreg "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSApkRegistry"
@@ -139,20 +140,40 @@ func TestGetOperatorInfo(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create mocks
 			mockSubscription := newFakeEventSubscription(tt.eventErrC)
-			mockAvsRegistrySubscriber := newFakeAVSRegistrySubscriber(mockSubscription, tt.pubkeyRegistrationEventC, tt.operatorSocketUpdateEventC)
+			mockAvsRegistrySubscriber := newFakeAVSRegistrySubscriber(
+				mockSubscription,
+				tt.pubkeyRegistrationEventC,
+				tt.operatorSocketUpdateEventC,
+			)
 			mockAvsReader := fakes.NewFakeAVSRegistryReader(tt.operator, nil)
 
 			// Create a new instance of the operatorpubkeys service
-			service := NewOperatorsInfoServiceInMemory(context.Background(), mockAvsRegistrySubscriber, mockAvsReader, nil, logger)
-			time.Sleep(2 * time.Second) // need to give it time to process the subscription events.. not sure if there's a better way to do this.
+			service := NewOperatorsInfoServiceInMemory(
+				context.Background(),
+				mockAvsRegistrySubscriber,
+				mockAvsReader,
+				nil,
+				logger,
+			)
+			time.Sleep(
+				2 * time.Second,
+			) // need to give it time to process the subscription events.. not sure if there's a better way to do this.
 
 			// Call the GetOperatorPubkeys method with the test operator address
 			gotOperatorsInfo, gotOperatorFound := service.GetOperatorInfo(context.Background(), tt.queryOperatorAddr)
 			if tt.wantOperatorFound != gotOperatorFound {
-				t.Fatalf("GetOperatorPubkeys returned wrong ok. Got: %v, want: %v.", gotOperatorFound, tt.wantOperatorFound)
+				t.Fatalf(
+					"GetOperatorPubkeys returned wrong ok. Got: %v, want: %v.",
+					gotOperatorFound,
+					tt.wantOperatorFound,
+				)
 			}
 			if tt.wantOperatorFound == true && !reflect.DeepEqual(tt.wantOperatorInfo, gotOperatorsInfo) {
-				t.Fatalf("GetOperatorPubkeys returned wrong operator pubkeys. Got: %v, want: %v.", gotOperatorsInfo, tt.wantOperatorInfo)
+				t.Fatalf(
+					"GetOperatorPubkeys returned wrong operator pubkeys. Got: %v, want: %v.",
+					gotOperatorsInfo,
+					tt.wantOperatorInfo,
+				)
 			}
 		})
 	}
