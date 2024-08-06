@@ -55,7 +55,8 @@ func newTestHarness(t *testing.T) *testHarness {
 		// this way we can test that the txmgr will bump the gasTipCap to a working value
 		// and also simulate a congested network (with fakeEthBackend.congestedBlocks) where txs won't be mined
 		GasTipMultiplierPercentage: 100,
-		// set to 1 second (instead of default 2min) so that we can test that the txmgr will bump the gasTipCap to a working value
+		// set to 1 second (instead of default 2min) so that we can test that the txmgr will bump the gasTipCap to a
+		// working value
 		TxnBroadcastTimeout: 1 * time.Second,
 	})
 
@@ -100,7 +101,8 @@ func TestGeometricTxManager(t *testing.T) {
 		defer cancel()
 		txReceipt, err := h.txmgr.Send(ctxWithTimeout, unsignedTx)
 		// ethBackend returns an error if the tx's gasFeeCap is less than the baseFeePerGas
-		// this test makes sure that even setting a gasFeeCap less than the baseFeePerGas in the tx (1 above) still works,
+		// this test makes sure that even setting a gasFeeCap less than the baseFeePerGas in the tx (1 above) still
+		// works,
 		// because the txmgr will overwrite it and set the gasFeeCap to a working value
 		require.NoError(t, err)
 
@@ -330,7 +332,9 @@ func newIntegrationTestHarness(t *testing.T) *integrationTestHarness {
 	anvilHttpClient, err := ethclient.Dial(anvilHttpEndpoint)
 	require.NoError(t, err)
 
-	ecdsaSk, ecdsaAddr, err := ecdsa.KeyAndAddressFromHexKey("0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80")
+	ecdsaSk, ecdsaAddr, err := ecdsa.KeyAndAddressFromHexKey(
+		"0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
+	)
 	require.NoError(t, err)
 
 	signerFn, _, err := signerv2.SignerFromConfig(signerv2.Config{PrivateKey: ecdsaSk}, chainId)
