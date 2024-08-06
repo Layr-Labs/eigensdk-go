@@ -198,16 +198,17 @@ func (ec *Collector) Collect(ch chan<- prometheus.Metric) {
 	// 		// might want to change this behavior if this is emitting too many metrics
 	// 		sharesWeiFloat, _ := sharesWei.Float64()
 	// 		// TODO(samlaf): add the token name.. probably need to have a hardcoded dict per env (mainnet, goerli, etc)? Is
-	// it really that important..? 		ch <- prometheus.MustNewConstMetric(ec.delegatedShares, prometheus.GaugeValue,
-	// sharesWeiFloat, strategyAddr.String(), "wei", "token")
+	// 		it really that important..?
+	//		ch <- prometheus.MustNewConstMetric(ec.delegatedShares, prometheus.GaugeValue,
+	// 		sharesWeiFloat, strategyAddr.String(), "wei", "token")
 
 	// 		sharesGweiFloat, _ := sharesWei.Div(sharesWei, big.NewInt(1e9)).Float64()
 	// 		ch <- prometheus.MustNewConstMetric(ec.delegatedShares, prometheus.GaugeValue, sharesGweiFloat,
-	// strategyAddr.String(), "gwei", "token")
+	// 		strategyAddr.String(), "gwei", "token")
 
 	// 		sharesEtherFloat, _ := sharesWei.Div(sharesWei, big.NewInt(1e18)).Float64()
 	// 		ch <- prometheus.MustNewConstMetric(ec.delegatedShares, prometheus.GaugeValue, sharesEtherFloat,
-	// strategyAddr.String(), "ether", "token")
+	// 		strategyAddr.String(), "ether", "token")
 	// 	}
 	// }
 }
