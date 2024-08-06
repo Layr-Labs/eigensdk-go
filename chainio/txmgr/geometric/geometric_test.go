@@ -80,7 +80,7 @@ func TestGeometricTxManager(t *testing.T) {
 
 	t.Run("Send 1 tx to congested network", func(t *testing.T) {
 		h := newTestHarness(t)
-		h.fakeEthBackend.congestedBlocks = 3
+		h.fakeEthBackend.setCongestedBlocks(3)
 		h.txmgr.params.TxnConfirmationTimeout = 1 * time.Second
 
 		unsignedTx := newUnsignedEthTransferTx(0, nil)
@@ -249,6 +249,13 @@ func (s *fakeEthBackend) startMining() {
 			time.Sleep(100 * time.Millisecond)
 		}
 	}()
+}
+
+func (s *fakeEthBackend) setCongestedBlocks(n uint64) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.congestedBlocks = n
+
 }
 
 func (s *fakeEthBackend) BlockNumber(context.Context) (uint64, error) {
