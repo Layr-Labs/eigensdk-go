@@ -26,7 +26,10 @@ func newFakeOperatorInfoService(operatorInfo types.OperatorInfo) *fakeOperatorIn
 	}
 }
 
-func (f *fakeOperatorInfoService) GetOperatorInfo(ctx context.Context, operator common.Address) (operatorInfo types.OperatorInfo, operatorFound bool) {
+func (f *fakeOperatorInfoService) GetOperatorInfo(
+	ctx context.Context,
+	operator common.Address,
+) (operatorInfo types.OperatorInfo, operatorFound bool) {
 	return f.operatorInfo, true
 }
 
@@ -38,7 +41,10 @@ func TestAvsRegistryServiceChainCaller_getOperatorPubkeys(t *testing.T) {
 		OperatorInfo: types.OperatorInfo{
 			Pubkeys: types.OperatorPubkeys{
 				G1Pubkey: bls.NewG1Point(big.NewInt(1), big.NewInt(1)),
-				G2Pubkey: bls.NewG2Point([2]*big.Int{big.NewInt(1), big.NewInt(1)}, [2]*big.Int{big.NewInt(1), big.NewInt(1)}),
+				G2Pubkey: bls.NewG2Point(
+					[2]*big.Int{big.NewInt(1), big.NewInt(1)},
+					[2]*big.Int{big.NewInt(1), big.NewInt(1)},
+				),
 			},
 			Socket: "localhost:8080",
 		},
@@ -76,7 +82,11 @@ func TestAvsRegistryServiceChainCaller_getOperatorPubkeys(t *testing.T) {
 				t.Fatalf("GetOperatorPubkeys returned wrong error. Got: %v, want: %v.", gotErr, tt.wantErr)
 			}
 			if tt.wantErr == nil && !reflect.DeepEqual(tt.wantOperatorInfo, gotOperatorInfo) {
-				t.Fatalf("GetOperatorPubkeys returned wrong operator pubkeys. Got: %v, want: %v.", gotOperatorInfo, tt.wantOperatorInfo)
+				t.Fatalf(
+					"GetOperatorPubkeys returned wrong operator pubkeys. Got: %v, want: %v.",
+					gotOperatorInfo,
+					tt.wantOperatorInfo,
+				)
 			}
 		})
 	}
@@ -90,7 +100,10 @@ func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
 		OperatorInfo: types.OperatorInfo{
 			Pubkeys: types.OperatorPubkeys{
 				G1Pubkey: bls.NewG1Point(big.NewInt(1), big.NewInt(1)),
-				G2Pubkey: bls.NewG2Point([2]*big.Int{big.NewInt(1), big.NewInt(1)}, [2]*big.Int{big.NewInt(1), big.NewInt(1)}),
+				G2Pubkey: bls.NewG2Point(
+					[2]*big.Int{big.NewInt(1), big.NewInt(1)},
+					[2]*big.Int{big.NewInt(1), big.NewInt(1)},
+				),
 			},
 			Socket: "localhost:8080",
 		},
@@ -131,12 +144,20 @@ func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
 			service := NewAvsRegistryServiceChainCaller(mockAvsRegistryReader, mockOperatorsInfoService, logger)
 
 			// Call the GetOperatorPubkeys method with the test operator address
-			gotOperatorsAvsStateDict, gotErr := service.GetOperatorsAvsStateAtBlock(context.Background(), tt.queryQuorumNumbers, tt.queryBlockNum)
+			gotOperatorsAvsStateDict, gotErr := service.GetOperatorsAvsStateAtBlock(
+				context.Background(),
+				tt.queryQuorumNumbers,
+				tt.queryBlockNum,
+			)
 			if !errors.Is(gotErr, tt.wantErr) {
 				t.Fatalf("GetOperatorsAvsState returned wrong error. Got: %v, want: %v.", gotErr, tt.wantErr)
 			}
 			if tt.wantErr == nil && !reflect.DeepEqual(tt.wantOperatorsAvsStateDict, gotOperatorsAvsStateDict) {
-				t.Fatalf("GetOperatorsAvsState returned wrong operatorsAvsStateDict. Got: %v, want: %v.", gotOperatorsAvsStateDict, tt.wantOperatorsAvsStateDict)
+				t.Fatalf(
+					"GetOperatorsAvsState returned wrong operatorsAvsStateDict. Got: %v, want: %v.",
+					gotOperatorsAvsStateDict,
+					tt.wantOperatorsAvsStateDict,
+				)
 			}
 		})
 	}
@@ -150,7 +171,10 @@ func TestAvsRegistryServiceChainCaller_GetQuorumsAvsState(t *testing.T) {
 		OperatorInfo: types.OperatorInfo{
 			Pubkeys: types.OperatorPubkeys{
 				G1Pubkey: bls.NewG1Point(big.NewInt(1), big.NewInt(1)),
-				G2Pubkey: bls.NewG2Point([2]*big.Int{big.NewInt(1), big.NewInt(1)}, [2]*big.Int{big.NewInt(1), big.NewInt(1)}),
+				G2Pubkey: bls.NewG2Point(
+					[2]*big.Int{big.NewInt(1), big.NewInt(1)},
+					[2]*big.Int{big.NewInt(1), big.NewInt(1)},
+				),
 			},
 			Socket: "localhost:8080",
 		},
@@ -191,12 +215,20 @@ func TestAvsRegistryServiceChainCaller_GetQuorumsAvsState(t *testing.T) {
 			service := NewAvsRegistryServiceChainCaller(mockAvsRegistryReader, mockOperatorsInfoService, logger)
 
 			// Call the GetOperatorPubkeys method with the test operator address
-			aggG1PubkeyPerQuorum, gotErr := service.GetQuorumsAvsStateAtBlock(context.Background(), tt.queryQuorumNumbers, tt.queryBlockNum)
+			aggG1PubkeyPerQuorum, gotErr := service.GetQuorumsAvsStateAtBlock(
+				context.Background(),
+				tt.queryQuorumNumbers,
+				tt.queryBlockNum,
+			)
 			if !errors.Is(gotErr, tt.wantErr) {
 				t.Fatalf("GetOperatorsAvsState returned wrong error. Got: %v, want: %v.", gotErr, tt.wantErr)
 			}
 			if tt.wantErr == nil && !reflect.DeepEqual(tt.wantQuorumsAvsStateDict, aggG1PubkeyPerQuorum) {
-				t.Fatalf("GetOperatorsAvsState returned wrong aggG1PubkeyPerQuorum. Got: %v, want: %v.", aggG1PubkeyPerQuorum, tt.wantQuorumsAvsStateDict)
+				t.Fatalf(
+					"GetOperatorsAvsState returned wrong aggG1PubkeyPerQuorum. Got: %v, want: %v.",
+					aggG1PubkeyPerQuorum,
+					tt.wantQuorumsAvsStateDict,
+				)
 			}
 		})
 	}

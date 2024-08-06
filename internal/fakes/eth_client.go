@@ -3,10 +3,11 @@ package fakes
 import (
 	"context"
 	"errors"
+	"math/big"
+
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"math/big"
 )
 
 const (
@@ -90,6 +91,10 @@ func (f *EthClient) FilterLogs(ctx context.Context, q ethereum.FilterQuery) ([]t
 	return []types.Log{}, nil
 }
 
-func (f *EthClient) SubscribeFilterLogs(ctx context.Context, q ethereum.FilterQuery, ch chan<- types.Log) (ethereum.Subscription, error) {
+func (f *EthClient) SubscribeFilterLogs(
+	ctx context.Context,
+	q ethereum.FilterQuery,
+	ch chan<- types.Log,
+) (ethereum.Subscription, error) {
 	return nil, nil
 }
