@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/Layr-Labs/eigensdk-go/utils"
-
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -15,6 +13,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
+	avsdirectory "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IAVSDirectory"
 	erc20 "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IERC20"
 	rewardscoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IRewardsCoordinator"
 	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/ISlasher"
@@ -23,6 +22,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/metrics"
 	"github.com/Layr-Labs/eigensdk-go/types"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
 type Reader interface {
@@ -36,6 +36,7 @@ type ChainWriter struct {
 	delegationManager   *delegationmanager.ContractDelegationManager
 	strategyManager     *strategymanager.ContractStrategyManager
 	rewardsCoordinator  *rewardscoordinator.ContractIRewardsCoordinator
+	avsDirectory        *avsdirectory.ContractIAVSDirectory
 	strategyManagerAddr gethcommon.Address
 	elChainReader       Reader
 	ethClient           eth.HttpBackend
@@ -332,6 +333,42 @@ func (w *ChainWriter) ProcessClaim(
 	if err != nil {
 		return nil, utils.WrapError("failed to create ProcessClaim tx", err)
 	}
+	receipt, err := w.txMgr.Send(ctx, tx)
+	if err != nil {
+		return nil, utils.WrapError("failed to send tx", err)
+	}
+
+	return receipt, nil
+}
+
+func (w *ChainWriter) ForceDeregisterFromOperatorSets(
+	ctx context.Context,
+	operator gethcommon.Address,
+	avs gethcommon.Address,
+	operatorSetIds []uint32,
+	operatorSignature avsdirectory.ISignatureUtilsSignatureWithSaltAndExpiry,
+) (*gethtypes.Receipt, error) {
+	if w.avsDirectory == nil {
+		return nil, errors.New("AVSDirectory contract not provided")
+	}
+
+	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
+	if err != nil {
+		return nil, utils.WrapError("failed to get no send tx opts", err)
+	}
+
+	tx, err := w.avsDirectory.ForceDeregisterFromOperatorSets(
+		noSendTxOpts,
+		operator,
+		avs,
+		operatorSetIds,
+		operatorSignature,
+	)
+
+	if err != nil {
+		return nil, utils.WrapError("failed to create ForceDeregisterFromOperatorSets tx", err)
+	}
+
 	receipt, err := w.txMgr.Send(ctx, tx)
 	if err != nil {
 		return nil, utils.WrapError("failed to send tx", err)

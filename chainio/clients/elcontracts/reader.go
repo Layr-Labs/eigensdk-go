@@ -10,8 +10,8 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
-	avsdirectory "github.com/Layr-Labs/eigensdk-go/contracts/bindings/AVSDirectory"
 	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
+	avsdirectory "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IAVSDirectory"
 	erc20 "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IERC20"
 	rewardscoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IRewardsCoordinator"
 	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/ISlasher"
@@ -33,7 +33,7 @@ type ChainReader struct {
 	slasher            slasher.ContractISlasherCalls
 	delegationManager  *delegationmanager.ContractDelegationManager
 	strategyManager    *strategymanager.ContractStrategyManager
-	avsDirectory       *avsdirectory.ContractAVSDirectory
+	avsDirectory       *avsdirectory.ContractIAVSDirectory
 	rewardsCoordinator *rewardscoordinator.ContractIRewardsCoordinator
 	ethClient          eth.HttpBackend
 }
@@ -42,7 +42,7 @@ func NewChainReader(
 	slasher slasher.ContractISlasherCalls,
 	delegationManager *delegationmanager.ContractDelegationManager,
 	strategyManager *strategymanager.ContractStrategyManager,
-	avsDirectory *avsdirectory.ContractAVSDirectory,
+	avsDirectory *avsdirectory.ContractIAVSDirectory,
 	rewardsCoordinator *rewardscoordinator.ContractIRewardsCoordinator,
 	logger logging.Logger,
 	ethClient eth.HttpBackend,
