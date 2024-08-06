@@ -3,11 +3,12 @@ package testutils
 import (
 	"context"
 	"fmt"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"log"
 	"os/exec"
 	"path/filepath"
 	"runtime"
+
+	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -69,8 +70,12 @@ func GetContractAddressesFromContractRegistry(ethHttpUrl string) (mockAvsContrac
 		panic(err)
 	}
 	// The ContractsRegistry contract should always be deployed at this address on anvil
-	// it's the address of the contract created at nonce 0 by the first anvil account (0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266)
-	contractsRegistry, err := contractreg.NewContractContractsRegistry(common.HexToAddress("0x5FbDB2315678afecb367f032d93F642f64180aa3"), ethHttpClient)
+	// it's the address of the contract created at nonce 0 by the first anvil account
+	// (0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266)
+	contractsRegistry, err := contractreg.NewContractContractsRegistry(
+		common.HexToAddress("0x5FbDB2315678afecb367f032d93F642f64180aa3"),
+		ethHttpClient,
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -89,7 +94,10 @@ func GetContractAddressesFromContractRegistry(ethHttpUrl string) (mockAvsContrac
 	if mockAvsRegistryCoordinatorAddr == (common.Address{}) {
 		panic("mockAvsRegistryCoordinatorAddr is empty")
 	}
-	mockAvsOperatorStateRetrieverAddr, err := contractsRegistry.Contracts(&bind.CallOpts{}, "mockAvsOperatorStateRetriever")
+	mockAvsOperatorStateRetrieverAddr, err := contractsRegistry.Contracts(
+		&bind.CallOpts{},
+		"mockAvsOperatorStateRetriever",
+	)
 	if err != nil {
 		panic(err)
 	}
@@ -133,9 +141,13 @@ func AdvanceChainByNBlocks(n int, anvilEndpoint string) {
 	}
 }
 
-// Prefer this function over AdvanceChainByNBlocks b/c it doesn't require cast to be installed on the host machine, whereas this one doesn't.
+// Prefer this function over AdvanceChainByNBlocks b/c it doesn't require cast to be installed on the host machine,
+// whereas this one doesn't.
 func AdvanceChainByNBlocksExecInContainer(ctx context.Context, n int, anvilC testcontainers.Container) {
-	c, _, err := anvilC.Exec(ctx, []string{"cast", "rpc", "anvil_mine", fmt.Sprintf("%d", n), "--rpc-url", "http://localhost:8545"})
+	c, _, err := anvilC.Exec(
+		ctx,
+		[]string{"cast", "rpc", "anvil_mine", fmt.Sprintf("%d", n), "--rpc-url", "http://localhost:8545"},
+	)
 	if err != nil {
 		panic(err)
 	}
