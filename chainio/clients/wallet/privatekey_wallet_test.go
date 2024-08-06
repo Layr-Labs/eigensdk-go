@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/signerv2"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stretchr/testify/require"
 )
 
@@ -28,7 +28,7 @@ func TestPrivateKeyWallet(t *testing.T) {
 		defer cancel()
 		anvilHttpEndpoint, err := anvilC.Endpoint(ctxWithTimeout, "http")
 		require.NoError(t, err)
-		ethClient, err := eth.NewClient(anvilHttpEndpoint)
+		ethClient, err := ethclient.Dial(anvilHttpEndpoint)
 		require.NoError(t, err)
 
 		ecdsaPrivKeyHex := "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"

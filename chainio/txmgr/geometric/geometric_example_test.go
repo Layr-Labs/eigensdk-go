@@ -15,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -52,7 +53,7 @@ func ExampleGeometricTxManager() {
 	// Output: Tx sent
 }
 
-func createTx(client eth.Client, address common.Address) *types.Transaction {
+func createTx(client eth.HttpBackend, address common.Address) *types.Transaction {
 	zeroAddr := common.HexToAddress("0x0")
 	nonce, err := client.PendingNonceAt(context.TODO(), address)
 	if err != nil {
@@ -64,9 +65,9 @@ func createTx(client eth.Client, address common.Address) *types.Transaction {
 	})
 }
 
-func createTxMgr(rpcUrl string, ecdsaPrivateKey *ecdsa.PrivateKey) (eth.Client, *GeometricTxManager) {
+func createTxMgr(rpcUrl string, ecdsaPrivateKey *ecdsa.PrivateKey) (eth.HttpBackend, *GeometricTxManager) {
 	logger := logging.NewTextSLogger(os.Stdout, &logging.SLoggerOptions{})
-	client, err := eth.NewClient(rpcUrl)
+	client, err := ethclient.Dial(rpcUrl)
 	if err != nil {
 		panic(err)
 	}
