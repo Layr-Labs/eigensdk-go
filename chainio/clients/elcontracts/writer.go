@@ -162,8 +162,7 @@ func (w *ChainWriter) RegisterAsOperator(ctx context.Context, operator types.Ope
 
 	w.logger.Infof("registering operator %s to EigenLayer", operator.Address)
 	opDetails := delegationmanager.IDelegationManagerOperatorDetails{
-		// Earning receiver has been deprecated but just to make sure we have something in contract
-		// We just force it to be operator address
+		// Earning receiver has been deprecated, so we just use the operator address as a dummy value
 		// Any reward related setup is via RewardsCoordinator contract
 		DeprecatedEarningsReceiver: gethcommon.HexToAddress(operator.Address),
 		StakerOptOutWindowBlocks:   operator.StakerOptOutWindowBlocks,
@@ -197,8 +196,7 @@ func (w *ChainWriter) UpdateOperatorDetails(
 
 	w.logger.Infof("updating operator details of operator %s to EigenLayer", operator.Address)
 	opDetails := delegationmanager.IDelegationManagerOperatorDetails{
-		// Earning receiver has been deprecated but just to make sure we have something in contract
-		// We just force it to be operator address
+		// Earning receiver has been deprecated, so we just use the operator address as a dummy value
 		// Any reward related setup is via RewardsCoordinator contract
 		DeprecatedEarningsReceiver: gethcommon.HexToAddress(operator.Address),
 		DelegationApprover:         gethcommon.HexToAddress(operator.DelegationApproverAddress),
