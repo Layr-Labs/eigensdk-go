@@ -376,3 +376,31 @@ func (w *ChainWriter) ForceDeregisterFromOperatorSets(
 
 	return receipt, nil
 }
+
+func (w *ChainWriter) SetOperatorCommissionBips(
+	ctx context.Context,
+	operatorSet rewardscoordinator.IAVSDirectoryOperatorSet,
+	rewardType uint8,
+	commissionBips uint16,
+) (*gethtypes.Receipt, error) {
+	if w.rewardsCoordinator == nil {
+		return nil, errors.New("RewardsCoordinator contract not provided")
+	}
+
+	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
+	if err != nil {
+		return nil, utils.WrapError("failed to get no send tx opts", err)
+	}
+
+	tx, err := w.rewardsCoordinator.SetOperatorCommissionBips(noSendTxOpts, operatorSet, rewardType, commissionBips)
+	if err != nil {
+		return nil, utils.WrapError("failed to create SetOperatorCommissionBips tx", err)
+	}
+
+	receipt, err := w.txMgr.Send(ctx, tx)
+	if err != nil {
+		return nil, utils.WrapError("failed to send tx", err)
+	}
+
+	return receipt, nil
+}
