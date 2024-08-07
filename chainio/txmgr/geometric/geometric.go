@@ -33,7 +33,7 @@ type txnRequest struct {
 	txAttempts []*transaction
 }
 
-type EthBackend interface {
+type ethBackend interface {
 	BlockNumber(ctx context.Context) (uint64, error)
 	SuggestGasTipCap(ctx context.Context) (*big.Int, error)
 	EstimateGas(ctx context.Context, msg ethereum.CallMsg) (uint64, error)
@@ -41,7 +41,7 @@ type EthBackend interface {
 }
 
 type GeometricTxManager struct {
-	ethClient EthBackend
+	ethClient ethBackend
 	wallet    wallet.Wallet
 	logger    logging.Logger
 	metrics   Metrics
@@ -130,7 +130,7 @@ func fillParamsWithDefaultValues(params *GeometricTxnManagerParams) {
 }
 
 func NewGeometricTxnManager(
-	ethClient EthBackend,
+	ethClient ethBackend,
 	wallet wallet.Wallet,
 	logger logging.Logger,
 	metrics Metrics,

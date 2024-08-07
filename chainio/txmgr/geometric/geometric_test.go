@@ -314,7 +314,7 @@ func (s *fakeEthBackend) TransactionReceipt(ctx context.Context, txHash common.H
 
 type integrationEthBackend interface {
 	wallet.EthBackend
-	EthBackend
+	ethBackend
 }
 type integrationTestHarness struct {
 	ethBackend integrationEthBackend
