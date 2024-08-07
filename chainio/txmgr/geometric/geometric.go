@@ -172,7 +172,7 @@ func (t *GeometricTxManager) Send(ctx context.Context, tx *types.Transaction) (*
 	return t.processTransaction(ctx, newTxnRequest(tx))
 }
 
-// ProcessTransaction sends the transaction and runs the monitoring loop which will bump the gasPrice until the tx get
+// processTransaction sends the transaction and runs the monitoring loop which will bump the gasPrice until the tx get
 // included.
 func (t *GeometricTxManager) processTransaction(ctx context.Context, req *txnRequest) (*types.Receipt, error) {
 	t.logger.Debug("new transaction",
