@@ -392,10 +392,10 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 				totalStakePerQuorum,
 				quorumThresholdPercentagesMap,
 			) {
-        a.logger.Debug("Task goroutine stake threshold reached",
+				a.logger.Debug("Task goroutine stake threshold reached",
 					"taskIndex", taskIndex,
 					"taskResponseDigest", taskResponseDigest)
-        
+
 				nonSignersOperatorIds := []types.OperatorId{}
 				for operatorId := range operatorsAvsStateDict {
 					if _, operatorSigned := digestAggregatedOperators.signersOperatorIdsSet[operatorId]; !operatorSigned {
