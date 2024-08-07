@@ -146,7 +146,7 @@ func (m *GeometricTxManager) GetNoSendTxOpts() (*bind.TransactOpts, error) {
 	defer cancel()
 	from, err := m.wallet.SenderAddress(ctxWithTimeout)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get sender address: %w", err)
+		return nil, utils.WrapError("failed to get sender address", err)
 	}
 	return &bind.TransactOpts{
 		From:   from,
@@ -183,7 +183,7 @@ func (t *GeometricTxManager) processTransaction(ctx context.Context, req *txnReq
 
 	from, err := t.wallet.SenderAddress(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get sender address: %w", err)
+		return nil, utils.WrapError("failed to get sender address", err)
 	}
 
 	var txn *types.Transaction
@@ -192,11 +192,11 @@ func (t *GeometricTxManager) processTransaction(ctx context.Context, req *txnReq
 	for retryFromFailure < t.params.MaxSendTransactionRetry {
 		gasTipCap, err := t.estimateGasTipCap(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("failed to estimate gas tip cap: %w", err)
+			return nil, utils.WrapError("failed to estimate gas tip cap", err)
 		}
 		txn, err = t.updateGasTipCap(ctx, req.tx, gasTipCap, from)
 		if err != nil {
-			return nil, fmt.Errorf("failed to update gas price: %w", err)
+			return nil, utils.WrapError("failed to update gas price", err)
 		}
 		txID, err = t.wallet.SendTransaction(ctx, txn)
 		// TODO: what is this...? does it come from the fireblocks wallet?
@@ -217,7 +217,7 @@ func (t *GeometricTxManager) processTransaction(ctx context.Context, req *txnReq
 			retryFromFailure++
 			continue
 		} else if err != nil {
-			return nil, fmt.Errorf("failed to send txn %s: %w", txn.Hash().Hex(), err)
+			return nil, utils.WrapError(fmt.Errorf("failed to send txn %s", txn.Hash().Hex()), err)
 		} else {
 			t.logger.Debug("successfully sent txn", "txID", txID, "txHash", txn.Hash().Hex())
 			break
@@ -226,7 +226,7 @@ func (t *GeometricTxManager) processTransaction(ctx context.Context, req *txnReq
 
 	// is this case even possible? we return on errors above
 	if txn == nil || txID == "" {
-		return nil, fmt.Errorf("failed to send txn %s: %w", req.tx.Hash().Hex(), err)
+		return nil, utils.WrapError(fmt.Errorf("failed to send txn %s", req.tx.Hash().Hex()), err)
 	}
 
 	req.tx = txn
@@ -476,7 +476,7 @@ func (t *GeometricTxManager) speedUpTxn(
 	{
 		estimatedGasTipCap, err := t.estimateGasTipCap(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("failed to estimate gas tip cap: %w", err)
+			return nil, utils.WrapError("failed to estimate gas tip cap", err)
 		}
 		bumpedGasTipCap := t.addGasTipCapBuffer(tx.GasTipCap())
 		if estimatedGasTipCap.Cmp(bumpedGasTipCap) > 0 {
@@ -488,11 +488,11 @@ func (t *GeometricTxManager) speedUpTxn(
 
 	from, err := t.wallet.SenderAddress(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get sender address: %w", err)
+		return nil, utils.WrapError("failed to get sender address", err)
 	}
 	newTx, err := t.updateGasTipCap(ctx, tx, newGasTipCap, from)
 	if err != nil {
-		return nil, fmt.Errorf("failed to update gas price: %w", err)
+		return nil, utils.WrapError("failed to update gas price", err)
 	}
 	t.logger.Info(
 		"increasing gas price",
