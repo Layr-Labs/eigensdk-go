@@ -315,7 +315,8 @@ func (t *GeometricTxManager) ensureAnyTransactionConfirmed(
 			} else if errors.Is(err, wallet.ErrTransactionFailed) {
 				t.logger.Debug("Transaction failed", "txID", txID, "txHash", tx.Hash().Hex(), "err", err)
 				// Remove the transaction from the list of transactions to query.
-				// go seemingly allows deleting from a map while iterating over it: https://groups.google.com/g/golang-nuts/c/rEmaoxi11_A
+				// go seemingly allows deleting from a map while iterating over it:
+				// https://groups.google.com/g/golang-nuts/c/rEmaoxi11_A
 				// although the official spec and faq don't seem to mention this anywhere...
 				delete(txnsToQuery, txID)
 			} else if errors.Is(err, wallet.ErrNotYetBroadcasted) {
