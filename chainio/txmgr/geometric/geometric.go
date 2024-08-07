@@ -71,6 +71,7 @@ type GeometricTxnManagerParams struct {
 	MaxSendTransactionRetry int
 	// time to wait between checking for each transaction receipt
 	// while monitoring transactions to get mined
+	// default: 3 seconds
 	GetTxReceiptTickerDuration time.Duration
 	// default gas tip cap to use when eth_maxPriorityFeePerGas is not available
 	// default: 5 gwei
