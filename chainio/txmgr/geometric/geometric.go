@@ -247,7 +247,8 @@ func (t *GeometricTxManager) processTransaction(ctx context.Context, req *txnReq
 }
 
 // ensureAnyTransactionBroadcasted waits until at least one of the bumped transactions are broadcasted to the network.
-// this is only needed for the Fireblocks wallet, where some processing is done in their backend before broadcasting to the ethereum network.
+// this is only needed for the Fireblocks wallet, where some processing is done in their backend before broadcasting to
+// the ethereum network.
 func (t *GeometricTxManager) ensureAnyTransactionBroadcasted(ctx context.Context, txs []*transaction) error {
 	queryTicker := time.NewTicker(t.params.GetTxReceiptTickerDuration)
 	defer queryTicker.Stop()
@@ -270,8 +271,9 @@ func (t *GeometricTxManager) ensureAnyTransactionBroadcasted(ctx context.Context
 	}
 }
 
-// ensureAnyTransactionConfirmed waits until at least one of the transactions is confirmed (mined + confirmationBlocks blocks).
-// It returns the receipt of the first transaction that is confirmed (only one tx can ever be mined given they all have the same nonce).
+// ensureAnyTransactionConfirmed waits until at least one of the transactions is confirmed (mined + confirmationBlocks
+// blocks). It returns the receipt of the first transaction that is confirmed (only one tx can ever be mined given they
+// all have the same nonce).
 func (t *GeometricTxManager) ensureAnyTransactionConfirmed(
 	ctx context.Context,
 	txs []*transaction,
