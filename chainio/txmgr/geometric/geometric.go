@@ -181,14 +181,14 @@ func (t *GeometricTxManager) processTransaction(ctx context.Context, req *txnReq
 	t.metrics.IncrementProcessingTxCount()
 	defer t.metrics.DecrementProcessingTxCount()
 
-	var txn *types.Transaction
-	var txID wallet.TxID
-	var err error
-	retryFromFailure := 0
 	from, err := t.wallet.SenderAddress(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get sender address: %w", err)
 	}
+
+	var txn *types.Transaction
+	var txID wallet.TxID
+	retryFromFailure := 0
 	for retryFromFailure < t.params.MaxSendTransactionRetry {
 		gasTipCap, err := t.estimateGasTipCap(ctx)
 		if err != nil {
@@ -224,6 +224,7 @@ func (t *GeometricTxManager) processTransaction(ctx context.Context, req *txnReq
 		}
 	}
 
+	// is this case even possible? we return on errors above
 	if txn == nil || txID == "" {
 		return nil, fmt.Errorf("failed to send txn %s: %w", req.tx.Hash().Hex(), err)
 	}
