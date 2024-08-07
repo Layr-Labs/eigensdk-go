@@ -18,5 +18,9 @@ func TestRpcCallsCollector(t *testing.T) {
 	// assert.Equal(t, 1.0, testutil.ToFloat64(suite.metrics.rpcRequestDurationSeconds))
 
 	rpcCallsCollector.AddRPCRequestTotal("testmethod", "testclient/testversion")
-	assert.Equal(t, 1.0, testutil.ToFloat64(rpcCallsCollector.rpcRequestTotal.WithLabelValues("testmethod", "testclient/testversion")))
+	assert.Equal(
+		t,
+		1.0,
+		testutil.ToFloat64(rpcCallsCollector.rpcRequestTotal.WithLabelValues("testmethod", "testclient/testversion")),
+	)
 }

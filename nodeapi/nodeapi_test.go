@@ -39,7 +39,11 @@ func TestNodeHandler(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
-	assert.Equal(t, "{\"node_name\":\"testAvs\",\"node_version\":\"v0.0.1\",\"spec_version\":\"v0.0.1\"}\n", string(data))
+	assert.Equal(
+		t,
+		"{\"node_name\":\"testAvs\",\"node_version\":\"v0.0.1\",\"spec_version\":\"v0.0.1\"}\n",
+		string(data),
+	)
 }
 
 func TestHealthHandler(t *testing.T) {
@@ -107,7 +111,12 @@ func TestServicesHandler(t *testing.T) {
 		"one service": {
 			nodeApi: func() *NodeApi {
 				nodeApi := NewNodeApi("testAvs", "v0.0.1", "localhost:8080", logger)
-				nodeApi.RegisterNewService("testServiceId", "testServiceName", "testServiceDescription", ServiceStatusUp)
+				nodeApi.RegisterNewService(
+					"testServiceId",
+					"testServiceName",
+					"testServiceDescription",
+					ServiceStatusUp,
+				)
 				return nodeApi
 			}(),
 			wantStatusCode: http.StatusOK,
@@ -116,8 +125,18 @@ func TestServicesHandler(t *testing.T) {
 		"two services": {
 			nodeApi: func() *NodeApi {
 				nodeApi := NewNodeApi("testAvs", "v0.0.1", "localhost:8080", logger)
-				nodeApi.RegisterNewService("testServiceId", "testServiceName", "testServiceDescription", ServiceStatusUp)
-				nodeApi.RegisterNewService("testServiceId2", "testServiceName2", "testServiceDescription2", ServiceStatusDown)
+				nodeApi.RegisterNewService(
+					"testServiceId",
+					"testServiceName",
+					"testServiceDescription",
+					ServiceStatusUp,
+				)
+				nodeApi.RegisterNewService(
+					"testServiceId2",
+					"testServiceName2",
+					"testServiceDescription2",
+					ServiceStatusDown,
+				)
 				return nodeApi
 			}(),
 			wantStatusCode: http.StatusOK,

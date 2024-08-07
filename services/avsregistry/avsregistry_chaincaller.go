@@ -3,9 +3,10 @@ package avsregistry
 import (
 	"context"
 	"fmt"
+	"math/big"
+
 	opstateretriever "github.com/Layr-Labs/eigensdk-go/contracts/bindings/OperatorStateRetriever"
 	"github.com/ethereum/go-ethereum/common"
-	"math/big"
 
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
@@ -45,7 +46,11 @@ type AvsRegistryServiceChainCaller struct {
 
 var _ AvsRegistryService = (*AvsRegistryServiceChainCaller)(nil)
 
-func NewAvsRegistryServiceChainCaller(reader avsRegistryReader, operatorInfoService opinfoservice.OperatorsInfoService, logger logging.Logger) *AvsRegistryServiceChainCaller {
+func NewAvsRegistryServiceChainCaller(
+	reader avsRegistryReader,
+	operatorInfoService opinfoservice.OperatorsInfoService,
+	logger logging.Logger,
+) *AvsRegistryServiceChainCaller {
 	return &AvsRegistryServiceChainCaller{
 		avsRegistryReader:   reader,
 		operatorInfoService: operatorInfoService,
@@ -53,16 +58,29 @@ func NewAvsRegistryServiceChainCaller(reader avsRegistryReader, operatorInfoServ
 	}
 }
 
-func (ar *AvsRegistryServiceChainCaller) GetOperatorsAvsStateAtBlock(ctx context.Context, quorumNumbers types.QuorumNums, blockNumber types.BlockNum) (map[types.OperatorId]types.OperatorAvsState, error) {
+func (ar *AvsRegistryServiceChainCaller) GetOperatorsAvsStateAtBlock(
+	ctx context.Context,
+	quorumNumbers types.QuorumNums,
+	blockNumber types.BlockNum,
+) (map[types.OperatorId]types.OperatorAvsState, error) {
 	operatorsAvsState := make(map[types.OperatorId]types.OperatorAvsState)
-	// Get operator state for each quorum by querying BLSOperatorStateRetriever (this call is why this service implementation is called ChainCaller)
-	operatorsStakesInQuorums, err := ar.avsRegistryReader.GetOperatorsStakeInQuorumsAtBlock(&bind.CallOpts{Context: ctx}, quorumNumbers, blockNumber)
+	// Get operator state for each quorum by querying BLSOperatorStateRetriever (this call is why this service
+	// implementation is called ChainCaller)
+	operatorsStakesInQuorums, err := ar.avsRegistryReader.GetOperatorsStakeInQuorumsAtBlock(
+		&bind.CallOpts{Context: ctx},
+		quorumNumbers,
+		blockNumber,
+	)
 	if err != nil {
 		return nil, utils.WrapError("Failed to get operator state", err)
 	}
 	numquorums := len(quorumNumbers)
 	if len(operatorsStakesInQuorums) != numquorums {
-		ar.logger.Fatal("Number of quorums returned from GetOperatorsStakeInQuorumsAtBlock does not match number of quorums requested. Probably pointing to old contract or wrong implementation.", "service", "AvsRegistryServiceChainCaller")
+		ar.logger.Fatal(
+			"Number of quorums returned from GetOperatorsStakeInQuorumsAtBlock does not match number of quorums requested. Probably pointing to old contract or wrong implementation.",
+			"service",
+			"AvsRegistryServiceChainCaller",
+		)
 	}
 
 	for quorumIdx, quorumNum := range quorumNumbers {
@@ -90,7 +108,11 @@ func (ar *AvsRegistryServiceChainCaller) GetOperatorsAvsStateAtBlock(ctx context
 	return operatorsAvsState, nil
 }
 
-func (ar *AvsRegistryServiceChainCaller) GetQuorumsAvsStateAtBlock(ctx context.Context, quorumNumbers types.QuorumNums, blockNumber types.BlockNum) (map[types.QuorumNum]types.QuorumAvsState, error) {
+func (ar *AvsRegistryServiceChainCaller) GetQuorumsAvsStateAtBlock(
+	ctx context.Context,
+	quorumNumbers types.QuorumNums,
+	blockNumber types.BlockNum,
+) (map[types.QuorumNum]types.QuorumAvsState, error) {
 	operatorsAvsState, err := ar.GetOperatorsAvsStateAtBlock(ctx, quorumNumbers, blockNumber)
 	if err != nil {
 		return nil, utils.WrapError("Failed to get quorum state", err)
@@ -116,14 +138,21 @@ func (ar *AvsRegistryServiceChainCaller) GetQuorumsAvsStateAtBlock(ctx context.C
 	return quorumsAvsState, nil
 }
 
-func (ar *AvsRegistryServiceChainCaller) getOperatorInfo(ctx context.Context, operatorId types.OperatorId) (types.OperatorInfo, error) {
+func (ar *AvsRegistryServiceChainCaller) getOperatorInfo(
+	ctx context.Context,
+	operatorId types.OperatorId,
+) (types.OperatorInfo, error) {
 	operatorAddr, err := ar.avsRegistryReader.GetOperatorFromId(&bind.CallOpts{Context: ctx}, operatorId)
 	if err != nil {
 		return types.OperatorInfo{}, utils.WrapError("Failed to get operator address from pubkey hash", err)
 	}
 	info, ok := ar.operatorInfoService.GetOperatorInfo(ctx, operatorAddr)
 	if !ok {
-		return types.OperatorInfo{}, fmt.Errorf("Failed to get operator info from operatorInfoService (operatorAddr: %v, operatorId: %v)", operatorAddr, operatorId)
+		return types.OperatorInfo{}, fmt.Errorf(
+			"Failed to get operator info from operatorInfoService (operatorAddr: %v, operatorId: %v)",
+			operatorAddr,
+			operatorId,
+		)
 	}
 	return info, nil
 }

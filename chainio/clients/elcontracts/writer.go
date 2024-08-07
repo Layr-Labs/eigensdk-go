@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/Layr-Labs/eigensdk-go/utils"
-
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -15,6 +13,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
+	avsdirectory "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IAVSDirectory"
 	erc20 "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IERC20"
 	rewardscoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IRewardsCoordinator"
 	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/ISlasher"
@@ -23,6 +22,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/metrics"
 	"github.com/Layr-Labs/eigensdk-go/types"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
 type Reader interface {
@@ -36,6 +36,7 @@ type ChainWriter struct {
 	delegationManager   *delegationmanager.ContractDelegationManager
 	strategyManager     *strategymanager.ContractStrategyManager
 	rewardsCoordinator  *rewardscoordinator.ContractIRewardsCoordinator
+	avsDirectory        *avsdirectory.ContractIAVSDirectory
 	strategyManagerAddr gethcommon.Address
 	elChainReader       Reader
 	ethClient           eth.HttpBackend
@@ -48,6 +49,7 @@ func NewChainWriter(
 	delegationManager *delegationmanager.ContractDelegationManager,
 	strategyManager *strategymanager.ContractStrategyManager,
 	rewardsCoordinator *rewardscoordinator.ContractIRewardsCoordinator,
+	avsDirectory *avsdirectory.ContractIAVSDirectory,
 	strategyManagerAddr gethcommon.Address,
 	elChainReader Reader,
 	ethClient eth.HttpBackend,
@@ -63,6 +65,7 @@ func NewChainWriter(
 		strategyManager:     strategyManager,
 		strategyManagerAddr: strategyManagerAddr,
 		rewardsCoordinator:  rewardsCoordinator,
+		avsDirectory:        avsDirectory,
 		elChainReader:       elChainReader,
 		logger:              logger,
 		ethClient:           ethClient,
@@ -103,6 +106,7 @@ func BuildELChainWriter(
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
 		elContractBindings.RewardsCoordinator,
+		elContractBindings.AvsDirectory,
 		elContractBindings.StrategyManagerAddr,
 		elChainReader,
 		ethClient,
@@ -141,6 +145,7 @@ func NewWriterFromConfig(
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
 		elContractBindings.RewardsCoordinator,
+		elContractBindings.AvsDirectory,
 		elContractBindings.StrategyManagerAddr,
 		elChainReader,
 		ethClient,
@@ -157,7 +162,9 @@ func (w *ChainWriter) RegisterAsOperator(ctx context.Context, operator types.Ope
 
 	w.logger.Infof("registering operator %s to EigenLayer", operator.Address)
 	opDetails := delegationmanager.IDelegationManagerOperatorDetails{
-		DeprecatedEarningsReceiver: gethcommon.HexToAddress(operator.EarningsReceiverAddress),
+		// Earning receiver has been deprecated, so we just use the operator address as a dummy value
+		// Any reward related setup is via RewardsCoordinator contract
+		DeprecatedEarningsReceiver: gethcommon.HexToAddress(operator.Address),
 		StakerOptOutWindowBlocks:   operator.StakerOptOutWindowBlocks,
 		DelegationApprover:         gethcommon.HexToAddress(operator.DelegationApproverAddress),
 	}
@@ -189,7 +196,9 @@ func (w *ChainWriter) UpdateOperatorDetails(
 
 	w.logger.Infof("updating operator details of operator %s to EigenLayer", operator.Address)
 	opDetails := delegationmanager.IDelegationManagerOperatorDetails{
-		DeprecatedEarningsReceiver: gethcommon.HexToAddress(operator.EarningsReceiverAddress),
+		// Earning receiver has been deprecated, so we just use the operator address as a dummy value
+		// Any reward related setup is via RewardsCoordinator contract
+		DeprecatedEarningsReceiver: gethcommon.HexToAddress(operator.Address),
 		DelegationApprover:         gethcommon.HexToAddress(operator.DelegationApproverAddress),
 		StakerOptOutWindowBlocks:   operator.StakerOptOutWindowBlocks,
 	}
@@ -332,6 +341,70 @@ func (w *ChainWriter) ProcessClaim(
 	if err != nil {
 		return nil, utils.WrapError("failed to create ProcessClaim tx", err)
 	}
+	receipt, err := w.txMgr.Send(ctx, tx)
+	if err != nil {
+		return nil, utils.WrapError("failed to send tx", err)
+	}
+
+	return receipt, nil
+}
+
+func (w *ChainWriter) ForceDeregisterFromOperatorSets(
+	ctx context.Context,
+	operator gethcommon.Address,
+	avs gethcommon.Address,
+	operatorSetIds []uint32,
+	operatorSignature avsdirectory.ISignatureUtilsSignatureWithSaltAndExpiry,
+) (*gethtypes.Receipt, error) {
+	if w.avsDirectory == nil {
+		return nil, errors.New("AVSDirectory contract not provided")
+	}
+
+	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
+	if err != nil {
+		return nil, utils.WrapError("failed to get no send tx opts", err)
+	}
+
+	tx, err := w.avsDirectory.ForceDeregisterFromOperatorSets(
+		noSendTxOpts,
+		operator,
+		avs,
+		operatorSetIds,
+		operatorSignature,
+	)
+
+	if err != nil {
+		return nil, utils.WrapError("failed to create ForceDeregisterFromOperatorSets tx", err)
+	}
+
+	receipt, err := w.txMgr.Send(ctx, tx)
+	if err != nil {
+		return nil, utils.WrapError("failed to send tx", err)
+	}
+
+	return receipt, nil
+}
+
+func (w *ChainWriter) SetOperatorCommissionBips(
+	ctx context.Context,
+	operatorSet rewardscoordinator.IAVSDirectoryOperatorSet,
+	rewardType uint8,
+	commissionBips uint16,
+) (*gethtypes.Receipt, error) {
+	if w.rewardsCoordinator == nil {
+		return nil, errors.New("RewardsCoordinator contract not provided")
+	}
+
+	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
+	if err != nil {
+		return nil, utils.WrapError("failed to get no send tx opts", err)
+	}
+
+	tx, err := w.rewardsCoordinator.SetOperatorCommissionBips(noSendTxOpts, operatorSet, rewardType, commissionBips)
+	if err != nil {
+		return nil, utils.WrapError("failed to create SetOperatorCommissionBips tx", err)
+	}
+
 	receipt, err := w.txMgr.Send(ctx, tx)
 	if err != nil {
 		return nil, utils.WrapError("failed to send tx", err)

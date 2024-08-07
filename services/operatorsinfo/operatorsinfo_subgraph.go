@@ -36,7 +36,8 @@ type (
 		SocketUpdates []SocketUpdates `graphql:"socketUpdates(first: 1, orderBy: blockNumber, orderDirection: desc)"`
 	}
 	IndexedOperatorInfo struct {
-		// PubKeyG1 and PubKeyG2 are the public keys of the operator, which are retrieved from the EigenDAPubKeyCompendium smart contract
+		// PubKeyG1 and PubKeyG2 are the public keys of the operator, which are retrieved from the
+		// EigenDAPubKeyCompendium smart contract
 		PubkeyG1 *G1Point
 		PubkeyG2 *G2Point
 		// Socket is the socket address of the operator, in the form "host:port"
@@ -57,9 +58,11 @@ var _ OperatorsInfoService = (*OperatorsInfoServiceSubgraph)(nil)
 
 // NewOperatorsInfoServiceSubgraph constructs a OperatorsInfoServiceSubgraph and starts it in a goroutine.
 // It takes a context as argument because the "backfilling" of the database is done inside this constructor,
-// so we wait for all past NewPubkeyRegistration/OperatorSocketUpdate events to be queried and the db to be filled before returning the service.
+// so we wait for all past NewPubkeyRegistration/OperatorSocketUpdate events to be queried and the db to be filled
+// before returning the service.
 // The constructor is thus following a RAII-like pattern, of initializing the serving during construction.
-// Using a separate initialize() function might lead to some users forgetting to call it and the service not behaving properly.
+// Using a separate initialize() function might lead to some users forgetting to call it and the service not behaving
+// properly.
 func NewOperatorsInfoServiceSubgraph(
 	ctx context.Context,
 	client GraphQLQuerier,
@@ -73,7 +76,10 @@ func NewOperatorsInfoServiceSubgraph(
 }
 
 // TODO(samlaf): we might want to also add an async version of this method that returns a channel of operator pubkeys?
-func (ops *OperatorsInfoServiceSubgraph) GetOperatorInfo(ctx context.Context, operator common.Address) (operatorPubkeys types.OperatorInfo, operatorFound bool) {
+func (ops *OperatorsInfoServiceSubgraph) GetOperatorInfo(
+	ctx context.Context,
+	operator common.Address,
+) (operatorPubkeys types.OperatorInfo, operatorFound bool) {
 	operatorInfo, err := ops.getIndexedOperatorInfoByOperatorId(ctx, operator)
 	if err != nil {
 		return types.OperatorInfo{}, false
@@ -81,7 +87,10 @@ func (ops *OperatorsInfoServiceSubgraph) GetOperatorInfo(ctx context.Context, op
 	return *operatorInfo, true
 }
 
-func (ops *OperatorsInfoServiceSubgraph) getIndexedOperatorInfoByOperatorId(ctx context.Context, operator common.Address) (*types.OperatorInfo, error) {
+func (ops *OperatorsInfoServiceSubgraph) getIndexedOperatorInfoByOperatorId(
+	ctx context.Context,
+	operator common.Address,
+) (*types.OperatorInfo, error) {
 	var (
 		query     QueryOperatorByAddressGql
 		variables = map[string]any{

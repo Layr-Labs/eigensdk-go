@@ -53,7 +53,8 @@ func (suite *MetricsTestSuite) TestEigenMetricsServerIntegration() {
 	assert.NoError(suite.T(), err)
 
 	// We only check for "eigen_performance_score" since it's the only metric that doesn't have a label
-	// the other metrics have labels (they are vectors) so they don't appear in the output unless we use them once at least
+	// the other metrics have labels (they are vectors) so they don't appear in the output unless we use them once at
+	// least
 	assert.Contains(suite.T(), string(body), "eigen_fees_earned_total")
 	assert.Contains(suite.T(), string(body), "eigen_performance_score")
 }
