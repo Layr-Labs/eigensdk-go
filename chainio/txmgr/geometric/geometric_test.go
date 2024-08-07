@@ -54,7 +54,7 @@ func newTestHarness(t *testing.T) *testHarness {
 		// set to 100 so that no buffer is added to the gasTipCap
 		// this way we can test that the txmgr will bump the gasTipCap to a working value
 		// and also simulate a congested network (with fakeEthBackend.congestedBlocks) where txs won't be mined
-		GasTipMultiplierPercentage: 100,
+		GasTipMultiplier: 100,
 		// set to 1 second (instead of default 2min) so that we can test that the txmgr will bump the gasTipCap to a
 		// working value
 		TxnBroadcastTimeout: 1 * time.Second,

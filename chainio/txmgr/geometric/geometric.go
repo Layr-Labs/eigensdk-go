@@ -76,12 +76,12 @@ type GeometricTxnManagerParams struct {
 	// default gas tip cap to use when eth_maxPriorityFeePerGas is not available
 	// default: 5 gwei
 	FallbackGasTipCap uint64
-	// percentage multiplier for gas limit. Should be >= 100
-	// default: 120
-	GasMultiplierPercentage uint64
-	// percentage multiplier for gas tip. Should be >= 100
-	// default: 125
-	GasTipMultiplierPercentage uint64
+	// multiplier for gas limit to add a buffer and increase chance of tx getting included. Should be >= 1.0
+	// default: 1.2
+	GasMultiplier float64
+	// multiplier for gas tip. Should be >= 1.0
+	// default: 1.25
+	GasTipMultiplier float64
 }
 
 var defaultParams = GeometricTxnManagerParams{
@@ -91,8 +91,8 @@ var defaultParams = GeometricTxnManagerParams{
 	MaxSendTransactionRetry:    3,                    // arbitrary
 	GetTxReceiptTickerDuration: 3 * time.Second,
 	FallbackGasTipCap:          uint64(5_000_000_000), // 5 gwei
-	GasMultiplierPercentage:    uint64(120),           // add an extra 20% gas buffer to the gas limit
-	GasTipMultiplierPercentage: uint64(125),           // add an extra 25% to the gas tip
+	GasMultiplier:              float64(1.20),         // add an extra 20% gas buffer to the gas limit
+	GasTipMultiplier:           float64(1.25),         // add an extra 25% to the gas tip
 }
 
 func fillParamsWithDefaultValues(params *GeometricTxnManagerParams) {
@@ -114,11 +114,11 @@ func fillParamsWithDefaultValues(params *GeometricTxnManagerParams) {
 	if params.FallbackGasTipCap == 0 {
 		params.FallbackGasTipCap = defaultParams.FallbackGasTipCap
 	}
-	if params.GasMultiplierPercentage == 0 {
-		params.GasMultiplierPercentage = defaultParams.GasMultiplierPercentage
+	if params.GasMultiplier == 0 {
+		params.GasMultiplier = defaultParams.GasMultiplier
 	}
-	if params.GasTipMultiplierPercentage == 0 {
-		params.GasTipMultiplierPercentage = defaultParams.GasTipMultiplierPercentage
+	if params.GasTipMultiplier == 0 {
+		params.GasTipMultiplier = defaultParams.GasTipMultiplier
 	}
 }
 
@@ -575,7 +575,7 @@ func (t *GeometricTxManager) estimateGasTipCap(ctx context.Context) (gasTipCap *
 // The result is returned in a new big.Int to avoid modifying the input gasTipCap.
 func (t *GeometricTxManager) addGasTipCapBuffer(gasTipCap *big.Int) *big.Int {
 	bumpedGasTipCap := new(big.Int).Set(gasTipCap)
-	return bumpedGasTipCap.Mul(bumpedGasTipCap, big.NewInt(int64(t.params.GasTipMultiplierPercentage))).
+	return bumpedGasTipCap.Mul(bumpedGasTipCap, big.NewInt(int64(t.params.GasTipMultiplier*100))).
 		Div(bumpedGasTipCap, big.NewInt(100))
 }
 
@@ -592,5 +592,5 @@ func (t *GeometricTxManager) estimateGasFeeCap(ctx context.Context, gasTipCap *b
 }
 
 func (t *GeometricTxManager) addGasBuffer(gasLimit uint64) uint64 {
-	return t.params.GasMultiplierPercentage * gasLimit / 100
+	return uint64(t.params.GasMultiplier * float64(gasLimit))
 }
