@@ -79,25 +79,20 @@ type GeometricTxnManagerParams struct {
 	// percentage multiplier for gas limit. Should be >= 100
 	// default: 120
 	GasMultiplierPercentage uint64
-	// percentage multiplier for gas price. It needs to be >= 10 to properly replace existing transaction
-	// e.g. 10 means 10% increase
-	// default: 10
-	GasPricePercentageMultiplier *big.Int
 	// percentage multiplier for gas tip. Should be >= 100
 	// default: 125
 	GasTipMultiplierPercentage uint64
 }
 
 var defaultParams = GeometricTxnManagerParams{
-	ConfirmationBlocks:           0,                    // tx mined is considered confirmed
-	TxnBroadcastTimeout:          2 * time.Minute,      // fireblocks has had issues so we give it a long time
-	TxnConfirmationTimeout:       5 * 12 * time.Second, // 5 blocks
-	MaxSendTransactionRetry:      3,                    // arbitrary
-	GetTxReceiptTickerDuration:   3 * time.Second,
-	FallbackGasTipCap:            uint64(5_000_000_000), // 5 gwei
-	GasMultiplierPercentage:      uint64(120),           // add an extra 20% gas buffer to the gas limit
-	GasPricePercentageMultiplier: big.NewInt(10),        // 10%
-	GasTipMultiplierPercentage:   uint64(125),           // add an extra 25% to the gas tip
+	ConfirmationBlocks:         0,                    // tx mined is considered confirmed
+	TxnBroadcastTimeout:        2 * time.Minute,      // fireblocks has had issues so we give it a long time
+	TxnConfirmationTimeout:     5 * 12 * time.Second, // 5 blocks
+	MaxSendTransactionRetry:    3,                    // arbitrary
+	GetTxReceiptTickerDuration: 3 * time.Second,
+	FallbackGasTipCap:          uint64(5_000_000_000), // 5 gwei
+	GasMultiplierPercentage:    uint64(120),           // add an extra 20% gas buffer to the gas limit
+	GasTipMultiplierPercentage: uint64(125),           // add an extra 25% to the gas tip
 }
 
 func fillParamsWithDefaultValues(params *GeometricTxnManagerParams) {
@@ -121,9 +116,6 @@ func fillParamsWithDefaultValues(params *GeometricTxnManagerParams) {
 	}
 	if params.GasMultiplierPercentage == 0 {
 		params.GasMultiplierPercentage = defaultParams.GasMultiplierPercentage
-	}
-	if params.GasPricePercentageMultiplier == nil {
-		params.GasPricePercentageMultiplier = defaultParams.GasPricePercentageMultiplier
 	}
 	if params.GasTipMultiplierPercentage == 0 {
 		params.GasTipMultiplierPercentage = defaultParams.GasTipMultiplierPercentage
