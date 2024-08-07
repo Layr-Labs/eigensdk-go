@@ -7,7 +7,7 @@
 
 
 ## EigenSDK
-This SDK provides a set of primitive Go modules for developing AVSs used in EigenLayer.
+This SDK provides a set of primitive Go modules for developing AVSs on EigenLayer.
 
 ## Installation
 ```
