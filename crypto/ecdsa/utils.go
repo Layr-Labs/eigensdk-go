@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -116,9 +117,7 @@ func GetAddressFromKeyStoreFile(keyStoreFile string) (gethcommon.Address, error)
 }
 
 func KeyAndAddressFromHexKey(hexkey string) (*ecdsa.PrivateKey, common.Address, error) {
-	if len(hexkey) > 2 && hexkey[:2] == "0x" {
-		hexkey = hexkey[2:]
-	}
+	hexkey = strings.TrimPrefix(hexkey, "0x")
 	ecdsaSk, err := crypto.HexToECDSA(hexkey)
 	if err != nil {
 		return nil, common.Address{}, fmt.Errorf("failed to convert hexkey %s to ecdsa key: %w", hexkey, err)
