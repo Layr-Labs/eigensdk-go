@@ -246,17 +246,17 @@ func (t *GeometricTxManager) processTransaction(ctx context.Context, req *txnReq
 	return receipt, err
 }
 
-// ensureAnyTransactionBroadcasted waits until at least one of the bumped transactions are broadcasted to the network.
+// ensureAnyFireblocksTransactionBroadcasted waits until at least one of the bumped transactions are broadcasted to the network.
 // this is only needed for the Fireblocks wallet, where some processing is done in their backend before broadcasting to
 // the ethereum network.
-func (t *GeometricTxManager) ensureAnyTransactionBroadcasted(ctx context.Context, txs []*transaction) error {
+func (t *GeometricTxManager) ensureAnyFireblocksTransactionBroadcasted(ctx context.Context, txs []*transaction) error {
 	queryTicker := time.NewTicker(t.params.GetTxReceiptTickerDuration)
 	defer queryTicker.Stop()
 
 	for {
 		for _, tx := range txs {
 			_, err := t.wallet.GetTransactionReceipt(ctx, tx.TxID)
-			if err == nil || errors.Is(err, ethereum.NotFound) || errors.Is(err, wallet.ErrReceiptNotYetAvailable) {
+			if err == nil || errors.Is(err, wallet.ErrReceiptNotYetAvailable) {
 				t.metrics.ObserveBroadcastLatencyMs(time.Since(tx.requestedAt).Milliseconds())
 				return nil
 			}
@@ -361,23 +361,21 @@ func (t *GeometricTxManager) monitorTransaction(ctx context.Context, req *txnReq
 		ctxWithTimeout, cancelBroadcastTimeout := context.WithTimeout(ctx, t.params.TxnBroadcastTimeout)
 		defer cancelBroadcastTimeout()
 
-		// Ensure transactions are broadcasted to the network before querying the receipt.
-		// This is to avoid querying the receipt of a transaction that hasn't been broadcasted yet.
-		// For example, when Fireblocks wallet is used, there may be delays in broadcasting the transaction due to
-		// latency from cosigning and MPC operations.
-		err = t.ensureAnyTransactionBroadcasted(ctxWithTimeout, req.txAttempts)
-		if err != nil && errors.Is(err, context.DeadlineExceeded) {
-			t.logger.Warn(
-				"transaction not broadcasted within timeout",
-				"txHash",
-				req.tx.Hash().Hex(),
-				"nonce",
-				req.tx.Nonce(),
-			)
-			fireblocksWallet, ok := t.wallet.(interface {
-				CancelTransactionBroadcast(ctx context.Context, txID wallet.TxID) (bool, error)
-			})
-			if ok {
+		if fireblocksWallet, ok := t.wallet.(interface {
+			CancelTransactionBroadcast(ctx context.Context, txID wallet.TxID) (bool, error)
+		}); ok {
+			// Fireblocks wallet is used, there may be delays in broadcasting the transaction due to
+			// latency from cosigning and MPC operations. We thus make sure that at least one of the
+			// bumped transactions are broadcasted to the network before querying for its receipt.
+			err = t.ensureAnyFireblocksTransactionBroadcasted(ctxWithTimeout, req.txAttempts)
+			if err != nil && errors.Is(err, context.DeadlineExceeded) {
+				t.logger.Warn(
+					"transaction not broadcasted within timeout",
+					"txHash",
+					req.tx.Hash().Hex(),
+					"nonce",
+					req.tx.Nonce(),
+				)
 				// Consider these transactions failed as they haven't been broadcasted within timeout.
 				// Cancel these transactions to avoid blocking the next transactions.
 				for _, tx := range req.txAttempts {
@@ -388,11 +386,11 @@ func (t *GeometricTxManager) monitorTransaction(ctx context.Context, req *txnReq
 						t.logger.Info("cancelled Fireblocks transaction broadcast because it didn't get broadcasted within timeout", "txID", tx.TxID, "timeout", t.params.TxnBroadcastTimeout.String())
 					}
 				}
+				return fmt.Errorf("transaction %x (with nonce %d) not broadcasted", req.tx.Hash(), req.tx.Nonce())
+			} else if err != nil {
+				t.logger.Error("unexpected error while waiting for Fireblocks transaction to broadcast", "txHash", req.tx.Hash().Hex(), "err", err)
+				return err
 			}
-			return fmt.Errorf("transaction %x (with nonce %d) not broadcasted", req.tx.Hash(), req.tx.Nonce())
-		} else if err != nil {
-			t.logger.Error("unexpected error while waiting for Fireblocks transaction to broadcast", "txHash", req.tx.Hash().Hex(), "err", err)
-			return err
 		}
 
 		ctxWithTimeout, cancelEvaluationTimeout := context.WithTimeout(ctx, t.params.TxnConfirmationTimeout)
