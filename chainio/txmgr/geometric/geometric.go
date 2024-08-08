@@ -96,7 +96,7 @@ var defaultParams = GeometricTxnManagerParams{
 	GasTipMultiplier:           float64(1.25),         // add an extra 25% to the gas tip
 }
 
-func fillParamsWithDefaultValues(params *GeometricTxnManagerParams) {
+func fillUnsetParamsWithDefaultValues(params *GeometricTxnManagerParams) {
 	if params.ConfirmationBlocks == 0 {
 		params.ConfirmationBlocks = defaultParams.ConfirmationBlocks
 	}
@@ -130,7 +130,7 @@ func NewGeometricTxnManager(
 	metrics Metrics,
 	params GeometricTxnManagerParams,
 ) *GeometricTxManager {
-	fillParamsWithDefaultValues(&params)
+	fillUnsetParamsWithDefaultValues(&params)
 	return &GeometricTxManager{
 		ethClient: ethClient,
 		wallet:    wallet,
