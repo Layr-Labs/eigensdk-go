@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"net/url"
 	"time"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
@@ -199,9 +200,17 @@ func (t *GeometricTxManager) processTransaction(ctx context.Context, req *txnReq
 			return nil, utils.WrapError("failed to update gas price", err)
 		}
 		txID, err = t.wallet.SendTransaction(ctx, txn)
-		// TODO: what is this...? does it come from the fireblocks wallet?
-		var timeout interface{ Timeout() bool }
-		if errors.As(err, &timeout); timeout != nil && timeout.Timeout() {
+		// fireblocks wallet uses go's net.Http client which returns a url.Error on timeouts
+		// see https://pkg.go.dev/net/http#Client.Do
+		// the privatekey wallet on the other hand returns a context.DeadlineExceeded error
+		// so we need this ugly code to catch both forms of timeout.
+		// Perhaps we could in the fireblocks client convert the url.Error into context.DeadlineExceeded errors?
+		var urlErr *url.Error
+		didTimeout := false
+		if errors.As(err, &urlErr) {
+			didTimeout = urlErr.Timeout()
+		}
+		if didTimeout || errors.Is(err, context.DeadlineExceeded) {
 			t.logger.Warn(
 				"failed to send txn due to timeout",
 				"hash",
