@@ -255,7 +255,8 @@ func (t *GeometricTxManager) processTransaction(ctx context.Context, req *txnReq
 	return receipt, err
 }
 
-// ensureAnyFireblocksTransactionBroadcasted waits until at least one of the bumped transactions are broadcasted to the network.
+// ensureAnyFireblocksTransactionBroadcasted waits until at least one of the bumped transactions are broadcasted to the
+// network.
 // this is only needed for the Fireblocks wallet, where some processing is done in their backend before broadcasting to
 // the ethereum network.
 func (t *GeometricTxManager) ensureAnyFireblocksTransactionBroadcasted(ctx context.Context, txs []*transaction) error {
