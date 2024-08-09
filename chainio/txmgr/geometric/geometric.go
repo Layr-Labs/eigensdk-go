@@ -328,8 +328,8 @@ func (t *GeometricTxManager) ensureAnyTransactionConfirmed(
 			// TODO(samlaf): how to maintain these better? How do we know which errors to use and where they are
 			// returned from?
 			if errors.Is(err, ethereum.NotFound) || errors.Is(err, wallet.ErrReceiptNotYetAvailable) {
-				// t.logger.Debug("Transaction not yet mined", "nonce", tx.Nonce(), "txID", txID, "txHash",
-				// tx.Hash().Hex(), "err", err)
+				t.logger.Debug("Transaction not yet mined", "nonce", tx.Nonce(), "txID", txID, "txHash",
+					tx.Hash().Hex(), "err", err)
 			} else if errors.Is(err, wallet.ErrTransactionFailed) {
 				t.logger.Debug("Transaction failed", "txID", txID, "txHash", tx.Hash().Hex(), "err", err)
 				// Remove the transaction from the list of transactions to query.
