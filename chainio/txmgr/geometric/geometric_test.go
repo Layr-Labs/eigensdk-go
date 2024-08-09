@@ -36,7 +36,7 @@ func (h *testHarness) validateTxReceipt(t *testing.T, txReceipt *types.Receipt) 
 	require.Equal(t, txReceipt, receiptFromEthBackend)
 }
 
-func newTestHarness(t *testing.T) *testHarness {
+func newTestHarness(t *testing.T, geometricTxnManagerParams *GeometricTxnManagerParams) *testHarness {
 	logger := testutils.NewTestLogger()
 	ethBackend := NewFakeEthBackend()
 
@@ -49,16 +49,19 @@ func newTestHarness(t *testing.T) *testHarness {
 	skWallet, err := wallet.NewPrivateKeyWallet(ethBackend, signerFn, ecdsaAddr, logger)
 	require.NoError(t, err)
 
-	txmgr := NewGeometricTxnManager(ethBackend, skWallet, logger, NewNoopMetrics(), GeometricTxnManagerParams{
-		GetTxReceiptTickerDuration: 100 * time.Millisecond,
-		// set to 100 so that no buffer is added to the gasTipCap
-		// this way we can test that the txmgr will bump the gasTipCap to a working value
-		// and also simulate a congested network (with fakeEthBackend.congestedBlocks) where txs won't be mined
-		GasTipMultiplier: 100,
-		// set to 1 second (instead of default 2min) so that we can test that the txmgr will bump the gasTipCap to a
-		// working value
-		TxnBroadcastTimeout: 1 * time.Second,
-	})
+	if geometricTxnManagerParams == nil {
+		geometricTxnManagerParams = &GeometricTxnManagerParams{
+			GetTxReceiptTickerDuration: 100 * time.Millisecond,
+			// set to 100 so that no buffer is added to the gasTipCap
+			// this way we can test that the txmgr will bump the gasTipCap to a working value
+			// and also simulate a congested network (with fakeEthBackend.congestedBlocks) where txs won't be mined
+			GasTipMultiplier: 100,
+			// set to 1 second (instead of default 2min) so that we can test that the txmgr will bump the gasTipCap to a
+			// working value
+			TxnBroadcastTimeout: 1 * time.Second,
+		}
+	}
+	txmgr := NewGeometricTxnManager(ethBackend, skWallet, logger, NewNoopMetrics(), *geometricTxnManagerParams)
 
 	return &testHarness{
 		fakeEthBackend: ethBackend,
@@ -68,7 +71,7 @@ func newTestHarness(t *testing.T) *testHarness {
 
 func TestGeometricTxManager(t *testing.T) {
 	t.Run("Send 1 tx", func(t *testing.T) {
-		h := newTestHarness(t)
+		h := newTestHarness(t, nil)
 
 		unsignedTx := newUnsignedEthTransferTx(0, nil)
 		ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -80,7 +83,7 @@ func TestGeometricTxManager(t *testing.T) {
 	})
 
 	t.Run("Send 1 tx to congested network", func(t *testing.T) {
-		h := newTestHarness(t)
+		h := newTestHarness(t, nil)
 		h.fakeEthBackend.setCongestedBlocks(3)
 		h.txmgr.params.TxnConfirmationTimeout = 1 * time.Second
 
@@ -94,7 +97,7 @@ func TestGeometricTxManager(t *testing.T) {
 	})
 
 	t.Run("gasFeeCap gets overwritten when sending tx", func(t *testing.T) {
-		h := newTestHarness(t)
+		h := newTestHarness(t, nil)
 
 		unsignedTx := newUnsignedEthTransferTx(0, big.NewInt(1))
 		ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -111,7 +114,7 @@ func TestGeometricTxManager(t *testing.T) {
 
 	t.Run("Send n=3 txs in parallel", func(t *testing.T) {
 		n := 3
-		h := newTestHarness(t)
+		h := newTestHarness(t, nil)
 
 		g := new(errgroup.Group)
 
@@ -140,7 +143,7 @@ func TestGeometricTxManager(t *testing.T) {
 
 	t.Run("Send n=3 txs sequentially", func(t *testing.T) {
 		n := uint64(3)
-		h := newTestHarness(t)
+		h := newTestHarness(t, nil)
 
 		for nonce := uint64(0); nonce < n; nonce++ {
 			tx := newUnsignedEthTransferTx(nonce, nil)
@@ -152,8 +155,19 @@ func TestGeometricTxManager(t *testing.T) {
 
 	})
 
+	t.Run("Send tx with incorrect nonce should result in context.DeadlineExceeded error", func(t *testing.T) {
+		h := newTestHarness(t, nil)
+
+		tx := newUnsignedEthTransferTx(uint64(100), nil)
+		ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		_, err := h.txmgr.Send(ctxWithTimeout, tx)
+		require.Equal(t, context.DeadlineExceeded, err)
+
+	})
+
 	t.Run("Send 2 txs with same nonce", func(t *testing.T) {
-		h := newTestHarness(t)
+		h := newTestHarness(t, nil)
 
 		unsignedTx := newUnsignedEthTransferTx(0, nil)
 		ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 5*time.Second)

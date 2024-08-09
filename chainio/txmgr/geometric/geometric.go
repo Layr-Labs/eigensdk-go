@@ -325,7 +325,7 @@ func (t *GeometricTxManager) ensureAnyTransactionConfirmed(
 			// TODO(samlaf): how to maintain these better? How do we know which errors to use and where they are
 			// returned from?
 			if errors.Is(err, ethereum.NotFound) || errors.Is(err, wallet.ErrReceiptNotYetAvailable) {
-				t.logger.Debug("Transaction not yet mined", "txID", txID, "txHash", tx.Hash().Hex(), "err", err)
+				// t.logger.Debug("Transaction not yet mined", "nonce", tx.Nonce(), "txID", txID, "txHash", tx.Hash().Hex(), "err", err)
 			} else if errors.Is(err, wallet.ErrTransactionFailed) {
 				t.logger.Debug("Transaction failed", "txID", txID, "txHash", tx.Hash().Hex(), "err", err)
 				// Remove the transaction from the list of transactions to query.
@@ -411,6 +411,8 @@ func (t *GeometricTxManager) monitorTransaction(ctx context.Context, req *txnReq
 		return err
 	}
 
+	queryTicker := time.NewTicker(t.params.GetTxReceiptTickerDuration)
+	defer queryTicker.Stop()
 	for {
 		err = rpcCallAttempt()
 		if err == nil {
@@ -437,7 +439,7 @@ func (t *GeometricTxManager) monitorTransaction(ctx context.Context, req *txnReq
 				"nonce",
 				req.tx.Nonce(),
 			)
-			newTx, err := t.speedUpTxn(ctx, req.tx)
+			newTx, err := t.speedUpTxn(ctx, req.tx, numSpeedUps)
 			if err != nil {
 				t.logger.Error("failed to speed up transaction", "err", err)
 				t.metrics.IncrementProcessedTxsTotal("failure")
@@ -478,6 +480,13 @@ func (t *GeometricTxManager) monitorTransaction(ctx context.Context, req *txnReq
 			t.metrics.IncrementProcessedTxsTotal("failure")
 			return nil, err
 		}
+
+		// Wait for the next round.
+		select {
+		case <-ctx.Done():
+			return receipt, ctx.Err()
+		case <-queryTicker.C:
+		}
 	}
 }
 
@@ -486,6 +495,7 @@ func (t *GeometricTxManager) monitorTransaction(ctx context.Context, req *txnReq
 func (t *GeometricTxManager) speedUpTxn(
 	ctx context.Context,
 	tx *types.Transaction,
+	numSpeedUps int,
 ) (*types.Transaction, error) {
 	// bump the current gasTip, and also reestimate it from the node, and take the highest value
 	var newGasTipCap *big.Int
@@ -512,6 +522,7 @@ func (t *GeometricTxManager) speedUpTxn(
 	}
 	t.logger.Info(
 		"increasing gas price",
+		"numSpeedUps", numSpeedUps,
 		"prevTxHash", tx.Hash().Hex(), "newTxHash", newTx.Hash().Hex(),
 		"nonce", tx.Nonce(),
 		"prevGasTipCap", tx.GasTipCap(), "newGasTipCap", newGasTipCap,
