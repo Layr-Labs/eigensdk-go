@@ -173,8 +173,11 @@ func (t *GeometricTxManager) Send(ctx context.Context, tx *types.Transaction) (*
 	return t.processTransaction(ctx, newTxnRequest(tx))
 }
 
-// processTransaction sends the transaction and runs the monitoring loop which will bump the gasPrice until the tx get
-// included.
+// processTransaction sends the transaction and runs a monitoring loop to bump the gasPrice until the tx get included.
+// processTransaction can be called concurrently, so sending multiple txs in parallel is safe.
+// However, the nonces have to be set correctly by the caller. One could send txs with nonces 3,2,1,0 in this order.
+// But sending nonces 2,1 and forgetting 0 would cause the manager to get stuck waiting for nonce 0 to be mined.
+// Thus a wallet which manages nonces should be used to ensure the correct nonce is set.
 func (t *GeometricTxManager) processTransaction(ctx context.Context, req *txnRequest) (*types.Receipt, error) {
 	t.logger.Debug("new transaction",
 		"nonce", req.tx.Nonce(), "gasFeeCap", req.tx.GasFeeCap(), "gasTipCap", req.tx.GasTipCap(),
@@ -325,7 +328,8 @@ func (t *GeometricTxManager) ensureAnyTransactionConfirmed(
 			// TODO(samlaf): how to maintain these better? How do we know which errors to use and where they are
 			// returned from?
 			if errors.Is(err, ethereum.NotFound) || errors.Is(err, wallet.ErrReceiptNotYetAvailable) {
-				// t.logger.Debug("Transaction not yet mined", "nonce", tx.Nonce(), "txID", txID, "txHash", tx.Hash().Hex(), "err", err)
+				// t.logger.Debug("Transaction not yet mined", "nonce", tx.Nonce(), "txID", txID, "txHash",
+				// tx.Hash().Hex(), "err", err)
 			} else if errors.Is(err, wallet.ErrTransactionFailed) {
 				t.logger.Debug("Transaction failed", "txID", txID, "txHash", tx.Hash().Hex(), "err", err)
 				// Remove the transaction from the list of transactions to query.
