@@ -141,6 +141,36 @@ func TestGeometricTxManager(t *testing.T) {
 
 	})
 
+	t.Run("Send n=3 txs in parallel, with nonces in reverse order", func(t *testing.T) {
+		n := 3
+		h := newTestHarness(t, nil)
+
+		g := new(errgroup.Group)
+
+		txs := make([]*types.Transaction, n)
+		txReceipts := make([]*types.Receipt, n)
+
+		for nonce := n - 1; nonce >= 0; nonce-- {
+			tx := newUnsignedEthTransferTx(uint64(nonce), nil)
+			txs[nonce] = tx
+			nonce := nonce
+			g.Go(func() error {
+				ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				defer cancel()
+				txReceipt, err := h.txmgr.Send(ctxWithTimeout, tx)
+				if err == nil {
+					txReceipts[nonce] = txReceipt
+				}
+				return err
+			})
+			time.Sleep(1 * time.Second)
+		}
+
+		err := g.Wait()
+		require.NoError(t, err)
+
+	})
+
 	t.Run("Send n=3 txs sequentially", func(t *testing.T) {
 		n := uint64(3)
 		h := newTestHarness(t, nil)
