@@ -232,8 +232,7 @@ func (t *GeometricTxManager) processTransaction(ctx context.Context, req *txnReq
 			break
 		}
 	}
-
-	// is this case even possible? we return on errors above
+	// if all attempts to send the tx failed, return an error
 	if txn == nil || txID == "" {
 		return nil, utils.WrapError(fmt.Errorf("failed to send txn %s", req.tx.Hash().Hex()), err)
 	}
