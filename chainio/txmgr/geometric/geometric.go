@@ -200,9 +200,9 @@ func (t *GeometricTxManager) processTransaction(ctx context.Context, req *txnReq
 			return nil, utils.WrapError("failed to update gas price", err)
 		}
 		txID, err = t.wallet.SendTransaction(ctx, txn)
-		// fireblocks wallet uses go's net.Http client which returns a url.Error on timeouts
+		// the fireblocks and privatekey wallets use go's net.Http client which returns a url.Error on timeouts
 		// see https://pkg.go.dev/net/http#Client.Do
-		// the privatekey wallet on the other hand returns a context.DeadlineExceeded error
+		// context.DeadlineExceeded error is returned by any other (non-network) context timeouting.
 		// so we need this ugly code to catch both forms of timeout.
 		// Perhaps we could in the fireblocks client convert the url.Error into context.DeadlineExceeded errors?
 		var urlErr *url.Error
