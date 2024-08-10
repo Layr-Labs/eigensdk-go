@@ -169,7 +169,11 @@ func newTxnRequest(tx *types.Transaction) *txnRequest {
 // but it does not do nonce management, so the tx argument must have the correct nonce already set.
 //
 // Send is blocking and safe to call concurrently, so sending multiple txs in parallel is safe.
-func (t *GeometricTxManager) Send(ctx context.Context, tx *types.Transaction) (*types.Receipt, error) {
+func (t *GeometricTxManager) Send(
+	ctx context.Context,
+	tx *types.Transaction,
+	waitForReceipt bool,
+) (*types.Receipt, error) {
 	return t.processTransaction(ctx, newTxnRequest(tx))
 }
 

@@ -76,7 +76,7 @@ func TestGeometricTxManager(t *testing.T) {
 		unsignedTx := newUnsignedEthTransferTx(0, nil)
 		ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		txReceipt, err := h.txmgr.Send(ctxWithTimeout, unsignedTx)
+		txReceipt, err := h.txmgr.Send(ctxWithTimeout, unsignedTx, true)
 		require.NoError(t, err)
 
 		h.validateTxReceipt(t, txReceipt)
@@ -90,7 +90,7 @@ func TestGeometricTxManager(t *testing.T) {
 		unsignedTx := newUnsignedEthTransferTx(0, nil)
 		ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		txReceipt, err := h.txmgr.Send(ctxWithTimeout, unsignedTx)
+		txReceipt, err := h.txmgr.Send(ctxWithTimeout, unsignedTx, true)
 		require.NoError(t, err)
 
 		h.validateTxReceipt(t, txReceipt)
@@ -102,7 +102,7 @@ func TestGeometricTxManager(t *testing.T) {
 		unsignedTx := newUnsignedEthTransferTx(0, big.NewInt(1))
 		ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		txReceipt, err := h.txmgr.Send(ctxWithTimeout, unsignedTx)
+		txReceipt, err := h.txmgr.Send(ctxWithTimeout, unsignedTx, true)
 		// ethBackend returns an error if the tx's gasFeeCap is less than the baseFeePerGas
 		// this test makes sure that even setting a gasFeeCap less than the baseFeePerGas in the tx (1 above) still
 		// works,
@@ -128,7 +128,7 @@ func TestGeometricTxManager(t *testing.T) {
 			g.Go(func() error {
 				ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 				defer cancel()
-				txReceipt, err := h.txmgr.Send(ctxWithTimeout, tx)
+				txReceipt, err := h.txmgr.Send(ctxWithTimeout, tx, true)
 				if err == nil {
 					txReceipts[nonce] = txReceipt
 				}
@@ -157,7 +157,7 @@ func TestGeometricTxManager(t *testing.T) {
 			g.Go(func() error {
 				ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 				defer cancel()
-				txReceipt, err := h.txmgr.Send(ctxWithTimeout, tx)
+				txReceipt, err := h.txmgr.Send(ctxWithTimeout, tx, true)
 				if err == nil {
 					txReceipts[nonce] = txReceipt
 				}
@@ -179,7 +179,7 @@ func TestGeometricTxManager(t *testing.T) {
 			tx := newUnsignedEthTransferTx(nonce, nil)
 			ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
-			_, err := h.txmgr.Send(ctxWithTimeout, tx)
+			_, err := h.txmgr.Send(ctxWithTimeout, tx, true)
 			require.NoError(t, err)
 		}
 
@@ -191,7 +191,7 @@ func TestGeometricTxManager(t *testing.T) {
 		tx := newUnsignedEthTransferTx(uint64(100), nil)
 		ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
-		_, err := h.txmgr.Send(ctxWithTimeout, tx)
+		_, err := h.txmgr.Send(ctxWithTimeout, tx, true)
 		require.Equal(t, context.DeadlineExceeded, err)
 
 	})
@@ -202,11 +202,11 @@ func TestGeometricTxManager(t *testing.T) {
 		unsignedTx := newUnsignedEthTransferTx(0, nil)
 		ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		_, err := h.txmgr.Send(ctxWithTimeout, unsignedTx)
+		_, err := h.txmgr.Send(ctxWithTimeout, unsignedTx, true)
 		require.NoError(t, err)
 
 		unsignedTx = newUnsignedEthTransferTx(0, nil)
-		_, err = h.txmgr.Send(ctxWithTimeout, unsignedTx)
+		_, err = h.txmgr.Send(ctxWithTimeout, unsignedTx, true)
 		require.Error(t, err)
 	})
 }
@@ -409,7 +409,7 @@ func TestGeometricTxManagerIntegration(t *testing.T) {
 		unsignedTx := newUnsignedEthTransferTx(0, nil)
 		ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		txReceipt, err := h.txmgr.Send(ctxWithTimeout, unsignedTx)
+		txReceipt, err := h.txmgr.Send(ctxWithTimeout, unsignedTx, true)
 		require.NoError(t, err)
 
 		h.validateTxReceipt(t, txReceipt)

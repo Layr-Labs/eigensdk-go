@@ -67,7 +67,30 @@ func (m *SimpleTxManager) WithGasLimitMultiplier(multiplier float64) *SimpleTxMa
 // If you pass in a signed transaction it will ignore the signature
 // and resign the transaction after adding the nonce and gas limit.
 // To check out the whole flow on how this works, check out the README.md in this folder
-func (m *SimpleTxManager) Send(ctx context.Context, tx *types.Transaction) (*types.Receipt, error) {
+func (m *SimpleTxManager) Send(
+	ctx context.Context,
+	tx *types.Transaction,
+	waitForReceipt bool,
+) (*types.Receipt, error) {
+
+	r, err := m.send(ctx, tx)
+	if err != nil {
+		return nil, errors.Join(errors.New("send: failed to estimate gas and nonce"), err)
+	}
+	if !waitForReceipt {
+		return r, nil
+	}
+
+	receipt, err := m.waitForReceipt(ctx, r.TxHash.Hex())
+	if err != nil {
+		log.Info("Transaction receipt not found", "err", err)
+		return nil, err
+	}
+
+	return receipt, nil
+}
+
+func (m *SimpleTxManager) send(ctx context.Context, tx *types.Transaction) (*types.Receipt, error) {
 	// Estimate gas and nonce
 	// can't print tx hash in logs because the tx changes below when we complete and sign it
 	// so the txHash is meaningless at this point
@@ -89,14 +112,9 @@ func (m *SimpleTxManager) Send(ctx context.Context, tx *types.Transaction) (*typ
 	if err != nil {
 		return nil, errors.Join(errors.New("send: failed to estimate gas and nonce"), err)
 	}
-
-	receipt, err := m.waitForReceipt(ctx, txID)
-	if err != nil {
-		log.Info("Transaction receipt not found", "err", err)
-		return nil, err
-	}
-
-	return receipt, nil
+	return &types.Receipt{
+		TxHash: common.HexToHash(txID),
+	}, nil
 }
 
 func NoopSigner(addr common.Address, tx *types.Transaction) (*types.Transaction, error) {

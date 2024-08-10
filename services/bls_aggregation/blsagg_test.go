@@ -1161,7 +1161,14 @@ func TestIntegrationBlsAgg(t *testing.T) {
 
 		// register operator
 		quorumNumbers := types.QuorumNums{0}
-		_, err = avsWriter.RegisterOperator(context.Background(), ecdsaPrivKey, blsKeyPair, quorumNumbers, "socket")
+		_, err = avsWriter.RegisterOperator(
+			context.Background(),
+			ecdsaPrivKey,
+			blsKeyPair,
+			quorumNumbers,
+			"socket",
+			true,
+		)
 		require.NoError(t, err)
 
 		// create the task related parameters: RBN, quorumThresholdPercentages, taskIndex and taskResponse
