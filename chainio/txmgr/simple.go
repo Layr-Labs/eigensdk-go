@@ -67,8 +67,7 @@ func (m *SimpleTxManager) WithGasLimitMultiplier(multiplier float64) *SimpleTxMa
 // If you pass in a signed transaction it will ignore the signature
 // and resign the transaction after adding the nonce and gas limit.
 // To check out the whole flow on how this works, check out the README.md in this folder
-// One should be aware of that if waitForReceipt is set to false, the function returns a dummy transaction
-// receipt with a transaction hash.
+// If waitForReceipt is set to false, the function returns a dummy transaction receipt containing a transaction hash.
 func (m *SimpleTxManager) Send(
 	ctx context.Context,
 	tx *types.Transaction,
