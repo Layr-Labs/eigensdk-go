@@ -51,11 +51,94 @@ type Clients struct {
 	PrometheusRegistry          *prometheus.Registry  // Used if avs teams need to register avs-specific metrics
 }
 
-func BuildAll(
+type ClientsBase struct {
+	AvsRegistryChainReader      *avsregistry.ChainReader
+	AvsRegistryChainSubscriber  *avsregistry.ChainSubscriber
+	AvsRegistryChainWriter      *avsregistry.ChainWriter
+	ElChainReader               *elcontracts.ChainReader
+	EthHttpClient               eth.HttpBackend
+	EthWsClient                 eth.WsBackend
+	AvsRegistryContractBindings *avsregistry.ContractBindings
+	EigenlayerContractBindings  *elcontracts.ContractBindings
+	Metrics                     *metrics.EigenMetrics // exposes main avs node spec metrics that need to be incremented by avs code and used to start the metrics server
+	PrometheusRegistry          *prometheus.Registry
+}
+
+type ClientsWithPkKey struct {
+	ClientsBase
+	Wallet        wallet.Wallet
+	TxManager     txmgr.TxManager
+	ElChainWriter *elcontracts.ChainWriter
+}
+
+func BuildForEcMetrics(
+	config BuildAllConfig,
+	logger logging.Logger,
+) (*ClientsBase, error) {
+	config.validate(logger)
+
+	// Create the metrics server
+	promReg := prometheus.NewRegistry()
+	eigenMetrics := metrics.NewEigenMetrics(config.AvsName, config.PromMetricsIpPortAddress, promReg, logger)
+
+	// creating two types of Eth clients: HTTP and WS
+	ethHttpClient, err := ethclient.Dial(config.EthHttpUrl)
+	if err != nil {
+		return nil, utils.WrapError("Failed to create Eth Http client", err)
+	}
+
+	ethWsClient, err := ethclient.Dial(config.EthWsUrl)
+	if err != nil {
+		return nil, utils.WrapError("Failed to create Eth WS client", err)
+	}
+
+	// creating AVS clients: Reader
+	avsRegistryChainReader, avsRegistryChainSubscriber, avsRegistryContractBindings, err := avsregistry.BuildClientsForEcMetrics(
+		avsregistry.Config{
+			RegistryCoordinatorAddress:    gethcommon.HexToAddress(config.RegistryCoordinatorAddr),
+			OperatorStateRetrieverAddress: gethcommon.HexToAddress(config.OperatorStateRetrieverAddr),
+		},
+		ethHttpClient,
+		ethWsClient,
+		logger,
+	)
+	if err != nil {
+		return nil, utils.WrapError("Failed to create AVS Registry Reader and Writer", err)
+	}
+
+	// creating EL clients: Reader and EigenLayer Contract Bindings
+	elChainReader, elContractBindings, err := elcontracts.BuildClientsForEcMetrics(
+		elcontracts.Config{
+			DelegationManagerAddress: avsRegistryContractBindings.DelegationManagerAddr,
+			AvsDirectoryAddress:      avsRegistryContractBindings.AvsDirectoryAddr,
+		},
+		ethHttpClient,
+		logger,
+		eigenMetrics,
+	)
+	if err != nil {
+		return nil, utils.WrapError("Failed to create EL Reader and Writer", err)
+	}
+
+	base := ClientsBase{
+		ElChainReader:               elChainReader,
+		AvsRegistryChainReader:      avsRegistryChainReader,
+		AvsRegistryChainSubscriber:  avsRegistryChainSubscriber,
+		EthHttpClient:               ethHttpClient,
+		EthWsClient:                 ethWsClient,
+		EigenlayerContractBindings:  elContractBindings,
+		AvsRegistryContractBindings: avsRegistryContractBindings,
+		Metrics:                     eigenMetrics,
+		PrometheusRegistry:          promReg,
+	}
+	return &base, nil
+}
+
+func BuildAll( // BUILDS A ClientsWithPkKey
 	config BuildAllConfig,
 	ecdsaPrivateKey *ecdsa.PrivateKey,
 	logger logging.Logger,
-) (*Clients, error) {
+) (*ClientsWithPkKey, error) {
 	config.validate(logger)
 
 	// Create the metrics server
@@ -120,22 +203,24 @@ func BuildAll(
 		return nil, utils.WrapError("Failed to create EL Reader and Writer", err)
 	}
 
-	return &Clients{
+	base := ClientsBase{
 		ElChainReader:               elChainReader,
-		ElChainWriter:               elChainWriter,
 		AvsRegistryChainReader:      avsRegistryChainReader,
 		AvsRegistryChainSubscriber:  avsRegistryChainSubscriber,
 		AvsRegistryChainWriter:      avsRegistryChainWriter,
 		EthHttpClient:               ethHttpClient,
 		EthWsClient:                 ethWsClient,
-		Wallet:                      pkWallet,
-		TxManager:                   txMgr,
 		EigenlayerContractBindings:  elContractBindings,
 		AvsRegistryContractBindings: avsRegistryContractBindings,
 		Metrics:                     eigenMetrics,
 		PrometheusRegistry:          promReg,
+	}
+	return &ClientsWithPkKey{
+		ClientsBase:   base,
+		ElChainWriter: elChainWriter,
+		Wallet:        pkWallet,
+		TxManager:     txMgr,
 	}, nil
-
 }
 
 // Very basic validation that makes sure all fields are nonempty
