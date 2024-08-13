@@ -43,7 +43,7 @@ func ExampleGeometricTxManager() {
 	client, txmgr := createTxMgr(anvilUrl, ecdsaPrivateKey)
 
 	tx := createTx(client, address)
-	_, err = txmgr.Send(context.TODO(), tx)
+	_, err = txmgr.Send(context.TODO(), tx, true)
 	if err != nil {
 		panic(err)
 	}

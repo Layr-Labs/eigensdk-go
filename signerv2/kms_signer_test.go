@@ -116,7 +116,7 @@ func TestSendTransaction(t *testing.T) {
 		Nonce:   0,
 		To:      &zeroAddr,
 		Value:   big.NewInt(1_000_000_000_000_000_000),
-	}))
+	}), true)
 	assert.Nil(t, err)
 	assert.NotNil(t, receipt)
 	balance, err := ethClient.BalanceAt(context.Background(), keyAddr, nil)
