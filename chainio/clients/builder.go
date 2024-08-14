@@ -51,6 +51,9 @@ type Clients struct {
 	PrometheusRegistry          *prometheus.Registry  // Used if avs teams need to register avs-specific metrics
 }
 
+// This is a struct that holds all the params that are needed to interact
+// with the AVS and EL contracts without the Wallet/Private key.
+// This is useful for read-only operations, such as fetching metrics.
 type ClientsBase struct {
 	AvsRegistryChainReader      *avsregistry.ChainReader
 	AvsRegistryChainSubscriber  *avsregistry.ChainSubscriber
@@ -64,6 +67,8 @@ type ClientsBase struct {
 	PrometheusRegistry          *prometheus.Registry
 }
 
+// This is a struct that extends ClientsBase with Wallet and TxManager.
+// This is useful for the full set of operations (reads and writes), such as sending transactions.
 type ClientsWithPkKey struct {
 	ClientsBase
 	Wallet        wallet.Wallet
@@ -71,6 +76,7 @@ type ClientsWithPkKey struct {
 	ElChainWriter *elcontracts.ChainWriter
 }
 
+// Creates a ClientsBase struct with the given configuration and logger.
 func BuildForEcMetrics(
 	config BuildAllConfig,
 	logger logging.Logger,

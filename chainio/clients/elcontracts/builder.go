@@ -7,6 +7,8 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/metrics"
 )
 
+// Creates a ClientsBase struct (for read operations) with the given:
+// configuration, HTTP client, logger and metrics.
 func BuildClientsForEcMetrics(
 	config Config,
 	client eth.HttpBackend,
