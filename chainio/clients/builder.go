@@ -101,7 +101,7 @@ func BuildReadClients(
 		return nil, utils.WrapError("Failed to create EL Reader and Writer", err)
 	}
 
-	base := ReadClients{
+	readClients := ReadClients{
 		ElChainReader:               elChainReader,
 		AvsRegistryChainReader:      avsRegistryChainReader,
 		AvsRegistryChainSubscriber:  avsRegistryChainSubscriber,
@@ -112,10 +112,15 @@ func BuildReadClients(
 		Metrics:                     eigenMetrics,
 		PrometheusRegistry:          promReg,
 	}
-	return &base, nil
+	return &readClients, nil
 }
 
 // BuildAll creates all the clients needed to interact with the AVS and EL contracts. For both read and write operations.
+// TODO: this is confusing right now because clients are not instrumented clients, but
+// we return metrics and prometheus reg, so user has to build instrumented clients at the call
+// site if they need them. We should probably separate into two separate constructors, one
+// for non-instrumented clients that doesn't return metrics/reg, and another instrumented-constructor
+// that returns instrumented clients and the metrics/reg.
 func BuildAll(
 	config BuildAllConfig,
 	ecdsaPrivateKey *ecdsa.PrivateKey,
@@ -185,7 +190,7 @@ func BuildAll(
 		return nil, utils.WrapError("Failed to create EL Reader and Writer", err)
 	}
 
-	base := ReadClients{
+	readClients := ReadClients{
 		ElChainReader:               elChainReader,
 		AvsRegistryChainReader:      avsRegistryChainReader,
 		AvsRegistryChainSubscriber:  avsRegistryChainSubscriber,
@@ -198,7 +203,7 @@ func BuildAll(
 	}
 
 	return &Clients{
-		ReadClients:            base,
+		ReadClients:            readClients,
 		ElChainWriter:          elChainWriter,
 		AvsRegistryChainWriter: avsRegistryChainWriter,
 		Wallet:                 pkWallet,
