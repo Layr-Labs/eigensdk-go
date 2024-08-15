@@ -262,9 +262,13 @@ func (r *ChainReader) CurrRewardsCalculationEndTimestamp(opts *bind.CallOpts) (u
 	return r.rewardsCoordinator.CurrRewardsCalculationEndTimestamp(opts)
 }
 
-func (r *ChainReader) GetCurrentClaimableDistributionRoot(opts *bind.CallOpts) (rewardscoordinator.IRewardsCoordinatorDistributionRoot, error) {
+func (r *ChainReader) GetCurrentClaimableDistributionRoot(
+	opts *bind.CallOpts,
+) (rewardscoordinator.IRewardsCoordinatorDistributionRoot, error) {
 	if r.rewardsCoordinator == nil {
-		return rewardscoordinator.IRewardsCoordinatorDistributionRoot{}, errors.New("RewardsCoordinator contract not provided")
+		return rewardscoordinator.IRewardsCoordinatorDistributionRoot{}, errors.New(
+			"RewardsCoordinator contract not provided",
+		)
 	}
 
 	return r.rewardsCoordinator.GetCurrentClaimableDistributionRoot(opts)
