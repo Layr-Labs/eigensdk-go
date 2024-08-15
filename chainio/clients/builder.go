@@ -51,6 +51,7 @@ type Clients struct {
 	AvsRegistryChainWriter *avsregistry.ChainWriter
 }
 
+// BuildReadClients creates all the read clients needed to interact with the AVS and EL contracts.
 func BuildReadClients(
 	config BuildAllConfig,
 	logger logging.Logger,
@@ -114,6 +115,7 @@ func BuildReadClients(
 	return &base, nil
 }
 
+// BuildAll creates all the clients needed to interact with the AVS and EL contracts. For both read and write operations.
 func BuildAll(
 	config BuildAllConfig,
 	ecdsaPrivateKey *ecdsa.PrivateKey,

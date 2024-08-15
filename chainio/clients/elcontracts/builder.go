@@ -7,6 +7,8 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/metrics"
 )
 
+// Returns a tuple of reader clients with the given:
+// configuration, HTTP client, logger and metrics.
 func BuildReadClients(
 	config Config,
 	client eth.HttpBackend,
