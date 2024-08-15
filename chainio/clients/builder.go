@@ -115,7 +115,8 @@ func BuildReadClients(
 	return &readClients, nil
 }
 
-// BuildAll creates all the clients needed to interact with the AVS and EL contracts. For both read and write operations.
+// BuildAll creates all the clients needed to interact with the AVS and EL contracts. For both read and write
+// operations.
 // TODO: this is confusing right now because clients are not instrumented clients, but
 // we return metrics and prometheus reg, so user has to build instrumented clients at the call
 // site if they need them. We should probably separate into two separate constructors, one
