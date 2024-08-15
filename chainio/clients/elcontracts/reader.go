@@ -273,3 +273,11 @@ func (r *ChainReader) GetCurrentClaimableDistributionRoot(
 
 	return r.rewardsCoordinator.GetCurrentClaimableDistributionRoot(opts)
 }
+
+func (r *ChainReader) GetRootIndexFromHash(opts *bind.CallOpts, rootHash [32]byte) (uint32, error) {
+	if r.rewardsCoordinator == nil {
+		return 0, errors.New("RewardsCoordinator contract not provided")
+	}
+
+	return r.rewardsCoordinator.GetRootIndexFromHash(opts, rootHash)
+}
