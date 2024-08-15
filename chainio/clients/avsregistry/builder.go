@@ -7,7 +7,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/logging"
 )
 
-func BuildClientsForEcMetrics(
+func BuildReadClients(
 	config Config,
 	client eth.HttpBackend,
 	wsClient eth.WsBackend,
@@ -20,7 +20,7 @@ func BuildClientsForEcMetrics(
 	)
 
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	chainReader := NewChainReader(
@@ -36,19 +36,6 @@ func BuildClientsForEcMetrics(
 	chainSubscriber, err := NewSubscriberFromConfig(
 		config,
 		wsClient,
-		logger,
-	)
-	if err != nil {
-		return nil, nil, nil, err
-	}
-
-	// This is ugly, but we need elReader to be able to create the AVS writer
-	elChainReader, err := elcontracts.NewReaderFromConfig(
-		elcontracts.Config{
-			DelegationManagerAddress: avsBindings.DelegationManagerAddr,
-			AvsDirectoryAddress:      avsBindings.AvsDirectoryAddr,
-		},
-		client,
 		logger,
 	)
 	if err != nil {

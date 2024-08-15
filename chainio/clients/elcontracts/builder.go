@@ -7,7 +7,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/metrics"
 )
 
-func BuildClientsForEcMetrics(
+func BuildReadClients(
 	config Config,
 	client eth.HttpBackend,
 	logger logging.Logger,

@@ -29,32 +29,10 @@ type BuildAllConfig struct {
 	PromMetricsIpPortAddress   string
 }
 
-// Clients is a struct that holds all the clients that are needed to interact with the AVS and EL contracts.
-// TODO: this is confusing right now because clients are not instrumented clients, but
-// we return metrics and prometheus reg, so user has to build instrumented clients at the call
-// site if they need them. We should probably separate into two separate constructors, one
-// for non-instrumented clients that doesn't return metrics/reg, and another instrumented-constructor
-// that returns instrumented clients and the metrics/reg.
-type Clients struct {
+// ReadClients is a struct that holds only the read clients for interacting with the AVS and EL contracts.
+type ReadClients struct {
 	AvsRegistryChainReader      *avsregistry.ChainReader
 	AvsRegistryChainSubscriber  *avsregistry.ChainSubscriber
-	AvsRegistryChainWriter      *avsregistry.ChainWriter
-	ElChainReader               *elcontracts.ChainReader
-	ElChainWriter               *elcontracts.ChainWriter
-	EthHttpClient               eth.HttpBackend
-	EthWsClient                 eth.WsBackend
-	Wallet                      wallet.Wallet
-	TxManager                   txmgr.TxManager
-	AvsRegistryContractBindings *avsregistry.ContractBindings
-	EigenlayerContractBindings  *elcontracts.ContractBindings
-	Metrics                     *metrics.EigenMetrics // exposes main avs node spec metrics that need to be incremented by avs code and used to start the metrics server
-	PrometheusRegistry          *prometheus.Registry  // Used if avs teams need to register avs-specific metrics
-}
-
-type ClientsBase struct {
-	AvsRegistryChainReader      *avsregistry.ChainReader
-	AvsRegistryChainSubscriber  *avsregistry.ChainSubscriber
-	AvsRegistryChainWriter      *avsregistry.ChainWriter
 	ElChainReader               *elcontracts.ChainReader
 	EthHttpClient               eth.HttpBackend
 	EthWsClient                 eth.WsBackend
@@ -64,17 +42,19 @@ type ClientsBase struct {
 	PrometheusRegistry          *prometheus.Registry
 }
 
-type ClientsWithPkKey struct {
-	ClientsBase
-	Wallet        wallet.Wallet
-	TxManager     txmgr.TxManager
-	ElChainWriter *elcontracts.ChainWriter
+// Clients is a struct that holds all the clients that are needed to interact with the AVS and EL contracts.
+type Clients struct {
+	ReadClients
+	Wallet                 wallet.Wallet
+	TxManager              txmgr.TxManager
+	ElChainWriter          *elcontracts.ChainWriter
+	AvsRegistryChainWriter *avsregistry.ChainWriter
 }
 
-func BuildForEcMetrics(
+func BuildReadClients(
 	config BuildAllConfig,
 	logger logging.Logger,
-) (*ClientsBase, error) {
+) (*ReadClients, error) {
 	config.validate(logger)
 
 	// Create the metrics server
@@ -93,7 +73,7 @@ func BuildForEcMetrics(
 	}
 
 	// creating AVS clients: Reader
-	avsRegistryChainReader, avsRegistryChainSubscriber, avsRegistryContractBindings, err := avsregistry.BuildClientsForEcMetrics(
+	avsRegistryChainReader, avsRegistryChainSubscriber, avsRegistryContractBindings, err := avsregistry.BuildReadClients(
 		avsregistry.Config{
 			RegistryCoordinatorAddress:    gethcommon.HexToAddress(config.RegistryCoordinatorAddr),
 			OperatorStateRetrieverAddress: gethcommon.HexToAddress(config.OperatorStateRetrieverAddr),
@@ -107,7 +87,7 @@ func BuildForEcMetrics(
 	}
 
 	// creating EL clients: Reader and EigenLayer Contract Bindings
-	elChainReader, elContractBindings, err := elcontracts.BuildClientsForEcMetrics(
+	elChainReader, elContractBindings, err := elcontracts.BuildReadClients(
 		elcontracts.Config{
 			DelegationManagerAddress: avsRegistryContractBindings.DelegationManagerAddr,
 			AvsDirectoryAddress:      avsRegistryContractBindings.AvsDirectoryAddr,
@@ -120,7 +100,7 @@ func BuildForEcMetrics(
 		return nil, utils.WrapError("Failed to create EL Reader and Writer", err)
 	}
 
-	base := ClientsBase{
+	base := ReadClients{
 		ElChainReader:               elChainReader,
 		AvsRegistryChainReader:      avsRegistryChainReader,
 		AvsRegistryChainSubscriber:  avsRegistryChainSubscriber,
@@ -134,11 +114,11 @@ func BuildForEcMetrics(
 	return &base, nil
 }
 
-func BuildAll( // BUILDS A ClientsWithPkKey
+func BuildAll(
 	config BuildAllConfig,
 	ecdsaPrivateKey *ecdsa.PrivateKey,
 	logger logging.Logger,
-) (*ClientsWithPkKey, error) {
+) (*Clients, error) {
 	config.validate(logger)
 
 	// Create the metrics server
@@ -203,11 +183,10 @@ func BuildAll( // BUILDS A ClientsWithPkKey
 		return nil, utils.WrapError("Failed to create EL Reader and Writer", err)
 	}
 
-	base := ClientsBase{
+	base := ReadClients{
 		ElChainReader:               elChainReader,
 		AvsRegistryChainReader:      avsRegistryChainReader,
 		AvsRegistryChainSubscriber:  avsRegistryChainSubscriber,
-		AvsRegistryChainWriter:      avsRegistryChainWriter,
 		EthHttpClient:               ethHttpClient,
 		EthWsClient:                 ethWsClient,
 		EigenlayerContractBindings:  elContractBindings,
@@ -215,11 +194,13 @@ func BuildAll( // BUILDS A ClientsWithPkKey
 		Metrics:                     eigenMetrics,
 		PrometheusRegistry:          promReg,
 	}
-	return &ClientsWithPkKey{
-		ClientsBase:   base,
-		ElChainWriter: elChainWriter,
-		Wallet:        pkWallet,
-		TxManager:     txMgr,
+
+	return &Clients{
+		ReadClients:            base,
+		ElChainWriter:          elChainWriter,
+		AvsRegistryChainWriter: avsRegistryChainWriter,
+		Wallet:                 pkWallet,
+		TxManager:              txMgr,
 	}, nil
 }
 
