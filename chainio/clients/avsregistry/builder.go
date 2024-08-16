@@ -10,7 +10,7 @@ import (
 // Build an AVS registry client with the given configuration,
 // HTTP and WS clients, and logger, but without a private key.
 //
-// This is useful for read-only operations, such as fetching metrics.
+// This is useful for read-only operations.
 func BuildReadClients(
 	config Config,
 	client eth.HttpBackend,
