@@ -29,28 +29,99 @@ type BuildAllConfig struct {
 	PromMetricsIpPortAddress   string
 }
 
+// ReadClients is a struct that holds only the read clients for interacting with the AVS and EL contracts.
+type ReadClients struct {
+	AvsRegistryChainReader      *avsregistry.ChainReader
+	AvsRegistryChainSubscriber  *avsregistry.ChainSubscriber
+	ElChainReader               *elcontracts.ChainReader
+	EthHttpClient               eth.HttpBackend
+	EthWsClient                 eth.WsBackend
+	AvsRegistryContractBindings *avsregistry.ContractBindings
+	EigenlayerContractBindings  *elcontracts.ContractBindings
+	Metrics                     *metrics.EigenMetrics // exposes main avs node spec metrics that need to be incremented by avs code and used to start the metrics server
+	PrometheusRegistry          *prometheus.Registry
+}
+
 // Clients is a struct that holds all the clients that are needed to interact with the AVS and EL contracts.
+type Clients struct {
+	ReadClients
+	Wallet                 wallet.Wallet
+	TxManager              txmgr.TxManager
+	ElChainWriter          *elcontracts.ChainWriter
+	AvsRegistryChainWriter *avsregistry.ChainWriter
+}
+
+// BuildReadClients creates all the read clients needed to interact with the AVS and EL contracts.
+func BuildReadClients(
+	config BuildAllConfig,
+	logger logging.Logger,
+) (*ReadClients, error) {
+	config.validate(logger)
+
+	// Create the metrics server
+	promReg := prometheus.NewRegistry()
+	eigenMetrics := metrics.NewEigenMetrics(config.AvsName, config.PromMetricsIpPortAddress, promReg, logger)
+
+	// creating two types of Eth clients: HTTP and WS
+	ethHttpClient, err := ethclient.Dial(config.EthHttpUrl)
+	if err != nil {
+		return nil, utils.WrapError("Failed to create Eth Http client", err)
+	}
+
+	ethWsClient, err := ethclient.Dial(config.EthWsUrl)
+	if err != nil {
+		return nil, utils.WrapError("Failed to create Eth WS client", err)
+	}
+
+	// creating AVS clients: Reader
+	avsRegistryChainReader, avsRegistryChainSubscriber, avsRegistryContractBindings, err := avsregistry.BuildReadClients(
+		avsregistry.Config{
+			RegistryCoordinatorAddress:    gethcommon.HexToAddress(config.RegistryCoordinatorAddr),
+			OperatorStateRetrieverAddress: gethcommon.HexToAddress(config.OperatorStateRetrieverAddr),
+		},
+		ethHttpClient,
+		ethWsClient,
+		logger,
+	)
+	if err != nil {
+		return nil, utils.WrapError("Failed to create AVS Registry Reader and Writer", err)
+	}
+
+	// creating EL clients: Reader and EigenLayer Contract Bindings
+	elChainReader, elContractBindings, err := elcontracts.BuildReadClients(
+		elcontracts.Config{
+			DelegationManagerAddress: avsRegistryContractBindings.DelegationManagerAddr,
+			AvsDirectoryAddress:      avsRegistryContractBindings.AvsDirectoryAddr,
+		},
+		ethHttpClient,
+		logger,
+		eigenMetrics,
+	)
+	if err != nil {
+		return nil, utils.WrapError("Failed to create EL Reader and Writer", err)
+	}
+
+	readClients := ReadClients{
+		ElChainReader:               elChainReader,
+		AvsRegistryChainReader:      avsRegistryChainReader,
+		AvsRegistryChainSubscriber:  avsRegistryChainSubscriber,
+		EthHttpClient:               ethHttpClient,
+		EthWsClient:                 ethWsClient,
+		EigenlayerContractBindings:  elContractBindings,
+		AvsRegistryContractBindings: avsRegistryContractBindings,
+		Metrics:                     eigenMetrics,
+		PrometheusRegistry:          promReg,
+	}
+	return &readClients, nil
+}
+
+// BuildAll creates all the clients needed to interact with the AVS and EL contracts. For both read and write
+// operations.
 // TODO: this is confusing right now because clients are not instrumented clients, but
 // we return metrics and prometheus reg, so user has to build instrumented clients at the call
 // site if they need them. We should probably separate into two separate constructors, one
 // for non-instrumented clients that doesn't return metrics/reg, and another instrumented-constructor
 // that returns instrumented clients and the metrics/reg.
-type Clients struct {
-	AvsRegistryChainReader      *avsregistry.ChainReader
-	AvsRegistryChainSubscriber  *avsregistry.ChainSubscriber
-	AvsRegistryChainWriter      *avsregistry.ChainWriter
-	ElChainReader               *elcontracts.ChainReader
-	ElChainWriter               *elcontracts.ChainWriter
-	EthHttpClient               eth.HttpBackend
-	EthWsClient                 eth.WsBackend
-	Wallet                      wallet.Wallet
-	TxManager                   txmgr.TxManager
-	AvsRegistryContractBindings *avsregistry.ContractBindings
-	EigenlayerContractBindings  *elcontracts.ContractBindings
-	Metrics                     *metrics.EigenMetrics // exposes main avs node spec metrics that need to be incremented by avs code and used to start the metrics server
-	PrometheusRegistry          *prometheus.Registry  // Used if avs teams need to register avs-specific metrics
-}
-
 func BuildAll(
 	config BuildAllConfig,
 	ecdsaPrivateKey *ecdsa.PrivateKey,
@@ -120,22 +191,25 @@ func BuildAll(
 		return nil, utils.WrapError("Failed to create EL Reader and Writer", err)
 	}
 
-	return &Clients{
+	readClients := ReadClients{
 		ElChainReader:               elChainReader,
-		ElChainWriter:               elChainWriter,
 		AvsRegistryChainReader:      avsRegistryChainReader,
 		AvsRegistryChainSubscriber:  avsRegistryChainSubscriber,
-		AvsRegistryChainWriter:      avsRegistryChainWriter,
 		EthHttpClient:               ethHttpClient,
 		EthWsClient:                 ethWsClient,
-		Wallet:                      pkWallet,
-		TxManager:                   txMgr,
 		EigenlayerContractBindings:  elContractBindings,
 		AvsRegistryContractBindings: avsRegistryContractBindings,
 		Metrics:                     eigenMetrics,
 		PrometheusRegistry:          promReg,
-	}, nil
+	}
 
+	return &Clients{
+		ReadClients:            readClients,
+		ElChainWriter:          elChainWriter,
+		AvsRegistryChainWriter: avsRegistryChainWriter,
+		Wallet:                 pkWallet,
+		TxManager:              txMgr,
+	}, nil
 }
 
 // Very basic validation that makes sure all fields are nonempty
