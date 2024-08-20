@@ -57,7 +57,7 @@ lint: ## runs all linters
 	golangci-lint run ./...
 
 
-___BINDINGS___: ##
+___BINDINGS___: ## 
 
 core_default := "DelegationManager IRewardsCoordinator ISlasher StrategyManager EigenPod EigenPodManager IStrategy IAVSDirectory"
 core_location := "./lib/eigenlayer-middleware/lib/eigenlayer-contracts"
@@ -71,7 +71,7 @@ sdk_default := "MockAvsServiceManager ContractsRegistry"
 sdk_location := "."
 sdk_bindings_location := "./bindings"
 
-.PHONY: core-bindings
+.PHONY: core-bindings ## generates core contracts bindings
 core-bindings: ## generates core bindings
 	@echo "Starting core bindings generation"
 ifneq ($(contracts),)
@@ -83,7 +83,7 @@ else
 endif
 
 
-.PHONY: middleware-bindings
+.PHONY: middleware-bindings ## generates middleware contracts bindings
 middleware-bindings: ## generates middleware bindings
 	@echo "Starting middleware bindings generation"
 ifneq ($(contracts),)
@@ -94,7 +94,7 @@ else
 	cd contracts && ./generate-bindings.sh $(middleware_location) $(middleware_default) $(middleware_bindings_location)
 endif
 
-.PHONY: sdk-bindings
+.PHONY: sdk-bindings ## generates sdk contracts bindings
 sdk-bindings: ## generates sdk bindings
 	@echo "Starting sdk bindings generation"
 ifneq ($(contracts),)
@@ -106,7 +106,7 @@ else
 endif
 
 .PHONY: bindings
-bindings: ## generates contract bindings
+bindings: ## generates all contract bindings
 	rm -rf bindings/* && make core-bindings middleware-bindings sdk-bindings
 
 .PHONY: eigenpod-bindings
