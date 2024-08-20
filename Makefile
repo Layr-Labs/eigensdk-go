@@ -57,7 +57,7 @@ lint: ## runs all linters
 	golangci-lint run ./...
 
 
-___BINDINGS___: ## 
+___BINDINGS___: ##
 
 core_default := "DelegationManager IRewardsCoordinator ISlasher StrategyManager EigenPod EigenPodManager IStrategy IAVSDirectory"
 core_location := "./lib/eigenlayer-middleware/lib/eigenlayer-contracts"
