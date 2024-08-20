@@ -41,7 +41,7 @@ pwd
 contracts=$2
 bindings_path=$3
 
-forge build
+forge build -C src/contracts
 echo "Generating bindings for contracts: $contracts"
 for contract in $contracts; do
     sleep 1 # this is a hack to fix the issue with abigen randomly failing for some contracts
