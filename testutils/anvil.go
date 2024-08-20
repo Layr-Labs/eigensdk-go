@@ -51,7 +51,9 @@ func StartAnvilContainer(anvilStateFileName string) (testcontainers.Container, e
 	// Still need to advance the chain by at least 1 block b/c some tests need to query the latest block,
 	// and the blocks dumped/loaded by anvil don't contain full transactions, which leads to panics in tests.
 	// See https://github.com/foundry-rs/foundry/issues/8213, which will hopefully get fixed soon.
-	AdvanceChainByNBlocksExecInContainer(ctx, 1, anvilC)
+	if anvilStateFileName != "" {
+		AdvanceChainByNBlocksExecInContainer(ctx, 1, anvilC)
+	}
 
 	return anvilC, nil
 }

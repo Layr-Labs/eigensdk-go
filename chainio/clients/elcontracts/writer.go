@@ -155,7 +155,11 @@ func NewWriterFromConfig(
 	), nil
 }
 
-func (w *ChainWriter) RegisterAsOperator(ctx context.Context, operator types.Operator) (*gethtypes.Receipt, error) {
+func (w *ChainWriter) RegisterAsOperator(
+	ctx context.Context,
+	operator types.Operator,
+	waitForReceipt bool,
+) (*gethtypes.Receipt, error) {
 	if w.delegationManager == nil {
 		return nil, errors.New("DelegationManager contract not provided")
 	}
@@ -177,7 +181,7 @@ func (w *ChainWriter) RegisterAsOperator(ctx context.Context, operator types.Ope
 	if err != nil {
 		return nil, err
 	}
-	receipt, err := w.txMgr.Send(ctx, tx)
+	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt)
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
@@ -189,6 +193,7 @@ func (w *ChainWriter) RegisterAsOperator(ctx context.Context, operator types.Ope
 func (w *ChainWriter) UpdateOperatorDetails(
 	ctx context.Context,
 	operator types.Operator,
+	waitForReceipt bool,
 ) (*gethtypes.Receipt, error) {
 	if w.delegationManager == nil {
 		return nil, errors.New("DelegationManager contract not provided")
@@ -212,7 +217,7 @@ func (w *ChainWriter) UpdateOperatorDetails(
 	if err != nil {
 		return nil, err
 	}
-	receipt, err := w.txMgr.Send(ctx, tx)
+	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt)
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
@@ -227,7 +232,8 @@ func (w *ChainWriter) UpdateOperatorDetails(
 	return receipt, nil
 }
 
-func (w *ChainWriter) UpdateMetadataURI(ctx context.Context, uri string) (*gethtypes.Receipt, error) {
+func (w *ChainWriter) UpdateMetadataURI(ctx context.Context, uri string, waitForReceipt bool,
+) (*gethtypes.Receipt, error) {
 	if w.delegationManager == nil {
 		return nil, errors.New("DelegationManager contract not provided")
 	}
@@ -241,7 +247,7 @@ func (w *ChainWriter) UpdateMetadataURI(ctx context.Context, uri string) (*getht
 	if err != nil {
 		return nil, err
 	}
-	receipt, err := w.txMgr.Send(ctx, tx)
+	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt)
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
@@ -258,6 +264,7 @@ func (w *ChainWriter) DepositERC20IntoStrategy(
 	ctx context.Context,
 	strategyAddr gethcommon.Address,
 	amount *big.Int,
+	waitForReceipt bool,
 ) (*gethtypes.Receipt, error) {
 	if w.strategyManager == nil {
 		return nil, errors.New("StrategyManager contract not provided")
@@ -280,7 +287,7 @@ func (w *ChainWriter) DepositERC20IntoStrategy(
 	if err != nil {
 		return nil, errors.Join(errors.New("failed to approve token transfer"), err)
 	}
-	_, err = w.txMgr.Send(ctx, tx)
+	_, err = w.txMgr.Send(ctx, tx, waitForReceipt)
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
@@ -289,7 +296,7 @@ func (w *ChainWriter) DepositERC20IntoStrategy(
 	if err != nil {
 		return nil, err
 	}
-	receipt, err := w.txMgr.Send(ctx, tx)
+	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt)
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
@@ -301,6 +308,7 @@ func (w *ChainWriter) DepositERC20IntoStrategy(
 func (w *ChainWriter) SetClaimerFor(
 	ctx context.Context,
 	claimer gethcommon.Address,
+	waitForReceipt bool,
 ) (*gethtypes.Receipt, error) {
 	if w.rewardsCoordinator == nil {
 		return nil, errors.New("RewardsCoordinator contract not provided")
@@ -315,7 +323,7 @@ func (w *ChainWriter) SetClaimerFor(
 	if err != nil {
 		return nil, err
 	}
-	receipt, err := w.txMgr.Send(ctx, tx)
+	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt)
 	if err != nil {
 		return nil, utils.WrapError("failed to send tx", err)
 	}
@@ -327,6 +335,7 @@ func (w *ChainWriter) ProcessClaim(
 	ctx context.Context,
 	claim rewardscoordinator.IRewardsCoordinatorRewardsMerkleClaim,
 	earnerAddress gethcommon.Address,
+	waitForReceipt bool,
 ) (*gethtypes.Receipt, error) {
 	if w.rewardsCoordinator == nil {
 		return nil, errors.New("RewardsCoordinator contract not provided")
@@ -341,7 +350,7 @@ func (w *ChainWriter) ProcessClaim(
 	if err != nil {
 		return nil, utils.WrapError("failed to create ProcessClaim tx", err)
 	}
-	receipt, err := w.txMgr.Send(ctx, tx)
+	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt)
 	if err != nil {
 		return nil, utils.WrapError("failed to send tx", err)
 	}
@@ -355,6 +364,7 @@ func (w *ChainWriter) ForceDeregisterFromOperatorSets(
 	avs gethcommon.Address,
 	operatorSetIds []uint32,
 	operatorSignature avsdirectory.ISignatureUtilsSignatureWithSaltAndExpiry,
+	waitForReceipt bool,
 ) (*gethtypes.Receipt, error) {
 	if w.avsDirectory == nil {
 		return nil, errors.New("AVSDirectory contract not provided")
@@ -377,7 +387,7 @@ func (w *ChainWriter) ForceDeregisterFromOperatorSets(
 		return nil, utils.WrapError("failed to create ForceDeregisterFromOperatorSets tx", err)
 	}
 
-	receipt, err := w.txMgr.Send(ctx, tx)
+	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt)
 	if err != nil {
 		return nil, utils.WrapError("failed to send tx", err)
 	}
@@ -390,6 +400,7 @@ func (w *ChainWriter) SetOperatorCommissionBips(
 	operatorSet rewardscoordinator.IAVSDirectoryOperatorSet,
 	rewardType uint8,
 	commissionBips uint16,
+	waitForReceipt bool,
 ) (*gethtypes.Receipt, error) {
 	if w.rewardsCoordinator == nil {
 		return nil, errors.New("RewardsCoordinator contract not provided")
@@ -405,7 +416,7 @@ func (w *ChainWriter) SetOperatorCommissionBips(
 		return nil, utils.WrapError("failed to create SetOperatorCommissionBips tx", err)
 	}
 
-	receipt, err := w.txMgr.Send(ctx, tx)
+	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt)
 	if err != nil {
 		return nil, utils.WrapError("failed to send tx", err)
 	}

@@ -7,6 +7,36 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/metrics"
 )
 
+// Returns a tuple of reader clients with the given:
+// configuration, HTTP client, logger and metrics.
+func BuildReadClients(
+	config Config,
+	client eth.HttpBackend,
+	logger logging.Logger,
+	eigenMetrics *metrics.EigenMetrics,
+) (*ChainReader, *ContractBindings, error) {
+	elContractBindings, err := NewBindingsFromConfig(
+		config,
+		client,
+		logger,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	elChainReader := NewChainReader(
+		elContractBindings.Slasher,
+		elContractBindings.DelegationManager,
+		elContractBindings.StrategyManager,
+		elContractBindings.AvsDirectory,
+		elContractBindings.RewardsCoordinator,
+		logger,
+		client,
+	)
+
+	return elChainReader, elContractBindings, nil
+}
+
 func BuildClients(
 	config Config,
 	client eth.HttpBackend,
