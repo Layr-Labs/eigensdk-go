@@ -293,11 +293,26 @@ func (r *ChainReader) CheckClaim(
 	return r.rewardsCoordinator.CheckClaim(opts, claim)
 }
 
-//
-//func (r *ChainReader) Foo(opts *bind.CallOpts) error {
-//	if r.avsDirectory == nil {
-//		return errors.New("AVSDirectory contract not provided")
-//	}
-//
-//	//r.avsDirectory.
-//}
+func (r *ChainReader) GetAllocatableMagnitude(
+	opts *bind.CallOpts,
+	operatorAddress gethcommon.Address,
+	strategyAddress gethcommon.Address,
+) (uint64, error) {
+	if r.avsDirectory == nil {
+		return 0, errors.New("AVSDirectory contract not provided")
+	}
+
+	return r.avsDirectory.GetAllocatableMagnitude(opts, operatorAddress, strategyAddress)
+}
+
+func (r *ChainReader) GetLatestTotalMagnitude(
+	opts *bind.CallOpts,
+	operatorAddress gethcommon.Address,
+	strategyAddress gethcommon.Address,
+) (uint64, error) {
+	if r.avsDirectory == nil {
+		return 0, errors.New("AVSDirectory contract not provided")
+	}
+
+	return r.avsDirectory.GetLatestTotalMagnitude(opts, operatorAddress, strategyAddress)
+}
