@@ -423,3 +423,32 @@ func (w *ChainWriter) SetOperatorCommissionBips(
 
 	return receipt, nil
 }
+
+func (w *ChainWriter) ModifyAllocations(
+	ctx context.Context,
+	operator gethcommon.Address,
+	allocations []avsdirectory.IAVSDirectoryMagnitudeAllocation,
+	operatorSignature avsdirectory.ISignatureUtilsSignatureWithSaltAndExpiry,
+	waitForReceipt bool,
+) (*gethtypes.Receipt, error) {
+	if w.avsDirectory == nil {
+		return nil, errors.New("AVSDirectory contract not provided")
+	}
+
+	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
+	if err != nil {
+		return nil, utils.WrapError("failed to get no send tx opts", err)
+	}
+
+	tx, err := w.avsDirectory.ModifyAllocations(noSendTxOpts, operator, allocations, operatorSignature)
+	if err != nil {
+		return nil, utils.WrapError("failed to create ModifyAllocations tx", err)
+	}
+
+	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt)
+	if err != nil {
+		return nil, utils.WrapError("failed to send tx", err)
+	}
+
+	return receipt, nil
+}

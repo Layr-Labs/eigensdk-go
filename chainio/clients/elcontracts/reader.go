@@ -292,3 +292,12 @@ func (r *ChainReader) CheckClaim(
 
 	return r.rewardsCoordinator.CheckClaim(opts, claim)
 }
+
+//
+//func (r *ChainReader) Foo(opts *bind.CallOpts) error {
+//	if r.avsDirectory == nil {
+//		return errors.New("AVSDirectory contract not provided")
+//	}
+//
+//	//r.avsDirectory.
+//}
