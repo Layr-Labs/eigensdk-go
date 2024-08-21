@@ -71,6 +71,7 @@ sdk_default := "MockAvsServiceManager ContractsRegistry"
 sdk_location := "."
 sdk_bindings_location := "./bindings"
 
+# To generate bindings for specific contracts, run `make core-bindings contracts="DelegationManager IRewardsCoordinator"`
 .PHONY: core-bindings ## generates core contracts bindings
 core-bindings: ## generates core bindings
 	@echo "Starting core bindings generation"
@@ -82,7 +83,7 @@ else
 	cd contracts && ./generate-bindings.sh $(core_location) $(core_default) $(core_bindings_location)
 endif
 
-
+# To generate bindings for specific contracts, run `make middleware-bindings contracts="RegistryCoordinator"`
 .PHONY: middleware-bindings ## generates middleware contracts bindings
 middleware-bindings: ## generates middleware bindings
 	@echo "Starting middleware bindings generation"
@@ -94,6 +95,7 @@ else
 	cd contracts && ./generate-bindings.sh $(middleware_location) $(middleware_default) $(middleware_bindings_location)
 endif
 
+# To generate bindings for specific contracts, run `make sdk-bindings contracts="MockAvsServiceManager"`
 .PHONY: sdk-bindings ## generates sdk contracts bindings
 sdk-bindings: ## generates sdk bindings
 	@echo "Starting sdk bindings generation"
@@ -105,13 +107,13 @@ else
 	cd contracts && ./generate-bindings.sh $(sdk_location) $(sdk_default) $(sdk_bindings_location)
 endif
 
-.PHONY: bindings
-bindings: ## generates all contract bindings
-	rm -rf bindings/* && make core-bindings middleware-bindings sdk-bindings
-
 .PHONY: eigenpod-bindings
 eigenpod-bindings: ## generates contract bindings for eigenpod
 	cd chainio/clients/eigenpod && ./generate.sh
+
+.PHONY: bindings
+bindings: ## generates all contract bindings
+	rm -rf bindings/* && make core-bindings middleware-bindings sdk-bindings eigenpod-bindings
 
 
 ___CONTRACTS___: ## 
