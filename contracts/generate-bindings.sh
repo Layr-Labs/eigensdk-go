@@ -33,33 +33,17 @@ function create_binding {
     rm -rf data/tmp.abi data/tmp.bin
 }
 
-cd $script_path
+path=$1
+echo "Generating bindings for contracts in path: $path"
+cd "$path"
+pwd
+
+contracts=$2
+bindings_path=$3
+
 forge build
-sdk_contracts="MockAvsServiceManager ContractsRegistry"
-for contract in $sdk_contracts; do
+echo "Generating bindings for contracts: $contracts"
+for contract in $contracts; do
     sleep 1 # this is a hack to fix the issue with abigen randomly failing for some contracts
-    create_binding . $contract ./bindings
-done
-
-EIGENLAYER_MIDDLEWARE_PATH=$script_path/lib/eigenlayer-middleware
-cd $EIGENLAYER_MIDDLEWARE_PATH
-# you might want to run forge clean if the contracts have changed
-forge build
-
-# No idea why but ordering of the contracts matters here... when I move them around sometimes bindings fail
-avs_contracts="RegistryCoordinator IndexRegistry OperatorStateRetriever StakeRegistry BLSApkRegistry IBLSSignatureChecker ServiceManagerBase IERC20"
-for contract in $avs_contracts; do
-    sleep 1 # this is a hack to fix the issue with abigen randomly failing for some contracts
-    create_binding . $contract ../../bindings
-done
-
-EIGENLAYER_CONTRACT_PATH=$EIGENLAYER_MIDDLEWARE_PATH/lib/eigenlayer-contracts
-cd $EIGENLAYER_CONTRACT_PATH
-forge build
-
-# No idea why but the ordering of the contracts matters, and for some orderings abigen fails...
-el_contracts="DelegationManager IRewardsCoordinator ISlasher StrategyManager EigenPod EigenPodManager IStrategy IAVSDirectory"
-for contract in $el_contracts; do
-    sleep 1 # this is a hack to fix the issue with abigen randomly failing for some contracts
-    create_binding . $contract ../../../../bindings
+    create_binding . "$contract" "$bindings_path"
 done
