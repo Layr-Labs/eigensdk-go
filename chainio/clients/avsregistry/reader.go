@@ -355,6 +355,25 @@ func (r *ChainReader) GetOperatorFromId(
 	return operatorAddress, nil
 }
 
+func (r *ChainReader) QueryRegistrationDetail(
+	opts *bind.CallOpts,
+	operatorAddress common.Address,
+) (map[int]bool, error) {
+	operatorId, err := r.GetOperatorId(opts, operatorAddress)
+	if err != nil {
+		return nil, err
+	}
+	bitmap, err := r.registryCoordinator.GetCurrentQuorumBitmap(opts, operatorId)
+	if err != nil {
+		return nil, err
+	}
+	quorums := make(map[int]bool)
+	for i, b := range bitmap.Bits() {
+		quorums[i] = b == 1
+	}
+	return quorums, nil
+}
+
 func (r *ChainReader) IsOperatorRegistered(
 	opts *bind.CallOpts,
 	operatorAddress common.Address,
