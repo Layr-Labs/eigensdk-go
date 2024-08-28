@@ -358,18 +358,24 @@ func (r *ChainReader) GetOperatorFromId(
 func (r *ChainReader) QueryRegistrationDetail(
 	opts *bind.CallOpts,
 	operatorAddress common.Address,
-) (map[int]bool, error) {
+) ([]bool, error) {
 	operatorId, err := r.GetOperatorId(opts, operatorAddress)
 	if err != nil {
 		return nil, err
 	}
-	bitmap, err := r.registryCoordinator.GetCurrentQuorumBitmap(opts, operatorId)
+	value, err := r.registryCoordinator.GetCurrentQuorumBitmap(opts, operatorId)
 	if err != nil {
 		return nil, err
 	}
-	quorums := make(map[int]bool)
-	for i, b := range bitmap.Bits() {
-		quorums[i] = b == 1
+	numBits := value.BitLen()
+	quorums := make([]bool, numBits)
+	for i := 0; i < numBits; i++ {
+		// Check if the ith bit is set
+		if value.Int64()&(1<<i) != 0 {
+			quorums[i] = true
+		} else {
+			quorums[i] = false
+		}
 	}
 	return quorums, nil
 }
