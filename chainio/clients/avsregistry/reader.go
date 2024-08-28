@@ -358,7 +358,7 @@ func (r *ChainReader) GetOperatorFromId(
 func (r *ChainReader) QueryRegistrationDetail(
 	opts *bind.CallOpts,
 	operatorAddress common.Address,
-) ([]bool, error) {
+) (map[int]bool, error) {
 	operatorId, err := r.GetOperatorId(opts, operatorAddress)
 	if err != nil {
 		return nil, err
@@ -368,14 +368,9 @@ func (r *ChainReader) QueryRegistrationDetail(
 		return nil, err
 	}
 	numBits := value.BitLen()
-	quorums := make([]bool, numBits)
+	quorums := make(map[int]bool, numBits)
 	for i := 0; i < numBits; i++ {
-		// Check if the ith bit is set
-		if value.Int64()&(1<<i) != 0 {
-			quorums[i] = true
-		} else {
-			quorums[i] = false
-		}
+		quorums[i] = value.Int64()&(1<<i) != 0
 	}
 	return quorums, nil
 }
