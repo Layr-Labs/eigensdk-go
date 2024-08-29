@@ -358,7 +358,7 @@ func (r *ChainReader) GetOperatorFromId(
 func (r *ChainReader) QueryRegistrationDetail(
 	opts *bind.CallOpts,
 	operatorAddress common.Address,
-) (map[int]bool, error) {
+) ([]bool, error) {
 	operatorId, err := r.GetOperatorId(opts, operatorAddress)
 	if err != nil {
 		return nil, err
@@ -368,9 +368,9 @@ func (r *ChainReader) QueryRegistrationDetail(
 		return nil, err
 	}
 	numBits := value.BitLen()
-	quorums := make(map[int]bool, numBits)
+	var quorums []bool
 	for i := 0; i < numBits; i++ {
-		quorums[i] = value.Int64()&(1<<i) != 0
+		quorums = append(quorums, value.Int64()&(1<<i) != 0)
 	}
 	return quorums, nil
 }
