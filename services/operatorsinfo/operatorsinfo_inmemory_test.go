@@ -153,6 +153,8 @@ func TestGetOperatorInfo(t *testing.T) {
 				mockAvsRegistrySubscriber,
 				mockAvsReader,
 				nil,
+				nil,
+				nil,
 				logger,
 			)
 			time.Sleep(
