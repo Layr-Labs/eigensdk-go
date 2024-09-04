@@ -361,16 +361,25 @@ func (r *ChainReader) QueryRegistrationDetail(
 ) ([]bool, error) {
 	operatorId, err := r.GetOperatorId(opts, operatorAddress)
 	if err != nil {
-		return nil, err
+		return nil, utils.WrapError("Failed to get operator id", err)
 	}
 	value, err := r.registryCoordinator.GetCurrentQuorumBitmap(opts, operatorId)
 	if err != nil {
-		return nil, err
+		return nil, utils.WrapError("Failed to get operator quorums", err)
 	}
 	numBits := value.BitLen()
 	var quorums []bool
 	for i := 0; i < numBits; i++ {
 		quorums = append(quorums, value.Int64()&(1<<i) != 0)
+	}
+	if len(quorums) == 0 {
+		numQuorums, err := r.GetQuorumCount(opts)
+		if err != nil {
+			return nil, utils.WrapError("Failed to get quorum count", err)
+		}
+		for i := uint8(0); i < numQuorums; i++ {
+			quorums = append(quorums, false)
+		}
 	}
 	return quorums, nil
 }
