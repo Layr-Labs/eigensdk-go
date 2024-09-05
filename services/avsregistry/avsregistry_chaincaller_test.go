@@ -5,8 +5,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"flag"
 	"io/ioutil"
-	"path/filepath"
 
 	"math/big"
 	"reflect"
@@ -21,6 +21,12 @@ import (
 
 type fakeOperatorInfoService struct {
 	operatorInfo types.OperatorInfo
+}
+
+var testData string
+
+func init() {
+	flag.StringVar(&testData, "data", ".", "Data JSON with parameters for the test")
 }
 
 func newFakeOperatorInfoService(operatorInfo types.OperatorInfo) *fakeOperatorInfoService {
@@ -159,10 +165,8 @@ func NewBytes32FromString(hexString string) [32]byte {
 }
 
 func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
-	// read json
-	filePath := filepath.Join("../../compliance/testdata", "getOperatorsAvsState.json")
-	print(filePath)
-	data, err := ioutil.ReadFile(filePath)
+	flag.Parse()
+	data, err := ioutil.ReadFile(testData)
 	if err != nil {
 		t.Fatalf("Failed to read JSON file for test %s: %v", t.Name(), err)
 	}
