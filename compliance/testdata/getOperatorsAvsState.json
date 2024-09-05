@@ -1,42 +1,44 @@
 {
-    "Input": {
-        "queryQuorumNumbers": [
+    "input": {
+        "query_quorum_numbers": [
             1
         ],
+        "query_block_num": 1,
         "operator": {
-            "OperatorAddr": "0x1",
-            "OperatorId": "0x1",
-            "OperatorInfo": {
-                "Pubkeys": {
-                    "G1Pubkey": {
-                        "X": 1,
-                        "Y": 1
+            "operator_addr": "0x1",
+            "operator_id": "0x1",
+            "operator_info": {
+                "pubkeys": {
+                    "g1_pubkey": {
+                        "x": 1,
+                        "y": 1
                     },
-                    "G2Pubkey": {
-                        "X": [
+                    "g2_pubkey": {
+                        "x": [
                             1,
                             1
                         ],
-                        "Y": [
+                        "y": [
                             1,
                             1
                         ]
                     }
                 },
-                "Socket": "localhost:8080"
+                "socket": "localhost:8080"
             }
         }
     },
-    "Output": {
-        "queryBlockNum": 1,
-        "OperatorsAvsStateDict": {
-            "0x0000000000000000000000000000000000000000000000000000000000000001": {
-                "OperatorId": 1,
-                "StakePerQuorum": {
-                    "1": 123
+    "output": {
+        "operators_avs_state": [
+            {
+                "operator_addr": "0x1",
+                "operator_id": "0x1",
+                "stake_per_quorum": {
+                    "quorum": 1,
+                    "stake": 123
                 },
-                "BlockNumber": 1
+                "block_number": 1
             }
-        }
+        ]
     }
 }
