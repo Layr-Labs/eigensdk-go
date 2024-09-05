@@ -1150,6 +1150,7 @@ func TestIntegrationBlsAgg(t *testing.T) {
 			avsClients.AvsRegistryChainSubscriber,
 			avsClients.AvsRegistryChainReader,
 			nil,
+			operatorsinfo.Opts{},
 			logger,
 		)
 		avsRegistryService := avsregistry.NewAvsRegistryServiceChainCaller(
