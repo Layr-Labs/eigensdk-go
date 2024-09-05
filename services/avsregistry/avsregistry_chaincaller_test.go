@@ -2,7 +2,11 @@ package avsregistry
 
 import (
 	"context"
+	"encoding/hex"
+	"encoding/json"
 	"errors"
+	"io/ioutil"
+	"path/filepath"
 
 	"math/big"
 	"reflect"
@@ -12,7 +16,6 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/internal/fakes"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
 	"github.com/Layr-Labs/eigensdk-go/types"
-
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -92,20 +95,88 @@ func TestAvsRegistryServiceChainCaller_getOperatorPubkeys(t *testing.T) {
 	}
 }
 
+type G2Point struct {
+	X [2]int64 `json:"X"`
+	Y [2]int64 `json:"Y"`
+}
+type G1Point struct {
+	X int64 `json:"X"`
+	Y int64 `json:"Y"`
+}
+
+type BlsPublicKey struct {
+	G1Pubkey G1Point `json:"G1Pubkey"`
+	G2Pubkey G2Point `json:"G2Pubkey"`
+}
+
+type TestOperator struct {
+	OperatorAddr string `json:"OperatorAddr"`
+	OperatorId   string `json:"OperatorId"`
+	OperatorInfo struct {
+		Pubkeys BlsPublicKey `json:"Pubkeys"`
+		Socket  string       `json:"Socket"`
+	} `json:"OperatorInfo"`
+}
+
+type TestData struct {
+	Input  Input  `json:"input"`
+	Output Output `json:"output"`
+}
+
+type Input struct {
+	QueryQuorumNumbers []int        `json:"queryQuorumNumbers"`
+	Operator           TestOperator `json:"operator"`
+}
+
+type Output struct {
+	QueryBlockNum         int64                             `json:"queryBlockNum"`
+	OperatorsAvsStateDict map[string]types.OperatorAvsState `json:"wantOperatorsAvsStateDict"`
+}
+
+// converts a hex string (starting with "0x") into a Bytes32.
+func NewBytes32FromString(hexString string) [32]byte {
+	var b32 [32]byte
+
+	// Remove the "0x" prefix if it's present
+	if len(hexString) >= 2 && hexString[:2] == "0x" {
+		hexString = hexString[2:]
+	}
+
+	// Decode the hex string
+	bytes, _ := hex.DecodeString(hexString)
+
+	// Copy the bytes into the Bytes32 array
+	copy(b32[:], bytes)
+	return b32
+}
+
 func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
+	// read json
+	filePath := filepath.Join("../../compliance/testdata", "getOperatorsAvsState.json")
+	print(filePath)
+	data, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		t.Fatalf("Failed to read JSON file for test %s: %v", t.Name(), err)
+	}
+
+	var testData TestData
+	if err := json.Unmarshal(data, &testData); err != nil {
+		t.Fatalf("Failed to unmarshal JSON data for test %s: %v", t.Name(), err)
+	}
+
 	logger := testutils.GetTestLogger()
 	testOperator1 := fakes.TestOperator{
-		OperatorAddr: common.HexToAddress("0x1"),
-		OperatorId:   types.OperatorId{1},
+		OperatorAddr: common.HexToAddress(testData.Input.Operator.OperatorAddr),
+		OperatorId:   NewBytes32FromString(testData.Input.Operator.OperatorId),
 		OperatorInfo: types.OperatorInfo{
 			Pubkeys: types.OperatorPubkeys{
-				G1Pubkey: bls.NewG1Point(big.NewInt(1), big.NewInt(1)),
+				G1Pubkey: bls.NewG1Point(big.NewInt(testData.Input.Operator.OperatorInfo.Pubkeys.G1Pubkey.X), big.NewInt(testData.Input.Operator.OperatorInfo.Pubkeys.G1Pubkey.Y)),
 				G2Pubkey: bls.NewG2Point(
-					[2]*big.Int{big.NewInt(1), big.NewInt(1)},
-					[2]*big.Int{big.NewInt(1), big.NewInt(1)},
+					[2]*big.Int{big.NewInt(testData.Input.Operator.OperatorInfo.Pubkeys.G2Pubkey.X[0]), big.NewInt(testData.Input.Operator.OperatorInfo.Pubkeys.G2Pubkey.X[1])},
+					[2]*big.Int{big.NewInt(testData.Input.Operator.OperatorInfo.Pubkeys.G2Pubkey.Y[0]), big.NewInt(testData.Input.Operator.OperatorInfo.Pubkeys.G2Pubkey.Y[1])},
 				),
 			},
-			Socket: "localhost:8080",
+			Socket: types.Socket(testData.Input.Operator.OperatorInfo.Socket),
 		},
 	}
 

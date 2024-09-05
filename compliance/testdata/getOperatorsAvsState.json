@@ -1,0 +1,42 @@
+{
+    "Input": {
+        "queryQuorumNumbers": [
+            1
+        ],
+        "operator": {
+            "OperatorAddr": "0x1",
+            "OperatorId": "0x1",
+            "OperatorInfo": {
+                "Pubkeys": {
+                    "G1Pubkey": {
+                        "X": 1,
+                        "Y": 1
+                    },
+                    "G2Pubkey": {
+                        "X": [
+                            1,
+                            1
+                        ],
+                        "Y": [
+                            1,
+                            1
+                        ]
+                    }
+                },
+                "Socket": "localhost:8080"
+            }
+        }
+    },
+    "Output": {
+        "queryBlockNum": 1,
+        "OperatorsAvsStateDict": {
+            "0x0000000000000000000000000000000000000000000000000000000000000001": {
+                "OperatorId": 1,
+                "StakePerQuorum": {
+                    "1": 123
+                },
+                "BlockNumber": 1
+            }
+        }
+    }
+}
