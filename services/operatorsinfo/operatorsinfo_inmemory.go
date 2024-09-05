@@ -78,6 +78,11 @@ type resp struct {
 	operatorExists bool
 }
 
+type Opts struct {
+	StartBlock *big.Int
+	StopBlock  *big.Int
+}
+
 var _ OperatorsInfoService = (*OperatorsInfoServiceInMemory)(nil)
 
 // NewOperatorsInfoServiceInMemory constructs a OperatorsInfoServiceInMemory and starts it in a goroutine.
@@ -92,8 +97,7 @@ func NewOperatorsInfoServiceInMemory(
 	avsRegistrySubscriber avsRegistrySubscriber,
 	avsRegistryReader avsRegistryReader,
 	logFilterQueryBlockRange *big.Int,
-	startBlock *big.Int,
-	stopBlock *big.Int,
+	opts *Opts,
 	logger logging.Logger,
 ) *OperatorsInfoServiceInMemory {
 	queryC := make(chan query)
@@ -114,7 +118,7 @@ func NewOperatorsInfoServiceInMemory(
 	// which requires querying the past events of the pubkey registration contract
 	wg := sync.WaitGroup{}
 	wg.Add(1)
-	pkcs.startServiceInGoroutine(ctx, queryC, &wg, startBlock, stopBlock)
+	pkcs.startServiceInGoroutine(ctx, queryC, &wg, opts)
 	wg.Wait()
 	return pkcs
 }
@@ -123,8 +127,7 @@ func (ops *OperatorsInfoServiceInMemory) startServiceInGoroutine(
 	ctx context.Context,
 	queryC <-chan query,
 	wg *sync.WaitGroup,
-	startBlock *big.Int,
-	stopBlock *big.Int,
+	opts *Opts,
 ) {
 	go func() {
 
@@ -157,7 +160,7 @@ func (ops *OperatorsInfoServiceInMemory) startServiceInGoroutine(
 			)
 			panic(err)
 		}
-		err = ops.queryPastRegisteredOperatorEventsAndFillDb(ctx, startBlock, stopBlock)
+		err = ops.queryPastRegisteredOperatorEventsAndFillDb(ctx, opts)
 		if err != nil {
 			ops.logger.Error(
 				"Fatal error querying past registered operator events and filling db",
@@ -281,8 +284,7 @@ func (ops *OperatorsInfoServiceInMemory) startServiceInGoroutine(
 
 func (ops *OperatorsInfoServiceInMemory) queryPastRegisteredOperatorEventsAndFillDb(
 	ctx context.Context,
-	startBlock *big.Int,
-	stopBlock *big.Int,
+	opts *Opts,
 ) error {
 	// Querying with nil startBlock and stopBlock will return all events. It doesn't matter if we query some events that
 	// we will receive again in the websocket,
@@ -298,8 +300,8 @@ func (ops *OperatorsInfoServiceInMemory) queryPastRegisteredOperatorEventsAndFil
 	go func() {
 		alreadyRegisteredOperatorAddrs, alreadyRegisteredOperatorPubkeys, pubkeysErr = ops.avsRegistryReader.QueryExistingRegisteredOperatorPubKeys(
 			ctx,
-			startBlock,
-			stopBlock,
+			opts.StartBlock,
+			opts.StopBlock,
 			ops.logFilterQueryBlockRange,
 		)
 		wg.Done()
@@ -309,8 +311,8 @@ func (ops *OperatorsInfoServiceInMemory) queryPastRegisteredOperatorEventsAndFil
 	go func() {
 		socketsMap, socketsErr = ops.avsRegistryReader.QueryExistingRegisteredOperatorSockets(
 			ctx,
-			startBlock,
-			stopBlock,
+			opts.StartBlock,
+			opts.StopBlock,
 			ops.logFilterQueryBlockRange,
 		)
 		wg.Done()
