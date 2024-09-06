@@ -111,8 +111,8 @@ type G1Point struct {
 }
 
 type BlsPublicKey struct {
-	G1Pubkey G1Point `json:"g1_pubkey"`
-	G2Pubkey G2Point `json:"g2_pubkey"`
+	G1Pubkey G1Point `json:"g1_pub_key"`
+	G2Pubkey G2Point `json:"g2_pub_key"`
 }
 
 type TestOperator struct {
