@@ -95,50 +95,11 @@ func TestAvsRegistryServiceChainCaller_getOperatorPubkeys(t *testing.T) {
 	}
 }
 
-type G2Point struct {
-	X [2]int64 `json:"x"`
-	Y [2]int64 `json:"y"`
-}
-type G1Point struct {
-	X int64 `json:"x"`
-	Y int64 `json:"y"`
-}
-
-type BlsPublicKey struct {
-	G1Pubkey G1Point `json:"g1_pub_key"`
-	G2Pubkey G2Point `json:"g2_pub_key"`
-}
-
-type TestOperator struct {
-	OperatorAddr string `json:"operator_addr"`
-	OperatorId   string `json:"operator_id"`
-	OperatorInfo struct {
-		Pubkeys BlsPublicKey `json:"pubkeys"`
-		Socket  string       `json:"socket"`
-	} `json:"operator_info"`
-}
-
 type TestData struct {
-	Input  Input  `json:"input"`
-	Output Output `json:"output"`
-}
-
-type Input struct {
-	QueryQuorumNumbers []int        `json:"query_quorum_numbers"`
-	QueryBlockNum      int32        `json:"query_block_num"`
-	Operator           TestOperator `json:"operator"`
-}
-
-type Output struct {
-	OperatorsAvsState []struct {
-		OperatorAddr   string `json:"operator_addr"`
-		OperatorId     string `json:"operator_id"`
-		StakePerQuorum struct {
-			Quorum int   `json:"quorum"`
-			Stake  int64 `json:"stake"`
-		} `json:"stake_per_quorum"`
-		BlockNumber int32 `json:"block_number"`
-	} `json:"operators_avs_state"`
+	Input struct {
+		QueryQuorumNumbers types.QuorumNums `json:"query_quorum_numbers"`
+		QueryBlockNum      int32            `json:"query_block_num"`
+	} `json:"input"`
 }
 
 // converts a hex string (starting with "0x") into a Bytes32.
@@ -171,23 +132,22 @@ func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
 	}
 
 	logger := testutils.GetTestLogger()
-	pubkeys := testData.Input.Operator.OperatorInfo.Pubkeys
+
 	testOperator1 := fakes.TestOperator{
-		OperatorAddr: common.HexToAddress(testData.Input.Operator.OperatorAddr),
-		OperatorId:   NewBytes32FromString(testData.Input.Operator.OperatorId),
+		OperatorAddr: common.HexToAddress("0x1"),
+		OperatorId:   types.OperatorId{1},
 		OperatorInfo: types.OperatorInfo{
 			Pubkeys: types.OperatorPubkeys{
-				G1Pubkey: bls.NewG1Point(big.NewInt(pubkeys.G1Pubkey.X), big.NewInt(pubkeys.G1Pubkey.Y)),
+				G1Pubkey: bls.NewG1Point(big.NewInt(1), big.NewInt(1)),
 				G2Pubkey: bls.NewG2Point(
-					[2]*big.Int{big.NewInt(pubkeys.G2Pubkey.X[0]), big.NewInt(pubkeys.G2Pubkey.X[1])},
-					[2]*big.Int{big.NewInt(pubkeys.G2Pubkey.Y[0]), big.NewInt(pubkeys.G2Pubkey.Y[1])},
+					[2]*big.Int{big.NewInt(1), big.NewInt(1)},
+					[2]*big.Int{big.NewInt(1), big.NewInt(1)},
 				),
 			},
-			Socket: types.Socket(testData.Input.Operator.OperatorInfo.Socket),
+			Socket: "localhost:8080",
 		},
 	}
 
-	outputOperator := testData.Output.OperatorsAvsState[0]
 	var tests = []struct {
 		name                      string
 		queryQuorumNumbers        types.QuorumNums
@@ -198,16 +158,16 @@ func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
 	}{
 		{
 			name:               "should return operatorsAvsState",
-			queryQuorumNumbers: types.QuorumNums{types.QuorumNum(testData.Input.QueryQuorumNumbers[0])},
+			queryQuorumNumbers: testData.Input.QueryQuorumNumbers,
 			operator:           &testOperator1,
 			queryBlockNum:      uint32(testData.Input.QueryBlockNum),
 			wantErr:            nil,
 			wantOperatorsAvsStateDict: map[types.OperatorId]types.OperatorAvsState{
-				NewBytes32FromString(outputOperator.OperatorId): {
-					OperatorId:     NewBytes32FromString(outputOperator.OperatorId),
+				testOperator1.OperatorId: {
+					OperatorId:     testOperator1.OperatorId,
 					OperatorInfo:   testOperator1.OperatorInfo,
-					StakePerQuorum: map[types.QuorumNum]types.StakeAmount{types.QuorumNum(outputOperator.StakePerQuorum.Quorum): big.NewInt(outputOperator.StakePerQuorum.Stake)},
-					BlockNumber:    uint32(outputOperator.BlockNumber),
+					StakePerQuorum: map[types.QuorumNum]types.StakeAmount{testData.Input.QueryQuorumNumbers[0]: big.NewInt(123)},
+					BlockNumber:    uint32(testData.Input.QueryBlockNum),
 				},
 			},
 		},
