@@ -40,6 +40,21 @@ var (
 	// We do NOT want to support formats like SVG since they can be used for javascript injection
 	// If we get pushback on only supporting png, we can support jpg, jpeg, gif, etc. later
 	ImageExtensions = []string{".png"}
+
+	// Regular expression to ethereum address
+	ethAddrPattern = regexp.MustCompile("^0x[0-9a-fA-F]{40}$")
+
+	// Regular expression to validate text
+	textPattern = regexp.MustCompile(TextRegex)
+
+	// Regular expression to validate URLs
+	rawGitHubUrlPattern = regexp.MustCompile(`^https?://raw\.githubusercontent\.com/.*$`)
+
+	// Regular expression to validate URLs
+	twitterUrlPattern = regexp.MustCompile(`^(?:https?://)?(?:www\.)?(?:twitter\.com/\w+|x\.com/\w+)(?:/?|$)`)
+
+	// Regular expression to validate URLs
+	urlPattern = regexp.MustCompile(`^(https?)://[^\s/$.?#].[^\s]*$`)
 )
 
 func ReadFile(path string) ([]byte, error) {
@@ -100,8 +115,7 @@ func RoundUpDivideBig(a, b *big.Int) *big.Int {
 }
 
 func IsValidEthereumAddress(address string) bool {
-	re := regexp.MustCompile("^0x[0-9a-fA-F]{40}$")
-	return re.MatchString(address)
+	return ethAddrPattern.MatchString(address)
 }
 
 func ReadPublicURL(url string) ([]byte, error) {
@@ -150,11 +164,8 @@ func CheckIfValidTwitterURL(twitterURL string) error {
 		return err
 	}
 
-	// Regular expression to validate URLs
-	urlPattern := regexp.MustCompile(`^(?:https?://)?(?:www\.)?(?:twitter\.com/\w+|x\.com/\w+)(?:/?|$)`)
-
 	// Check if the URL matches the regular expression
-	if !urlPattern.MatchString(twitterURL) {
+	if !twitterUrlPattern.MatchString(twitterURL) {
 		return ErrInvalidTwitterUrlRegex
 	}
 
@@ -193,9 +204,6 @@ func CheckIfUrlIsValid(rawUrl string) error {
 	if err != nil {
 		return err
 	}
-
-	// Regular expression to validate URLs
-	urlPattern := regexp.MustCompile(`^(https?)://[^\s/$.?#].[^\s]*$`)
 
 	// Check if the URL matches the regular expression
 	if !urlPattern.MatchString(rawUrl) {
@@ -246,9 +254,6 @@ func ValidateText(text string) error {
 		return ErrTextTooLong(TextCharsLimit)
 	}
 
-	// Regular expression to validate text
-	textPattern := regexp.MustCompile(TextRegex)
-
 	// Check if the URL matches the regular expression
 	if !textPattern.MatchString(text) {
 		return ErrInvalidText
@@ -263,9 +268,6 @@ func ValidateRawGithubUrl(url string) error {
 	if err != nil {
 		return err
 	}
-
-	// Regular expression to validate URLs
-	rawGitHubUrlPattern := regexp.MustCompile(`^https?://raw\.githubusercontent\.com/.*$`)
 
 	// Check if the URL matches the regular expression
 	if !rawGitHubUrlPattern.MatchString(url) {
