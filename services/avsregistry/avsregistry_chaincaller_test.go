@@ -3,10 +3,7 @@ package avsregistry
 import (
 	"context"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
-	"io/ioutil"
-	"os"
 
 	"math/big"
 	"reflect"
@@ -95,13 +92,6 @@ func TestAvsRegistryServiceChainCaller_getOperatorPubkeys(t *testing.T) {
 	}
 }
 
-type TestData struct {
-	Input struct {
-		QueryQuorumNumbers types.QuorumNums `json:"query_quorum_numbers"`
-		QueryBlockNum      int32            `json:"query_block_num"`
-	} `json:"input"`
-}
-
 // converts a hex string (starting with "0x") into a Bytes32.
 func NewBytes32FromString(hexString string) [32]byte {
 	var b32 [32]byte
@@ -120,17 +110,6 @@ func NewBytes32FromString(hexString string) [32]byte {
 }
 
 func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
-	test_data_path := os.Getenv("TEST_DATA_PATH")
-	data, err := ioutil.ReadFile(test_data_path)
-	if err != nil {
-		t.Fatalf("Failed to read JSON file for test %s: %v", t.Name(), err)
-	}
-
-	var testData TestData
-	if err := json.Unmarshal(data, &testData); err != nil {
-		t.Fatalf("Failed to unmarshal JSON data for test %s: %v", t.Name(), err)
-	}
-
 	logger := testutils.GetTestLogger()
 
 	testOperator1 := fakes.TestOperator{
@@ -158,16 +137,16 @@ func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
 	}{
 		{
 			name:               "should return operatorsAvsState",
-			queryQuorumNumbers: testData.Input.QueryQuorumNumbers,
+			queryQuorumNumbers: types.QuorumNums{1},
 			operator:           &testOperator1,
-			queryBlockNum:      uint32(testData.Input.QueryBlockNum),
+			queryBlockNum:      1,
 			wantErr:            nil,
 			wantOperatorsAvsStateDict: map[types.OperatorId]types.OperatorAvsState{
 				testOperator1.OperatorId: {
 					OperatorId:     testOperator1.OperatorId,
 					OperatorInfo:   testOperator1.OperatorInfo,
-					StakePerQuorum: map[types.QuorumNum]types.StakeAmount{testData.Input.QueryQuorumNumbers[0]: big.NewInt(123)},
-					BlockNumber:    uint32(testData.Input.QueryBlockNum),
+					StakePerQuorum: map[types.QuorumNum]types.StakeAmount{1: big.NewInt(123)},
+					BlockNumber:    1,
 				},
 			},
 		},
