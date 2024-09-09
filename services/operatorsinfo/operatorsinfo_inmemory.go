@@ -78,6 +78,11 @@ type resp struct {
 	operatorExists bool
 }
 
+type Opts struct {
+	StartBlock *big.Int
+	StopBlock  *big.Int
+}
+
 var _ OperatorsInfoService = (*OperatorsInfoServiceInMemory)(nil)
 
 // NewOperatorsInfoServiceInMemory constructs a OperatorsInfoServiceInMemory and starts it in a goroutine.
@@ -92,6 +97,7 @@ func NewOperatorsInfoServiceInMemory(
 	avsRegistrySubscriber avsRegistrySubscriber,
 	avsRegistryReader avsRegistryReader,
 	logFilterQueryBlockRange *big.Int,
+	opts Opts,
 	logger logging.Logger,
 ) *OperatorsInfoServiceInMemory {
 	queryC := make(chan query)
@@ -112,7 +118,7 @@ func NewOperatorsInfoServiceInMemory(
 	// which requires querying the past events of the pubkey registration contract
 	wg := sync.WaitGroup{}
 	wg.Add(1)
-	pkcs.startServiceInGoroutine(ctx, queryC, &wg)
+	pkcs.startServiceInGoroutine(ctx, queryC, &wg, opts)
 	wg.Wait()
 	return pkcs
 }
@@ -121,6 +127,7 @@ func (ops *OperatorsInfoServiceInMemory) startServiceInGoroutine(
 	ctx context.Context,
 	queryC <-chan query,
 	wg *sync.WaitGroup,
+	opts Opts,
 ) {
 	go func() {
 
@@ -153,7 +160,7 @@ func (ops *OperatorsInfoServiceInMemory) startServiceInGoroutine(
 			)
 			panic(err)
 		}
-		err = ops.queryPastRegisteredOperatorEventsAndFillDb(ctx)
+		err = ops.queryPastRegisteredOperatorEventsAndFillDb(ctx, opts)
 		if err != nil {
 			ops.logger.Error(
 				"Fatal error querying past registered operator events and filling db",
@@ -275,7 +282,10 @@ func (ops *OperatorsInfoServiceInMemory) startServiceInGoroutine(
 	}()
 }
 
-func (ops *OperatorsInfoServiceInMemory) queryPastRegisteredOperatorEventsAndFillDb(ctx context.Context) error {
+func (ops *OperatorsInfoServiceInMemory) queryPastRegisteredOperatorEventsAndFillDb(
+	ctx context.Context,
+	opts Opts,
+) error {
 	// Querying with nil startBlock and stopBlock will return all events. It doesn't matter if we query some events that
 	// we will receive again in the websocket,
 	// since we will just overwrite the pubkey dict with the same values.
@@ -290,8 +300,8 @@ func (ops *OperatorsInfoServiceInMemory) queryPastRegisteredOperatorEventsAndFil
 	go func() {
 		alreadyRegisteredOperatorAddrs, alreadyRegisteredOperatorPubkeys, pubkeysErr = ops.avsRegistryReader.QueryExistingRegisteredOperatorPubKeys(
 			ctx,
-			nil,
-			nil,
+			opts.StartBlock,
+			opts.StopBlock,
 			ops.logFilterQueryBlockRange,
 		)
 		wg.Done()
@@ -301,8 +311,8 @@ func (ops *OperatorsInfoServiceInMemory) queryPastRegisteredOperatorEventsAndFil
 	go func() {
 		socketsMap, socketsErr = ops.avsRegistryReader.QueryExistingRegisteredOperatorSockets(
 			ctx,
-			nil,
-			nil,
+			opts.StartBlock,
+			opts.StopBlock,
 			ops.logFilterQueryBlockRange,
 		)
 		wg.Done()
@@ -328,7 +338,7 @@ func (ops *OperatorsInfoServiceInMemory) queryPastRegisteredOperatorEventsAndFil
 		// we print each socket info on a separate line because slog for some reason doesn't pass map keys via their
 		// LogValue() function, so operatorId (of custom type Bytes32) prints as a byte array instead of its hex
 		// representation from LogValue()
-		// passing the Bytes32 directly to an slog log statements does call LogValue() and prints the hex representation
+		// passing the Bytes32 directly to a slog log statements does call LogValue() and prints the hex representation
 		ops.logger.Debug(
 			"operator socket returned from registration events query",
 			"operatorId",
