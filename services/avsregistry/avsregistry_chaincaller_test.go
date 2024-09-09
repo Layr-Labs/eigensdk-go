@@ -2,7 +2,6 @@ package avsregistry
 
 import (
 	"context"
-	"encoding/hex"
 	"errors"
 
 	"math/big"
@@ -13,6 +12,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/internal/fakes"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
 	"github.com/Layr-Labs/eigensdk-go/types"
+
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -92,26 +92,8 @@ func TestAvsRegistryServiceChainCaller_getOperatorPubkeys(t *testing.T) {
 	}
 }
 
-// converts a hex string (starting with "0x") into a Bytes32.
-func NewBytes32FromString(hexString string) [32]byte {
-	var b32 [32]byte
-
-	// Remove the "0x" prefix if it's present
-	if len(hexString) >= 2 && hexString[:2] == "0x" {
-		hexString = hexString[2:]
-	}
-
-	// Decode the hex string
-	bytes, _ := hex.DecodeString(hexString)
-
-	// Copy the bytes into the Bytes32 array
-	copy(b32[:], bytes)
-	return b32
-}
-
 func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
 	logger := testutils.GetTestLogger()
-
 	testOperator1 := fakes.TestOperator{
 		OperatorAddr: common.HexToAddress("0x1"),
 		OperatorId:   types.OperatorId{1},
