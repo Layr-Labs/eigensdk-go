@@ -256,10 +256,18 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 	timeToExpiry time.Duration,
 	signedTaskRespsC <-chan types.SignedTaskResponseDigest,
 ) {
+	a.logger.Debug("AggregatorService goroutine processing new task",
+		"taskIndex", taskIndex,
+		"taskCreatedBlock", taskCreatedBlock)
+
 	defer a.closeTaskGoroutine(taskIndex)
 	quorumThresholdPercentagesMap := make(map[types.QuorumNum]types.QuorumThresholdPercentage)
 	for i, quorumNumber := range quorumNumbers {
 		quorumThresholdPercentagesMap[quorumNumber] = quorumThresholdPercentages[i]
+		a.logger.Debug("AggregatorService goroutine quorum threshold percentage",
+			"taskIndex", taskIndex,
+			"quorumNumber", quorumNumber,
+			"quorumThresholdPercentage", quorumThresholdPercentages[i])
 	}
 	operatorsAvsStateDict, err := a.avsRegistryService.GetOperatorsAvsStateAtBlock(
 		context.Background(),
@@ -302,6 +310,10 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 	totalStakePerQuorum := make(map[types.QuorumNum]*big.Int)
 	for quorumNum, quorumAvsState := range quorumsAvsStakeDict {
 		totalStakePerQuorum[quorumNum] = quorumAvsState.TotalStake
+		a.logger.Debug("Task goroutine quorum total stake",
+			"taskIndex", taskIndex,
+			"quorumNum", quorumNum,
+			"totalStake", quorumAvsState.TotalStake)
 	}
 	quorumApksG1 := []*bls.G1Point{}
 	for _, quorumNumber := range quorumNumbers {
@@ -354,6 +366,10 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 					),
 				}
 			} else {
+				a.logger.Debug("Task goroutine updating existing aggregated operator signatures",
+					"taskIndex", taskIndex,
+					"taskResponseDigest", taskResponseDigest)
+
 				digestAggregatedOperators.signersAggSigG1.Add(signedTaskResponseDigest.BlsSignature)
 				digestAggregatedOperators.signersApkG2.Add(operatorsAvsStateDict[signedTaskResponseDigest.OperatorId].OperatorInfo.Pubkeys.G2Pubkey)
 				digestAggregatedOperators.signersOperatorIdsSet[signedTaskResponseDigest.OperatorId] = true
@@ -376,6 +392,10 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 				totalStakePerQuorum,
 				quorumThresholdPercentagesMap,
 			) {
+				a.logger.Debug("Task goroutine stake threshold reached",
+					"taskIndex", taskIndex,
+					"taskResponseDigest", taskResponseDigest)
+
 				nonSignersOperatorIds := []types.OperatorId{}
 				for operatorId := range operatorsAvsStateDict {
 					if _, operatorSigned := digestAggregatedOperators.signersOperatorIdsSet[operatorId]; !operatorSigned {
@@ -523,6 +543,7 @@ func checkIfStakeThresholdsMet(
 	totalStakePerQuorum map[types.QuorumNum]*big.Int,
 	quorumThresholdPercentagesMap map[types.QuorumNum]types.QuorumThresholdPercentage,
 ) bool {
+	logger.Debug("Checking if stake thresholds are met.")
 	for quorumNum, quorumThresholdPercentage := range quorumThresholdPercentagesMap {
 		signedStakeByQuorum, ok := signedStakePerQuorum[quorumNum]
 		if !ok {
@@ -541,11 +562,20 @@ func checkIfStakeThresholdsMet(
 			return false
 		}
 
+		logger.Debug("Stakes for quorum",
+			"quorumNum", quorumNum,
+			"totalStakeByQuorum", totalStakeByQuorum,
+			"signedStakeByQuorum", signedStakeByQuorum)
+
 		// we check that signedStake >= totalStake * quorumThresholdPercentage / 100
 		// to be exact (and do like the contracts), we actually check that
 		// signedStake * 100 >= totalStake * quorumThresholdPercentage
 		signedStake := big.NewInt(0).Mul(signedStakeByQuorum, big.NewInt(100))
 		thresholdStake := big.NewInt(0).Mul(totalStakeByQuorum, big.NewInt(int64(quorumThresholdPercentage)))
+
+		logger.Debug("Checking if signed stake is greater than threshold",
+			"signedStake", signedStake,
+			"thresholdStake", thresholdStake)
 		if signedStake.Cmp(thresholdStake) < 0 {
 			return false
 		}
