@@ -1119,33 +1119,17 @@ func TestIntegrationBlsAgg(t *testing.T) {
 	require.NoError(t, err)
 	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
 	t.Run("1 quorums 1 operator", func(t *testing.T) {
-		type Input struct {
+		// read input from JSON if available, otherwise use default values
+		var defaultInput = struct {
 			QuorumNumbers              types.QuorumNums                 `json:"quorum_numbers"`
 			QuorumThresholdPercentages types.QuorumThresholdPercentages `json:"quorum_threshold_percentages"`
 			BlsPrivKey                 string                           `json:"bls_key"`
+		}{
+			QuorumNumbers:              types.QuorumNums{0},
+			QuorumThresholdPercentages: types.QuorumThresholdPercentages{100},
+			BlsPrivKey:                 "0x1",
 		}
-
-		type TestData struct {
-			Input Input `json:"input"`
-		}
-
-		// read input from json
-		test_data_path := os.Getenv("TEST_DATA_PATH")
-		data, err := os.ReadFile(test_data_path)
-		var testData TestData
-		if err != nil {
-			testData = TestData{
-				Input: Input{
-					QuorumNumbers:              types.QuorumNums{0},
-					QuorumThresholdPercentages: types.QuorumThresholdPercentages{100},
-					BlsPrivKey:                 "0x1",
-				},
-			}
-		} else {
-			if err := json.Unmarshal(data, &testData); err != nil {
-				t.Fatalf("Failed to unmarshal JSON data for test %s: %v", t.Name(), err)
-			}
-		}
+		testData := testutils.NewTestData(defaultInput)
 
 		// define operator ecdsa and bls private keys
 		ecdsaPrivKeyHex := "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"

@@ -94,6 +94,17 @@ func TestAvsRegistryServiceChainCaller_getOperatorPubkeys(t *testing.T) {
 
 func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
 	logger := testutils.GetTestLogger()
+
+	// read input from JSON if available, otherwise use default values
+	var defaultInput = struct {
+		QuorumNumbers types.QuorumNums `json:"quorum_numbers"`
+		BlockNum      uint32           `json:"block_num"`
+	}{
+		QuorumNumbers: types.QuorumNums{1},
+		BlockNum:      1,
+	}
+	testData := testutils.NewTestData(defaultInput)
+
 	testOperator1 := fakes.TestOperator{
 		OperatorAddr: common.HexToAddress("0x1"),
 		OperatorId:   types.OperatorId{1},
@@ -119,16 +130,16 @@ func TestAvsRegistryServiceChainCaller_GetOperatorsAvsState(t *testing.T) {
 	}{
 		{
 			name:               "should return operatorsAvsState",
-			queryQuorumNumbers: types.QuorumNums{1},
+			queryQuorumNumbers: testData.Input.QuorumNumbers,
 			operator:           &testOperator1,
-			queryBlockNum:      1,
+			queryBlockNum:      testData.Input.BlockNum,
 			wantErr:            nil,
 			wantOperatorsAvsStateDict: map[types.OperatorId]types.OperatorAvsState{
 				testOperator1.OperatorId: {
 					OperatorId:     testOperator1.OperatorId,
 					OperatorInfo:   testOperator1.OperatorInfo,
 					StakePerQuorum: map[types.QuorumNum]types.StakeAmount{1: big.NewInt(123)},
-					BlockNumber:    1,
+					BlockNumber:    testData.Input.BlockNum,
 				},
 			},
 		},
