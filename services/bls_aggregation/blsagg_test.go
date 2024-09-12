@@ -1119,11 +1119,23 @@ func TestIntegrationBlsAgg(t *testing.T) {
 	require.NoError(t, err)
 	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
 	t.Run("1 quorums 1 operator", func(t *testing.T) {
+		// read input from JSON if available, otherwise use default values
+		var defaultInput = struct {
+			QuorumNumbers              types.QuorumNums                 `json:"quorum_numbers"`
+			QuorumThresholdPercentages types.QuorumThresholdPercentages `json:"quorum_threshold_percentages"`
+			BlsPrivKey                 string                           `json:"bls_key"`
+		}{
+			QuorumNumbers:              types.QuorumNums{0},
+			QuorumThresholdPercentages: types.QuorumThresholdPercentages{100},
+			BlsPrivKey:                 "0x1",
+		}
+		testData := testutils.NewTestData(defaultInput)
+
 		// define operator ecdsa and bls private keys
 		ecdsaPrivKeyHex := "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
 		ecdsaPrivKey, err := crypto.HexToECDSA(ecdsaPrivKeyHex)
 		require.NoError(t, err)
-		blsPrivKeyHex := "0x1"
+		blsPrivKeyHex := testData.Input.BlsPrivKey
 		blsKeyPair := newBlsKeyPairPanics(blsPrivKeyHex)
 		operatorId := types.OperatorIdFromG1Pubkey(blsKeyPair.GetPubKeyG1())
 
@@ -1161,7 +1173,7 @@ func TestIntegrationBlsAgg(t *testing.T) {
 		blsAggServ := NewBlsAggregatorService(avsRegistryService, hashFunction, logger)
 
 		// register operator
-		quorumNumbers := types.QuorumNums{0}
+		quorumNumbers := testData.Input.QuorumNumbers
 		_, err = avsWriter.RegisterOperator(
 			context.Background(),
 			ecdsaPrivKey,
@@ -1181,7 +1193,7 @@ func TestIntegrationBlsAgg(t *testing.T) {
 		testutils.AdvanceChainByNBlocksExecInContainer(context.TODO(), 1, anvilC)
 		taskIndex := types.TaskIndex(0)
 		taskResponse := mockTaskResponse{123} // Initialize with appropriate data
-		quorumThresholdPercentages := []types.QuorumThresholdPercentage{100}
+		quorumThresholdPercentages := testData.Input.QuorumThresholdPercentages
 
 		// initialize the task
 		err = blsAggServ.InitializeNewTask(
