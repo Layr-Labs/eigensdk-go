@@ -35,9 +35,18 @@ func (f *fakeOperatorInfoService) GetOperatorInfo(
 
 func TestAvsRegistryServiceChainCaller_GetOperatorPubkeys(t *testing.T) {
 	logger := testutils.GetTestLogger()
-	testOperator1 := fakes.TestOperator{
+	var defaultInput = struct {
+		OperatorAddr common.Address   `json:"private_key_decimal"`
+		OperatorId   types.OperatorId `json:"operator_id"`
+	}{
 		OperatorAddr: common.HexToAddress("0x1"),
 		OperatorId:   types.OperatorId{1},
+	}
+	testData := testutils.NewTestData(defaultInput)
+
+	testOperator1 := fakes.TestOperator{
+		OperatorAddr: testData.Input.OperatorAddr,
+		OperatorId:   testData.Input.OperatorId,
 		OperatorInfo: types.OperatorInfo{
 			Pubkeys: types.OperatorPubkeys{
 				G1Pubkey: bls.NewG1Point(big.NewInt(1), big.NewInt(1)),
