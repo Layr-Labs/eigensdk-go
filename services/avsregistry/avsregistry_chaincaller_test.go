@@ -33,7 +33,7 @@ func (f *fakeOperatorInfoService) GetOperatorInfo(
 	return f.operatorInfo, true
 }
 
-func TestAvsRegistryServiceChainCaller_getOperatorPubkeys(t *testing.T) {
+func TestAvsRegistryServiceChainCaller_GetOperatorPubkeys(t *testing.T) {
 	logger := testutils.GetTestLogger()
 	testOperator1 := fakes.TestOperator{
 		OperatorAddr: common.HexToAddress("0x1"),
