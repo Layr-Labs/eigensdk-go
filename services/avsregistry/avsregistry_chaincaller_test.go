@@ -41,7 +41,7 @@ func TestAvsRegistryServiceChainCaller_GetOperatorPubkeys(t *testing.T) {
 		OperatorId   string             `json:"operator_id"`
 	}{
 		OperatorAddr: common.HexToAddress("0x1"),
-		OperatorId:   "1",
+		OperatorId:   "0000000000000000000000000000000000000000000000000000000000000001",
 	}
 	testData := testutils.NewTestData(defaultInput)
 
