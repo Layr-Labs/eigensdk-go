@@ -9,6 +9,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
 	avsdirectory "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IAVSDirectory"
+	allocationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IAllocationManager"
 	rewardscoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IRewardsCoordinator"
 	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/ISlasher"
 	strategymanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StrategyManager"
@@ -26,11 +27,13 @@ type ContractBindings struct {
 	DelegationManagerAddr     gethcommon.Address
 	AvsDirectoryAddr          gethcommon.Address
 	RewardsCoordinatorAddress gethcommon.Address
+	AllocationManagerAddr     gethcommon.Address
 	Slasher                   *slasher.ContractISlasher
 	DelegationManager         *delegationmanager.ContractDelegationManager
 	StrategyManager           *strategymanager.ContractStrategyManager
 	AvsDirectory              *avsdirectory.ContractIAVSDirectory
 	RewardsCoordinator        *rewardscoordinator.ContractIRewardsCoordinator
+	AllocationManager         *allocationmanager.ContractIAllocationManager
 }
 
 func NewBindingsFromConfig(
@@ -44,8 +47,10 @@ func NewBindingsFromConfig(
 		contractDelegationManager *delegationmanager.ContractDelegationManager
 		contractSlasher           *slasher.ContractISlasher
 		contractStrategyManager   *strategymanager.ContractStrategyManager
+		contractAllocationManager *allocationmanager.ContractIAllocationManager
 		slasherAddr               gethcommon.Address
 		strategyManagerAddr       gethcommon.Address
+		allocationManagerAddr     gethcommon.Address
 		avsDirectory              *avsdirectory.ContractIAVSDirectory
 		rewardsCoordinator        *rewardscoordinator.ContractIRewardsCoordinator
 	)
@@ -74,6 +79,15 @@ func NewBindingsFromConfig(
 		contractStrategyManager, err = strategymanager.NewContractStrategyManager(strategyManagerAddr, client)
 		if err != nil {
 			return nil, utils.WrapError("Failed to fetch StrategyManager contract", err)
+		}
+
+		allocationManagerAddr, err = contractDelegationManager.AllocationManager(&bind.CallOpts{})
+		if err != nil {
+			return nil, utils.WrapError("Failed to fetch AllocationManager address", err)
+		}
+		contractAllocationManager, err = allocationmanager.NewContractIAllocationManager(allocationManagerAddr, client)
+		if err != nil {
+			return nil, utils.WrapError("Failed to fetch AllocationManager contract", err)
 		}
 	}
 
@@ -106,6 +120,8 @@ func NewBindingsFromConfig(
 		DelegationManager:         contractDelegationManager,
 		AvsDirectory:              avsDirectory,
 		RewardsCoordinator:        rewardsCoordinator,
+		AllocationManager:         contractAllocationManager,
+		AllocationManagerAddr:     allocationManagerAddr,
 	}, nil
 }
 func isZeroAddress(address gethcommon.Address) bool {

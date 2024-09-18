@@ -6,12 +6,12 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
 	avsdirectory "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IAVSDirectory"
+	allocationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IAllocationManager"
 	erc20 "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IERC20"
 	rewardscoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IRewardsCoordinator"
 	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/ISlasher"
@@ -23,9 +23,9 @@ import (
 )
 
 type Config struct {
-	DelegationManagerAddress  common.Address
-	AvsDirectoryAddress       common.Address
-	RewardsCoordinatorAddress common.Address
+	DelegationManagerAddress  gethcommon.Address
+	AvsDirectoryAddress       gethcommon.Address
+	RewardsCoordinatorAddress gethcommon.Address
 }
 
 type ChainReader struct {
@@ -35,6 +35,7 @@ type ChainReader struct {
 	strategyManager    *strategymanager.ContractStrategyManager
 	avsDirectory       *avsdirectory.ContractIAVSDirectory
 	rewardsCoordinator *rewardscoordinator.ContractIRewardsCoordinator
+	allocationManager  *allocationmanager.ContractIAllocationManager
 	ethClient          eth.HttpBackend
 }
 
@@ -44,6 +45,7 @@ func NewChainReader(
 	strategyManager *strategymanager.ContractStrategyManager,
 	avsDirectory *avsdirectory.ContractIAVSDirectory,
 	rewardsCoordinator *rewardscoordinator.ContractIRewardsCoordinator,
+	allocationManager *allocationmanager.ContractIAllocationManager,
 	logger logging.Logger,
 	ethClient eth.HttpBackend,
 ) *ChainReader {
@@ -55,6 +57,7 @@ func NewChainReader(
 		strategyManager:    strategyManager,
 		avsDirectory:       avsDirectory,
 		rewardsCoordinator: rewardsCoordinator,
+		allocationManager:  allocationManager,
 		logger:             logger,
 		ethClient:          ethClient,
 	}
@@ -83,6 +86,7 @@ func BuildELChainReader(
 		elContractBindings.StrategyManager,
 		elContractBindings.AvsDirectory,
 		elContractBindings.RewardsCoordinator,
+		elContractBindings.AllocationManager,
 		logger,
 		ethClient,
 	), nil
@@ -107,6 +111,7 @@ func NewReaderFromConfig(
 		elContractBindings.StrategyManager,
 		elContractBindings.AvsDirectory,
 		elContractBindings.RewardsCoordinator,
+		elContractBindings.AllocationManager,
 		logger,
 		ethClient,
 	), nil
@@ -154,11 +159,11 @@ func (r *ChainReader) GetStrategyAndUnderlyingToken(
 ) (*strategy.ContractIStrategy, gethcommon.Address, error) {
 	contractStrategy, err := strategy.NewContractIStrategy(strategyAddr, r.ethClient)
 	if err != nil {
-		return nil, common.Address{}, utils.WrapError("Failed to fetch strategy contract", err)
+		return nil, gethcommon.Address{}, utils.WrapError("Failed to fetch strategy contract", err)
 	}
 	underlyingTokenAddr, err := contractStrategy.UnderlyingToken(opts)
 	if err != nil {
-		return nil, common.Address{}, utils.WrapError("Failed to fetch token contract", err)
+		return nil, gethcommon.Address{}, utils.WrapError("Failed to fetch token contract", err)
 	}
 	return contractStrategy, underlyingTokenAddr, nil
 }
@@ -170,15 +175,15 @@ func (r *ChainReader) GetStrategyAndUnderlyingERC20Token(
 ) (*strategy.ContractIStrategy, erc20.ContractIERC20Methods, gethcommon.Address, error) {
 	contractStrategy, err := strategy.NewContractIStrategy(strategyAddr, r.ethClient)
 	if err != nil {
-		return nil, nil, common.Address{}, utils.WrapError("Failed to fetch strategy contract", err)
+		return nil, nil, gethcommon.Address{}, utils.WrapError("Failed to fetch strategy contract", err)
 	}
 	underlyingTokenAddr, err := contractStrategy.UnderlyingToken(opts)
 	if err != nil {
-		return nil, nil, common.Address{}, utils.WrapError("Failed to fetch token contract", err)
+		return nil, nil, gethcommon.Address{}, utils.WrapError("Failed to fetch token contract", err)
 	}
 	contractUnderlyingToken, err := erc20.NewContractIERC20(underlyingTokenAddr, r.ethClient)
 	if err != nil {
-		return nil, nil, common.Address{}, utils.WrapError("Failed to fetch token contract", err)
+		return nil, nil, gethcommon.Address{}, utils.WrapError("Failed to fetch token contract", err)
 	}
 	return contractStrategy, contractUnderlyingToken, underlyingTokenAddr, nil
 }
@@ -298,21 +303,59 @@ func (r *ChainReader) GetAllocatableMagnitude(
 	operatorAddress gethcommon.Address,
 	strategyAddress gethcommon.Address,
 ) (uint64, error) {
-	if r.avsDirectory == nil {
-		return 0, errors.New("AVSDirectory contract not provided")
+	if r.allocationManager == nil {
+		return 0, errors.New("AllocationManager contract not provided")
 	}
 
-	return r.avsDirectory.GetAllocatableMagnitude(opts, operatorAddress, strategyAddress)
+	return r.allocationManager.GetAllocatableMagnitude(opts, operatorAddress, strategyAddress, 0)
 }
 
-func (r *ChainReader) GetLatestTotalMagnitude(
+func (r *ChainReader) GetTotalMagnitudes(
+	opts *bind.CallOpts,
+	operatorAddress gethcommon.Address,
+	strategyAddresses []gethcommon.Address,
+) ([]uint64, error) {
+	if r.allocationManager == nil {
+		return []uint64{}, errors.New("AllocationManager contract not provided")
+	}
+
+	return r.allocationManager.GetTotalMagnitudes(opts, operatorAddress, strategyAddresses)
+}
+
+func (r *ChainReader) GetCurrentSlashableMagnitudes(
+	opts *bind.CallOpts,
+	operatorAddress gethcommon.Address,
+	strategyAddresses []gethcommon.Address,
+) ([]allocationmanager.OperatorSet, [][]uint64, error) {
+	if r.allocationManager == nil {
+		return []allocationmanager.OperatorSet{}, [][]uint64{}, errors.New("AllocationManager contract not provided")
+	}
+
+	return r.allocationManager.GetCurrentSlashableMagnitudes(opts, operatorAddress, strategyAddresses)
+}
+
+func (r *ChainReader) GetPendingAllocations(
 	opts *bind.CallOpts,
 	operatorAddress gethcommon.Address,
 	strategyAddress gethcommon.Address,
-) (uint64, error) {
-	if r.avsDirectory == nil {
-		return 0, errors.New("AVSDirectory contract not provided")
+	operatorSets []allocationmanager.OperatorSet,
+) ([]uint64, []uint32, error) {
+	if r.allocationManager == nil {
+		return []uint64{}, []uint32{}, errors.New("AllocationManager contract not provided")
 	}
 
-	return r.avsDirectory.GetLatestTotalMagnitude(opts, operatorAddress, strategyAddress)
+	return r.allocationManager.GetPendingAllocations(opts, operatorAddress, strategyAddress, operatorSets)
+}
+
+func (r *ChainReader) GetPendingDeallocations(
+	opts *bind.CallOpts,
+	operatorAddress gethcommon.Address,
+	strategyAddress gethcommon.Address,
+	operatorSets []allocationmanager.OperatorSet,
+) ([]allocationmanager.IAllocationManagerPendingFreeMagnitude, error) {
+	if r.allocationManager == nil {
+		return []allocationmanager.IAllocationManagerPendingFreeMagnitude{}, errors.New("AllocationManager contract not provided")
+	}
+
+	return r.allocationManager.GetPendingDeallocations(opts, operatorAddress, strategyAddress, operatorSets)
 }

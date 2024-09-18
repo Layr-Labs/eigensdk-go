@@ -30,6 +30,7 @@ func BuildReadClients(
 		elContractBindings.StrategyManager,
 		elContractBindings.AvsDirectory,
 		elContractBindings.RewardsCoordinator,
+		elContractBindings.AllocationManager,
 		logger,
 		client,
 	)
@@ -59,6 +60,7 @@ func BuildClients(
 		elContractBindings.StrategyManager,
 		elContractBindings.AvsDirectory,
 		elContractBindings.RewardsCoordinator,
+		elContractBindings.AllocationManager,
 		logger,
 		client,
 	)
@@ -69,6 +71,7 @@ func BuildClients(
 		elContractBindings.StrategyManager,
 		elContractBindings.RewardsCoordinator,
 		elContractBindings.AvsDirectory,
+		elContractBindings.AllocationManager,
 		elContractBindings.StrategyManagerAddr,
 		elChainReader,
 		client,
