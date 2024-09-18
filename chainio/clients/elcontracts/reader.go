@@ -281,3 +281,14 @@ func (r *ChainReader) GetRootIndexFromHash(opts *bind.CallOpts, rootHash [32]byt
 
 	return r.rewardsCoordinator.GetRootIndexFromHash(opts, rootHash)
 }
+
+func (r *ChainReader) CheckClaim(
+	opts *bind.CallOpts,
+	claim rewardscoordinator.IRewardsCoordinatorRewardsMerkleClaim,
+) (bool, error) {
+	if r.rewardsCoordinator == nil {
+		return false, errors.New("RewardsCoordinator contract not provided")
+	}
+
+	return r.rewardsCoordinator.CheckClaim(opts, claim)
+}
