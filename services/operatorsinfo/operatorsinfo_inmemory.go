@@ -298,12 +298,10 @@ func (ops *OperatorsInfoServiceInMemory) queryPastRegisteredOperatorEventsAndFil
 	// starting the other
 	wg.Add(2)
 	go func() {
-		startBlock := new(big.Int).Set(opts.StartBlock)
-		stopBlock := new(big.Int).Set(opts.StopBlock)
 		alreadyRegisteredOperatorAddrs, alreadyRegisteredOperatorPubkeys, pubkeysErr = ops.avsRegistryReader.QueryExistingRegisteredOperatorPubKeys(
 			ctx,
-			startBlock,
-			stopBlock,
+			opts.StartBlock,
+			opts.StopBlock,
 			ops.logFilterQueryBlockRange,
 		)
 		wg.Done()
@@ -311,12 +309,10 @@ func (ops *OperatorsInfoServiceInMemory) queryPastRegisteredOperatorEventsAndFil
 	var socketsMap map[types.OperatorId]types.Socket
 	var socketsErr error
 	go func() {
-		startBlock := new(big.Int).Set(opts.StartBlock)
-		stopBlock := new(big.Int).Set(opts.StopBlock)
 		socketsMap, socketsErr = ops.avsRegistryReader.QueryExistingRegisteredOperatorSockets(
 			ctx,
-			startBlock,
-			stopBlock,
+			opts.StartBlock,
+			opts.StopBlock,
 			ops.logFilterQueryBlockRange,
 		)
 		wg.Done()
