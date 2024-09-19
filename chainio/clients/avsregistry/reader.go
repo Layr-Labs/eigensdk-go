@@ -426,11 +426,10 @@ func (r *ChainReader) QueryExistingRegisteredOperatorPubKeys(
 	if blockRange == nil {
 		blockRange = DefaultQueryBlockRange
 	}
-	startBlock = new(big.Int).Set(startBlock)
 
 	operatorAddresses := make([]types.OperatorAddr, 0)
 	operatorPubkeys := make([]types.OperatorPubkeys, 0)
-	for i := startBlock; i.Cmp(stopBlock) <= 0; i.Add(i, blockRange) {
+	for i := new(big.Int).Set(startBlock); i.Cmp(stopBlock) <= 0; i.Add(i, blockRange) {
 		// Subtract 1 since FilterQuery is inclusive
 		toBlock := big.NewInt(0).Add(i, big.NewInt(0).Sub(blockRange, big.NewInt(1)))
 		if toBlock.Cmp(stopBlock) > 0 {
@@ -520,10 +519,9 @@ func (r *ChainReader) QueryExistingRegisteredOperatorSockets(
 	if blockRange == nil {
 		blockRange = DefaultQueryBlockRange
 	}
-	startBlock = new(big.Int).Set(startBlock)
 
 	operatorIdToSocketMap := make(map[types.OperatorId]types.Socket)
-	for i := startBlock; i.Cmp(stopBlock) <= 0; i.Add(i, blockRange) {
+	for i := new(big.Int).Set(startBlock); i.Cmp(stopBlock) <= 0; i.Add(i, blockRange) {
 		// Subtract 1 since FilterQuery is inclusive
 		toBlock := big.NewInt(0).Add(i, big.NewInt(0).Sub(blockRange, big.NewInt(1)))
 		if toBlock.Cmp(stopBlock) > 0 {
