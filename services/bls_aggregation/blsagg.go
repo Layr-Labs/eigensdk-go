@@ -349,6 +349,11 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 			digestAggregatedOperators, ok := aggregatedOperatorsDict[taskResponseDigest]
 			if ok {
 				if digestAggregatedOperators.signersOperatorIdsSet[signedTaskResponseDigest.OperatorId] {
+					a.logger.Warn(
+						"Duplicate signature received",
+						"operatorId", fmt.Sprintf("%x", signedTaskResponseDigest.OperatorId),
+						"taskIndex", taskIndex,
+					)
 					signedTaskResponseDigest.SignatureVerificationErrorC <- fmt.Errorf("duplicate signature from operator %x for task %d", signedTaskResponseDigest.OperatorId, taskIndex)
 					continue
 				}
