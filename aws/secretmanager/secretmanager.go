@@ -2,7 +2,6 @@ package secretmanager
 
 import (
 	"context"
-	"log"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -12,7 +11,7 @@ import (
 func ReadStringFromSecretManager(ctx context.Context, secretName, region string) (string, error) {
 	config, err := config.LoadDefaultConfig(ctx, config.WithRegion(region))
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 
 	// Create Secrets Manager client
