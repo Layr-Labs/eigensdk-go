@@ -336,12 +336,6 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 				signedTaskResponseDigest,
 			)
 
-			err := a.verifySignature(taskIndex, signedTaskResponseDigest, operatorsAvsStateDict)
-			signedTaskResponseDigest.SignatureVerificationErrorC <- err
-			if err != nil {
-				continue
-			}
-
 			// compute the taskResponseDigest using the hash function
 			taskResponseDigest, err := a.hashFunction(signedTaskResponseDigest.TaskResponse)
 			if err != nil {
@@ -350,8 +344,23 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 				// happens..
 				continue
 			}
-			// after verifying signature we aggregate its sig and pubkey, and update the signed stake amount
+
+			// check if the operator has already signed for this digest
 			digestAggregatedOperators, ok := aggregatedOperatorsDict[taskResponseDigest]
+			if ok {
+				if digestAggregatedOperators.signersOperatorIdsSet[signedTaskResponseDigest.OperatorId] {
+					signedTaskResponseDigest.SignatureVerificationErrorC <- fmt.Errorf("duplicate signature from operator %x for task %d", signedTaskResponseDigest.OperatorId, taskIndex)
+					continue
+				}
+			}
+
+			err = a.verifySignature(taskIndex, signedTaskResponseDigest, operatorsAvsStateDict)
+			signedTaskResponseDigest.SignatureVerificationErrorC <- err
+			if err != nil {
+				continue
+			}
+
+			// after verifying signature we aggregate its sig and pubkey, and update the signed stake amount
 			if !ok {
 				// first operator to sign on this digest
 				digestAggregatedOperators = aggregatedOperators{
