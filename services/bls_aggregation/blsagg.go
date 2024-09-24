@@ -336,12 +336,29 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 				signedTaskResponseDigest,
 			)
 
+			err := a.verifySignature(taskIndex, signedTaskResponseDigest, operatorsAvsStateDict)
+			if err != nil {
+				a.logger.Info(
+					"Signature verification failed",
+					"taskIndex", taskIndex,
+					"operatorId", fmt.Sprintf("%x", signedTaskResponseDigest.OperatorId),
+					"error", err,
+				)
+				signedTaskResponseDigest.SignatureVerificationErrorC <- err
+				continue
+			}
+
 			// compute the taskResponseDigest using the hash function
 			taskResponseDigest, err := a.hashFunction(signedTaskResponseDigest.TaskResponse)
 			if err != nil {
 				// this error should never happen, because we've already hashed the taskResponse in verifySignature,
 				// but keeping here in case the verifySignature implementation ever changes or some catastrophic bug
 				// happens..
+				a.logger.Warn(
+					"Failed to hash task response",
+					"taskIndex", taskIndex,
+					"error", err,
+				)
 				continue
 			}
 
@@ -357,14 +374,6 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 					signedTaskResponseDigest.SignatureVerificationErrorC <- fmt.Errorf("duplicate signature from operator %x for task %d", signedTaskResponseDigest.OperatorId, taskIndex)
 					continue
 				}
-			}
-
-			err = a.verifySignature(taskIndex, signedTaskResponseDigest, operatorsAvsStateDict)
-			// return the err (or nil) to the operator, and then proceed to do aggregation logic asynchronously (when no
-			// error)
-			signedTaskResponseDigest.SignatureVerificationErrorC <- err
-			if err != nil {
-				continue
 			}
 
 			// after verifying signature we aggregate its sig and pubkey, and update the signed stake amount
