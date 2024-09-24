@@ -1,9 +1,9 @@
 package generate
 
 import (
+	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"math/rand"
 	"os"
 	"path/filepath"
 	"time"
