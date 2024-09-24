@@ -4,9 +4,9 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"math/big"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 
@@ -167,7 +167,7 @@ func generateBlsKeys(numKeys int, path string, passwordFile, privateKeyFile *os.
 			return err
 		}
 
-		password := generateRandomPassword()
+		password, err := generateRandomPassword()
 		if err != nil {
 			return err
 		}
@@ -214,7 +214,7 @@ func generateECDSAKeys(numKeys int, path string, passwordFile, privateKeyFile *o
 			return err
 		}
 
-		password := generateRandomPassword()
+		password, err := generateRandomPassword()
 		if err != nil {
 			return err
 		}
@@ -242,10 +242,7 @@ func generateECDSAKeys(numKeys int, path string, passwordFile, privateKeyFile *o
 	return nil
 }
 
-func generateRandomPassword() string {
-	// Seed the random number generator
-	random := rand.New(rand.NewSource(time.Now().UnixNano()))
-
+func generateRandomPassword() (string, error) {
 	// Define character sets for the password
 	uppercaseLetters := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	lowercaseLetters := "abcdefghijklmnopqrstuvwxyz"
@@ -262,7 +259,11 @@ func generateRandomPassword() string {
 	// Generate the password
 	password := make([]byte, passwordLength)
 	for i := range password {
-		password[i] = allCharacters[random.Intn(len(allCharacters))]
+		v, err := rand.Int(rand.Reader, big.NewInt(int64(len(allCharacters))))
+		if err != nil {
+			return "", err // Return empty string in case of error
+		}
+		password[i] = allCharacters[v.Int64()]
 	}
-	return string(password)
+	return string(password), nil
 }
