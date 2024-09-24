@@ -413,6 +413,101 @@ func TestBlsAgg(t *testing.T) {
 		}
 	})
 
+	t.Run("1 quorum 2 operators operator 1 double sign", func(t *testing.T) {
+		testOperator1 := types.TestOperator{
+			OperatorId:     types.OperatorId{1},
+			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100)},
+			BlsKeypair:     newBlsKeyPairPanics("0x1"),
+		}
+		testOperator2 := types.TestOperator{
+			OperatorId:     types.OperatorId{2},
+			StakePerQuorum: map[types.QuorumNum]types.StakeAmount{0: big.NewInt(100)},
+			BlsKeypair:     newBlsKeyPairPanics("0x2"),
+		}
+
+		blockNum := uint32(1)
+		taskIndex := types.TaskIndex(0)
+		quorumNumbers := types.QuorumNums{0}
+		quorumThresholdPercentages := []types.QuorumThresholdPercentage{100}
+		taskResponse := mockTaskResponse{123}
+
+		fakeAvsRegistryService := avsregistry.NewFakeAvsRegistryService(
+			blockNum,
+			[]types.TestOperator{testOperator1, testOperator2},
+		)
+		logger := testutils.GetTestLogger()
+		blsAggServ := NewBlsAggregatorService(fakeAvsRegistryService, hashFunction, logger)
+
+		logger.Info("Initializing new task", "taskIndex", taskIndex)
+		err := blsAggServ.InitializeNewTask(
+			taskIndex,
+			blockNum,
+			quorumNumbers,
+			quorumThresholdPercentages,
+			10*time.Second, // Longer expiry time for testing
+		)
+		require.NoError(t, err)
+
+		taskResponseDigest, err := hashFunction(taskResponse)
+		require.NoError(t, err)
+
+		logger.Info("Processing first signature", "operatorId", testOperator1.OperatorId)
+		blsSigOp1 := testOperator1.BlsKeypair.SignMessage(taskResponseDigest)
+		err = blsAggServ.ProcessNewSignature(
+			context.Background(),
+			taskIndex,
+			taskResponse,
+			blsSigOp1,
+			testOperator1.OperatorId,
+		)
+		require.NoError(t, err)
+
+		logger.Info("Processing second signature (Operator 1 double sign)", "operatorId", testOperator1.OperatorId)
+		blsSigOp1Dup := testOperator1.BlsKeypair.SignMessage(taskResponseDigest)
+		err = blsAggServ.ProcessNewSignature(
+			context.Background(),
+			taskIndex,
+			taskResponse,
+			blsSigOp1Dup,
+			testOperator1.OperatorId,
+		)
+
+		if err != nil {
+			logger.Info("Received error from second signature", "error", err)
+			require.Contains(t, err.Error(), "duplicate signature")
+		} else {
+			t.Fatal("Expected an error for duplicate signature, but got nil")
+		}
+
+		logger.Info("Processing second signature", "operatorId", testOperator2.OperatorId)
+		blsSigOp2 := testOperator2.BlsKeypair.SignMessage(taskResponseDigest)
+		err = blsAggServ.ProcessNewSignature(
+			context.Background(),
+			taskIndex,
+			taskResponse,
+			blsSigOp2,
+			testOperator2.OperatorId,
+		)
+		require.NoError(t, err)
+
+		wantAggregationServiceResponse := BlsAggregationServiceResponse{
+			Err:                 nil,
+			TaskIndex:           taskIndex,
+			TaskResponse:        taskResponse,
+			TaskResponseDigest:  taskResponseDigest,
+			NonSignersPubkeysG1: []*bls.G1Point{},
+			QuorumApksG1: []*bls.G1Point{testOperator1.BlsKeypair.GetPubKeyG1().
+				Add(testOperator2.BlsKeypair.GetPubKeyG1()),
+			},
+			SignersApkG2: testOperator1.BlsKeypair.GetPubKeyG2().
+				Add(testOperator2.BlsKeypair.GetPubKeyG2()),
+			SignersAggSigG1: testOperator1.BlsKeypair.SignMessage(taskResponseDigest).
+				Add(testOperator2.BlsKeypair.SignMessage(taskResponseDigest)),
+		}
+		gotAggregationServiceResponse := <-blsAggServ.aggregatedResponsesC
+		require.EqualValues(t, wantAggregationServiceResponse, gotAggregationServiceResponse)
+
+	})
 	t.Run("1 quorum 1 operator 0 signatures - task expired", func(t *testing.T) {
 		testOperator1 := types.TestOperator{
 			OperatorId:     types.OperatorId{1},
