@@ -360,6 +360,7 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 			}
 
 			err = a.verifySignature(taskIndex, signedTaskResponseDigest, operatorsAvsStateDict)
+                         // return the err (or nil) to the operator, and then proceed to do aggregation logic asynchronously (when no error)
 			signedTaskResponseDigest.SignatureVerificationErrorC <- err
 			if err != nil {
 				continue
