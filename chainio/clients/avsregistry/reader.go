@@ -432,7 +432,8 @@ func (r *ChainReader) QueryExistingRegisteredOperatorPubKeys(
 	// QueryExistingRegisteredOperatorPubKeys and QueryExistingRegisteredOperatorSockets
 	// both run in parallel and they read and mutate the same variable startBlock,
 	// so we clone it to prevent the race condition.
-	// TODO: we might want to eventually change the function signature to pass a uint, but that would be a breaking change
+	// TODO: we might want to eventually change the function signature to pass a uint,
+	// but that would be a breaking change
 	for i := new(big.Int).Set(startBlock); i.Cmp(stopBlock) <= 0; i.Add(i, blockRange) {
 		// Subtract 1 since FilterQuery is inclusive
 		toBlock := big.NewInt(0).Add(i, big.NewInt(0).Sub(blockRange, big.NewInt(1)))
@@ -528,7 +529,8 @@ func (r *ChainReader) QueryExistingRegisteredOperatorSockets(
 	// QueryExistingRegisteredOperatorPubKeys and QueryExistingRegisteredOperatorSockets
 	// both run in parallel and they read and mutate the same variable startBlock,
 	// so we clone it to prevent the race condition.
-	// TODO: we might want to eventually change the function signature to pass a uint, but that would be a breaking change
+	// TODO: we might want to eventually change the function signature to pass a uint,
+	// but that would be a breaking change
 	for i := new(big.Int).Set(startBlock); i.Cmp(stopBlock) <= 0; i.Add(i, blockRange) {
 		// Subtract 1 since FilterQuery is inclusive
 		toBlock := big.NewInt(0).Add(i, big.NewInt(0).Sub(blockRange, big.NewInt(1)))
