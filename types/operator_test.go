@@ -44,7 +44,8 @@ func TestOperatorValidate(t *testing.T) {
 		}
 		marshalledOperatorMetadata, err := json.Marshal(operatorMetadata)
 		require.NoError(t, err)
-		w.Write(marshalledOperatorMetadata)
+		_, err = w.Write(marshalledOperatorMetadata)
+		require.NoError(t, err)
 	}))
 	defer ts.Close()
 	fmt.Println(ts.URL)
