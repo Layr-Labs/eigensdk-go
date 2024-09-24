@@ -344,12 +344,12 @@ func (w *ChainWriter) RegisterOperator(
 	if err != nil {
 		return nil, err
 	}
-	curBlock, err := w.ethClient.BlockByNumber(context.Background(), big.NewInt(int64(curBlockNum)))
+	curBlock, err := w.ethClient.BlockByNumber(context.Background(), new(big.Int).SetUint64(curBlockNum))
 	if err != nil {
 		return nil, err
 	}
 	sigValidForSeconds := int64(60 * 60) // 1 hour
-	operatorToAvsRegistrationSigExpiry := big.NewInt(int64(curBlock.Time()) + sigValidForSeconds)
+	operatorToAvsRegistrationSigExpiry := new(big.Int).Add(new(big.Int).SetUint64(curBlock.Time()), big.NewInt(sigValidForSeconds))
 
 	// params to register operator in delegation manager's operator-avs mapping
 	msgToSign, err := w.elReader.CalculateOperatorAVSRegistrationDigestHash(
