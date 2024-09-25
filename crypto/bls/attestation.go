@@ -232,7 +232,7 @@ func (k *KeyPair) EncryptedString(path string, password string) ([]byte, error) 
 }
 
 func ReadPrivateKeyFromFile(path string, password string) (*KeyPair, error) {
-	keyStoreContents, err := os.ReadFile(path)
+	keyStoreContents, err := os.ReadFile(filepath.Clean(path))
 	if err != nil {
 		return nil, err
 	}
