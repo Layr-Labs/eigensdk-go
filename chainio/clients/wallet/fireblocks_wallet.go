@@ -97,9 +97,9 @@ func (t *fireblocksWallet) getAccount(ctx context.Context) (*fireblocks.VaultAcc
 		if err != nil {
 			return nil, fmt.Errorf("error listing vault accounts: %w", err)
 		}
-		for _, a := range accounts {
+		for i_a, a := range accounts {
 			if a.Name == t.vaultAccountName {
-				t.account = &a
+				t.account = &accounts[i_a]
 				break
 			}
 		}
@@ -121,11 +121,11 @@ func (f *fireblocksWallet) getWhitelistedAccount(
 		if err != nil {
 			return nil, fmt.Errorf("error listing external wallets: %w", err)
 		}
-		for _, a := range accounts {
+		for i_a, a := range accounts {
 			for _, asset := range a.Assets {
 				if asset.Address == address && asset.Status == "APPROVED" && asset.ID == assetID {
-					f.whitelistedAccounts[address] = &a
-					whitelistedAccount = &a
+					f.whitelistedAccounts[address] = &accounts[i_a]
+					whitelistedAccount = &accounts[i_a]
 					return whitelistedAccount, nil
 				}
 			}
@@ -152,11 +152,11 @@ func (t *fireblocksWallet) getWhitelistedContract(
 		if err != nil {
 			return nil, fmt.Errorf("error listing contracts: %w", err)
 		}
-		for _, c := range contracts {
+		for i_c, c := range contracts {
 			for _, a := range c.Assets {
 				if a.Address == address && a.Status == "APPROVED" && a.ID == assetID {
-					t.whitelistedContracts[address] = &c
-					contract = &c
+					t.whitelistedContracts[address] = &contracts[i_c]
+					contract = &contracts[i_c]
 					return contract, nil
 				}
 			}
