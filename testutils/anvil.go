@@ -131,6 +131,7 @@ func GetContractAddressesFromContractRegistry(ethHttpUrl string) (mockAvsContrac
 }
 
 func AdvanceChainByNBlocks(n int, anvilEndpoint string) {
+	// see https://book.getfoundry.sh/reference/anvil/#custom-methods
 	cmd := exec.Command("cast", "rpc", "anvil_mine", fmt.Sprintf("%d", n), "--rpc-url", anvilEndpoint)
 	err := cmd.Run()
 	if err != nil {
