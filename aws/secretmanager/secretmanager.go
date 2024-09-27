@@ -3,6 +3,7 @@ package secretmanager
 import (
 	"context"
 
+	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
@@ -11,7 +12,7 @@ import (
 func ReadStringFromSecretManager(ctx context.Context, secretName, region string) (string, error) {
 	config, err := config.LoadDefaultConfig(ctx, config.WithRegion(region))
 	if err != nil {
-		return "", err
+		return "", utils.WrapError("error while loading default config", err)
 	}
 
 	// Create Secrets Manager client
@@ -26,7 +27,7 @@ func ReadStringFromSecretManager(ctx context.Context, secretName, region string)
 	if err != nil {
 		// For a list of exceptions thrown, see
 		// https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
-		return "", err
+		return "", utils.WrapError("error while loading default config", err)
 	}
 
 	// Decrypts secret using the associated KMS key.
