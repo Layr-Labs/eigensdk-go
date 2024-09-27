@@ -148,6 +148,23 @@ type BlsAggregatorService struct {
 
 var _ BlsAggregationService = (*BlsAggregatorService)(nil)
 
+// NewBlsAggregatorService creates a new BlsAggregatorService
+// avsRegistryService is the AVS registry service to use
+// hashFunction is the hash function to use to compute the taskResponseDigest from the taskResponse
+// logger is the logger to use
+//
+// An example of hashFunction is the one defined in blsagg_test.go:
+// ```go
+//
+//	hashFunction := func(taskResponse types.TaskResponse) (types.TaskResponseDigest, error) {
+//		taskResponseBytes, err := json.Marshal(taskResponse)
+//		if err != nil {
+//			return types.TaskResponseDigest{}, err
+//		}
+//		return types.TaskResponseDigest(sha256.Sum256(taskResponseBytes)), nil
+//	}
+//
+// ```
 func NewBlsAggregatorService(
 	avsRegistryService avsregistry.AvsRegistryService,
 	hashFunction types.TaskResponseHashFunction,
