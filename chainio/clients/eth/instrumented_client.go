@@ -376,7 +376,7 @@ func (iec *InstrumentedClient) TransactionByHash(
 	if err != nil {
 		return nil, false, err
 	}
-	rpcRequestDuration := time.Since(start)
+	rpcRequestDuration := time.Since(start).Seconds()
 	// we only observe the duration of successful calls (even though this is not well defined in the spec)
 	iec.rpcCallsCollector.ObserveRPCRequestDurationSeconds(
 		float64(rpcRequestDuration),
@@ -455,7 +455,7 @@ func instrumentFunction[T any](
 	if err != nil {
 		return value, err
 	}
-	rpcRequestDuration := time.Since(start)
+	rpcRequestDuration := time.Since(start).Seconds()
 	// we only observe the duration of successful calls (even though this is not well defined in the spec)
 	iec.rpcCallsCollector.ObserveRPCRequestDurationSeconds(
 		float64(rpcRequestDuration),
