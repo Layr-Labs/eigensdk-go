@@ -9,9 +9,11 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
+	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/signerv2"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
+	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stretchr/testify/require"
@@ -21,15 +23,18 @@ func TestWriterMethods(t *testing.T) {
 	anvilStateFileName := "contracts-deployed-anvil-state.json"
 	anvilC, err := testutils.StartAnvilContainer(anvilStateFileName)
 	require.NoError(t, err)
+
 	anvilHttpEndpoint, err := anvilC.Endpoint(context.Background(), "http")
 	require.NoError(t, err)
 
 	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
 	ethHttpClient, err := ethclient.Dial(anvilHttpEndpoint)
 	require.NoError(t, err)
+
 	logger := logging.NewTextSLogger(os.Stdout, &logging.SLoggerOptions{Level: slog.LevelDebug})
 
-	ecdsaPrivateKey, err := crypto.HexToECDSA("0x0")
+	ecdsaPrivKeyHex := "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+	ecdsaPrivateKey, err := crypto.HexToECDSA(ecdsaPrivKeyHex)
 	require.NoError(t, err)
 
 	rpcCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -49,4 +54,15 @@ func TestWriterMethods(t *testing.T) {
 		OperatorStateRetrieverAddress: contractAddrs.OperatorStateRetriever,
 	}, ethHttpClient, txMgr, logger)
 	require.NoError(t, err)
+
+	t.Run("register operator", func(t *testing.T) {
+		quorumNumbers := types.QuorumNums{0}
+
+		keypair, err := bls.NewKeyPairFromString("0x01")
+		require.NoError(t, err)
+
+		receipt, err := chainWriter.RegisterOperator(context.Background(), ecdsaPrivateKey, keypair, quorumNumbers, "", false)
+		require.NoError(t, err)
+		require.NotNil(t, receipt)
+	})
 }
