@@ -282,6 +282,18 @@ func (r *ChainReader) GetRootIndexFromHash(opts *bind.CallOpts, rootHash [32]byt
 	return r.rewardsCoordinator.GetRootIndexFromHash(opts, rootHash)
 }
 
+func (r *ChainReader) GetCumulativeClaimed(
+	opts *bind.CallOpts,
+	earner gethcommon.Address,
+	token gethcommon.Address,
+) (*big.Int, error) {
+	if r.rewardsCoordinator == nil {
+		return nil, errors.New("RewardsCoordinator contract not provided")
+	}
+
+	return r.rewardsCoordinator.CumulativeClaimed(opts, earner, token)
+}
+
 func (r *ChainReader) CheckClaim(
 	opts *bind.CallOpts,
 	claim rewardscoordinator.IRewardsCoordinatorRewardsMerkleClaim,
