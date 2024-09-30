@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"time"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
@@ -43,7 +44,7 @@ func ExampleGeometricTxManager() {
 	client, txmgr := createTxMgr(anvilUrl, ecdsaPrivateKey)
 
 	tx := createTx(client, address)
-	_, err = txmgr.Send(context.TODO(), tx, true)
+	_, err = txmgr.Send(context.TODO(), tx, true, 2*time.Second)
 	if err != nil {
 		panic(err)
 	}

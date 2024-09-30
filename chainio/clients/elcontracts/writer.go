@@ -3,6 +3,7 @@ package elcontracts
 import (
 	"context"
 	"errors"
+	"time"
 
 	"math/big"
 
@@ -181,7 +182,7 @@ func (w *ChainWriter) RegisterAsOperator(
 	if err != nil {
 		return nil, err
 	}
-	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt)
+	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt, 2*time.Second)
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
@@ -217,7 +218,7 @@ func (w *ChainWriter) UpdateOperatorDetails(
 	if err != nil {
 		return nil, err
 	}
-	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt)
+	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt, 2*time.Second)
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
@@ -247,7 +248,7 @@ func (w *ChainWriter) UpdateMetadataURI(ctx context.Context, uri string, waitFor
 	if err != nil {
 		return nil, err
 	}
-	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt)
+	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt, 2*time.Second)
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
@@ -287,7 +288,7 @@ func (w *ChainWriter) DepositERC20IntoStrategy(
 	if err != nil {
 		return nil, errors.Join(errors.New("failed to approve token transfer"), err)
 	}
-	_, err = w.txMgr.Send(ctx, tx, waitForReceipt)
+	_, err = w.txMgr.Send(ctx, tx, waitForReceipt, 2*time.Second)
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
@@ -296,7 +297,7 @@ func (w *ChainWriter) DepositERC20IntoStrategy(
 	if err != nil {
 		return nil, err
 	}
-	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt)
+	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt, 2*time.Second)
 	if err != nil {
 		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
@@ -323,7 +324,7 @@ func (w *ChainWriter) SetClaimerFor(
 	if err != nil {
 		return nil, err
 	}
-	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt)
+	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt, 2*time.Second)
 	if err != nil {
 		return nil, utils.WrapError("failed to send tx", err)
 	}
@@ -350,7 +351,7 @@ func (w *ChainWriter) ProcessClaim(
 	if err != nil {
 		return nil, utils.WrapError("failed to create ProcessClaim tx", err)
 	}
-	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt)
+	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt, 2*time.Second)
 	if err != nil {
 		return nil, utils.WrapError("failed to send tx", err)
 	}
@@ -387,7 +388,7 @@ func (w *ChainWriter) ForceDeregisterFromOperatorSets(
 		return nil, utils.WrapError("failed to create ForceDeregisterFromOperatorSets tx", err)
 	}
 
-	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt)
+	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt, 2*time.Second)
 	if err != nil {
 		return nil, utils.WrapError("failed to send tx", err)
 	}
@@ -416,7 +417,7 @@ func (w *ChainWriter) SetOperatorCommissionBips(
 		return nil, utils.WrapError("failed to create SetOperatorCommissionBips tx", err)
 	}
 
-	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt)
+	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt, 2*time.Second)
 	if err != nil {
 		return nil, utils.WrapError("failed to send tx", err)
 	}

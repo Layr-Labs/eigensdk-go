@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"os"
 	"testing"
+	"time"
 
 	eigenkms "github.com/Layr-Labs/eigensdk-go/aws/kms"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
@@ -116,7 +117,7 @@ func TestSendTransaction(t *testing.T) {
 		Nonce:   0,
 		To:      &zeroAddr,
 		Value:   big.NewInt(1_000_000_000_000_000_000),
-	}), true)
+	}), true, 2*time.Second)
 	assert.Nil(t, err)
 	assert.NotNil(t, receipt)
 	balance, err := ethClient.BalanceAt(context.Background(), keyAddr, nil)
