@@ -69,7 +69,7 @@ func TestWriterMethods(t *testing.T) {
 			keypair,
 			quorumNumbers,
 			"",
-			false,
+			true,
 		)
 		require.NoError(t, err)
 		require.NotNil(t, receipt)
