@@ -2,92 +2,86 @@ package elcontracts_test
 
 import (
 	"context"
+	"log/slog"
+	"os"
 	"testing"
-	"time"
 
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients"
+	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
-	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/Layr-Labs/eigensdk-go/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestChainWriter(t *testing.T) {
-	anvil, err := testutils.StartAnvilContainer("")
-	defer anvil.Terminate(context.Background())
-
-	// Setup ethclient
-	ctxWithTimeout, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	anvilHttpEndpoint, err := anvil.Endpoint(ctxWithTimeout, "http")
-	require.NoError(t, err)
-	ethClient, err := ethclient.Dial(anvilHttpEndpoint)
+	anvilStateFileName := "contracts-deployed-anvil-state.json"
+	anvilC, err := testutils.StartAnvilContainer(anvilStateFileName)
 	require.NoError(t, err)
 
-	/*
-		// Setup el_chain_reader
-		elChainReader, err := setupELChainReader(httpEndpoint)
-		assert.NoError(t, err)
+	anvilHttpEndpoint, err := anvilC.Endpoint(context.Background(), "http")
+	require.NoError(t, err)
 
-		// Setup operator address and private key
-		operatorAddr := common.HexToAddress("90F79bf6EB2c4f870365E785982E1f101E93b906")
-		operatorPrivateKey := "7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6"
+	defer anvilC.Terminate(context.Background())
+	logger := logging.NewTextSLogger(os.Stdout, &logging.SLoggerOptions{Level: slog.LevelDebug})
 
-		// Get strategy manager address
-		strategyManagerAddr, err := getStrategyManagerAddress(httpEndpoint)
-		assert.NoError(t, err)
+	ecdsaPrivKeyHex := "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+	ecdsaPrivateKey, err := crypto.HexToECDSA(ecdsaPrivKeyHex)
+	require.NoError(t, err)
 
-		// Setup ChainWriter
-		logger := logging.NewNoopLogger()
-		txMgr := txmgr.NewSimpleTxManager(ethClient, logger)
-		elChainWriter, err := NewWriterFromConfig(Config{
-			StrategyManagerAddr: strategyManagerAddr,
-		}, ethClient, logger, nil, txMgr)
-		assert.NoError(t, err)
+	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
+	require.NoError(t, err)
 
-		// Define an operator
-		wallet, err := crypto.HexToECDSA("bead471191bea97fc3aeac36c9d74c895e8a6242602e144e43152f96219e96e8")
-		assert.NoError(t, err)
-		walletAddress := crypto.PubkeyToAddress(wallet.PublicKey)
+	RegistryCoordinatorAddress := contractAddrs.RegistryCoordinator
+	OperatorStateRetrieverAddress := contractAddrs.OperatorStateRetriever
 
-		operator := types.Operator{
-			Address:                   walletAddress.Hex(),
-			EarningsReceiverAddress:   walletAddress.Hex(),
-			DelegationApproverAddress: walletAddress.Hex(),
-			StakerOptOutWindowBlocks:  big.NewInt(3),
-			MetadataUrl:               "eigensdk-go",
+	chainioConfig := clients.BuildAllConfig{
+		EthHttpUrl:                 "http://localhost:8545",
+		EthWsUrl:                   "ws://localhost:8545",
+		RegistryCoordinatorAddr:    RegistryCoordinatorAddress.String(),
+		OperatorStateRetrieverAddr: OperatorStateRetrieverAddress.String(),
+		AvsName:                    "exampleAvs",
+		PromMetricsIpPortAddress:   ":9090",
+	}
+
+	//// Setup el_chain_reader
+	clients, err := clients.BuildAll(
+		chainioConfig,
+		ecdsaPrivateKey,
+		logger,
+	)
+	require.NoError(t, err)
+
+	// Define an operator
+	operator :=
+		types.Operator{
+			Address:                   "0xd5e099c71b797516c10ed0f0d895f429c2781142",
+			DelegationApproverAddress: "0xd5e099c71b797516c10ed0f0d895f429c2781142",
+			StakerOptOutWindowBlocks:  100,
+			MetadataUrl:               "https://madhur-test-public.s3.us-east-2.amazonaws.com/metadata.json",
 		}
 
-		// Test 1: Register as an operator
-		receipt, err := elChainWriter.RegisterAsOperator(context.Background(), operator, true)
-		assert.NoError(t, err)
-		assert.True(t, receipt.Status == 1)
+	// Test 1: Register as an operator
+	receipt, err := clients.ElChainWriter.RegisterAsOperator(context.Background(), operator, true)
+	assert.NoError(t, err)
+	assert.True(t, receipt.Status == 1)
 
-		// Test 2: Update operator details
-		walletModified, err := crypto.HexToECDSA("2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6")
-		assert.NoError(t, err)
-		walletModifiedAddress := crypto.PubkeyToAddress(walletModified.PublicKey)
+	// Test 2: Update operator details
+	walletModified, err := crypto.HexToECDSA("2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6")
+	assert.NoError(t, err)
+	walletModifiedAddress := crypto.PubkeyToAddress(walletModified.PublicKey)
 
-		operatorModified := types.Operator{
-			Address:                   walletModifiedAddress.Hex(),
-			EarningsReceiverAddress:   walletModifiedAddress.Hex(),
-			DelegationApproverAddress: walletModifiedAddress.Hex(),
-			StakerOptOutWindowBlocks:  big.NewInt(3),
-			MetadataUrl:               "eigensdk-go",
-		}
+	operatorModified := types.Operator{
+		Address:                   walletModifiedAddress.Hex(),
+		DelegationApproverAddress: walletModifiedAddress.Hex(),
+		StakerOptOutWindowBlocks:  101,
+		MetadataUrl:               "eigensdk-go",
+	}
 
-		receipt, err = elChainWriter.UpdateOperatorDetails(context.Background(), operatorModified, true)
-		assert.NoError(t, err)
-		assert.True(t, receipt.Status == 1)
+	receipt, err = clients.ElChainWriter.UpdateOperatorDetails(context.Background(), operatorModified, true)
+	assert.NoError(t, err)
+	assert.True(t, receipt.Status == 1)
 
-		// Test 3: Deposit ERC20 into strategy
-		amount := big.NewInt(100)
-		strategyAddr, err := getERC20MockStrategy(httpEndpoint)
-		assert.NoError(t, err)
-
-		receipt, err = elChainWriter.DepositERC20IntoStrategy(context.Background(), strategyAddr, amount, true)
-		assert.NoError(t, err)
-		assert.True(t, receipt.Status == 1)
-
-	*/
 	assert.Equal(t, "1234", "1234")
 }
