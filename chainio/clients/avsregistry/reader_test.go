@@ -3,6 +3,7 @@ package avsregistry
 import (
 	"context"
 	"log/slog"
+	"math/big"
 	"os"
 	"testing"
 
@@ -81,17 +82,13 @@ func TestReaderMethods(t *testing.T) {
 		require.Equal(t, 0, len(stakes))
 	})
 
-	t.Run("get check signatures indices", func(t *testing.T) {
+	t.Run("get check signatures indices returns error for non-registered operator", func(t *testing.T) {
 		operatorAddress := common.Address{0x1}
 		operatorId, err := chainReader.GetOperatorId(&bind.CallOpts{}, operatorAddress)
 		require.NoError(t, err)
 
-		checkSignaturesIndices, err := chainReader.GetCheckSignaturesIndices(&bind.CallOpts{}, 100, quorumNumbers, []types.OperatorId{operatorId})
-		require.NoError(t, err)
-		require.Equal(t, 0, len(checkSignaturesIndices.NonSignerQuorumBitmapIndices))
-		require.Equal(t, 0, len(checkSignaturesIndices.NonSignerStakeIndices))
-		require.Equal(t, 0, len(checkSignaturesIndices.QuorumApkIndices))
-		require.Equal(t, 0, len(checkSignaturesIndices.TotalStakeIndices))
+		_, err = chainReader.GetCheckSignaturesIndices(&bind.CallOpts{}, 100, quorumNumbers, []types.OperatorId{operatorId})
+		require.Contains(t, err.Error(), "Failed to get check signatures indices")
 	})
 
 	t.Run("get operator id", func(t *testing.T) {
@@ -109,5 +106,32 @@ func TestReaderMethods(t *testing.T) {
 		retrievedAddress, err := chainReader.GetOperatorFromId(&bind.CallOpts{}, operatorId)
 		require.NoError(t, err)
 		require.Equal(t, retrievedAddress, common.Address{0x0})
+	})
+
+	t.Run("query registration detail", func(t *testing.T) {
+		operatorAddress := common.HexToAddress("0x1234567890123456789012345678901234567890")
+		quorums, err := chainReader.QueryRegistrationDetail(&bind.CallOpts{}, operatorAddress)
+		require.NoError(t, err)
+		require.Equal(t, 1, len(quorums))
+	})
+
+	t.Run("is operator registered", func(t *testing.T) {
+		operatorAddress := common.HexToAddress("0x1234567890123456789012345678901234567890")
+		isRegistered, err := chainReader.IsOperatorRegistered(&bind.CallOpts{}, operatorAddress)
+		require.NoError(t, err)
+		require.False(t, isRegistered)
+	})
+
+	t.Run("query existing registered operator pub keys", func(t *testing.T) {
+		addresses, pubKeys, err := chainReader.QueryExistingRegisteredOperatorPubKeys(context.Background(), big.NewInt(0), nil, nil)
+		require.NoError(t, err)
+		require.Equal(t, 0, len(pubKeys))
+		require.Equal(t, 0, len(addresses))
+	})
+
+	t.Run("query existing registered operator sockets", func(t *testing.T) {
+		address_to_sockets, err := chainReader.QueryExistingRegisteredOperatorSockets(context.Background(), big.NewInt(0), nil, nil)
+		require.NoError(t, err)
+		require.Equal(t, 0, len(address_to_sockets))
 	})
 }
