@@ -2,6 +2,7 @@ package txmgr
 
 import (
 	"context"
+	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -11,7 +12,7 @@ type TxManager interface {
 	// Send is used to sign and send a transaction to an evm chain
 	// It takes an unsigned transaction and then signs it before sending
 	// It might also take care of nonce management and gas estimation, depending on the implementation
-	Send(ctx context.Context, tx *types.Transaction, waitForReceipt bool) (*types.Receipt, error)
+	Send(ctx context.Context, tx *types.Transaction, waitForReceipt bool, waitForDuration time.Duration) (*types.Receipt, error)
 
 	// GetNoSendTxOpts generates a TransactOpts with
 	// - NoSend=true: b/c we want to manage the sending ourselves

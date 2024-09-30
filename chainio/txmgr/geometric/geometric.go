@@ -173,6 +173,7 @@ func (t *GeometricTxManager) Send(
 	ctx context.Context,
 	tx *types.Transaction,
 	waitForReceipt bool,
+	waitForDuration time.Duration,
 ) (*types.Receipt, error) {
 	return t.processTransaction(ctx, newTxnRequest(tx))
 }

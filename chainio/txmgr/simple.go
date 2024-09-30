@@ -72,6 +72,7 @@ func (m *SimpleTxManager) Send(
 	ctx context.Context,
 	tx *types.Transaction,
 	waitForReceipt bool,
+	waitForDuration time.Duration,
 ) (*types.Receipt, error) {
 
 	r, err := m.send(ctx, tx)
@@ -82,7 +83,7 @@ func (m *SimpleTxManager) Send(
 		return r, nil
 	}
 
-	receipt, err := m.waitForReceipt(ctx, r.TxHash.Hex())
+	receipt, err := m.waitForReceipt(ctx, r.TxHash.Hex(), waitForDuration)
 	if err != nil {
 		log.Info("Transaction receipt not found", "err", err)
 		return nil, err
@@ -132,9 +133,11 @@ func (m *SimpleTxManager) GetNoSendTxOpts() (*bind.TransactOpts, error) {
 	}, nil
 }
 
-func (m *SimpleTxManager) waitForReceipt(ctx context.Context, txID wallet.TxID) (*types.Receipt, error) {
-	// TODO: make this ticker adjustable
-	queryTicker := time.NewTicker(2 * time.Second)
+func (m *SimpleTxManager) waitForReceipt(ctx context.Context, txID wallet.TxID, waitForDuration time.Duration) (*types.Receipt, error) {
+	if waitForDuration <= 0 {
+		waitForDuration = 2 * time.Second
+	}
+	queryTicker := time.NewTicker(waitForDuration)
 	defer queryTicker.Stop()
 	for {
 		select {
