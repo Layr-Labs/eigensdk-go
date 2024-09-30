@@ -29,7 +29,7 @@ func TestChainWriter(t *testing.T) {
 	defer anvilC.Terminate(context.Background())
 	logger := logging.NewTextSLogger(os.Stdout, &logging.SLoggerOptions{Level: slog.LevelDebug})
 
-	ecdsaPrivKeyHex := "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+	ecdsaPrivKeyHex := "7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6"
 	ecdsaPrivateKey, err := crypto.HexToECDSA(ecdsaPrivKeyHex)
 	require.NoError(t, err)
 
@@ -59,7 +59,7 @@ func TestChainWriter(t *testing.T) {
 	// Define an operator
 	operator :=
 		types.Operator{
-			Address:                   "0xd5e099c71b797516c10ed0f0d895f429c2781142",
+			Address:                   "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
 			DelegationApproverAddress: "0xd5e099c71b797516c10ed0f0d895f429c2781142",
 			StakerOptOutWindowBlocks:  100,
 			MetadataUrl:               "https://madhur-test-public.s3.us-east-2.amazonaws.com/metadata.json",
