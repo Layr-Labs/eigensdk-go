@@ -76,19 +76,33 @@ func TestWriterMethods(t *testing.T) {
 	})
 
 	t.Run("update stake of operator subset", func(t *testing.T) {
-		receipt, err := chainWriter.UpdateStakesOfOperatorSubsetForAllQuorums(context.Background(), []gethcommon.Address{addr}, true)
+		receipt, err := chainWriter.UpdateStakesOfOperatorSubsetForAllQuorums(
+			context.Background(),
+			[]gethcommon.Address{addr},
+			true,
+		)
 		require.NoError(t, err)
 		require.NotNil(t, receipt)
 	})
 
 	t.Run("update stake of entire operator set", func(t *testing.T) {
-		receipt, err := chainWriter.UpdateStakesOfEntireOperatorSetForQuorums(context.Background(), [][]gethcommon.Address{{addr}}, quorumNumbers, true)
+		receipt, err := chainWriter.UpdateStakesOfEntireOperatorSetForQuorums(
+			context.Background(),
+			[][]gethcommon.Address{{addr}},
+			quorumNumbers,
+			true,
+		)
 		require.NoError(t, err)
 		require.NotNil(t, receipt)
 	})
 
 	t.Run("deregister operator", func(t *testing.T) {
-		receipt, err := chainWriter.DeregisterOperator(context.Background(), quorumNumbers, chainioutils.ConvertToBN254G1Point(keypair.PubKey), true)
+		receipt, err := chainWriter.DeregisterOperator(
+			context.Background(),
+			quorumNumbers,
+			chainioutils.ConvertToBN254G1Point(keypair.PubKey),
+			true,
+		)
 		require.NoError(t, err)
 		require.NotNil(t, receipt)
 	})
