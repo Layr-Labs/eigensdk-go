@@ -63,7 +63,8 @@ func TestReaderMethods(t *testing.T) {
 	})
 
 	t.Run(
-		"get operators stake in quorums of operator at block returns error for non-registered operator", func(t *testing.T) {
+		"get operators stake in quorums of operator at block returns error for non-registered operator",
+		func(t *testing.T) {
 			operatorAddress := common.Address{0x1}
 			operatorId, err := chainReader.GetOperatorId(&bind.CallOpts{}, operatorAddress)
 			require.NoError(t, err)
@@ -74,7 +75,8 @@ func TestReaderMethods(t *testing.T) {
 		})
 
 	t.Run(
-		"get single operator stake in quorums of operator at current block returns error for non-registered operator", func(t *testing.T) {
+		"get single operator stake in quorums of operator at current block returns error for non-registered operator",
+		func(t *testing.T) {
 			operatorAddress := common.Address{0x1}
 			operatorId, err := chainReader.GetOperatorId(&bind.CallOpts{}, operatorAddress)
 			require.NoError(t, err)
