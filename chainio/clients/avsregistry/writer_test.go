@@ -14,6 +14,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/signerv2"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
 	"github.com/Layr-Labs/eigensdk-go/types"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stretchr/testify/require"
@@ -55,13 +56,32 @@ func TestWriterMethods(t *testing.T) {
 	}, ethHttpClient, txMgr, logger)
 	require.NoError(t, err)
 
+	keypair, err := bls.NewKeyPairFromString("0x01")
+	require.NoError(t, err)
+
+	quorumNumbers := types.QuorumNums{0}
+
 	t.Run("register operator", func(t *testing.T) {
-		quorumNumbers := types.QuorumNums{0}
-
-		keypair, err := bls.NewKeyPairFromString("0x01")
+		receipt, err := chainWriter.RegisterOperator(
+			context.Background(),
+			ecdsaPrivateKey,
+			keypair,
+			quorumNumbers,
+			"",
+			false,
+		)
 		require.NoError(t, err)
+		require.NotNil(t, receipt)
+	})
 
-		receipt, err := chainWriter.RegisterOperator(context.Background(), ecdsaPrivateKey, keypair, quorumNumbers, "", false)
+	t.Run("update stake of operator subset", func(t *testing.T) {
+		receipt, err := chainWriter.UpdateStakesOfOperatorSubsetForAllQuorums(context.Background(), []gethcommon.Address{addr}, true)
+		require.NoError(t, err)
+		require.NotNil(t, receipt)
+	})
+
+	t.Run("update stake of entire operator set", func(t *testing.T) {
+		receipt, err := chainWriter.UpdateStakesOfEntireOperatorSetForQuorums(context.Background(), [][]gethcommon.Address{{addr}}, quorumNumbers, true)
 		require.NoError(t, err)
 		require.NotNil(t, receipt)
 	})
