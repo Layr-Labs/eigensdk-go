@@ -9,6 +9,7 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
+	chainioutils "github.com/Layr-Labs/eigensdk-go/chainio/utils"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/signerv2"
@@ -82,6 +83,12 @@ func TestWriterMethods(t *testing.T) {
 
 	t.Run("update stake of entire operator set", func(t *testing.T) {
 		receipt, err := chainWriter.UpdateStakesOfEntireOperatorSetForQuorums(context.Background(), [][]gethcommon.Address{{addr}}, quorumNumbers, true)
+		require.NoError(t, err)
+		require.NotNil(t, receipt)
+	})
+
+	t.Run("deregister operator", func(t *testing.T) {
+		receipt, err := chainWriter.DeregisterOperator(context.Background(), quorumNumbers, chainioutils.ConvertToBN254G1Point(keypair.PubKey), true)
 		require.NoError(t, err)
 		require.NotNil(t, receipt)
 	})
