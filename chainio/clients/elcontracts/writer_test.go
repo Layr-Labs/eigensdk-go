@@ -23,6 +23,9 @@ func TestChainWriter(t *testing.T) {
 	anvilHttpEndpoint, err := anvilC.Endpoint(context.Background(), "http")
 	require.NoError(t, err)
 
+	anvilWsEndpoint, err := anvilC.Endpoint(context.Background(), "ws")
+	require.NoError(t, err)
+
 	defer anvilC.Terminate(context.Background())
 	logger := logging.NewTextSLogger(os.Stdout, &logging.SLoggerOptions{Level: slog.LevelDebug})
 
@@ -37,8 +40,8 @@ func TestChainWriter(t *testing.T) {
 	OperatorStateRetrieverAddress := contractAddrs.OperatorStateRetriever
 
 	chainioConfig := clients.BuildAllConfig{
-		EthHttpUrl:                 "http://localhost:8545",
-		EthWsUrl:                   "ws://localhost:8545",
+		EthHttpUrl:                 anvilHttpEndpoint,
+		EthWsUrl:                   anvilWsEndpoint,
 		RegistryCoordinatorAddr:    RegistryCoordinatorAddress.String(),
 		OperatorStateRetrieverAddr: OperatorStateRetrieverAddress.String(),
 		AvsName:                    "exampleAvs",
