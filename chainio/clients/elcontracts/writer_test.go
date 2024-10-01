@@ -86,5 +86,32 @@ func TestChainWriter(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, receipt.Status == 1)
 
-	assert.Equal(t, "1234", "1234")
+	// Test 3: Update metadata URI
+	receipt, err = clients.ElChainWriter.UpdateMetadataURI(context.Background(), "https://0.0.0.0", true)
+	assert.NoError(t, err)
+	assert.True(t, receipt.Status == 1)
+
+	t.Run("deposit ERC20 into strategy", func(t *testing.T) {
+		// TODO: fix this test
+		amount := big.NewInt(1)
+		receipt, err = clients.ElChainWriter.DepositERC20IntoStrategy(context.Background(), contractAddrs.Erc20MockStrategy, amount, true)
+		assert.NoError(t, err)
+		assert.True(t, receipt.Status == 1)
+	})
+
+	t.Run("set claimer for", func(t *testing.T) {
+		// TODO: fix this test, add RewardsCoordinator address to config
+		claimer := common.HexToAddress("0x1234567890123456789012345678901234567890")
+		receipt, err = clients.ElChainWriter.SetClaimerFor(context.Background(), claimer, true)
+		assert.NoError(t, err)
+		assert.True(t, receipt.Status == 1)
+	})
+
+	t.Run("process claim", func(t *testing.T) {
+		// TODO: fix this test, add RewardsCoordinator address to config
+		claimer := common.HexToAddress("0x1234567890123456789012345678901234567890")
+		receipt, err = clients.ElChainWriter.ProcessClaim(context.Background(), claimer, true)
+		assert.NoError(t, err)
+		assert.True(t, receipt.Status == 1)
+	})
 }
