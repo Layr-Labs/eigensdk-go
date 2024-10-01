@@ -95,40 +95,6 @@ func NewJsonSLogger(outputWriter io.Writer, opts *SLoggerOptions) *SLogger {
 	}
 }
 
-// NewSlogTextLogger creates a new SLogger with a text handler
-//
-//		outputWriter is the writer to write the logs to (typically os.Stdout,
-//		  but can also use a io.MultiWriter(os.Stdout, file) to write to multiple outputs)
-//	 	handlerOptions is the options for the handler, such as
-//		Level is the minimum level to log
-//		AddSource if true, adds source information to the log
-//
-// Deprecated: use NewTextSLogger instead
-func NewSlogTextLogger(outputWriter io.Writer, handlerOpts *slog.HandlerOptions) *SLogger {
-	handler := slog.NewTextHandler(outputWriter, handlerOpts)
-	logger := slog.New(handler)
-	return &SLogger{
-		logger,
-	}
-}
-
-// NewSlogJsonLogger creates a new SLogger with a Json handler
-//
-//		outputWriter is the writer to write the logs to (typically os.Stdout,
-//		  but can also use a io.MultiWriter(os.Stdout, file) to write to multiple outputs)
-//	 	handlerOptions is the options for the handler, such as
-//		Level is the minimum level to log
-//		AddSource if true, adds source information to the log
-//
-// Deprecated: use NewJsonSLogger instead
-func NewSlogJsonLogger(outputWriter io.Writer, handlerOpts *slog.HandlerOptions) *SLogger {
-	handler := slog.NewJSONHandler(outputWriter, handlerOpts)
-	logger := slog.New(handler)
-	return &SLogger{
-		logger,
-	}
-}
-
 func (s SLogger) Debug(msg string, tags ...any) {
 	s.logCorrectSource(slog.LevelDebug, msg, tags...)
 }

@@ -84,48 +84,6 @@ func NewReaderFromConfig(
 	), nil
 }
 
-// BuildAvsRegistryChainReader creates a new ChainReader
-// Deprecated: Use NewReaderFromConfig instead
-func BuildAvsRegistryChainReader(
-	registryCoordinatorAddr common.Address,
-	operatorStateRetrieverAddr common.Address,
-	ethClient eth.HttpBackend,
-	logger logging.Logger,
-) (*ChainReader, error) {
-	contractRegistryCoordinator, err := regcoord.NewContractRegistryCoordinator(registryCoordinatorAddr, ethClient)
-	if err != nil {
-		return nil, utils.WrapError("Failed to create contractRegistryCoordinator", err)
-	}
-	blsApkRegistryAddr, err := contractRegistryCoordinator.BlsApkRegistry(&bind.CallOpts{})
-	if err != nil {
-		return nil, utils.WrapError("Failed to get blsApkRegistryAddr", err)
-	}
-	stakeRegistryAddr, err := contractRegistryCoordinator.StakeRegistry(&bind.CallOpts{})
-	if err != nil {
-		return nil, utils.WrapError("Failed to get stakeRegistryAddr", err)
-	}
-	contractStakeRegistry, err := stakeregistry.NewContractStakeRegistry(stakeRegistryAddr, ethClient)
-	if err != nil {
-		return nil, utils.WrapError("Failed to create contractStakeRegistry", err)
-	}
-	contractOperatorStateRetriever, err := opstateretriever.NewContractOperatorStateRetriever(
-		operatorStateRetrieverAddr,
-		ethClient,
-	)
-	if err != nil {
-		return nil, utils.WrapError("Failed to create contractOperatorStateRetriever", err)
-	}
-	return NewChainReader(
-		registryCoordinatorAddr,
-		blsApkRegistryAddr,
-		contractRegistryCoordinator,
-		contractOperatorStateRetriever,
-		contractStakeRegistry,
-		logger,
-		ethClient,
-	), nil
-}
-
 func (r *ChainReader) GetQuorumCount(opts *bind.CallOpts) (uint8, error) {
 	if r.registryCoordinator == nil {
 		return 0, errors.New("RegistryCoordinator contract not provided")

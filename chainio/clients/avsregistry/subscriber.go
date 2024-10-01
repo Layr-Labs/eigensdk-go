@@ -2,7 +2,6 @@ package avsregistry
 
 import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/event"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
@@ -32,28 +31,6 @@ func NewChainSubscriber(
 		blsApkRegistry: blsApkRegistry,
 		logger:         logger,
 	}
-}
-
-// BuildAvsRegistryChainSubscriber creates a new instance of ChainSubscriber
-// Deprecated: Use NewSubscriberFromConfig instead
-func BuildAvsRegistryChainSubscriber(
-	regCoordAddr common.Address,
-	ethWsClient eth.WsBackend,
-	logger logging.Logger,
-) (*ChainSubscriber, error) {
-	regCoord, err := regcoord.NewContractRegistryCoordinator(regCoordAddr, ethWsClient)
-	if err != nil {
-		return nil, utils.WrapError("Failed to create RegistryCoordinator contract", err)
-	}
-	blsApkRegAddr, err := regCoord.BlsApkRegistry(&bind.CallOpts{})
-	if err != nil {
-		return nil, utils.WrapError("Failed to get BLSApkRegistry address from RegistryCoordinator", err)
-	}
-	blsApkReg, err := blsapkreg.NewContractBLSApkRegistry(blsApkRegAddr, ethWsClient)
-	if err != nil {
-		return nil, utils.WrapError("Failed to create BLSApkRegistry contract", err)
-	}
-	return NewChainSubscriber(regCoord, blsApkReg, logger), nil
 }
 
 // NewSubscriberFromConfig creates a new instance of ChainSubscriber

@@ -60,34 +60,6 @@ func NewChainReader(
 	}
 }
 
-// BuildELChainReader creates a new ELChainReader
-// Deprecated: Use BuildFromConfig instead
-func BuildELChainReader(
-	delegationManagerAddr gethcommon.Address,
-	avsDirectoryAddr gethcommon.Address,
-	ethClient eth.HttpBackend,
-	logger logging.Logger,
-) (*ChainReader, error) {
-	elContractBindings, err := NewEigenlayerContractBindings(
-		delegationManagerAddr,
-		avsDirectoryAddr,
-		ethClient,
-		logger,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return NewChainReader(
-		elContractBindings.Slasher,
-		elContractBindings.DelegationManager,
-		elContractBindings.StrategyManager,
-		elContractBindings.AvsDirectory,
-		elContractBindings.RewardsCoordinator,
-		logger,
-		ethClient,
-	), nil
-}
-
 func NewReaderFromConfig(
 	cfg Config,
 	ethClient eth.HttpBackend,
