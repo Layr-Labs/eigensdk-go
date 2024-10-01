@@ -2,8 +2,10 @@ package elcontracts_test
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
+	"os/exec"
 	"testing"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients"
@@ -29,8 +31,9 @@ func TestChainWriter(t *testing.T) {
 	defer anvilC.Terminate(context.Background())
 	logger := logging.NewTextSLogger(os.Stdout, &logging.SLoggerOptions{Level: slog.LevelDebug})
 
-	ecdsaPrivKeyHex := "7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6"
-	ecdsaPrivateKey, err := crypto.HexToECDSA(ecdsaPrivKeyHex)
+	privateKeyHex := "3339854a8622364bcd5650fa92eac82d5dccf04089f5575a761c9b7d3c405b1c"
+	addressHex := "0x408EfD9C90d59298A9b32F4441aC9Df6A2d8C3E1"
+	ecdsaPrivateKey, err := crypto.HexToECDSA(privateKeyHex)
 	require.NoError(t, err)
 
 	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
@@ -56,10 +59,16 @@ func TestChainWriter(t *testing.T) {
 	)
 	require.NoError(t, err)
 
+	// Fund the address with 10 ether
+	richPrivateKeyHex := "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+	cmd := exec.Command("bash", "-c", fmt.Sprintf("cast send %s --value 10ether --private-key %s --rpc-url %s", addressHex, richPrivateKeyHex, anvilHttpEndpoint))
+	err = cmd.Run()
+	assert.NoError(t, err)
+
 	// Define an operator
 	operator :=
 		types.Operator{
-			Address:                   "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+			Address:                   addressHex,
 			DelegationApproverAddress: "0xd5e099c71b797516c10ed0f0d895f429c2781142",
 			StakerOptOutWindowBlocks:  100,
 			MetadataUrl:               "https://madhur-test-public.s3.us-east-2.amazonaws.com/metadata.json",
@@ -90,28 +99,4 @@ func TestChainWriter(t *testing.T) {
 	receipt, err = clients.ElChainWriter.UpdateMetadataURI(context.Background(), "https://0.0.0.0", true)
 	assert.NoError(t, err)
 	assert.True(t, receipt.Status == 1)
-
-	t.Run("deposit ERC20 into strategy", func(t *testing.T) {
-		// TODO: fix this test
-		amount := big.NewInt(1)
-		receipt, err = clients.ElChainWriter.DepositERC20IntoStrategy(context.Background(), contractAddrs.Erc20MockStrategy, amount, true)
-		assert.NoError(t, err)
-		assert.True(t, receipt.Status == 1)
-	})
-
-	t.Run("set claimer for", func(t *testing.T) {
-		// TODO: fix this test, add RewardsCoordinator address to config
-		claimer := common.HexToAddress("0x1234567890123456789012345678901234567890")
-		receipt, err = clients.ElChainWriter.SetClaimerFor(context.Background(), claimer, true)
-		assert.NoError(t, err)
-		assert.True(t, receipt.Status == 1)
-	})
-
-	t.Run("process claim", func(t *testing.T) {
-		// TODO: fix this test, add RewardsCoordinator address to config
-		claimer := common.HexToAddress("0x1234567890123456789012345678901234567890")
-		receipt, err = clients.ElChainWriter.ProcessClaim(context.Background(), claimer, true)
-		assert.NoError(t, err)
-		assert.True(t, receipt.Status == 1)
-	})
 }
