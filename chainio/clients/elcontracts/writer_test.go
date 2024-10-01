@@ -27,8 +27,6 @@ func TestChainWriter(t *testing.T) {
 
 	anvilWsEndpoint, err := anvilC.Endpoint(context.Background(), "ws")
 	require.NoError(t, err)
-
-	defer anvilC.Terminate(context.Background())
 	logger := logging.NewTextSLogger(os.Stdout, &logging.SLoggerOptions{Level: slog.LevelDebug})
 
 	privateKeyHex := "3339854a8622364bcd5650fa92eac82d5dccf04089f5575a761c9b7d3c405b1c"
@@ -61,7 +59,16 @@ func TestChainWriter(t *testing.T) {
 
 	// Fund the address with 10 ether
 	richPrivateKeyHex := "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
-	cmd := exec.Command("bash", "-c", fmt.Sprintf("cast send %s --value 10ether --private-key %s --rpc-url %s", addressHex, richPrivateKeyHex, anvilHttpEndpoint))
+	cmd := exec.Command(
+		"bash",
+		"-c",
+		fmt.Sprintf(
+			"cast send %s --value 10ether --private-key %s --rpc-url %s",
+			addressHex,
+			richPrivateKeyHex,
+			anvilHttpEndpoint,
+		),
+	)
 	err = cmd.Run()
 	assert.NoError(t, err)
 
