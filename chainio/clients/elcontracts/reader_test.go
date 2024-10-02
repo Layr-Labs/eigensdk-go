@@ -10,6 +10,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
 	"github.com/Layr-Labs/eigensdk-go/types"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -52,19 +53,17 @@ func TestChainReader(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("is operator registered", func(t *testing.T) {
-		walletModified, err := crypto.HexToECDSA("2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6")
-		assert.NoError(t, err)
-		walletModifiedAddress := crypto.PubkeyToAddress(walletModified.PublicKey)
+		address := "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
 
-		operatorModified := types.Operator{
-			Address:                   walletModifiedAddress.Hex(),
-			DelegationApproverAddress: walletModifiedAddress.Hex(),
+		operator := types.Operator{
+			Address:                   address,
+			DelegationApproverAddress: address,
 			StakerOptOutWindowBlocks:  101,
-			MetadataUrl:               "eigensdk-go",
+			MetadataUrl:               "test",
 		}
 
-		receipt, err := clients.ElChainReader.IsOperatorRegistered(context.Background(), operatorModified, true)
+		isOperator, err := clients.ElChainReader.IsOperatorRegistered(&bind.CallOpts{}, operator)
 		assert.NoError(t, err)
-		assert.True(t, receipt.Status == 1)
+		assert.Equal(t, isOperator, true)
 	})
 }
