@@ -12,6 +12,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
 	"github.com/Layr-Labs/eigensdk-go/types"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -37,14 +38,12 @@ func TestChainWriter(t *testing.T) {
 	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
 	require.NoError(t, err)
 
-	RegistryCoordinatorAddress := contractAddrs.RegistryCoordinator
-	OperatorStateRetrieverAddress := contractAddrs.OperatorStateRetriever
-
 	chainioConfig := clients.BuildAllConfig{
 		EthHttpUrl:                 anvilHttpEndpoint,
 		EthWsUrl:                   anvilWsEndpoint,
-		RegistryCoordinatorAddr:    RegistryCoordinatorAddress.String(),
-		OperatorStateRetrieverAddr: OperatorStateRetrieverAddress.String(),
+		RegistryCoordinatorAddr:    contractAddrs.RegistryCoordinator.String(),
+		OperatorStateRetrieverAddr: contractAddrs.OperatorStateRetriever.String(),
+		RewardsCoordinatorAddress:  contractAddrs.RewardsCoordinator.String(),
 		AvsName:                    "exampleAvs",
 		PromMetricsIpPortAddress:   ":9090",
 	}
@@ -106,4 +105,11 @@ func TestChainWriter(t *testing.T) {
 	receipt, err = clients.ElChainWriter.UpdateMetadataURI(context.Background(), "https://0.0.0.0", true)
 	assert.NoError(t, err)
 	assert.True(t, receipt.Status == 1)
+
+	t.Run("set claimer for", func(t *testing.T) {
+		claimer := common.HexToAddress("0x1234567890123456789012345678901234567890")
+		receipt, err = clients.ElChainWriter.SetClaimerFor(context.Background(), claimer, true)
+		assert.NoError(t, err)
+		assert.True(t, receipt.Status == 1)
+	})
 }
