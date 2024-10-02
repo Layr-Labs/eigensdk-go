@@ -187,7 +187,12 @@ func TestChainWriter(t *testing.T) {
 
 	t.Run("deposit ERC20 into strategy", func(t *testing.T) {
 		amount := big.NewInt(1)
-		receipt, err := clients.ElChainWriter.DepositERC20IntoStrategy(context.Background(), contractAddrs.Erc20MockStrategy, amount, true)
+		receipt, err := clients.ElChainWriter.DepositERC20IntoStrategy(
+			context.Background(),
+			contractAddrs.Erc20MockStrategy,
+			amount,
+			true,
+		)
 		assert.NoError(t, err)
 		assert.True(t, receipt.Status == 1)
 	})
