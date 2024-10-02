@@ -58,7 +58,16 @@ func TestChainWriter(t *testing.T) {
 	richPrivateKeyHex := "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
 	code, _, err := anvilC.Exec(
 		context.Background(),
-		[]string{"cast", "send", addressHex, "--value", "5ether", "--private-key", richPrivateKeyHex, "--rpc-url", anvilHttpEndpoint},
+		[]string{"cast",
+			"send",
+			addressHex,
+			"--value",
+			"5ether",
+			"--private-key",
+			richPrivateKeyHex,
+			"--rpc-url",
+			anvilHttpEndpoint,
+		},
 	)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, code)
