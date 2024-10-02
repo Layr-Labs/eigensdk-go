@@ -2,10 +2,8 @@ package elcontracts_test
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"os"
-	"os/exec"
 	"testing"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients"
@@ -56,20 +54,14 @@ func TestChainWriter(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	// Fund the address with 10 ether
+	// Fund the address with 5 ether
 	richPrivateKeyHex := "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
-	cmd := exec.Command(
-		"bash",
-		"-c",
-		fmt.Sprintf(
-			"cast send %s --value 6ether --private-key %s --rpc-url %s",
-			addressHex,
-			richPrivateKeyHex,
-			anvilHttpEndpoint,
-		),
+	code, _, err := anvilC.Exec(
+		context.Background(),
+		[]string{"cast", "send", addressHex, "--value", "5ether", "--private-key", richPrivateKeyHex, "--rpc-url", anvilHttpEndpoint},
 	)
-	err = cmd.Run()
 	assert.NoError(t, err)
+	assert.Equal(t, 0, code)
 
 	// Define an operator
 	operator :=
