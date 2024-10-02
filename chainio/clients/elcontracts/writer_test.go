@@ -65,8 +65,6 @@ func TestChainWriter(t *testing.T) {
 			"5ether",
 			"--private-key",
 			richPrivateKeyHex,
-			"--rpc-url",
-			anvilHttpEndpoint,
 		},
 	)
 	assert.NoError(t, err)
