@@ -28,7 +28,8 @@ type EigenMetrics struct {
 
 var _ Metrics = (*EigenMetrics)(nil)
 
-// NewEigenMetrics Follows the structure from https://pkg.go.dev/github.com/prometheus/client_golang/prometheus#hdr-A_Basic_Example
+// NewEigenMetrics Follows the structure from
+// https://pkg.go.dev/github.com/prometheus/client_golang/prometheus#hdr-A_Basic_Example
 // TODO(samlaf): I think each avs runs in a separate docker bridge network.
 // In order for prometheus to scrape the metrics does the address need to be 0.0.0.0:port to accept connections from
 // other networks?
