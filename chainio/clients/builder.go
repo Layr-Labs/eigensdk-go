@@ -27,6 +27,7 @@ type BuildAllConfig struct {
 	OperatorStateRetrieverAddr string
 	AvsName                    string
 	PromMetricsIpPortAddress   string
+	RewardsCoordinatorAddress  string
 }
 
 // ReadClients is a struct that holds only the read clients for interacting with the AVS and EL contracts.
@@ -179,8 +180,9 @@ func BuildAll(
 	// creating EL clients: Reader, Writer and EigenLayer Contract Bindings
 	elChainReader, elChainWriter, elContractBindings, err := elcontracts.BuildClients(
 		elcontracts.Config{
-			DelegationManagerAddress: avsRegistryContractBindings.DelegationManagerAddr,
-			AvsDirectoryAddress:      avsRegistryContractBindings.AvsDirectoryAddr,
+			DelegationManagerAddress:  avsRegistryContractBindings.DelegationManagerAddr,
+			AvsDirectoryAddress:       avsRegistryContractBindings.AvsDirectoryAddr,
+			RewardsCoordinatorAddress: gethcommon.HexToAddress(config.RewardsCoordinatorAddress),
 		},
 		ethHttpClient,
 		txMgr,
