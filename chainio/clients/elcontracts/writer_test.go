@@ -62,7 +62,7 @@ func TestChainWriter(t *testing.T) {
 		"bash",
 		"-c",
 		fmt.Sprintf(
-			"cast send %s --value 10ether --private-key %s --rpc-url %s",
+			"cast send %s --value 6ether --private-key %s --rpc-url %s",
 			addressHex,
 			richPrivateKeyHex,
 			anvilHttpEndpoint,
