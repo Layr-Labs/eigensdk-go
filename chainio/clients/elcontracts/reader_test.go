@@ -69,7 +69,10 @@ func TestChainReader(t *testing.T) {
 
 	t.Run("get strategy and underlying token", func(t *testing.T) {
 		strategyAddr := contractAddrs.Erc20MockStrategy
-		strategy, underlyingTokenAddr, err := clients.ElChainReader.GetStrategyAndUnderlyingToken(&bind.CallOpts{}, strategyAddr)
+		strategy, underlyingTokenAddr, err := clients.ElChainReader.GetStrategyAndUnderlyingToken(
+			&bind.CallOpts{},
+			strategyAddr,
+		)
 		assert.NoError(t, err)
 		assert.NotNil(t, strategy)
 		assert.NotEqual(t, common.Address{}, underlyingTokenAddr)
