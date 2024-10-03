@@ -267,6 +267,16 @@ func (r *ChainReader) GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(
 		return nil, errors.New("StakeRegistry contract not provided")
 	}
 
+	// check if opts parameter has not a block number set (BlockNumber)
+	if opts.BlockNumber == nil {
+		// if not, set the block number to the latest block
+		latestBlock, err := r.ethClient.BlockNumber(opts.Context)
+		if err != nil {
+			return nil, utils.WrapError("Failed to get latest block number", err)
+		}
+		opts.BlockNumber = big.NewInt(int64(latestBlock))
+	}
+
 	quorumBitmap, err := r.registryCoordinator.GetCurrentQuorumBitmap(opts, operatorId)
 	if err != nil {
 		return nil, utils.WrapError("Failed to get operator quorums", err)
