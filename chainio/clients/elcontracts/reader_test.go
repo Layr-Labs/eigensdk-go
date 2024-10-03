@@ -2,6 +2,7 @@ package elcontracts_test
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
 	"testing"
@@ -40,9 +41,8 @@ func TestChainReader(t *testing.T) {
 		EthWsUrl:                   anvilWsEndpoint,
 		RegistryCoordinatorAddr:    contractAddrs.RegistryCoordinator.String(),
 		OperatorStateRetrieverAddr: contractAddrs.OperatorStateRetriever.String(),
-		// RewardsCoordinatorAddress:  contractAddrs.RewardsCoordinator.String(),
-		AvsName:                  "exampleAvs",
-		PromMetricsIpPortAddress: ":9090",
+		AvsName:                    "exampleAvs",
+		PromMetricsIpPortAddress:   ":9090",
 	}
 
 	clients, err := clients.BuildAll(
@@ -52,18 +52,26 @@ func TestChainReader(t *testing.T) {
 	)
 	require.NoError(t, err)
 
+	operatorAddress := "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+	operator := types.Operator{
+		Address:                   operatorAddress,
+		DelegationApproverAddress: operatorAddress,
+		StakerOptOutWindowBlocks:  101,
+		MetadataUrl:               "test",
+	}
+
 	t.Run("is operator registered", func(t *testing.T) {
-		address := "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
-
-		operator := types.Operator{
-			Address:                   address,
-			DelegationApproverAddress: address,
-			StakerOptOutWindowBlocks:  101,
-			MetadataUrl:               "test",
-		}
-
 		isOperator, err := clients.ElChainReader.IsOperatorRegistered(&bind.CallOpts{}, operator)
 		assert.NoError(t, err)
 		assert.Equal(t, isOperator, true)
+	})
+
+	t.Run("get operator details", func(t *testing.T) {
+		operatorDetails, err := clients.ElChainReader.GetOperatorDetails(&bind.CallOpts{}, operator)
+		assert.NoError(t, err)
+		fmt.Println("@@operatorDetails", operatorDetails)
+		assert.Equal(t, operatorAddress, operatorDetails.Address)
+		assert.Equal(t, operator.Address, operatorDetails.DelegationApproverAddress)
+		assert.Equal(t, operator.StakerOptOutWindowBlocks, operatorDetails.StakerOptOutWindowBlocks)
 	})
 }
