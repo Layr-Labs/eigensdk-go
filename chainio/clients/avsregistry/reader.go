@@ -252,9 +252,10 @@ func (r *ChainReader) GetOperatorsStakeInQuorumsOfOperatorAtCurrentBlock(
 	return r.GetOperatorsStakeInQuorumsOfOperatorAtBlock(opts, operatorId, uint32(curBlock))
 }
 
-// GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock could have race conditions
-// it currently makes a bunch of calls to fetch "current block" information,
-// so some of them could actually return information from different blocks
+// To avoid a possible race condition, this method must assure that all the calls
+// are made with the same blockNumber.
+// So, if the blockNumber is not set in opts, it will be set to the latest block.
+// All calls to the chain use this parameter.
 func (r *ChainReader) GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(
 	opts *bind.CallOpts,
 	operatorId types.OperatorId,
@@ -285,7 +286,7 @@ func (r *ChainReader) GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(
 	quorumStakes := make(map[types.QuorumNum]types.StakeAmount)
 	for _, quorum := range quorums {
 		stake, err := r.stakeRegistry.GetCurrentStake(
-			&bind.CallOpts{},
+			opts,
 			operatorId,
 			uint8(quorum),
 		)
