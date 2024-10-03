@@ -8,11 +8,9 @@ import (
 	"testing"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients"
-	rewardscoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IRewardsCoordinator"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
 	"github.com/Layr-Labs/eigensdk-go/types"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -36,7 +34,6 @@ func TestRegisterOperator(t *testing.T) {
 		EthWsUrl:                   anvilWsEndpoint,
 		RegistryCoordinatorAddr:    contractAddrs.RegistryCoordinator.String(),
 		OperatorStateRetrieverAddr: contractAddrs.OperatorStateRetriever.String(),
-		RewardsCoordinatorAddress:  contractAddrs.RewardsCoordinator.String(),
 		AvsName:                    "exampleAvs",
 		PromMetricsIpPortAddress:   ":9090",
 	}
@@ -135,7 +132,6 @@ func TestChainWriter(t *testing.T) {
 		EthWsUrl:                   anvilWsEndpoint,
 		RegistryCoordinatorAddr:    contractAddrs.RegistryCoordinator.String(),
 		OperatorStateRetrieverAddr: contractAddrs.OperatorStateRetriever.String(),
-		RewardsCoordinatorAddress:  contractAddrs.RewardsCoordinator.String(),
 		AvsName:                    "exampleAvs",
 		PromMetricsIpPortAddress:   ":9090",
 	}
@@ -196,30 +192,5 @@ func TestChainWriter(t *testing.T) {
 		)
 		assert.NoError(t, err)
 		assert.True(t, receipt.Status == 1)
-	})
-
-	t.Run("set claimer for", func(t *testing.T) {
-		claimer := common.HexToAddress("0x1234567890123456789012345678901234567890")
-		receipt, err := clients.ElChainWriter.SetClaimerFor(context.Background(), claimer, true)
-		assert.NoError(t, err)
-		assert.True(t, receipt.Status == 1)
-	})
-
-	t.Run("process claim fails if no root submitted", func(t *testing.T) {
-		claimer := common.HexToAddress("0x1234567890123456789012345678901234567890")
-		claim := rewardscoordinator.IRewardsCoordinatorRewardsMerkleClaim{
-			RootIndex:       0,
-			EarnerIndex:     0,
-			EarnerTreeProof: []byte{},
-			EarnerLeaf: rewardscoordinator.IRewardsCoordinatorEarnerTreeMerkleLeaf{
-				Earner:          claimer,
-				EarnerTokenRoot: [32]byte{},
-			},
-			TokenIndices:    []uint32{},
-			TokenTreeProofs: [][]byte{},
-			TokenLeaves:     []rewardscoordinator.IRewardsCoordinatorTokenTreeMerkleLeaf{},
-		}
-		_, err := clients.ElChainWriter.ProcessClaim(context.Background(), claim, claimer, true)
-		assert.Error(t, err)
 	})
 }
