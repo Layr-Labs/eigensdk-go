@@ -277,7 +277,7 @@ func (r *ChainReader) GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(
 		if err != nil {
 			return nil, utils.WrapError("Failed to get latest block number", err)
 		}
-		opts.BlockNumber = big.NewInt(int64(latestBlock))
+		opts.BlockNumber.SetUint64(latestBlock)
 	}
 
 	quorumBitmap, err := r.registryCoordinator.GetCurrentQuorumBitmap(opts, operatorId)
