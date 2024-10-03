@@ -8,10 +8,12 @@ import (
 	"testing"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients"
+	erc20 "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IERC20"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
 	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -67,11 +69,28 @@ func TestChainReader(t *testing.T) {
 	})
 
 	t.Run("get operator details", func(t *testing.T) {
+		// TODO: fix this test
 		operatorDetails, err := clients.ElChainReader.GetOperatorDetails(&bind.CallOpts{}, operator)
 		assert.NoError(t, err)
 		fmt.Println("@@operatorDetails", operatorDetails)
 		assert.Equal(t, operatorAddress, operatorDetails.Address)
 		assert.Equal(t, operator.Address, operatorDetails.DelegationApproverAddress)
 		assert.Equal(t, operator.StakerOptOutWindowBlocks, operatorDetails.StakerOptOutWindowBlocks)
+	})
+
+	t.Run("get strategy and underlying token", func(t *testing.T) {
+		strategyAddr := contractAddrs.Erc20MockStrategy
+		strategy, underlyingTokenAddr, err := clients.ElChainReader.GetStrategyAndUnderlyingToken(&bind.CallOpts{}, strategyAddr)
+		assert.NoError(t, err)
+		assert.NotNil(t, strategy)
+		assert.NotEqual(t, common.Address{}, underlyingTokenAddr)
+
+		// Verify that it's a valid ERC20 token
+		erc20Token, err := erc20.NewContractIERC20(underlyingTokenAddr, clients.EthHttpClient)
+		assert.NoError(t, err)
+
+		tokenName, err := erc20Token.Name(&bind.CallOpts{})
+		assert.NoError(t, err)
+		assert.NotEmpty(t, tokenName)
 	})
 }
