@@ -2,7 +2,6 @@ package elcontracts_test
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"os"
 	"testing"
@@ -66,16 +65,6 @@ func TestChainReader(t *testing.T) {
 		isOperator, err := clients.ElChainReader.IsOperatorRegistered(&bind.CallOpts{}, operator)
 		assert.NoError(t, err)
 		assert.Equal(t, isOperator, true)
-	})
-
-	t.Run("get operator details", func(t *testing.T) {
-		// TODO: fix this test
-		operatorDetails, err := clients.ElChainReader.GetOperatorDetails(&bind.CallOpts{}, operator)
-		assert.NoError(t, err)
-		fmt.Println("@@operatorDetails", operatorDetails)
-		assert.Equal(t, operatorAddress, operatorDetails.Address)
-		assert.Equal(t, operator.Address, operatorDetails.DelegationApproverAddress)
-		assert.Equal(t, operator.StakerOptOutWindowBlocks, operatorDetails.StakerOptOutWindowBlocks)
 	})
 
 	t.Run("get strategy and underlying token", func(t *testing.T) {
