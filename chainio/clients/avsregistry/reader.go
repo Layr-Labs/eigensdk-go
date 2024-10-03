@@ -254,8 +254,9 @@ func (r *ChainReader) GetOperatorsStakeInQuorumsOfOperatorAtCurrentBlock(
 
 // To avoid a possible race condition, this method must assure that all the calls
 // are made with the same blockNumber.
-// So, if the blockNumber is not set in opts, it will be set to the latest block.
-// All calls to the chain use this parameter.
+// So, if the blockNumber and blockHash are not set in opts, blockNumber will be set
+// to the latest block.
+// All calls to the chain use `opts` parameter.
 func (r *ChainReader) GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(
 	opts *bind.CallOpts,
 	operatorId types.OperatorId,
@@ -269,7 +270,8 @@ func (r *ChainReader) GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(
 	}
 
 	// check if opts parameter has not a block number set (BlockNumber)
-	if opts.BlockNumber == nil {
+	var defaultHash common.Hash
+	if opts.BlockNumber == nil && opts.BlockHash == defaultHash {
 		// if not, set the block number to the latest block
 		latestBlock, err := r.ethClient.BlockNumber(opts.Context)
 		if err != nil {
