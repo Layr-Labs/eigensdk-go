@@ -97,9 +97,9 @@ func (t *fireblocksWallet) getAccount(ctx context.Context) (*fireblocks.VaultAcc
 		if err != nil {
 			return nil, fmt.Errorf("error listing vault accounts: %w", err)
 		}
-		for i_a, a := range accounts {
+		for i, a := range accounts {
 			if a.Name == t.vaultAccountName {
-				t.account = &accounts[i_a]
+				t.account = &accounts[i]
 				break
 			}
 		}
@@ -121,11 +121,11 @@ func (f *fireblocksWallet) getWhitelistedAccount(
 		if err != nil {
 			return nil, fmt.Errorf("error listing external wallets: %w", err)
 		}
-		for i_a, a := range accounts {
+		for i, a := range accounts {
 			for _, asset := range a.Assets {
 				if asset.Address == address && asset.Status == "APPROVED" && asset.ID == assetID {
-					f.whitelistedAccounts[address] = &accounts[i_a]
-					whitelistedAccount = &accounts[i_a]
+					f.whitelistedAccounts[address] = &accounts[i]
+					whitelistedAccount = &accounts[i]
 					return whitelistedAccount, nil
 				}
 			}
