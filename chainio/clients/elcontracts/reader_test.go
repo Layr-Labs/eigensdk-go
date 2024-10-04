@@ -1,70 +1,37 @@
 package elcontracts_test
 
 import (
-	"context"
-	"log/slog"
-	"os"
+	"math/big"
 	"testing"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients"
 	erc20 "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IERC20"
-	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
+	"github.com/Layr-Labs/eigensdk-go/testutils/testclients"
 	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestChainReader(t *testing.T) {
-	anvilStateFileName := "contracts-deployed-anvil-state.json"
-	anvilC, err := testutils.StartAnvilContainer(anvilStateFileName)
-	require.NoError(t, err)
-
-	anvilHttpEndpoint, err := anvilC.Endpoint(context.Background(), "http")
-	require.NoError(t, err)
-
-	anvilWsEndpoint, err := anvilC.Endpoint(context.Background(), "ws")
-	require.NoError(t, err)
-	logger := logging.NewTextSLogger(os.Stdout, &logging.SLoggerOptions{Level: slog.LevelDebug})
-
-	privateKeyHex := "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
-	ecdsaPrivateKey, err := crypto.HexToECDSA(privateKeyHex)
-	require.NoError(t, err)
+	clients, anvilHttpEndpoint := testclients.BuildTestClients(t)
 
 	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
-	require.NoError(t, err)
-
-	chainioConfig := clients.BuildAllConfig{
-		EthHttpUrl:                 anvilHttpEndpoint,
-		EthWsUrl:                   anvilWsEndpoint,
-		RegistryCoordinatorAddr:    contractAddrs.RegistryCoordinator.String(),
-		OperatorStateRetrieverAddr: contractAddrs.OperatorStateRetriever.String(),
-		AvsName:                    "exampleAvs",
-		PromMetricsIpPortAddress:   ":9090",
-	}
-
-	clients, err := clients.BuildAll(
-		chainioConfig,
-		ecdsaPrivateKey,
-		logger,
-	)
-	require.NoError(t, err)
-
-	operatorAddress := "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
 	operator := types.Operator{
-		Address:                   operatorAddress,
-		DelegationApproverAddress: operatorAddress,
-		StakerOptOutWindowBlocks:  101,
-		MetadataUrl:               "test",
+		Address: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
 	}
 
 	t.Run("is operator registered", func(t *testing.T) {
 		isOperator, err := clients.ElChainReader.IsOperatorRegistered(&bind.CallOpts{}, operator)
 		assert.NoError(t, err)
 		assert.Equal(t, isOperator, true)
+	})
+
+	t.Run("get operator details", func(t *testing.T) {
+		operatorDetails, err := clients.ElChainReader.GetOperatorDetails(&bind.CallOpts{}, operator)
+		assert.NoError(t, err)
+		assert.NotNil(t, operatorDetails)
+		assert.Equal(t, operator.Address, operatorDetails.Address)
 	})
 
 	t.Run("get strategy and underlying token", func(t *testing.T) {
@@ -77,12 +44,87 @@ func TestChainReader(t *testing.T) {
 		assert.NotNil(t, strategy)
 		assert.NotEqual(t, common.Address{}, underlyingTokenAddr)
 
-		// Verify that it's a valid ERC20 token
 		erc20Token, err := erc20.NewContractIERC20(underlyingTokenAddr, clients.EthHttpClient)
 		assert.NoError(t, err)
 
 		tokenName, err := erc20Token.Name(&bind.CallOpts{})
 		assert.NoError(t, err)
 		assert.NotEmpty(t, tokenName)
+	})
+
+	t.Run("get strategy and underlying ERC20 token", func(t *testing.T) {
+		strategyAddr := contractAddrs.Erc20MockStrategy
+		strategy, contractUnderlyingToken, underlyingTokenAddr, err := clients.ElChainReader.GetStrategyAndUnderlyingERC20Token(
+			&bind.CallOpts{},
+			strategyAddr,
+		)
+		assert.NoError(t, err)
+		assert.NotNil(t, strategy)
+		assert.NotEqual(t, common.Address{}, underlyingTokenAddr)
+		assert.NotNil(t, contractUnderlyingToken)
+
+		tokenName, err := contractUnderlyingToken.Name(&bind.CallOpts{})
+		assert.NoError(t, err)
+		assert.NotEmpty(t, tokenName)
+	})
+
+	t.Run("service manager can slash operator until block", func(t *testing.T) {
+		_, err := clients.ElChainReader.ServiceManagerCanSlashOperatorUntilBlock(
+			&bind.CallOpts{},
+			common.HexToAddress(operator.Address),
+			contractAddrs.ServiceManager,
+		)
+		assert.NoError(t, err)
+	})
+
+	t.Run("operator is frozen", func(t *testing.T) {
+		isFrozen, err := clients.ElChainReader.OperatorIsFrozen(
+			&bind.CallOpts{},
+			common.HexToAddress(operator.Address),
+		)
+		assert.NoError(t, err)
+		assert.Equal(t, isFrozen, false)
+	})
+
+	t.Run("get operator shares in strategy", func(t *testing.T) {
+		shares, err := clients.ElChainReader.GetOperatorSharesInStrategy(
+			&bind.CallOpts{},
+			common.HexToAddress(operator.Address),
+			contractAddrs.Erc20MockStrategy,
+		)
+		assert.NoError(t, err)
+		assert.NotZero(t, shares)
+	})
+
+	t.Run("calculate delegation approval digest hash", func(t *testing.T) {
+		staker := common.Address{0x0}
+		delegationApprover := common.Address{0x0}
+		approverSalt := [32]byte{}
+		expiry := big.NewInt(0)
+		digest, err := clients.ElChainReader.CalculateDelegationApprovalDigestHash(
+			&bind.CallOpts{},
+			staker,
+			common.HexToAddress(operator.Address),
+			delegationApprover,
+			approverSalt,
+			expiry,
+		)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, digest)
+	})
+
+	t.Run("calculate operator AVS registration digest hash", func(t *testing.T) {
+		avs := common.Address{0x0}
+		salt := [32]byte{}
+		expiry := big.NewInt(0)
+		digest, err := clients.ElChainReader.CalculateOperatorAVSRegistrationDigestHash(
+			&bind.CallOpts{},
+			common.HexToAddress(operator.Address),
+			avs,
+			salt,
+			expiry,
+		)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, digest)
 	})
 }
