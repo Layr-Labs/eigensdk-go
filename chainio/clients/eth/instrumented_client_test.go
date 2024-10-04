@@ -1,6 +1,7 @@
 package eth_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
@@ -20,12 +21,10 @@ func TestNewInstrumentedClient(t *testing.T) {
 	assert.NotNil(t, client)
 }
 
-/*
 func TestChainID(t *testing.T) {
+	reg := prometheus.NewRegistry()
+	rpcCallsCollector := rpccalls.NewCollector("exampleAvs", reg)
 	rpcAddress := "http://localhost:8545"
-
-
-	rpcCallsCollector := rpccalls.NewCollector()
 
 	client, err := eth.NewInstrumentedClient(rpcAddress, rpcCallsCollector)
 	require.NoError(t, err)
@@ -35,6 +34,7 @@ func TestChainID(t *testing.T) {
 	assert.NotNil(t, chainID)
 }
 
+/*
 func TestBalanceAt(t *testing.T) {
 	rpcAddress := "http://localhost:8545"
 	rpcCallsCollector := rpccalls.NewCollector()
