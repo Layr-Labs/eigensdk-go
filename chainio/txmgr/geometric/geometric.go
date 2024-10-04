@@ -58,7 +58,7 @@ var _ txmgr.TxManager = (*GeometricTxManager)(nil)
 type GeometricTxnManagerParams struct {
 	// number of blocks to wait for a transaction to be confirmed
 	// default: 0
-	ConfirmationBlocks int
+	ConfirmationBlocks uint64
 	// time to wait for a transaction to be broadcasted to the network
 	// could be direct via eth_sendRawTransaction or indirect via a wallet service such as fireblocks
 	// default: 2 minutes
@@ -310,7 +310,7 @@ func (t *GeometricTxManager) ensureAnyTransactionConfirmed(
 			if err == nil {
 				chainTip, err := t.ethClient.BlockNumber(ctx)
 				if err == nil {
-					if receipt.BlockNumber.Uint64()+uint64(t.params.ConfirmationBlocks) > chainTip {
+					if receipt.BlockNumber.Uint64()+t.params.ConfirmationBlocks > chainTip {
 						t.logger.Debug(
 							"transaction has been mined but don't have enough confirmations at current chain tip",
 							"txnBlockNumber",

@@ -5,6 +5,7 @@ package metrics
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/types"
@@ -27,7 +28,8 @@ type EigenMetrics struct {
 
 var _ Metrics = (*EigenMetrics)(nil)
 
-// Follows the structure from https://pkg.go.dev/github.com/prometheus/client_golang/prometheus#hdr-A_Basic_Example
+// NewEigenMetrics Follows the structure from
+// https://pkg.go.dev/github.com/prometheus/client_golang/prometheus#hdr-A_Basic_Example
 // TODO(samlaf): I think each avs runs in a separate docker bridge network.
 // In order for prometheus to scrape the metrics does the address need to be 0.0.0.0:port to accept connections from
 // other networks?
@@ -85,8 +87,10 @@ func (m *EigenMetrics) Start(ctx context.Context, reg prometheus.Gatherer) <-cha
 	errChan := make(chan error, 1)
 	mux := http.NewServeMux()
 	httpServer := http.Server{
-		Addr:    m.ipPortAddress,
-		Handler: mux,
+		Addr:         m.ipPortAddress,
+		Handler:      mux,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 5 * time.Second,
 	}
 	mux.Handle("/metrics", promhttp.HandlerFor(
 		reg,

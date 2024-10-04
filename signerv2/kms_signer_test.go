@@ -84,7 +84,28 @@ func teardown() {
 	_ = anvil.Terminate(context.Background())
 }
 
-func TestSendTransaction(t *testing.T) {
+func TestSignTransactionWithKmsSigner(t *testing.T) {
+	logger := testutils.GetTestLogger()
+	ethClient, err := ethclient.Dial(anvilEndpoint)
+	assert.Nil(t, err)
+	chainID, err := ethClient.ChainID(context.Background())
+	assert.Nil(t, err)
+	zeroAddr := common.HexToAddress("0x0")
+
+	// read input from JSON if available, otherwise use default values
+	var defaultInput = struct {
+		ChainID big.Int        `json:"chain_id"`
+		Nonce   uint64         `json:"nonce"`
+		To      common.Address `json:"to"`
+		Value   big.Int        `json:"value"`
+	}{
+		ChainID: *big.NewInt(0),
+		Nonce:   0,
+		To:      zeroAddr,
+		Value:   *big.NewInt(1_000_000_000_000_000_000),
+	}
+	testData := testutils.NewTestData(defaultInput)
+
 	c, err := testutils.NewKMSClient(mappedLocalstackPort)
 	assert.Nil(t, err)
 	assert.NotNil(t, keyMetadata.KeyId)
@@ -97,11 +118,6 @@ func TestSendTransaction(t *testing.T) {
 	err = rpcClient.CallContext(context.Background(), nil, "anvil_setBalance", keyAddr, 2_000_000_000_000_000_000)
 	assert.Nil(t, err)
 
-	logger := testutils.GetTestLogger()
-	ethClient, err := ethclient.Dial(anvilEndpoint)
-	assert.Nil(t, err)
-	chainID, err := ethClient.ChainID(context.Background())
-	assert.Nil(t, err)
 	signer := signerv2.NewKMSSigner(context.Background(), c, pk, *keyMetadata.KeyId, chainID)
 	assert.Nil(t, err)
 	assert.NotNil(t, signer)
@@ -110,12 +126,11 @@ func TestSendTransaction(t *testing.T) {
 	assert.NotNil(t, pkWallet)
 	txMgr := txmgr.NewSimpleTxManager(pkWallet, ethClient, logger, keyAddr)
 	assert.NotNil(t, txMgr)
-	zeroAddr := common.HexToAddress("0x0")
 	receipt, err := txMgr.Send(context.Background(), gtypes.NewTx(&gtypes.DynamicFeeTx{
-		ChainID: chainID,
-		Nonce:   0,
+		ChainID: &testData.Input.ChainID,
+		Nonce:   testData.Input.Nonce,
 		To:      &zeroAddr,
-		Value:   big.NewInt(1_000_000_000_000_000_000),
+		Value:   &testData.Input.Value,
 	}), true)
 	assert.Nil(t, err)
 	assert.NotNil(t, receipt)

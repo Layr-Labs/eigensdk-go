@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -140,12 +141,8 @@ func GetContractAddressesFromContractRegistry(ethHttpUrl string) (mockAvsContrac
 }
 
 func AdvanceChainByNBlocks(n int, anvilEndpoint string) {
-	cmd := exec.Command("bash", "-c",
-		fmt.Sprintf(
-			// see https://book.getfoundry.sh/reference/anvil/#custom-methods
-			`cast rpc anvil_mine %d --rpc-url %s`,
-			n, anvilEndpoint),
-	)
+	// see https://book.getfoundry.sh/reference/anvil/#custom-methods
+	cmd := exec.Command("cast", "rpc", "anvil_mine", fmt.Sprintf("%d", n), "--rpc-url", anvilEndpoint)
 	err := cmd.Run()
 	if err != nil {
 		panic(err)
@@ -164,5 +161,17 @@ func AdvanceChainByNBlocksExecInContainer(ctx context.Context, n int, anvilC tes
 	}
 	if c != 0 {
 		log.Fatalf("Unable to advance anvil chain by n blocks. Expected return code 0, got %v", c)
+	}
+}
+
+type TestConfig struct {
+	AnvilStateFileName string
+	LogLevel           slog.Level
+}
+
+func GetDefaultTestConfig() TestConfig {
+	return TestConfig{
+		AnvilStateFileName: "contracts-deployed-anvil-state.json",
+		LogLevel:           slog.LevelDebug,
 	}
 }
