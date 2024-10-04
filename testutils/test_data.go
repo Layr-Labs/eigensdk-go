@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"path/filepath"
 )
 
 // Test data for generic loading of JSON data files.
@@ -15,7 +16,7 @@ type TestData[T any] struct {
 func NewTestData[T any](defaultInput T) TestData[T] {
 	path, exists := os.LookupEnv("TEST_DATA_PATH")
 	if exists {
-		file, err := os.ReadFile(path)
+		file, err := os.ReadFile(filepath.Clean(path))
 		if err != nil {
 			log.Fatalf("Failed to open file: %v", err)
 		}

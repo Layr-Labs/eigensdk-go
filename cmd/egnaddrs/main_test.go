@@ -26,14 +26,16 @@ func TestEgnAddrsWithServiceManagerFlag(t *testing.T) {
 	// read input from JSON if available, otherwise use default values
 	var defaultInput = struct {
 		ServiceManagerAddress common.Address `json:"service_manager_address"`
+		RpcUrl                string         `json:"rpc_url"`
 	}{
 		ServiceManagerAddress: testutils.GetContractAddressesFromContractRegistry(anvilEndpoint).ServiceManager,
+		RpcUrl:                anvilEndpoint,
 	}
 	testData := testutils.NewTestData(defaultInput)
 
 	args := []string{"egnaddrs"}
 	args = append(args, "--service-manager", testData.Input.ServiceManagerAddress.Hex())
-	args = append(args, "--rpc-url", anvilEndpoint)
+	args = append(args, "--rpc-url", testData.Input.RpcUrl)
 	// we just make sure it doesn't crash
 	run(args)
 }

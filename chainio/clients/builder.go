@@ -152,7 +152,7 @@ func BuildAll(
 	}
 	signerV2, addr, err := signerv2.SignerFromConfig(signerv2.Config{PrivateKey: ecdsaPrivateKey}, chainid)
 	if err != nil {
-		panic(err)
+		return nil, utils.WrapError("Failed to create the signer from the given config", err)
 	}
 
 	pkWallet, err := wallet.NewPrivateKeyWallet(ethHttpClient, signerV2, addr, logger)

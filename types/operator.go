@@ -173,14 +173,14 @@ type OperatorAvsState struct {
 }
 
 var (
-	maxNumberOfQuorums = 192
+	maxNumberOfQuorums uint8 = 192
 )
 
 func BitmapToQuorumIds(bitmap *big.Int) []QuorumNum {
 	// loop through each index in the bitmap to construct the array
 	quorumIds := make([]QuorumNum, 0, maxNumberOfQuorums)
-	for i := 0; i < maxNumberOfQuorums; i++ {
-		if bitmap.Bit(i) == 1 {
+	for i := uint8(0); i < maxNumberOfQuorums; i++ {
+		if bitmap.Bit(int(i)) == 1 {
 			quorumIds = append(quorumIds, QuorumNum(i))
 		}
 	}

@@ -81,7 +81,7 @@ func writeBytesToFile(path string, data []byte) error {
 }
 
 func ReadKey(keyStoreFile string, password string) (*ecdsa.PrivateKey, error) {
-	keyStoreContents, err := os.ReadFile(keyStoreFile)
+	keyStoreContents, err := os.ReadFile(filepath.Clean(keyStoreFile))
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func ReadKey(keyStoreFile string, password string) (*ecdsa.PrivateKey, error) {
 // GetAddressFromKeyStoreFile We are using Web3 format defined by
 // https://ethereum.org/en/developers/docs/data-structures-and-encoding/web3-secret-storage/
 func GetAddressFromKeyStoreFile(keyStoreFile string) (gethcommon.Address, error) {
-	keyJson, err := os.ReadFile(keyStoreFile)
+	keyJson, err := os.ReadFile(filepath.Clean(keyStoreFile))
 	if err != nil {
 		return gethcommon.Address{}, err
 	}

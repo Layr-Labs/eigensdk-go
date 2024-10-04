@@ -2,6 +2,7 @@ package avsregistry
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 
 	"math/big"
@@ -33,11 +34,24 @@ func (f *fakeOperatorInfoService) GetOperatorInfo(
 	return f.operatorInfo, true
 }
 
-func TestAvsRegistryServiceChainCaller_getOperatorPubkeys(t *testing.T) {
+func TestAvsRegistryServiceChainCaller_GetOperatorPubkeys(t *testing.T) {
 	logger := testutils.GetTestLogger()
-	testOperator1 := fakes.TestOperator{
+	var defaultInput = struct {
+		OperatorAddr types.OperatorAddr `json:"operator_address"`
+		OperatorId   string             `json:"operator_id"`
+	}{
 		OperatorAddr: common.HexToAddress("0x1"),
-		OperatorId:   types.OperatorId{1},
+		OperatorId:   "0000000000000000000000000000000000000000000000000000000000000001",
+	}
+	testData := testutils.NewTestData(defaultInput)
+
+	opid, err := hex.DecodeString(testData.Input.OperatorId)
+	if err != nil {
+		t.Fatalf("failed to decode operator id: %v", err)
+	}
+	testOperator1 := fakes.TestOperator{
+		OperatorAddr: testData.Input.OperatorAddr,
+		OperatorId:   types.OperatorId(opid),
 		OperatorInfo: types.OperatorInfo{
 			Pubkeys: types.OperatorPubkeys{
 				G1Pubkey: bls.NewG1Point(big.NewInt(1), big.NewInt(1)),

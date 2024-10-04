@@ -421,7 +421,7 @@ func (r *ChainReader) QueryExistingRegisteredOperatorPubKeys(
 		if err != nil {
 			return nil, nil, utils.WrapError("Cannot get current block number", err)
 		}
-		stopBlock = big.NewInt(int64(curBlockNum))
+		stopBlock = new(big.Int).SetUint64(curBlockNum)
 	}
 	if blockRange == nil {
 		blockRange = DefaultQueryBlockRange
@@ -519,7 +519,7 @@ func (r *ChainReader) QueryExistingRegisteredOperatorSockets(
 		if err != nil {
 			return nil, utils.WrapError("Cannot get current block number", err)
 		}
-		stopBlock = big.NewInt(int64(curBlockNum))
+		stopBlock = new(big.Int).SetUint64(curBlockNum)
 	}
 	if blockRange == nil {
 		blockRange = DefaultQueryBlockRange
