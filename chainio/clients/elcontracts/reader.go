@@ -40,7 +40,6 @@ type ChainReader struct {
 }
 
 func NewChainReader(
-	slasher slasher.ContractISlasherCalls,
 	delegationManager *delegationmanager.ContractDelegationManager,
 	strategyManager *strategymanager.ContractStrategyManager,
 	avsDirectory *avsdirectory.ContractIAVSDirectory,
@@ -52,7 +51,6 @@ func NewChainReader(
 	logger = logger.With(logging.ComponentKey, "elcontracts/reader")
 
 	return &ChainReader{
-		slasher:            slasher,
 		delegationManager:  delegationManager,
 		strategyManager:    strategyManager,
 		avsDirectory:       avsDirectory,
@@ -81,7 +79,6 @@ func BuildELChainReader(
 		return nil, err
 	}
 	return NewChainReader(
-		elContractBindings.Slasher,
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
 		elContractBindings.AvsDirectory,
@@ -106,7 +103,6 @@ func NewReaderFromConfig(
 		return nil, err
 	}
 	return NewChainReader(
-		elContractBindings.Slasher,
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
 		elContractBindings.AvsDirectory,
@@ -322,7 +318,7 @@ func (r *ChainReader) GetTotalMagnitudes(
 	return r.allocationManager.GetTotalMagnitudes(opts, operatorAddress, strategyAddresses)
 }
 
-func (r *ChainReader) GetCurrentSlashableMagnitudes(
+func (r *ChainReader) GetSlashableMagnitudes(
 	opts *bind.CallOpts,
 	operatorAddress gethcommon.Address,
 	strategyAddresses []gethcommon.Address,
@@ -331,7 +327,7 @@ func (r *ChainReader) GetCurrentSlashableMagnitudes(
 		return []allocationmanager.OperatorSet{}, [][]uint64{}, errors.New("AllocationManager contract not provided")
 	}
 
-	return r.allocationManager.GetCurrentSlashableMagnitudes(opts, operatorAddress, strategyAddresses)
+	return r.allocationManager.GetSlashableMagnitudes(opts, operatorAddress, strategyAddresses)
 }
 
 func (r *ChainReader) GetPendingAllocations(
@@ -352,12 +348,30 @@ func (r *ChainReader) GetPendingDeallocations(
 	operatorAddress gethcommon.Address,
 	strategyAddress gethcommon.Address,
 	operatorSets []allocationmanager.OperatorSet,
-) ([]allocationmanager.IAllocationManagerPendingFreeMagnitude, error) {
+) ([]PendingDeallocation, error) {
 	if r.allocationManager == nil {
-		return []allocationmanager.IAllocationManagerPendingFreeMagnitude{}, errors.New("AllocationManager contract not provided")
+		return []PendingDeallocation{}, errors.New("AllocationManager contract not provided")
 	}
 
-	return r.allocationManager.GetPendingDeallocations(opts, operatorAddress, strategyAddress, operatorSets)
+	diffs, timestamps, err := r.allocationManager.GetPendingDeallocations(
+		opts,
+		operatorAddress,
+		strategyAddress,
+		operatorSets,
+	)
+	if err != nil {
+		return []PendingDeallocation{}, err
+	}
+
+	pendingDeallocation := make([]PendingDeallocation, len(diffs))
+	for i, diff := range diffs {
+		pendingDeallocation[i] = PendingDeallocation{
+			MagnitudeDiff:        diff,
+			CompletableTimestamp: timestamps[i],
+		}
+	}
+
+	return pendingDeallocation, nil
 }
 
 func (r *ChainReader) GetOperatorShares(
@@ -372,7 +386,7 @@ func (r *ChainReader) GetOperatorShares(
 	return r.delegationManager.OperatorShares(opts, operatorAddress, strategyAddress)
 }
 
-func (r *ChainReader) GetOperatorScaledShares(
+func (r *ChainReader) GetOperatorDelegatedShares(
 	opts *bind.CallOpts,
 	operatorAddress gethcommon.Address,
 	strategyAddress gethcommon.Address,
@@ -381,5 +395,5 @@ func (r *ChainReader) GetOperatorScaledShares(
 		return &big.Int{}, errors.New("DelegationManager contract not provided")
 	}
 
-	return r.delegationManager.OperatorScaledShares(opts, operatorAddress, strategyAddress)
+	return r.delegationManager.OperatorDelegatedShares(opts, operatorAddress, strategyAddress)
 }

@@ -47,7 +47,6 @@ type ChainWriter struct {
 }
 
 func NewChainWriter(
-	slasher *slasher.ContractISlasher,
 	delegationManager *delegationmanager.ContractDelegationManager,
 	strategyManager *strategymanager.ContractStrategyManager,
 	rewardsCoordinator *rewardscoordinator.ContractIRewardsCoordinator,
@@ -63,7 +62,6 @@ func NewChainWriter(
 	logger = logger.With(logging.ComponentKey, "elcontracts/writer")
 
 	return &ChainWriter{
-		slasher:             slasher,
 		delegationManager:   delegationManager,
 		strategyManager:     strategyManager,
 		strategyManagerAddr: strategyManagerAddr,
@@ -97,7 +95,6 @@ func BuildELChainWriter(
 		return nil, err
 	}
 	elChainReader := NewChainReader(
-		elContractBindings.Slasher,
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
 		elContractBindings.AvsDirectory,
@@ -107,7 +104,6 @@ func BuildELChainWriter(
 		ethClient,
 	)
 	return NewChainWriter(
-		elContractBindings.Slasher,
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
 		elContractBindings.RewardsCoordinator,
@@ -138,7 +134,6 @@ func NewWriterFromConfig(
 		return nil, err
 	}
 	elChainReader := NewChainReader(
-		elContractBindings.Slasher,
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
 		elContractBindings.AvsDirectory,
@@ -148,7 +143,6 @@ func NewWriterFromConfig(
 		ethClient,
 	)
 	return NewChainWriter(
-		elContractBindings.Slasher,
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
 		elContractBindings.RewardsCoordinator,
@@ -408,34 +402,34 @@ func (w *ChainWriter) ForceDeregisterFromOperatorSets(
 	return receipt, nil
 }
 
-func (w *ChainWriter) SetOperatorCommissionBips(
-	ctx context.Context,
-	operatorSet rewardscoordinator.OperatorSet,
-	rewardType uint8,
-	commissionBips uint16,
-	waitForReceipt bool,
-) (*gethtypes.Receipt, error) {
-	if w.rewardsCoordinator == nil {
-		return nil, errors.New("RewardsCoordinator contract not provided")
-	}
-
-	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
-	if err != nil {
-		return nil, utils.WrapError("failed to get no send tx opts", err)
-	}
-
-	tx, err := w.rewardsCoordinator.SetOperatorCommissionBips(noSendTxOpts, operatorSet, rewardType, commissionBips)
-	if err != nil {
-		return nil, utils.WrapError("failed to create SetOperatorCommissionBips tx", err)
-	}
-
-	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt)
-	if err != nil {
-		return nil, utils.WrapError("failed to send tx", err)
-	}
-
-	return receipt, nil
-}
+//func (w *ChainWriter) SetOperatorCommissionBips(
+//	ctx context.Context,
+//	operatorSet rewardscoordinator.OperatorSet,
+//	rewardType uint8,
+//	commissionBips uint16,
+//	waitForReceipt bool,
+//) (*gethtypes.Receipt, error) {
+//	if w.rewardsCoordinator == nil {
+//		return nil, errors.New("RewardsCoordinator contract not provided")
+//	}
+//
+//	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
+//	if err != nil {
+//		return nil, utils.WrapError("failed to get no send tx opts", err)
+//	}
+//
+//	tx, err := w.rewardsCoordinator.SetOperatorCommissionBips(noSendTxOpts, operatorSet, rewardType, commissionBips)
+//	if err != nil {
+//		return nil, utils.WrapError("failed to create SetOperatorCommissionBips tx", err)
+//	}
+//
+//	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt)
+//	if err != nil {
+//		return nil, utils.WrapError("failed to send tx", err)
+//	}
+//
+//	return receipt, nil
+//}
 
 func (w *ChainWriter) ModifyAllocations(
 	ctx context.Context,
