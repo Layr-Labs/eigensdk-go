@@ -192,11 +192,11 @@ func (k *KeyPair) SaveToFile(path string, password string) error {
 	}
 
 	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0750); err != nil {
 		fmt.Println("Error creating directories:", err)
 		return err
 	}
-	err = os.WriteFile(path, data, 0644)
+	err = os.WriteFile(path, data, 0600)
 	if err != nil {
 		return err
 	}
