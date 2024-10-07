@@ -14,6 +14,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
 	avsdirectory "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IAVSDirectory"
+	allocationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IAllocationManager"
 	erc20 "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IERC20"
 	rewardscoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IRewardsCoordinator"
 	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/ISlasher"
@@ -37,6 +38,7 @@ type ChainWriter struct {
 	strategyManager     *strategymanager.ContractStrategyManager
 	rewardsCoordinator  *rewardscoordinator.ContractIRewardsCoordinator
 	avsDirectory        *avsdirectory.ContractIAVSDirectory
+	allocationManager   *allocationmanager.ContractIAllocationManager
 	strategyManagerAddr gethcommon.Address
 	elChainReader       Reader
 	ethClient           eth.HttpBackend
@@ -45,11 +47,11 @@ type ChainWriter struct {
 }
 
 func NewChainWriter(
-	slasher *slasher.ContractISlasher,
 	delegationManager *delegationmanager.ContractDelegationManager,
 	strategyManager *strategymanager.ContractStrategyManager,
 	rewardsCoordinator *rewardscoordinator.ContractIRewardsCoordinator,
 	avsDirectory *avsdirectory.ContractIAVSDirectory,
+	allocationManager *allocationmanager.ContractIAllocationManager,
 	strategyManagerAddr gethcommon.Address,
 	elChainReader Reader,
 	ethClient eth.HttpBackend,
@@ -60,11 +62,11 @@ func NewChainWriter(
 	logger = logger.With(logging.ComponentKey, "elcontracts/writer")
 
 	return &ChainWriter{
-		slasher:             slasher,
 		delegationManager:   delegationManager,
 		strategyManager:     strategyManager,
 		strategyManagerAddr: strategyManagerAddr,
 		rewardsCoordinator:  rewardsCoordinator,
+		allocationManager:   allocationManager,
 		avsDirectory:        avsDirectory,
 		elChainReader:       elChainReader,
 		logger:              logger,
@@ -93,20 +95,20 @@ func BuildELChainWriter(
 		return nil, err
 	}
 	elChainReader := NewChainReader(
-		elContractBindings.Slasher,
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
 		elContractBindings.AvsDirectory,
 		elContractBindings.RewardsCoordinator,
+		elContractBindings.AllocationManager,
 		logger,
 		ethClient,
 	)
 	return NewChainWriter(
-		elContractBindings.Slasher,
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
 		elContractBindings.RewardsCoordinator,
 		elContractBindings.AvsDirectory,
+		elContractBindings.AllocationManager,
 		elContractBindings.StrategyManagerAddr,
 		elChainReader,
 		ethClient,
@@ -132,20 +134,20 @@ func NewWriterFromConfig(
 		return nil, err
 	}
 	elChainReader := NewChainReader(
-		elContractBindings.Slasher,
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
 		elContractBindings.AvsDirectory,
 		elContractBindings.RewardsCoordinator,
+		elContractBindings.AllocationManager,
 		logger,
 		ethClient,
 	)
 	return NewChainWriter(
-		elContractBindings.Slasher,
 		elContractBindings.DelegationManager,
 		elContractBindings.StrategyManager,
 		elContractBindings.RewardsCoordinator,
 		elContractBindings.AvsDirectory,
+		elContractBindings.AllocationManager,
 		elContractBindings.StrategyManagerAddr,
 		elChainReader,
 		ethClient,
@@ -177,7 +179,12 @@ func (w *ChainWriter) RegisterAsOperator(
 	if err != nil {
 		return nil, err
 	}
-	tx, err := w.delegationManager.RegisterAsOperator(noSendTxOpts, opDetails, operator.MetadataUrl)
+	tx, err := w.delegationManager.RegisterAsOperator(
+		noSendTxOpts,
+		opDetails,
+		operator.AllocationDelay,
+		operator.MetadataUrl,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -395,15 +402,44 @@ func (w *ChainWriter) ForceDeregisterFromOperatorSets(
 	return receipt, nil
 }
 
-func (w *ChainWriter) SetOperatorCommissionBips(
+//func (w *ChainWriter) SetOperatorCommissionBips(
+//	ctx context.Context,
+//	operatorSet rewardscoordinator.OperatorSet,
+//	rewardType uint8,
+//	commissionBips uint16,
+//	waitForReceipt bool,
+//) (*gethtypes.Receipt, error) {
+//	if w.rewardsCoordinator == nil {
+//		return nil, errors.New("RewardsCoordinator contract not provided")
+//	}
+//
+//	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
+//	if err != nil {
+//		return nil, utils.WrapError("failed to get no send tx opts", err)
+//	}
+//
+//	tx, err := w.rewardsCoordinator.SetOperatorCommissionBips(noSendTxOpts, operatorSet, rewardType, commissionBips)
+//	if err != nil {
+//		return nil, utils.WrapError("failed to create SetOperatorCommissionBips tx", err)
+//	}
+//
+//	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt)
+//	if err != nil {
+//		return nil, utils.WrapError("failed to send tx", err)
+//	}
+//
+//	return receipt, nil
+//}
+
+func (w *ChainWriter) ModifyAllocations(
 	ctx context.Context,
-	operatorSet rewardscoordinator.IAVSDirectoryOperatorSet,
-	rewardType uint8,
-	commissionBips uint16,
+	operator gethcommon.Address,
+	allocations []allocationmanager.IAllocationManagerMagnitudeAllocation,
+	operatorSignature allocationmanager.ISignatureUtilsSignatureWithSaltAndExpiry,
 	waitForReceipt bool,
 ) (*gethtypes.Receipt, error) {
-	if w.rewardsCoordinator == nil {
-		return nil, errors.New("RewardsCoordinator contract not provided")
+	if w.allocationManager == nil {
+		return nil, errors.New("AllocationManager contract not provided")
 	}
 
 	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
@@ -411,11 +447,38 @@ func (w *ChainWriter) SetOperatorCommissionBips(
 		return nil, utils.WrapError("failed to get no send tx opts", err)
 	}
 
-	tx, err := w.rewardsCoordinator.SetOperatorCommissionBips(noSendTxOpts, operatorSet, rewardType, commissionBips)
+	tx, err := w.allocationManager.ModifyAllocations(noSendTxOpts, operator, allocations, operatorSignature)
 	if err != nil {
-		return nil, utils.WrapError("failed to create SetOperatorCommissionBips tx", err)
+		return nil, utils.WrapError("failed to create ModifyAllocations tx", err)
 	}
 
+	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt)
+	if err != nil {
+		return nil, utils.WrapError("failed to send tx", err)
+	}
+
+	return receipt, nil
+}
+
+func (w *ChainWriter) InitializeAllocationDelay(
+	ctx context.Context,
+	operatorAddress gethcommon.Address,
+	delay uint32,
+	waitForReceipt bool,
+) (*gethtypes.Receipt, error) {
+	if w.allocationManager == nil {
+		return nil, errors.New("AllocationManager contract not provided")
+	}
+
+	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
+	if err != nil {
+		return nil, utils.WrapError("failed to get no send tx opts", err)
+	}
+
+	tx, err := w.allocationManager.SetAllocationDelay(noSendTxOpts, operatorAddress, delay)
+	if err != nil {
+		return nil, utils.WrapError("failed to create InitializeAllocationDelay tx", err)
+	}
 	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt)
 	if err != nil {
 		return nil, utils.WrapError("failed to send tx", err)
