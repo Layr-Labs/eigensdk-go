@@ -55,7 +55,7 @@ func writeBytesToFile(path string, data []byte) error {
 	dir := filepath.Dir(path)
 
 	// create the directory if it doesn't exist. If exists, it does nothing
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0750); err != nil {
 		fmt.Println("Error creating directories:", err)
 		return err
 	}

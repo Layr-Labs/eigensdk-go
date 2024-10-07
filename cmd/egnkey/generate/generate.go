@@ -140,7 +140,7 @@ func createDir(c *cli.Context, prefix string) (fileName string, err error) {
 	// Clean the path
 	cleanFilePath := filepath.Clean(folder + "/" + DefaultKeyFolder)
 
-	err = os.MkdirAll(cleanFilePath, 0755)
+	err = os.MkdirAll(cleanFilePath, 0750)
 	if err != nil {
 		return "", err
 	}
