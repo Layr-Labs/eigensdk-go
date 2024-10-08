@@ -17,7 +17,9 @@ func TestGenerateBlsKeys(t *testing.T) {
 	args = append(args, "--output-dir", tempDir)
 	args = append(args, "--key-type", "bls")
 	args = append(args, "--num-keys", "1")
-	run(args)
+
+	err := run(args)
+	assert.NoError(t, err)
 
 	// Decrypt private key from json file and compare it with private_key_hex.txt
 	privateKeyPath := filepath.Join(tempDir, "/private_key_hex.txt")
@@ -43,7 +45,9 @@ func TestGenerateEcdsaKeys(t *testing.T) {
 	args = append(args, "--output-dir", tempDir)
 	args = append(args, "--key-type", "ecdsa")
 	args = append(args, "--num-keys", "1")
-	run(args)
+
+	err := run(args)
+	assert.NoError(t, err)
 
 	// Decrypt private key from json file and compare it with private_key_hex.txt
 	privateKeyPath := filepath.Join(tempDir, "/private_key_hex.txt")
@@ -60,4 +64,13 @@ func TestGenerateEcdsaKeys(t *testing.T) {
 	assert.NoError(t, err, "error decrypting bls key")
 
 	assert.Equal(t, privateKeyHex, decryptedKey.D.Bytes())
+}
+
+func TestDeriveOperatorId(t *testing.T) {
+	privateKey := "13710126902690889134622698668747132666439281256983827313388062967626731803599"
+
+	args := []string{"egnkey", "derive-operator-id"}
+	args = append(args, "--private-key", privateKey)
+	err := run(args)
+	assert.NoError(t, err)
 }

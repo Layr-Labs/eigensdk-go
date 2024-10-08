@@ -11,12 +11,16 @@ import (
 )
 
 func main() {
-	run(os.Args)
+	err := run(os.Args)
+	if err != nil {
+		fmt.Println("Error: ", err)
+		os.Exit(1)
+	}
 }
 
 // We structure run in this way to make it testable.
 // see https://github.com/urfave/cli/issues/731
-func run(args []string) {
+func run(args []string) error {
 	app := cli.NewApp()
 	app.Name = "egnkey"
 	app.Description = "Eigenlayer batch keys manager"
@@ -25,11 +29,8 @@ func run(args []string) {
 		store.Command,
 		operatorid.Command,
 	}
-
 	app.Usage = "Used to manage batch keys for testing"
 
-	if err := app.Run(args); err != nil {
-		fmt.Println("Error: ", err)
-		os.Exit(1)
-	}
+	err := app.Run(args)
+	return err
 }
