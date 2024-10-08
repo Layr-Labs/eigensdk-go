@@ -1,12 +1,11 @@
 package main
 
 import (
-	"bytes"
 	"os"
+	"path/filepath"
 	"testing"
 
-	sdkEcdsa "github.com/Layr-Labs/eigensdk-go/crypto/ecdsa"
-	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,18 +18,18 @@ func TestGenerateBlsKeys(t *testing.T) {
 	args = append(args, "--num-keys", "1")
 	run(args)
 
-	// Descrypt private key from json file and compare it with private_key_hex.txt
-	privateKeyHex, err := os.ReadFile(tempDir + "/private_key_hex.txt")
+	// Decrypt private key from json file and compare it with private_key_hex.txt
+	privateKeyPath := filepath.Join(tempDir, "/private_key_hex.txt")
+	privateKeyHex, err := os.ReadFile(privateKeyPath)
 	assert.NoError(t, err)
 
-	password, err := os.ReadFile(tempDir + "/password.txt")
+	passwordPath := filepath.Join(tempDir, "password.txt")
+	password, err := os.ReadFile(passwordPath)
 	assert.NoError(t, err)
 
-	decryptedKey, err := sdkEcdsa.ReadKey(tempDir+"/keys/1.bls.key.json", string(password))
-	assert.NoError(t, err)
-	decryptedKeyBytes := crypto.FromECDSA(decryptedKey)
+	blsKeyPath := filepath.Join(tempDir, "/keys/1.bls.key.json")
+	decryptedKey, err := bls.ReadPrivateKeyFromFile(blsKeyPath, string(password))
+	assert.NoError(t, err, "error decrypting bls key")
 
-	if !bytes.Equal(privateKeyHex, decryptedKeyBytes) {
-		t.Errorf("Decrypted private key does not match the original private key")
-	}
+	assert.Equal(t, privateKeyHex, decryptedKey.PrivKey.Marshal())
 }

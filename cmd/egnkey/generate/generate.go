@@ -133,7 +133,7 @@ func createDir(c *cli.Context, prefix string) (fileName string, err error) {
 	}
 
 	_, err = os.Stat(folder)
-	if !os.IsNotExist(err) {
+	if os.IsNotExist(err) {
 		return "", err
 	}
 
