@@ -18,6 +18,7 @@ type HttpBackend interface {
 
 	BlockNumber(ctx context.Context) (uint64, error)
 	BlockByNumber(ctx context.Context, number *big.Int) (*types.Block, error)
+	ChainID(ctx context.Context) (*big.Int, error)
 }
 
 // WsBackend is the Websocket ETH Client interface
@@ -29,4 +30,5 @@ type WsBackend interface {
 
 	BlockNumber(ctx context.Context) (uint64, error)
 	BlockByNumber(ctx context.Context, number *big.Int) (*types.Block, error)
+	ChainID(ctx context.Context) (*big.Int, error)
 }
