@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/hex"
 	"os"
 	"path/filepath"
 	"testing"
@@ -73,4 +74,27 @@ func TestDeriveOperatorId(t *testing.T) {
 	args = append(args, "--private-key", privateKey)
 	err := run(args)
 	assert.NoError(t, err)
+}
+
+func TestStore(t *testing.T) {
+	tempDir := t.TempDir()
+	tempFile := filepath.Join(tempDir, "tempFile")
+
+	privateKeyHex := "6e3de7104453736e95c62d1436519813505e0120e9404dca749c973a66f9a748"
+	password := "A4SzV5NRow0ve9B6QSbh"
+
+	args := []string{"egnkey", "convert"}
+	args = append(args, "--private-key", privateKeyHex)
+	args = append(args, "--password", password)
+	args = append(args, "--file", tempFile)
+
+	err := run(args)
+	assert.NoError(t, err)
+
+	// Verify the content of tempFile
+	key, err := sdkEcdsa.ReadKey(tempFile, password)
+	assert.NoError(t, err)
+
+	hexString := hex.EncodeToString(key.D.Bytes())
+	assert.Equal(t, privateKeyHex, hexString)
 }
