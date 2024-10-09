@@ -2,21 +2,58 @@ package eth_test
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"testing"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	rpccalls "github.com/Layr-Labs/eigensdk-go/metrics/collectors/rpc_calls"
+	"github.com/Layr-Labs/eigensdk-go/testutils"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/testcontainers/testcontainers-go"
 )
+
+var (
+	anvil             testcontainers.Container
+	anvilHttpEndpoint string
+)
+
+func TestMain(m *testing.M) {
+	err := setup()
+	if err != nil {
+		fmt.Println("Error setting up test environment:", err)
+		teardown()
+		os.Exit(1)
+	}
+	exitCode := m.Run()
+	teardown()
+	os.Exit(exitCode)
+}
+
+func setup() error {
+	var err error
+	anvil, err = testutils.StartAnvilContainer("")
+	if err != nil {
+		return fmt.Errorf("failed to start Anvil container: %w", err)
+	}
+	anvilHttpEndpoint, err = anvil.Endpoint(context.Background(), "http")
+	if err != nil {
+		return fmt.Errorf("failed to get Anvil endpoint: %w", err)
+	}
+	return nil
+}
+
+func teardown() {
+	_ = anvil.Terminate(context.Background())
+}
 
 func TestNewInstrumentedClient(t *testing.T) {
 	reg := prometheus.NewRegistry()
 	rpcCallsCollector := rpccalls.NewCollector("exampleAvs", reg)
-	rpcAddress := "http://localhost:8545"
 
-	client, err := eth.NewInstrumentedClient(rpcAddress, rpcCallsCollector)
+	client, err := eth.NewInstrumentedClient(anvilHttpEndpoint, rpcCallsCollector)
 	require.NoError(t, err)
 	assert.NotNil(t, client)
 }
@@ -24,9 +61,8 @@ func TestNewInstrumentedClient(t *testing.T) {
 func TestChainID(t *testing.T) {
 	reg := prometheus.NewRegistry()
 	rpcCallsCollector := rpccalls.NewCollector("exampleAvs", reg)
-	rpcAddress := "http://localhost:8545"
 
-	client, err := eth.NewInstrumentedClient(rpcAddress, rpcCallsCollector)
+	client, err := eth.NewInstrumentedClient(anvilHttpEndpoint, rpcCallsCollector)
 	require.NoError(t, err)
 
 	chainID, err := client.ChainID(context.Background())
@@ -34,7 +70,6 @@ func TestChainID(t *testing.T) {
 	assert.NotNil(t, chainID)
 }
 
-/*
 func TestBalanceAt(t *testing.T) {
 	rpcAddress := "http://localhost:8545"
 	rpcCallsCollector := rpccalls.NewCollector()
