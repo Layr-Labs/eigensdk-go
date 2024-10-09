@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
@@ -23,20 +24,22 @@ func TestGenerateBlsKeys(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Decrypt private key from json file and compare it with private_key_hex.txt
-	privateKeyPath := filepath.Join(tempDir, "/private_key_hex.txt")
-	privateKeyHex, err := os.ReadFile(privateKeyPath)
+	privateKeyPath := filepath.Join(tempDir, "private_key_hex.txt")
+	privateKeyBytes, err := os.ReadFile(privateKeyPath)
 	assert.NoError(t, err)
+	privateKey := strings.TrimSuffix(string(privateKeyBytes), "\n")
 
 	passwordPath := filepath.Join(tempDir, "password.txt")
-	password, err := os.ReadFile(passwordPath)
+	passwordBytes, err := os.ReadFile(passwordPath)
 	assert.NoError(t, err)
+	password := strings.TrimSuffix(string(passwordBytes), "\n")
 
-	blsKeyPath := filepath.Join(tempDir, "/keys/1.bls.key.json")
-	// TODO: fix decryption
-	decryptedKey, err := bls.ReadPrivateKeyFromFile(blsKeyPath, string(password))
+	blsKeyPath := filepath.Join(tempDir, "keys", "1.bls.key.json")
+
+	decryptedKey, err := bls.ReadPrivateKeyFromFile(blsKeyPath, password)
 	assert.NoError(t, err, "error decrypting bls key")
 
-	assert.Equal(t, privateKeyHex, decryptedKey.PrivKey.Bytes())
+	assert.Equal(t, privateKey, decryptedKey.PrivKey.String())
 }
 
 func TestGenerateEcdsaKeys(t *testing.T) {
@@ -51,20 +54,26 @@ func TestGenerateEcdsaKeys(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Decrypt private key from json file and compare it with private_key_hex.txt
-	privateKeyPath := filepath.Join(tempDir, "/private_key_hex.txt")
-	privateKeyHex, err := os.ReadFile(privateKeyPath)
+	privateKeyPath := filepath.Join(tempDir, "private_key_hex.txt")
+	privateKeyBytes, err := os.ReadFile(privateKeyPath)
 	assert.NoError(t, err)
+	privateKeyHex := strings.TrimSuffix(string(privateKeyBytes), "\n")
+	privateKeyHex = strings.TrimPrefix(privateKeyHex, "0x")
 
 	passwordPath := filepath.Join(tempDir, "password.txt")
-	password, err := os.ReadFile(passwordPath)
+	passwordBytes, err := os.ReadFile(passwordPath)
+	password := strings.TrimSuffix(string(passwordBytes), "\n")
+
 	assert.NoError(t, err)
 
-	ecdsaKeyPath := filepath.Join(tempDir, "/keys/1.ecdsa.key.json")
-	// TODO: fix decryption
-	decryptedKey, err := sdkEcdsa.ReadKey(ecdsaKeyPath, string(password))
-	assert.NoError(t, err, "error decrypting bls key")
+	ecdsaKeyPath := filepath.Join(tempDir, "keys", "1.ecdsa.key.json")
 
-	assert.Equal(t, privateKeyHex, decryptedKey.D.Bytes())
+	decryptedKey, err := sdkEcdsa.ReadKey(ecdsaKeyPath, password)
+	assert.NoError(t, err, "error decrypting ecdsa key")
+
+	privateKeyDecoded, err := hex.DecodeString(privateKeyHex)
+	assert.NoError(t, err)
+	assert.Equal(t, privateKeyDecoded, decryptedKey.D.Bytes())
 }
 
 func TestDeriveOperatorId(t *testing.T) {
