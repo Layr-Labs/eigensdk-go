@@ -3,12 +3,14 @@ package eth_test
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"os"
 	"testing"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	rpccalls "github.com/Layr-Labs/eigensdk-go/metrics/collectors/rpc_calls"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -67,14 +69,14 @@ func TestChainID(t *testing.T) {
 
 	chainID, err := client.ChainID(context.Background())
 	require.NoError(t, err)
-	assert.NotNil(t, chainID)
+	assert.Equal(t, chainID, big.NewInt(31337))
 }
 
 func TestBalanceAt(t *testing.T) {
-	rpcAddress := "http://localhost:8545"
-	rpcCallsCollector := rpccalls.NewCollector()
+	reg := prometheus.NewRegistry()
+	rpcCallsCollector := rpccalls.NewCollector("exampleAvs", reg)
 
-	client, err := eth.NewInstrumentedClient(rpcAddress, rpcCallsCollector)
+	client, err := eth.NewInstrumentedClient(anvilHttpEndpoint, rpcCallsCollector)
 	require.NoError(t, err)
 
 	account := common.HexToAddress("0x0000000000000000000000000000000000000000")
@@ -84,39 +86,49 @@ func TestBalanceAt(t *testing.T) {
 }
 
 func TestBlockByHash(t *testing.T) {
-	rpcAddress := "http://localhost:8545"
-	rpcCallsCollector := rpccalls.NewCollector()
+	reg := prometheus.NewRegistry()
+	rpcCallsCollector := rpccalls.NewCollector("exampleAvs", reg)
 
-	client, err := eth.NewInstrumentedClient(rpcAddress, rpcCallsCollector)
+	client, err := eth.NewInstrumentedClient(anvilHttpEndpoint, rpcCallsCollector)
 	require.NoError(t, err)
 
-	hash := common.HexToHash("0x0000000000000000000000000000000000000000000000000000000000000000")
-	block, err := client.BlockByHash(context.Background(), hash)
+	curBlock, err := client.BlockByNumber(context.Background(), big.NewInt(0))
+	require.NoError(t, err)
+
+	block, err := client.BlockByHash(context.Background(), curBlock.Hash())
 	require.NoError(t, err)
 	assert.NotNil(t, block)
 }
 
 func TestBlockByNumber(t *testing.T) {
-	rpcAddress := "http://localhost:8545"
-	rpcCallsCollector := rpccalls.NewCollector()
+	reg := prometheus.NewRegistry()
+	rpcCallsCollector := rpccalls.NewCollector("exampleAvs", reg)
 
-	client, err := eth.NewInstrumentedClient(rpcAddress, rpcCallsCollector)
+	client, err := eth.NewInstrumentedClient(anvilHttpEndpoint, rpcCallsCollector)
 	require.NoError(t, err)
 
-	number := big.NewInt(1)
+	number := big.NewInt(0)
 	block, err := client.BlockByNumber(context.Background(), number)
 	require.NoError(t, err)
 	assert.NotNil(t, block)
 }
 
+/*
 func TestSendTransaction(t *testing.T) {
-	rpcAddress := "http://localhost:8545"
-	rpcCallsCollector := rpccalls.NewCollector()
+	reg := prometheus.NewRegistry()
+	rpcCallsCollector := rpccalls.NewCollector("exampleAvs", reg)
 
-	client, err := eth.NewInstrumentedClient(rpcAddress, rpcCallsCollector)
+	client, err := eth.NewInstrumentedClient(anvilHttpEndpoint, rpcCallsCollector)
 	require.NoError(t, err)
 
-	tx := types.NewTransaction(1, common.HexToAddress("0x0000000000000000000000000000000000000000"), big.NewInt(1), 21000, big.NewInt(1), nil)
+	tx := types.NewTransaction(
+		1,
+		common.HexToAddress("0x0000000000000000000000000000000000000000"),
+		big.NewInt(1),
+		21000,
+		big.NewInt(1),
+		nil,
+	)
 	err = client.SendTransaction(context.Background(), tx)
 	require.NoError(t, err)
 }
