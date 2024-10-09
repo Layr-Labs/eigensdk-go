@@ -14,9 +14,10 @@ import (
 
 func TestGenerateBlsKeys(t *testing.T) {
 	tempDir := t.TempDir()
+	outputDir := filepath.Join(tempDir, "test")
 
 	args := []string{"egnkey", "generate"}
-	args = append(args, "--output-dir", tempDir)
+	args = append(args, "--output-dir", outputDir)
 	args = append(args, "--key-type", "bls")
 	args = append(args, "--num-keys", "1")
 
@@ -24,17 +25,17 @@ func TestGenerateBlsKeys(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Decrypt private key from json file and compare it with private_key_hex.txt
-	privateKeyPath := filepath.Join(tempDir, "private_key_hex.txt")
+	privateKeyPath := filepath.Join(outputDir, "private_key_hex.txt")
 	privateKeyBytes, err := os.ReadFile(privateKeyPath)
 	assert.NoError(t, err)
 	privateKey := strings.TrimSuffix(string(privateKeyBytes), "\n")
 
-	passwordPath := filepath.Join(tempDir, "password.txt")
+	passwordPath := filepath.Join(outputDir, "password.txt")
 	passwordBytes, err := os.ReadFile(passwordPath)
 	assert.NoError(t, err)
 	password := strings.TrimSuffix(string(passwordBytes), "\n")
 
-	blsKeyPath := filepath.Join(tempDir, "keys", "1.bls.key.json")
+	blsKeyPath := filepath.Join(outputDir, "keys", "1.bls.key.json")
 
 	decryptedKey, err := bls.ReadPrivateKeyFromFile(blsKeyPath, password)
 	assert.NoError(t, err, "error decrypting bls key")
@@ -44,9 +45,10 @@ func TestGenerateBlsKeys(t *testing.T) {
 
 func TestGenerateEcdsaKeys(t *testing.T) {
 	tempDir := t.TempDir()
+	outputDir := filepath.Join(tempDir, "test")
 
 	args := []string{"egnkey", "generate"}
-	args = append(args, "--output-dir", tempDir)
+	args = append(args, "--output-dir", outputDir)
 	args = append(args, "--key-type", "ecdsa")
 	args = append(args, "--num-keys", "1")
 
@@ -54,19 +56,19 @@ func TestGenerateEcdsaKeys(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Decrypt private key from json file and compare it with private_key_hex.txt
-	privateKeyPath := filepath.Join(tempDir, "private_key_hex.txt")
+	privateKeyPath := filepath.Join(outputDir, "private_key_hex.txt")
 	privateKeyBytes, err := os.ReadFile(privateKeyPath)
 	assert.NoError(t, err)
 	privateKeyHex := strings.TrimSuffix(string(privateKeyBytes), "\n")
 	privateKeyHex = strings.TrimPrefix(privateKeyHex, "0x")
 
-	passwordPath := filepath.Join(tempDir, "password.txt")
+	passwordPath := filepath.Join(outputDir, "password.txt")
 	passwordBytes, err := os.ReadFile(passwordPath)
 	password := strings.TrimSuffix(string(passwordBytes), "\n")
 
 	assert.NoError(t, err)
 
-	ecdsaKeyPath := filepath.Join(tempDir, "keys", "1.ecdsa.key.json")
+	ecdsaKeyPath := filepath.Join(outputDir, "keys", "1.ecdsa.key.json")
 
 	decryptedKey, err := sdkEcdsa.ReadKey(ecdsaKeyPath, password)
 	assert.NoError(t, err, "error decrypting ecdsa key")
