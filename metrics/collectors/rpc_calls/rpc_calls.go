@@ -6,6 +6,11 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
+type CollectorInterface interface {
+	ObserveRPCRequestDurationSeconds(duration float64, method, clientVersion string)
+	AddRPCRequestTotal(method, clientVersion string)
+}
+
 // Collector contains instrumented metrics that should be incremented by the avs node using the methods below
 // it is used by the eigensdk's instrumented_client, but can also be used by avs teams to instrument their own client
 // if it differs from ours.
