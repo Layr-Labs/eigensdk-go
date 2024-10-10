@@ -30,7 +30,10 @@ type InstrumentedClient struct {
 var _ HttpBackend = (*InstrumentedClient)(nil)
 var _ WsBackend = (*InstrumentedClient)(nil)
 
-func NewInstrumentedClient(rpcAddress string, rpcCallsCollector rpccalls.CollectorInterface) (*InstrumentedClient, error) {
+func NewInstrumentedClient(
+	rpcAddress string,
+	rpcCallsCollector rpccalls.CollectorInterface,
+) (*InstrumentedClient, error) {
 	client, err := ethclient.Dial(rpcAddress)
 	if err != nil {
 		return nil, err
