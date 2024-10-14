@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	rpccalls "github.com/Layr-Labs/eigensdk-go/metrics/collectors/rpc_calls"
@@ -350,17 +351,15 @@ func TestSyncProgress(t *testing.T) {
 	assert.Nil(t, syncProgress) // is nil since there is no current syncing in place
 }
 
-func TestSendTransaction(t *testing.T) {
+func TestTransactionMethods(t *testing.T) {
 	client, err := eth.NewInstrumentedClient(anvilHttpEndpoint, rpcCallsCollector)
 	assert.NoError(t, err)
 
 	to := common.HexToAddress("0x123")
 	tx := types.NewTx(&types.DynamicFeeTx{
-		Value:     big.NewInt(1),
-		To:        &to,
-		Gas:       21000,
-		GasFeeCap: big.NewInt(100000000000000000),
-		GasTipCap: big.NewInt(100000000000000000),
+		Value: big.NewInt(1),
+		To:    &to,
+		Gas:   21000,
 	})
 
 	ecdsaPrivKeyHex := "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
@@ -374,23 +373,45 @@ func TestSendTransaction(t *testing.T) {
 
 	err = client.SendTransaction(context.Background(), signedTx)
 	assert.NoError(t, err)
-}
 
-func TestTransactionByHash(t *testing.T) { //TODO: test happy case together with sendTransaction
-	client, err := eth.NewInstrumentedClient(anvilHttpEndpoint, rpcCallsCollector)
+	// this sleep is needed because we have to wait since the transaction is not ready yet
+	time.Sleep(1 * time.Second)
+
+	t.Run("transaction by hash", func(t *testing.T) {
+		_, _, err = client.TransactionByHash(context.Background(), signedTx.Hash())
+		assert.NoError(t, err)
+	})
+
+	curBlock, err := client.BlockByNumber(context.Background(), nil)
 	assert.NoError(t, err)
 
-	hash := common.HexToHash("0x0")
-	_, _, err = client.TransactionByHash(context.Background(), hash)
-	assert.Error(t, err) // not found error
+	t.Run("transaction count", func(t *testing.T) {
+		blockHash := curBlock.Hash()
+
+		count, err := client.TransactionCount(context.Background(), blockHash)
+		assert.NoError(t, err)
+		assert.Equal(t, count, uint(1))
+	})
+
+	t.Run("transaction in block", func(t *testing.T) {
+		blockHash := curBlock.Hash()
+		txIndex := uint(0)
+
+		tx, err := client.TransactionInBlock(context.Background(), blockHash, txIndex)
+		assert.NoError(t, err)
+		assert.Equal(t, tx.Hash(), signedTx.Hash())
+	})
 }
 
 func TestTransactionCount(t *testing.T) {
 	client, err := eth.NewInstrumentedClient(anvilHttpEndpoint, rpcCallsCollector)
 	assert.NoError(t, err)
 
-	hash := common.HexToHash("0x0")
-	count, err := client.TransactionCount(context.Background(), hash)
-	require.Error(t, err)
+	curBlock, err := client.BlockByNumber(context.Background(), nil)
+	assert.NoError(t, err)
+	blockHash := curBlock.Hash()
+
+	count, err := client.TransactionCount(context.Background(), blockHash)
+	assert.NoError(t, err)
 	assert.Equal(t, count, uint(0))
 }
