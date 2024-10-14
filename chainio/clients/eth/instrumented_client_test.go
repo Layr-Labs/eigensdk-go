@@ -375,7 +375,7 @@ func TestTransactionMethods(t *testing.T) {
 	assert.NoError(t, err)
 
 	// this sleep is needed because we have to wait since the transaction is not ready yet
-	time.Sleep(1 * time.Second)
+	time.Sleep(2 * time.Second)
 
 	t.Run("transaction by hash", func(t *testing.T) {
 		_, _, err = client.TransactionByHash(context.Background(), signedTx.Hash())
@@ -384,17 +384,15 @@ func TestTransactionMethods(t *testing.T) {
 
 	curBlock, err := client.BlockByNumber(context.Background(), nil)
 	assert.NoError(t, err)
+	blockHash := curBlock.Hash()
 
 	t.Run("transaction count", func(t *testing.T) {
-		blockHash := curBlock.Hash()
-
 		count, err := client.TransactionCount(context.Background(), blockHash)
 		assert.NoError(t, err)
 		assert.Equal(t, count, uint(1))
 	})
 
 	t.Run("transaction in block", func(t *testing.T) {
-		blockHash := curBlock.Hash()
 		txIndex := uint(0)
 
 		tx, err := client.TransactionInBlock(context.Background(), blockHash, txIndex)
