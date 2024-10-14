@@ -13,9 +13,9 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 )
 
@@ -287,25 +287,6 @@ func TestPendingTransactionCount(t *testing.T) {
 	assert.Equal(t, count, uint(0))
 }
 
-/*
-func TestSendTransaction(t *testing.T) {
-	client, err := eth.NewInstrumentedClient(anvilHttpEndpoint, rpcCallsCollector)
-	assert.NoError(t, err)
-
-	to := common.HexToAddress("0x123")
-	tx := types.NewTx(&types.DynamicFeeTx{
-		Nonce: 0,
-		Gas:   21000,
-		Value: big.NewInt(1),
-		To:    &to,
-	})
-
-	// TODO: fix error decode transaction
-	err = client.SendTransaction(context.Background(), tx)
-	assert.NoError(t, err)
-}
-*/
-
 func TestStorageAt(t *testing.T) {
 	client, err := eth.NewInstrumentedClient(anvilHttpEndpoint, rpcCallsCollector)
 	assert.NoError(t, err)
@@ -367,6 +348,32 @@ func TestSyncProgress(t *testing.T) {
 	syncProgress, err := client.SyncProgress(context.Background())
 	assert.NoError(t, err)
 	assert.Nil(t, syncProgress) // is nil since there is no current syncing in place
+}
+
+func TestSendTransaction(t *testing.T) {
+	client, err := eth.NewInstrumentedClient(anvilHttpEndpoint, rpcCallsCollector)
+	assert.NoError(t, err)
+
+	to := common.HexToAddress("0x123")
+	tx := types.NewTx(&types.DynamicFeeTx{
+		Value:     big.NewInt(1),
+		To:        &to,
+		Gas:       21000,
+		GasFeeCap: big.NewInt(100000000000000000),
+		GasTipCap: big.NewInt(100000000000000000),
+	})
+
+	ecdsaPrivKeyHex := "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+	ecdsaPrivKey, err := crypto.HexToECDSA(ecdsaPrivKeyHex)
+	assert.NoError(t, err)
+	signer := types.LatestSignerForChainID(big.NewInt(31337))
+	signature, err := crypto.Sign(signer.Hash(tx).Bytes(), ecdsaPrivKey)
+	assert.NoError(t, err)
+	signedTx, err := tx.WithSignature(signer, signature)
+	assert.NoError(t, err)
+
+	err = client.SendTransaction(context.Background(), signedTx)
+	assert.NoError(t, err)
 }
 
 func TestTransactionByHash(t *testing.T) { //TODO: test happy case together with sendTransaction
