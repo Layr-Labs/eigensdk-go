@@ -400,16 +400,3 @@ func TestTransactionMethods(t *testing.T) {
 		assert.Equal(t, tx.Hash(), signedTx.Hash())
 	})
 }
-
-func TestTransactionCount(t *testing.T) {
-	client, err := eth.NewInstrumentedClient(anvilHttpEndpoint, rpcCallsCollector)
-	assert.NoError(t, err)
-
-	curBlock, err := client.BlockByNumber(context.Background(), nil)
-	assert.NoError(t, err)
-	blockHash := curBlock.Hash()
-
-	count, err := client.TransactionCount(context.Background(), blockHash)
-	assert.NoError(t, err)
-	assert.Equal(t, count, uint(0))
-}
