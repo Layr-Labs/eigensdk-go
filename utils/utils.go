@@ -71,6 +71,7 @@ func EcdsaPrivateKeyToAddress(privateKey *ecdsa.PrivateKey) (gethcommon.Address,
 	return crypto.PubkeyToAddress(*publicKeyECDSA), nil
 }
 
+// RoundUpDivideBig divides two positive big.Int numbers and rounds up the result.
 func RoundUpDivideBig(a, b *big.Int) *big.Int {
 	one := new(big.Int).SetUint64(1)
 	res := new(big.Int)
@@ -84,14 +85,13 @@ func IsValidEthereumAddress(address string) bool {
 	return ethAddrPattern.MatchString(address)
 }
 
-func ReadPublicURL(url string) ([]byte, error) {
-	// allow no redirects
-	httpClient := http.Client{
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		},
-		Timeout: 3 * time.Second,
+func ReadPublicURL(url string, httpClient *http.Client) ([]byte, error) {
+	// Allow no redirects
+	httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
 	}
+	httpClient.Timeout = 3 * time.Second
+
 	resp, err := httpClient.Get(url)
 	if err != nil {
 		return []byte{}, err
@@ -179,7 +179,7 @@ func CheckIfUrlIsValid(rawUrl string) error {
 	return nil
 }
 
-func IsImageURL(urlString string) error {
+func IsImageURL(urlString string, httpClient *http.Client) error {
 	// Parse the URL
 	parsedURL, err := url.Parse(urlString)
 	if err != nil {
@@ -195,7 +195,7 @@ func IsImageURL(urlString string) error {
 	// Check if the extension is in the list of image extensions
 	for _, imgExt := range ImageExtensions {
 		if strings.EqualFold(extension, imgExt) {
-			imageBytes, err := ReadPublicURL(urlString)
+			imageBytes, err := ReadPublicURL(urlString, httpClient)
 			if err != nil {
 				return err
 			}
