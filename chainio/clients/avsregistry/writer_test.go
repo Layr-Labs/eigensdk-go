@@ -6,6 +6,7 @@ import (
 
 	chainioutils "github.com/Layr-Labs/eigensdk-go/chainio/utils"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
+	"github.com/Layr-Labs/eigensdk-go/testutils/testclients"
 	"github.com/Layr-Labs/eigensdk-go/types"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -13,7 +14,7 @@ import (
 )
 
 func TestWriterMethods(t *testing.T) {
-	clients := BuildTestClients(t)
+	clients, _ := testclients.BuildTestClients(t)
 	chainWriter := clients.AvsRegistryChainWriter
 
 	keypair, err := bls.NewKeyPairFromString("0x01")
