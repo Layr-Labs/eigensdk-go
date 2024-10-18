@@ -273,11 +273,14 @@ func (r *ChainReader) GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(
 	var defaultHash common.Hash
 	if opts.BlockNumber == nil && opts.BlockHash == defaultHash {
 		// if not, set the block number to the latest block
+		if opts.Context == nil {
+			opts.Context = context.Background()
+		}
 		latestBlock, err := r.ethClient.BlockNumber(opts.Context)
 		if err != nil {
 			return nil, utils.WrapError("Failed to get latest block number", err)
 		}
-		opts.BlockNumber.SetUint64(latestBlock)
+		opts.BlockNumber = big.NewInt(int64(latestBlock))
 	}
 
 	quorumBitmap, err := r.registryCoordinator.GetCurrentQuorumBitmap(opts, operatorId)
