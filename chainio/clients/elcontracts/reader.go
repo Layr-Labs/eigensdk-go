@@ -14,7 +14,6 @@ import (
 	allocationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IAllocationManager"
 	erc20 "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IERC20"
 	rewardscoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IRewardsCoordinator"
-	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/ISlasher"
 	strategy "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IStrategy"
 	strategymanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StrategyManager"
 	"github.com/Layr-Labs/eigensdk-go/logging"
@@ -30,7 +29,6 @@ type Config struct {
 
 type ChainReader struct {
 	logger             logging.Logger
-	slasher            slasher.ContractISlasherCalls
 	delegationManager  *delegationmanager.ContractDelegationManager
 	strategyManager    *strategymanager.ContractStrategyManager
 	avsDirectory       *avsdirectory.ContractIAVSDirectory
@@ -144,7 +142,7 @@ func (r *ChainReader) GetOperatorDetails(opts *bind.CallOpts, operator types.Ope
 
 	return types.Operator{
 		Address:                   operator.Address,
-		StakerOptOutWindowBlocks:  operatorDetails.StakerOptOutWindowBlocks,
+		StakerOptOutWindowBlocks:  operatorDetails.DeprecatedStakerOptOutWindowBlocks,
 		DelegationApproverAddress: operatorDetails.DelegationApprover.Hex(),
 	}, nil
 }
@@ -182,28 +180,6 @@ func (r *ChainReader) GetStrategyAndUnderlyingERC20Token(
 		return nil, nil, gethcommon.Address{}, utils.WrapError("Failed to fetch token contract", err)
 	}
 	return contractStrategy, contractUnderlyingToken, underlyingTokenAddr, nil
-}
-
-func (r *ChainReader) ServiceManagerCanSlashOperatorUntilBlock(
-	opts *bind.CallOpts,
-	operatorAddr gethcommon.Address,
-	serviceManagerAddr gethcommon.Address,
-) (uint32, error) {
-	if r.slasher == nil {
-		return uint32(0), errors.New("slasher contract not provided")
-	}
-
-	return r.slasher.ContractCanSlashOperatorUntilBlock(
-		opts, operatorAddr, serviceManagerAddr,
-	)
-}
-
-func (r *ChainReader) OperatorIsFrozen(opts *bind.CallOpts, operatorAddr gethcommon.Address) (bool, error) {
-	if r.slasher == nil {
-		return false, errors.New("slasher contract not provided")
-	}
-
-	return r.slasher.IsFrozen(opts, operatorAddr)
 }
 
 func (r *ChainReader) GetOperatorSharesInStrategy(
@@ -265,9 +241,9 @@ func (r *ChainReader) CurrRewardsCalculationEndTimestamp(opts *bind.CallOpts) (u
 
 func (r *ChainReader) GetCurrentClaimableDistributionRoot(
 	opts *bind.CallOpts,
-) (rewardscoordinator.IRewardsCoordinatorDistributionRoot, error) {
+) (rewardscoordinator.IRewardsCoordinatorTypesDistributionRoot, error) {
 	if r.rewardsCoordinator == nil {
-		return rewardscoordinator.IRewardsCoordinatorDistributionRoot{}, errors.New(
+		return rewardscoordinator.IRewardsCoordinatorTypesDistributionRoot{}, errors.New(
 			"RewardsCoordinator contract not provided",
 		)
 	}
@@ -285,7 +261,7 @@ func (r *ChainReader) GetRootIndexFromHash(opts *bind.CallOpts, rootHash [32]byt
 
 func (r *ChainReader) CheckClaim(
 	opts *bind.CallOpts,
-	claim rewardscoordinator.IRewardsCoordinatorRewardsMerkleClaim,
+	claim rewardscoordinator.IRewardsCoordinatorTypesRewardsMerkleClaim,
 ) (bool, error) {
 	if r.rewardsCoordinator == nil {
 		return false, errors.New("RewardsCoordinator contract not provided")
@@ -306,7 +282,7 @@ func (r *ChainReader) GetAllocatableMagnitude(
 	return r.allocationManager.GetAllocatableMagnitude(opts, operatorAddress, strategyAddress)
 }
 
-func (r *ChainReader) GetTotalMagnitudes(
+func (r *ChainReader) GetMaxMagnitudes(
 	opts *bind.CallOpts,
 	operatorAddress gethcommon.Address,
 	strategyAddresses []gethcommon.Address,
@@ -315,85 +291,45 @@ func (r *ChainReader) GetTotalMagnitudes(
 		return []uint64{}, errors.New("AllocationManager contract not provided")
 	}
 
-	return r.allocationManager.GetTotalMagnitudes(opts, operatorAddress, strategyAddresses)
+	return r.allocationManager.GetMaxMagnitudes(opts, operatorAddress, strategyAddresses)
 }
 
-func (r *ChainReader) GetSlashableMagnitudes(
-	opts *bind.CallOpts,
-	operatorAddress gethcommon.Address,
-	strategyAddresses []gethcommon.Address,
-) ([]allocationmanager.OperatorSet, [][]uint64, error) {
-	if r.allocationManager == nil {
-		return []allocationmanager.OperatorSet{}, [][]uint64{}, errors.New("AllocationManager contract not provided")
-	}
-
-	return r.allocationManager.GetSlashableMagnitudes(opts, operatorAddress, strategyAddresses)
-}
-
-func (r *ChainReader) GetPendingAllocations(
+func (r *ChainReader) GetAllocationInfo(
 	opts *bind.CallOpts,
 	operatorAddress gethcommon.Address,
 	strategyAddress gethcommon.Address,
-	operatorSets []allocationmanager.OperatorSet,
-) ([]uint64, []uint32, error) {
+) ([]AllocationInfo, error) {
 	if r.allocationManager == nil {
-		return []uint64{}, []uint32{}, errors.New("AllocationManager contract not provided")
+		return nil, errors.New("AllocationManager contract not provided")
 	}
 
-	return r.allocationManager.GetPendingAllocations(opts, operatorAddress, strategyAddress, operatorSets)
-}
-
-func (r *ChainReader) GetPendingDeallocations(
-	opts *bind.CallOpts,
-	operatorAddress gethcommon.Address,
-	strategyAddress gethcommon.Address,
-	operatorSets []allocationmanager.OperatorSet,
-) ([]PendingDeallocation, error) {
-	if r.allocationManager == nil {
-		return []PendingDeallocation{}, errors.New("AllocationManager contract not provided")
-	}
-
-	diffs, timestamps, err := r.allocationManager.GetPendingDeallocations(
-		opts,
-		operatorAddress,
-		strategyAddress,
-		operatorSets,
-	)
+	opSets, allocationInfo, err := r.allocationManager.GetAllocationInfo1(opts, operatorAddress, strategyAddress)
 	if err != nil {
-		return []PendingDeallocation{}, err
+		return nil, err
 	}
 
-	pendingDeallocation := make([]PendingDeallocation, len(diffs))
-	for i, diff := range diffs {
-		pendingDeallocation[i] = PendingDeallocation{
-			MagnitudeDiff:        diff,
-			CompletableTimestamp: timestamps[i],
+	allocationsInfo := make([]AllocationInfo, len(opSets))
+	for i, opSet := range opSets {
+		allocationsInfo[i] = AllocationInfo{
+			OperatorSetId:        opSet.OperatorSetId,
+			AvsAddress:           opSet.Avs,
+			CurrentMagnitude:     big.NewInt(int64(allocationInfo[i].CurrentMagnitude)),
+			PendingDiff:          allocationInfo[i].PendingDiff,
+			CompletableTimestamp: allocationInfo[i].EffectTimestamp,
 		}
 	}
 
-	return pendingDeallocation, nil
+	return allocationsInfo, nil
 }
 
 func (r *ChainReader) GetOperatorShares(
 	opts *bind.CallOpts,
 	operatorAddress gethcommon.Address,
-	strategyAddress gethcommon.Address,
-) (*big.Int, error) {
+	strategyAddresses []gethcommon.Address,
+) ([]*big.Int, error) {
 	if r.delegationManager == nil {
-		return &big.Int{}, errors.New("DelegationManager contract not provided")
+		return nil, errors.New("DelegationManager contract not provided")
 	}
 
-	return r.delegationManager.OperatorShares(opts, operatorAddress, strategyAddress)
-}
-
-func (r *ChainReader) GetOperatorDelegatedShares(
-	opts *bind.CallOpts,
-	operatorAddress gethcommon.Address,
-	strategyAddress gethcommon.Address,
-) (*big.Int, error) {
-	if r.delegationManager == nil {
-		return &big.Int{}, errors.New("DelegationManager contract not provided")
-	}
-
-	return r.delegationManager.OperatorDelegatedShares(opts, operatorAddress, strategyAddress)
+	return r.delegationManager.GetOperatorShares(opts, operatorAddress, strategyAddresses)
 }

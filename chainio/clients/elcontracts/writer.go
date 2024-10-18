@@ -17,7 +17,6 @@ import (
 	allocationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IAllocationManager"
 	erc20 "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IERC20"
 	rewardscoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IRewardsCoordinator"
-	slasher "github.com/Layr-Labs/eigensdk-go/contracts/bindings/ISlasher"
 	strategy "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IStrategy"
 	strategymanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StrategyManager"
 	"github.com/Layr-Labs/eigensdk-go/logging"
@@ -33,7 +32,6 @@ type Reader interface {
 }
 
 type ChainWriter struct {
-	slasher             *slasher.ContractISlasher
 	delegationManager   *delegationmanager.ContractDelegationManager
 	strategyManager     *strategymanager.ContractStrategyManager
 	rewardsCoordinator  *rewardscoordinator.ContractIRewardsCoordinator
@@ -167,12 +165,14 @@ func (w *ChainWriter) RegisterAsOperator(
 	}
 
 	w.logger.Infof("registering operator %s to EigenLayer", operator.Address)
-	opDetails := delegationmanager.IDelegationManagerOperatorDetails{
+	opDetails := delegationmanager.IDelegationManagerTypesOperatorDetails{
 		// Earning receiver has been deprecated, so we just use the operator address as a dummy value
 		// Any reward related setup is via RewardsCoordinator contract
 		DeprecatedEarningsReceiver: gethcommon.HexToAddress(operator.Address),
-		StakerOptOutWindowBlocks:   operator.StakerOptOutWindowBlocks,
-		DelegationApprover:         gethcommon.HexToAddress(operator.DelegationApproverAddress),
+		// DeprecatedStakerOptOutWindowBlocks has been deprecated, so we just use the operator's
+		// StakerOptOutWindowBlocks
+		DeprecatedStakerOptOutWindowBlocks: operator.StakerOptOutWindowBlocks,
+		DelegationApprover:                 gethcommon.HexToAddress(operator.DelegationApproverAddress),
 	}
 
 	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
@@ -207,12 +207,14 @@ func (w *ChainWriter) UpdateOperatorDetails(
 	}
 
 	w.logger.Infof("updating operator details of operator %s to EigenLayer", operator.Address)
-	opDetails := delegationmanager.IDelegationManagerOperatorDetails{
+	opDetails := delegationmanager.IDelegationManagerTypesOperatorDetails{
 		// Earning receiver has been deprecated, so we just use the operator address as a dummy value
 		// Any reward related setup is via RewardsCoordinator contract
 		DeprecatedEarningsReceiver: gethcommon.HexToAddress(operator.Address),
 		DelegationApprover:         gethcommon.HexToAddress(operator.DelegationApproverAddress),
-		StakerOptOutWindowBlocks:   operator.StakerOptOutWindowBlocks,
+		// DeprecatedStakerOptOutWindowBlocks has been deprecated, so we just use the operator's
+		// StakerOptOutWindowBlocks
+		DeprecatedStakerOptOutWindowBlocks: operator.StakerOptOutWindowBlocks,
 	}
 
 	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
@@ -340,7 +342,7 @@ func (w *ChainWriter) SetClaimerFor(
 
 func (w *ChainWriter) ProcessClaim(
 	ctx context.Context,
-	claim rewardscoordinator.IRewardsCoordinatorRewardsMerkleClaim,
+	claim rewardscoordinator.IRewardsCoordinatorTypesRewardsMerkleClaim,
 	earnerAddress gethcommon.Address,
 	waitForReceipt bool,
 ) (*gethtypes.Receipt, error) {
@@ -433,9 +435,7 @@ func (w *ChainWriter) ForceDeregisterFromOperatorSets(
 
 func (w *ChainWriter) ModifyAllocations(
 	ctx context.Context,
-	operator gethcommon.Address,
-	allocations []allocationmanager.IAllocationManagerMagnitudeAllocation,
-	operatorSignature allocationmanager.ISignatureUtilsSignatureWithSaltAndExpiry,
+	allocations []allocationmanager.IAllocationManagerTypesMagnitudeAllocation,
 	waitForReceipt bool,
 ) (*gethtypes.Receipt, error) {
 	if w.allocationManager == nil {
@@ -447,7 +447,7 @@ func (w *ChainWriter) ModifyAllocations(
 		return nil, utils.WrapError("failed to get no send tx opts", err)
 	}
 
-	tx, err := w.allocationManager.ModifyAllocations(noSendTxOpts, operator, allocations, operatorSignature)
+	tx, err := w.allocationManager.ModifyAllocations(noSendTxOpts, allocations)
 	if err != nil {
 		return nil, utils.WrapError("failed to create ModifyAllocations tx", err)
 	}
