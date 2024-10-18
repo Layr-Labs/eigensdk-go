@@ -252,9 +252,11 @@ func (r *ChainReader) GetOperatorsStakeInQuorumsOfOperatorAtCurrentBlock(
 	return r.GetOperatorsStakeInQuorumsOfOperatorAtBlock(opts, operatorId, uint32(curBlock))
 }
 
-// GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock could have race conditions
-// it currently makes a bunch of calls to fetch "current block" information,
-// so some of them could actually return information from different blocks
+// To avoid a possible race condition, this method must assure that all the calls
+// are made with the same blockNumber.
+// So, if the blockNumber and blockHash are not set in opts, blockNumber will be set
+// to the latest block.
+// All calls to the chain use `opts` parameter.
 func (r *ChainReader) GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(
 	opts *bind.CallOpts,
 	operatorId types.OperatorId,
@@ -267,6 +269,20 @@ func (r *ChainReader) GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(
 		return nil, errors.New("StakeRegistry contract not provided")
 	}
 
+	// check if opts parameter has not a block number set (BlockNumber)
+	var defaultHash common.Hash
+	if opts.BlockNumber == nil && opts.BlockHash == defaultHash {
+		// if not, set the block number to the latest block
+		if opts.Context == nil {
+			opts.Context = context.Background()
+		}
+		latestBlock, err := r.ethClient.BlockNumber(opts.Context)
+		if err != nil {
+			return nil, utils.WrapError("Failed to get latest block number", err)
+		}
+		opts.BlockNumber = big.NewInt(int64(latestBlock))
+	}
+
 	quorumBitmap, err := r.registryCoordinator.GetCurrentQuorumBitmap(opts, operatorId)
 	if err != nil {
 		return nil, utils.WrapError("Failed to get operator quorums", err)
@@ -275,7 +291,7 @@ func (r *ChainReader) GetOperatorStakeInQuorumsOfOperatorAtCurrentBlock(
 	quorumStakes := make(map[types.QuorumNum]types.StakeAmount)
 	for _, quorum := range quorums {
 		stake, err := r.stakeRegistry.GetCurrentStake(
-			&bind.CallOpts{},
+			opts,
 			operatorId,
 			uint8(quorum),
 		)
