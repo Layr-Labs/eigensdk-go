@@ -29,12 +29,6 @@ var (
 	_ = abi.ConvertType
 )
 
-// IAVSDirectoryOperatorSet is an auto generated low-level Go binding around an user-defined struct.
-type IAVSDirectoryOperatorSet struct {
-	Avs           common.Address
-	OperatorSetId uint32
-}
-
 // ISignatureUtilsSignatureWithSaltAndExpiry is an auto generated low-level Go binding around an user-defined struct.
 type ISignatureUtilsSignatureWithSaltAndExpiry struct {
 	Signature []byte
@@ -42,9 +36,15 @@ type ISignatureUtilsSignatureWithSaltAndExpiry struct {
 	Expiry    *big.Int
 }
 
+// OperatorSet is an auto generated low-level Go binding around an user-defined struct.
+type OperatorSet struct {
+	Avs           common.Address
+	OperatorSetId uint32
+}
+
 // ContractIAVSDirectoryMetaData contains all meta data concerning the ContractIAVSDirectory contract.
 var ContractIAVSDirectoryMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"OPERATOR_AVS_REGISTRATION_TYPEHASH\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"OPERATOR_SET_REGISTRATION_TYPEHASH\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"becomeOperatorSetAVS\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"calculateOperatorAVSRegistrationDigestHash\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"avs\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"salt\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"expiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"calculateOperatorSetForceDeregistrationTypehash\",\"inputs\":[{\"name\":\"avs\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSetIds\",\"type\":\"uint32[]\",\"internalType\":\"uint32[]\"},{\"name\":\"salt\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"expiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"calculateOperatorSetRegistrationDigestHash\",\"inputs\":[{\"name\":\"avs\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSetIds\",\"type\":\"uint32[]\",\"internalType\":\"uint32[]\"},{\"name\":\"salt\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"expiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"cancelSalt\",\"inputs\":[{\"name\":\"salt\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"createOperatorSets\",\"inputs\":[{\"name\":\"operatorSetIds\",\"type\":\"uint32[]\",\"internalType\":\"uint32[]\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"deregisterOperatorFromAVS\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"deregisterOperatorFromOperatorSets\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSetIds\",\"type\":\"uint32[]\",\"internalType\":\"uint32[]\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"domainSeparator\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"forceDeregisterFromOperatorSets\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"avs\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSetIds\",\"type\":\"uint32[]\",\"internalType\":\"uint32[]\"},{\"name\":\"operatorSignature\",\"type\":\"tuple\",\"internalType\":\"structISignatureUtils.SignatureWithSaltAndExpiry\",\"components\":[{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"salt\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"expiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"isMember\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSet\",\"type\":\"tuple\",\"internalType\":\"structIAVSDirectory.OperatorSet\",\"components\":[{\"name\":\"avs\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSetId\",\"type\":\"uint32\",\"internalType\":\"uint32\"}]}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isOperatorSet\",\"inputs\":[{\"name\":\"avs\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSetId\",\"type\":\"uint32\",\"internalType\":\"uint32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isOperatorSetAVS\",\"inputs\":[{\"name\":\"avs\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"migrateOperatorsToOperatorSets\",\"inputs\":[{\"name\":\"operators\",\"type\":\"address[]\",\"internalType\":\"address[]\"},{\"name\":\"operatorSetIds\",\"type\":\"uint32[][]\",\"internalType\":\"uint32[][]\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"operatorSaltIsSpent\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"salt\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"registerOperatorToAVS\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSignature\",\"type\":\"tuple\",\"internalType\":\"structISignatureUtils.SignatureWithSaltAndExpiry\",\"components\":[{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"salt\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"expiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"registerOperatorToOperatorSets\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSetIds\",\"type\":\"uint32[]\",\"internalType\":\"uint32[]\"},{\"name\":\"operatorSignature\",\"type\":\"tuple\",\"internalType\":\"structISignatureUtils.SignatureWithSaltAndExpiry\",\"components\":[{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"salt\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"expiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"updateAVSMetadataURI\",\"inputs\":[{\"name\":\"metadataURI\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"AVSMetadataURIUpdated\",\"inputs\":[{\"name\":\"avs\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"metadataURI\",\"type\":\"string\",\"indexed\":false,\"internalType\":\"string\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"AVSMigratedToOperatorSets\",\"inputs\":[{\"name\":\"avs\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OperatorAVSRegistrationStatusUpdated\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"avs\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"status\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"enumIAVSDirectory.OperatorAVSRegistrationStatus\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OperatorAddedToOperatorSet\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"operatorSet\",\"type\":\"tuple\",\"indexed\":false,\"internalType\":\"structIAVSDirectory.OperatorSet\",\"components\":[{\"name\":\"avs\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSetId\",\"type\":\"uint32\",\"internalType\":\"uint32\"}]}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OperatorMigratedToOperatorSets\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"avs\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"operatorSetIds\",\"type\":\"uint32[]\",\"indexed\":false,\"internalType\":\"uint32[]\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OperatorRemovedFromOperatorSet\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"operatorSet\",\"type\":\"tuple\",\"indexed\":false,\"internalType\":\"structIAVSDirectory.OperatorSet\",\"components\":[{\"name\":\"avs\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSetId\",\"type\":\"uint32\",\"internalType\":\"uint32\"}]}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OperatorSetCreated\",\"inputs\":[{\"name\":\"operatorSet\",\"type\":\"tuple\",\"indexed\":false,\"internalType\":\"structIAVSDirectory.OperatorSet\",\"components\":[{\"name\":\"avs\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSetId\",\"type\":\"uint32\",\"internalType\":\"uint32\"}]}],\"anonymous\":false}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"OPERATOR_AVS_REGISTRATION_TYPEHASH\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"OPERATOR_SET_REGISTRATION_TYPEHASH\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"addStrategiesToOperatorSet\",\"inputs\":[{\"name\":\"operatorSetId\",\"type\":\"uint32\",\"internalType\":\"uint32\"},{\"name\":\"strategies\",\"type\":\"address[]\",\"internalType\":\"contractIStrategy[]\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"becomeOperatorSetAVS\",\"inputs\":[],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"calculateOperatorAVSRegistrationDigestHash\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"avs\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"salt\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"expiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"calculateOperatorSetForceDeregistrationTypehash\",\"inputs\":[{\"name\":\"avs\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSetIds\",\"type\":\"uint32[]\",\"internalType\":\"uint32[]\"},{\"name\":\"salt\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"expiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"calculateOperatorSetRegistrationDigestHash\",\"inputs\":[{\"name\":\"avs\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSetIds\",\"type\":\"uint32[]\",\"internalType\":\"uint32[]\"},{\"name\":\"salt\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"expiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"cancelSalt\",\"inputs\":[{\"name\":\"salt\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"createOperatorSets\",\"inputs\":[{\"name\":\"operatorSetIds\",\"type\":\"uint32[]\",\"internalType\":\"uint32[]\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"deregisterOperatorFromAVS\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"deregisterOperatorFromOperatorSets\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSetIds\",\"type\":\"uint32[]\",\"internalType\":\"uint32[]\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"forceDeregisterFromOperatorSets\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"avs\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSetIds\",\"type\":\"uint32[]\",\"internalType\":\"uint32[]\"},{\"name\":\"operatorSignature\",\"type\":\"tuple\",\"internalType\":\"structISignatureUtils.SignatureWithSaltAndExpiry\",\"components\":[{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"salt\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"expiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getNumOperatorSetsOfOperator\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getNumOperatorsInOperatorSet\",\"inputs\":[{\"name\":\"operatorSet\",\"type\":\"tuple\",\"internalType\":\"structOperatorSet\",\"components\":[{\"name\":\"avs\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSetId\",\"type\":\"uint32\",\"internalType\":\"uint32\"}]}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getOperatorSetsOfOperator\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"start\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"length\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"operatorSets\",\"type\":\"tuple[]\",\"internalType\":\"structOperatorSet[]\",\"components\":[{\"name\":\"avs\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSetId\",\"type\":\"uint32\",\"internalType\":\"uint32\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getOperatorsInOperatorSet\",\"inputs\":[{\"name\":\"operatorSet\",\"type\":\"tuple\",\"internalType\":\"structOperatorSet\",\"components\":[{\"name\":\"avs\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSetId\",\"type\":\"uint32\",\"internalType\":\"uint32\"}]},{\"name\":\"start\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"length\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"operators\",\"type\":\"address[]\",\"internalType\":\"address[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getStrategiesInOperatorSet\",\"inputs\":[{\"name\":\"operatorSet\",\"type\":\"tuple\",\"internalType\":\"structOperatorSet\",\"components\":[{\"name\":\"avs\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSetId\",\"type\":\"uint32\",\"internalType\":\"uint32\"}]}],\"outputs\":[{\"name\":\"strategies\",\"type\":\"address[]\",\"internalType\":\"contractIStrategy[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"inTotalOperatorSets\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"initialize\",\"inputs\":[{\"name\":\"initialOwner\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"_pauserRegistry\",\"type\":\"address\",\"internalType\":\"contractIPauserRegistry\"},{\"name\":\"initialPausedStatus\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"isMember\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSet\",\"type\":\"tuple\",\"internalType\":\"structOperatorSet\",\"components\":[{\"name\":\"avs\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSetId\",\"type\":\"uint32\",\"internalType\":\"uint32\"}]}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isOperatorSet\",\"inputs\":[{\"name\":\"avs\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSetId\",\"type\":\"uint32\",\"internalType\":\"uint32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isOperatorSetAVS\",\"inputs\":[{\"name\":\"avs\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isOperatorSetBatch\",\"inputs\":[{\"name\":\"operatorSets\",\"type\":\"tuple[]\",\"internalType\":\"structOperatorSet[]\",\"components\":[{\"name\":\"avs\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSetId\",\"type\":\"uint32\",\"internalType\":\"uint32\"}]}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"isOperatorSlashable\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSet\",\"type\":\"tuple\",\"internalType\":\"structOperatorSet\",\"components\":[{\"name\":\"avs\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSetId\",\"type\":\"uint32\",\"internalType\":\"uint32\"}]}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"migrateOperatorsToOperatorSets\",\"inputs\":[{\"name\":\"operators\",\"type\":\"address[]\",\"internalType\":\"address[]\"},{\"name\":\"operatorSetIds\",\"type\":\"uint32[][]\",\"internalType\":\"uint32[][]\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"operatorSaltIsSpent\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"salt\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"operatorSetMemberAtIndex\",\"inputs\":[{\"name\":\"operatorSet\",\"type\":\"tuple\",\"internalType\":\"structOperatorSet\",\"components\":[{\"name\":\"avs\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSetId\",\"type\":\"uint32\",\"internalType\":\"uint32\"}]},{\"name\":\"index\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"operatorSetStatus\",\"inputs\":[{\"name\":\"avs\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSetId\",\"type\":\"uint32\",\"internalType\":\"uint32\"}],\"outputs\":[{\"name\":\"registered\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"lastDeregisteredTimestamp\",\"type\":\"uint32\",\"internalType\":\"uint32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"operatorSetsMemberOfAtIndex\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"index\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structOperatorSet\",\"components\":[{\"name\":\"avs\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSetId\",\"type\":\"uint32\",\"internalType\":\"uint32\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"registerOperatorToAVS\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSignature\",\"type\":\"tuple\",\"internalType\":\"structISignatureUtils.SignatureWithSaltAndExpiry\",\"components\":[{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"salt\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"expiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"registerOperatorToOperatorSets\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSetIds\",\"type\":\"uint32[]\",\"internalType\":\"uint32[]\"},{\"name\":\"operatorSignature\",\"type\":\"tuple\",\"internalType\":\"structISignatureUtils.SignatureWithSaltAndExpiry\",\"components\":[{\"name\":\"signature\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"salt\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"expiry\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"removeStrategiesFromOperatorSet\",\"inputs\":[{\"name\":\"operatorSetId\",\"type\":\"uint32\",\"internalType\":\"uint32\"},{\"name\":\"strategies\",\"type\":\"address[]\",\"internalType\":\"contractIStrategy[]\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"updateAVSMetadataURI\",\"inputs\":[{\"name\":\"metadataURI\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"AVSMetadataURIUpdated\",\"inputs\":[{\"name\":\"avs\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"metadataURI\",\"type\":\"string\",\"indexed\":false,\"internalType\":\"string\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"AVSMigratedToOperatorSets\",\"inputs\":[{\"name\":\"avs\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OperatorAVSRegistrationStatusUpdated\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"avs\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"status\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"enumIAVSDirectoryTypes.OperatorAVSRegistrationStatus\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OperatorAddedToOperatorSet\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"operatorSet\",\"type\":\"tuple\",\"indexed\":false,\"internalType\":\"structOperatorSet\",\"components\":[{\"name\":\"avs\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSetId\",\"type\":\"uint32\",\"internalType\":\"uint32\"}]}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OperatorMigratedToOperatorSets\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"avs\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"operatorSetIds\",\"type\":\"uint32[]\",\"indexed\":false,\"internalType\":\"uint32[]\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OperatorRemovedFromOperatorSet\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"operatorSet\",\"type\":\"tuple\",\"indexed\":false,\"internalType\":\"structOperatorSet\",\"components\":[{\"name\":\"avs\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSetId\",\"type\":\"uint32\",\"internalType\":\"uint32\"}]}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OperatorSetCreated\",\"inputs\":[{\"name\":\"operatorSet\",\"type\":\"tuple\",\"indexed\":false,\"internalType\":\"structOperatorSet\",\"components\":[{\"name\":\"avs\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSetId\",\"type\":\"uint32\",\"internalType\":\"uint32\"}]}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"StrategyAddedToOperatorSet\",\"inputs\":[{\"name\":\"operatorSet\",\"type\":\"tuple\",\"indexed\":false,\"internalType\":\"structOperatorSet\",\"components\":[{\"name\":\"avs\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSetId\",\"type\":\"uint32\",\"internalType\":\"uint32\"}]},{\"name\":\"strategy\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"contractIStrategy\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"StrategyRemovedFromOperatorSet\",\"inputs\":[{\"name\":\"operatorSet\",\"type\":\"tuple\",\"indexed\":false,\"internalType\":\"structOperatorSet\",\"components\":[{\"name\":\"avs\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"operatorSetId\",\"type\":\"uint32\",\"internalType\":\"uint32\"}]},{\"name\":\"strategy\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"contractIStrategy\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"InvalidAVS\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidOperator\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidOperatorSet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidSignature\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"OperatorAlreadyRegisteredToAVS\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"OperatorNotRegisteredToAVS\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"OperatorNotRegisteredToEigenLayer\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"SaltSpent\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"SignatureExpired\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"StrategyAlreadyInOperatorSet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"StrategyNotInOperatorSet\",\"inputs\":[]}]",
 }
 
 // ContractIAVSDirectoryABI is the input ABI used to generate the binding from.
@@ -70,19 +70,44 @@ type ContractIAVSDirectoryCalls interface {
 
 	CalculateOperatorSetRegistrationDigestHash(opts *bind.CallOpts, avs common.Address, operatorSetIds []uint32, salt [32]byte, expiry *big.Int) ([32]byte, error)
 
-	DomainSeparator(opts *bind.CallOpts) ([32]byte, error)
+	GetNumOperatorSetsOfOperator(opts *bind.CallOpts, operator common.Address) (*big.Int, error)
 
-	IsMember(opts *bind.CallOpts, operator common.Address, operatorSet IAVSDirectoryOperatorSet) (bool, error)
+	GetNumOperatorsInOperatorSet(opts *bind.CallOpts, operatorSet OperatorSet) (*big.Int, error)
+
+	GetOperatorSetsOfOperator(opts *bind.CallOpts, operator common.Address, start *big.Int, length *big.Int) ([]OperatorSet, error)
+
+	GetOperatorsInOperatorSet(opts *bind.CallOpts, operatorSet OperatorSet, start *big.Int, length *big.Int) ([]common.Address, error)
+
+	GetStrategiesInOperatorSet(opts *bind.CallOpts, operatorSet OperatorSet) ([]common.Address, error)
+
+	InTotalOperatorSets(opts *bind.CallOpts, operator common.Address) (*big.Int, error)
+
+	IsMember(opts *bind.CallOpts, operator common.Address, operatorSet OperatorSet) (bool, error)
 
 	IsOperatorSet(opts *bind.CallOpts, avs common.Address, operatorSetId uint32) (bool, error)
 
 	IsOperatorSetAVS(opts *bind.CallOpts, avs common.Address) (bool, error)
 
+	IsOperatorSetBatch(opts *bind.CallOpts, operatorSets []OperatorSet) (bool, error)
+
+	IsOperatorSlashable(opts *bind.CallOpts, operator common.Address, operatorSet OperatorSet) (bool, error)
+
 	OperatorSaltIsSpent(opts *bind.CallOpts, operator common.Address, salt [32]byte) (bool, error)
+
+	OperatorSetMemberAtIndex(opts *bind.CallOpts, operatorSet OperatorSet, index *big.Int) (common.Address, error)
+
+	OperatorSetStatus(opts *bind.CallOpts, avs common.Address, operator common.Address, operatorSetId uint32) (struct {
+		Registered                bool
+		LastDeregisteredTimestamp uint32
+	}, error)
+
+	OperatorSetsMemberOfAtIndex(opts *bind.CallOpts, operator common.Address, index *big.Int) (OperatorSet, error)
 }
 
 // ContractIAVSDirectoryTransacts is an auto generated interface that defines the transact methods available for an Ethereum contract.
 type ContractIAVSDirectoryTransacts interface {
+	AddStrategiesToOperatorSet(opts *bind.TransactOpts, operatorSetId uint32, strategies []common.Address) (*types.Transaction, error)
+
 	BecomeOperatorSetAVS(opts *bind.TransactOpts) (*types.Transaction, error)
 
 	CancelSalt(opts *bind.TransactOpts, salt [32]byte) (*types.Transaction, error)
@@ -95,11 +120,15 @@ type ContractIAVSDirectoryTransacts interface {
 
 	ForceDeregisterFromOperatorSets(opts *bind.TransactOpts, operator common.Address, avs common.Address, operatorSetIds []uint32, operatorSignature ISignatureUtilsSignatureWithSaltAndExpiry) (*types.Transaction, error)
 
+	Initialize(opts *bind.TransactOpts, initialOwner common.Address, _pauserRegistry common.Address, initialPausedStatus *big.Int) (*types.Transaction, error)
+
 	MigrateOperatorsToOperatorSets(opts *bind.TransactOpts, operators []common.Address, operatorSetIds [][]uint32) (*types.Transaction, error)
 
 	RegisterOperatorToAVS(opts *bind.TransactOpts, operator common.Address, operatorSignature ISignatureUtilsSignatureWithSaltAndExpiry) (*types.Transaction, error)
 
 	RegisterOperatorToOperatorSets(opts *bind.TransactOpts, operator common.Address, operatorSetIds []uint32, operatorSignature ISignatureUtilsSignatureWithSaltAndExpiry) (*types.Transaction, error)
+
+	RemoveStrategiesFromOperatorSet(opts *bind.TransactOpts, operatorSetId uint32, strategies []common.Address) (*types.Transaction, error)
 
 	UpdateAVSMetadataURI(opts *bind.TransactOpts, metadataURI string) (*types.Transaction, error)
 }
@@ -133,6 +162,14 @@ type ContractIAVSDirectoryFilters interface {
 	FilterOperatorSetCreated(opts *bind.FilterOpts) (*ContractIAVSDirectoryOperatorSetCreatedIterator, error)
 	WatchOperatorSetCreated(opts *bind.WatchOpts, sink chan<- *ContractIAVSDirectoryOperatorSetCreated) (event.Subscription, error)
 	ParseOperatorSetCreated(log types.Log) (*ContractIAVSDirectoryOperatorSetCreated, error)
+
+	FilterStrategyAddedToOperatorSet(opts *bind.FilterOpts) (*ContractIAVSDirectoryStrategyAddedToOperatorSetIterator, error)
+	WatchStrategyAddedToOperatorSet(opts *bind.WatchOpts, sink chan<- *ContractIAVSDirectoryStrategyAddedToOperatorSet) (event.Subscription, error)
+	ParseStrategyAddedToOperatorSet(log types.Log) (*ContractIAVSDirectoryStrategyAddedToOperatorSet, error)
+
+	FilterStrategyRemovedFromOperatorSet(opts *bind.FilterOpts) (*ContractIAVSDirectoryStrategyRemovedFromOperatorSetIterator, error)
+	WatchStrategyRemovedFromOperatorSet(opts *bind.WatchOpts, sink chan<- *ContractIAVSDirectoryStrategyRemovedFromOperatorSet) (event.Subscription, error)
+	ParseStrategyRemovedFromOperatorSet(log types.Log) (*ContractIAVSDirectoryStrategyRemovedFromOperatorSet, error)
 }
 
 // ContractIAVSDirectory is an auto generated Go binding around an Ethereum contract.
@@ -444,41 +481,196 @@ func (_ContractIAVSDirectory *ContractIAVSDirectoryCallerSession) CalculateOpera
 	return _ContractIAVSDirectory.Contract.CalculateOperatorSetRegistrationDigestHash(&_ContractIAVSDirectory.CallOpts, avs, operatorSetIds, salt, expiry)
 }
 
-// DomainSeparator is a free data retrieval call binding the contract method 0xf698da25.
+// GetNumOperatorSetsOfOperator is a free data retrieval call binding the contract method 0xe88d8049.
 //
-// Solidity: function domainSeparator() view returns(bytes32)
-func (_ContractIAVSDirectory *ContractIAVSDirectoryCaller) DomainSeparator(opts *bind.CallOpts) ([32]byte, error) {
+// Solidity: function getNumOperatorSetsOfOperator(address operator) view returns(uint256)
+func (_ContractIAVSDirectory *ContractIAVSDirectoryCaller) GetNumOperatorSetsOfOperator(opts *bind.CallOpts, operator common.Address) (*big.Int, error) {
 	var out []interface{}
-	err := _ContractIAVSDirectory.contract.Call(opts, &out, "domainSeparator")
+	err := _ContractIAVSDirectory.contract.Call(opts, &out, "getNumOperatorSetsOfOperator", operator)
 
 	if err != nil {
-		return *new([32]byte), err
+		return *new(*big.Int), err
 	}
 
-	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
 
 	return out0, err
 
 }
 
-// DomainSeparator is a free data retrieval call binding the contract method 0xf698da25.
+// GetNumOperatorSetsOfOperator is a free data retrieval call binding the contract method 0xe88d8049.
 //
-// Solidity: function domainSeparator() view returns(bytes32)
-func (_ContractIAVSDirectory *ContractIAVSDirectorySession) DomainSeparator() ([32]byte, error) {
-	return _ContractIAVSDirectory.Contract.DomainSeparator(&_ContractIAVSDirectory.CallOpts)
+// Solidity: function getNumOperatorSetsOfOperator(address operator) view returns(uint256)
+func (_ContractIAVSDirectory *ContractIAVSDirectorySession) GetNumOperatorSetsOfOperator(operator common.Address) (*big.Int, error) {
+	return _ContractIAVSDirectory.Contract.GetNumOperatorSetsOfOperator(&_ContractIAVSDirectory.CallOpts, operator)
 }
 
-// DomainSeparator is a free data retrieval call binding the contract method 0xf698da25.
+// GetNumOperatorSetsOfOperator is a free data retrieval call binding the contract method 0xe88d8049.
 //
-// Solidity: function domainSeparator() view returns(bytes32)
-func (_ContractIAVSDirectory *ContractIAVSDirectoryCallerSession) DomainSeparator() ([32]byte, error) {
-	return _ContractIAVSDirectory.Contract.DomainSeparator(&_ContractIAVSDirectory.CallOpts)
+// Solidity: function getNumOperatorSetsOfOperator(address operator) view returns(uint256)
+func (_ContractIAVSDirectory *ContractIAVSDirectoryCallerSession) GetNumOperatorSetsOfOperator(operator common.Address) (*big.Int, error) {
+	return _ContractIAVSDirectory.Contract.GetNumOperatorSetsOfOperator(&_ContractIAVSDirectory.CallOpts, operator)
+}
+
+// GetNumOperatorsInOperatorSet is a free data retrieval call binding the contract method 0x1023aa35.
+//
+// Solidity: function getNumOperatorsInOperatorSet((address,uint32) operatorSet) view returns(uint256)
+func (_ContractIAVSDirectory *ContractIAVSDirectoryCaller) GetNumOperatorsInOperatorSet(opts *bind.CallOpts, operatorSet OperatorSet) (*big.Int, error) {
+	var out []interface{}
+	err := _ContractIAVSDirectory.contract.Call(opts, &out, "getNumOperatorsInOperatorSet", operatorSet)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// GetNumOperatorsInOperatorSet is a free data retrieval call binding the contract method 0x1023aa35.
+//
+// Solidity: function getNumOperatorsInOperatorSet((address,uint32) operatorSet) view returns(uint256)
+func (_ContractIAVSDirectory *ContractIAVSDirectorySession) GetNumOperatorsInOperatorSet(operatorSet OperatorSet) (*big.Int, error) {
+	return _ContractIAVSDirectory.Contract.GetNumOperatorsInOperatorSet(&_ContractIAVSDirectory.CallOpts, operatorSet)
+}
+
+// GetNumOperatorsInOperatorSet is a free data retrieval call binding the contract method 0x1023aa35.
+//
+// Solidity: function getNumOperatorsInOperatorSet((address,uint32) operatorSet) view returns(uint256)
+func (_ContractIAVSDirectory *ContractIAVSDirectoryCallerSession) GetNumOperatorsInOperatorSet(operatorSet OperatorSet) (*big.Int, error) {
+	return _ContractIAVSDirectory.Contract.GetNumOperatorsInOperatorSet(&_ContractIAVSDirectory.CallOpts, operatorSet)
+}
+
+// GetOperatorSetsOfOperator is a free data retrieval call binding the contract method 0x16ae76cb.
+//
+// Solidity: function getOperatorSetsOfOperator(address operator, uint256 start, uint256 length) view returns((address,uint32)[] operatorSets)
+func (_ContractIAVSDirectory *ContractIAVSDirectoryCaller) GetOperatorSetsOfOperator(opts *bind.CallOpts, operator common.Address, start *big.Int, length *big.Int) ([]OperatorSet, error) {
+	var out []interface{}
+	err := _ContractIAVSDirectory.contract.Call(opts, &out, "getOperatorSetsOfOperator", operator, start, length)
+
+	if err != nil {
+		return *new([]OperatorSet), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]OperatorSet)).(*[]OperatorSet)
+
+	return out0, err
+
+}
+
+// GetOperatorSetsOfOperator is a free data retrieval call binding the contract method 0x16ae76cb.
+//
+// Solidity: function getOperatorSetsOfOperator(address operator, uint256 start, uint256 length) view returns((address,uint32)[] operatorSets)
+func (_ContractIAVSDirectory *ContractIAVSDirectorySession) GetOperatorSetsOfOperator(operator common.Address, start *big.Int, length *big.Int) ([]OperatorSet, error) {
+	return _ContractIAVSDirectory.Contract.GetOperatorSetsOfOperator(&_ContractIAVSDirectory.CallOpts, operator, start, length)
+}
+
+// GetOperatorSetsOfOperator is a free data retrieval call binding the contract method 0x16ae76cb.
+//
+// Solidity: function getOperatorSetsOfOperator(address operator, uint256 start, uint256 length) view returns((address,uint32)[] operatorSets)
+func (_ContractIAVSDirectory *ContractIAVSDirectoryCallerSession) GetOperatorSetsOfOperator(operator common.Address, start *big.Int, length *big.Int) ([]OperatorSet, error) {
+	return _ContractIAVSDirectory.Contract.GetOperatorSetsOfOperator(&_ContractIAVSDirectory.CallOpts, operator, start, length)
+}
+
+// GetOperatorsInOperatorSet is a free data retrieval call binding the contract method 0x7357723b.
+//
+// Solidity: function getOperatorsInOperatorSet((address,uint32) operatorSet, uint256 start, uint256 length) view returns(address[] operators)
+func (_ContractIAVSDirectory *ContractIAVSDirectoryCaller) GetOperatorsInOperatorSet(opts *bind.CallOpts, operatorSet OperatorSet, start *big.Int, length *big.Int) ([]common.Address, error) {
+	var out []interface{}
+	err := _ContractIAVSDirectory.contract.Call(opts, &out, "getOperatorsInOperatorSet", operatorSet, start, length)
+
+	if err != nil {
+		return *new([]common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]common.Address)).(*[]common.Address)
+
+	return out0, err
+
+}
+
+// GetOperatorsInOperatorSet is a free data retrieval call binding the contract method 0x7357723b.
+//
+// Solidity: function getOperatorsInOperatorSet((address,uint32) operatorSet, uint256 start, uint256 length) view returns(address[] operators)
+func (_ContractIAVSDirectory *ContractIAVSDirectorySession) GetOperatorsInOperatorSet(operatorSet OperatorSet, start *big.Int, length *big.Int) ([]common.Address, error) {
+	return _ContractIAVSDirectory.Contract.GetOperatorsInOperatorSet(&_ContractIAVSDirectory.CallOpts, operatorSet, start, length)
+}
+
+// GetOperatorsInOperatorSet is a free data retrieval call binding the contract method 0x7357723b.
+//
+// Solidity: function getOperatorsInOperatorSet((address,uint32) operatorSet, uint256 start, uint256 length) view returns(address[] operators)
+func (_ContractIAVSDirectory *ContractIAVSDirectoryCallerSession) GetOperatorsInOperatorSet(operatorSet OperatorSet, start *big.Int, length *big.Int) ([]common.Address, error) {
+	return _ContractIAVSDirectory.Contract.GetOperatorsInOperatorSet(&_ContractIAVSDirectory.CallOpts, operatorSet, start, length)
+}
+
+// GetStrategiesInOperatorSet is a free data retrieval call binding the contract method 0x4177a87c.
+//
+// Solidity: function getStrategiesInOperatorSet((address,uint32) operatorSet) view returns(address[] strategies)
+func (_ContractIAVSDirectory *ContractIAVSDirectoryCaller) GetStrategiesInOperatorSet(opts *bind.CallOpts, operatorSet OperatorSet) ([]common.Address, error) {
+	var out []interface{}
+	err := _ContractIAVSDirectory.contract.Call(opts, &out, "getStrategiesInOperatorSet", operatorSet)
+
+	if err != nil {
+		return *new([]common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]common.Address)).(*[]common.Address)
+
+	return out0, err
+
+}
+
+// GetStrategiesInOperatorSet is a free data retrieval call binding the contract method 0x4177a87c.
+//
+// Solidity: function getStrategiesInOperatorSet((address,uint32) operatorSet) view returns(address[] strategies)
+func (_ContractIAVSDirectory *ContractIAVSDirectorySession) GetStrategiesInOperatorSet(operatorSet OperatorSet) ([]common.Address, error) {
+	return _ContractIAVSDirectory.Contract.GetStrategiesInOperatorSet(&_ContractIAVSDirectory.CallOpts, operatorSet)
+}
+
+// GetStrategiesInOperatorSet is a free data retrieval call binding the contract method 0x4177a87c.
+//
+// Solidity: function getStrategiesInOperatorSet((address,uint32) operatorSet) view returns(address[] strategies)
+func (_ContractIAVSDirectory *ContractIAVSDirectoryCallerSession) GetStrategiesInOperatorSet(operatorSet OperatorSet) ([]common.Address, error) {
+	return _ContractIAVSDirectory.Contract.GetStrategiesInOperatorSet(&_ContractIAVSDirectory.CallOpts, operatorSet)
+}
+
+// InTotalOperatorSets is a free data retrieval call binding the contract method 0xcbdf0e42.
+//
+// Solidity: function inTotalOperatorSets(address operator) view returns(uint256)
+func (_ContractIAVSDirectory *ContractIAVSDirectoryCaller) InTotalOperatorSets(opts *bind.CallOpts, operator common.Address) (*big.Int, error) {
+	var out []interface{}
+	err := _ContractIAVSDirectory.contract.Call(opts, &out, "inTotalOperatorSets", operator)
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
+}
+
+// InTotalOperatorSets is a free data retrieval call binding the contract method 0xcbdf0e42.
+//
+// Solidity: function inTotalOperatorSets(address operator) view returns(uint256)
+func (_ContractIAVSDirectory *ContractIAVSDirectorySession) InTotalOperatorSets(operator common.Address) (*big.Int, error) {
+	return _ContractIAVSDirectory.Contract.InTotalOperatorSets(&_ContractIAVSDirectory.CallOpts, operator)
+}
+
+// InTotalOperatorSets is a free data retrieval call binding the contract method 0xcbdf0e42.
+//
+// Solidity: function inTotalOperatorSets(address operator) view returns(uint256)
+func (_ContractIAVSDirectory *ContractIAVSDirectoryCallerSession) InTotalOperatorSets(operator common.Address) (*big.Int, error) {
+	return _ContractIAVSDirectory.Contract.InTotalOperatorSets(&_ContractIAVSDirectory.CallOpts, operator)
 }
 
 // IsMember is a free data retrieval call binding the contract method 0xda2ff05d.
 //
 // Solidity: function isMember(address operator, (address,uint32) operatorSet) view returns(bool)
-func (_ContractIAVSDirectory *ContractIAVSDirectoryCaller) IsMember(opts *bind.CallOpts, operator common.Address, operatorSet IAVSDirectoryOperatorSet) (bool, error) {
+func (_ContractIAVSDirectory *ContractIAVSDirectoryCaller) IsMember(opts *bind.CallOpts, operator common.Address, operatorSet OperatorSet) (bool, error) {
 	var out []interface{}
 	err := _ContractIAVSDirectory.contract.Call(opts, &out, "isMember", operator, operatorSet)
 
@@ -495,14 +687,14 @@ func (_ContractIAVSDirectory *ContractIAVSDirectoryCaller) IsMember(opts *bind.C
 // IsMember is a free data retrieval call binding the contract method 0xda2ff05d.
 //
 // Solidity: function isMember(address operator, (address,uint32) operatorSet) view returns(bool)
-func (_ContractIAVSDirectory *ContractIAVSDirectorySession) IsMember(operator common.Address, operatorSet IAVSDirectoryOperatorSet) (bool, error) {
+func (_ContractIAVSDirectory *ContractIAVSDirectorySession) IsMember(operator common.Address, operatorSet OperatorSet) (bool, error) {
 	return _ContractIAVSDirectory.Contract.IsMember(&_ContractIAVSDirectory.CallOpts, operator, operatorSet)
 }
 
 // IsMember is a free data retrieval call binding the contract method 0xda2ff05d.
 //
 // Solidity: function isMember(address operator, (address,uint32) operatorSet) view returns(bool)
-func (_ContractIAVSDirectory *ContractIAVSDirectoryCallerSession) IsMember(operator common.Address, operatorSet IAVSDirectoryOperatorSet) (bool, error) {
+func (_ContractIAVSDirectory *ContractIAVSDirectoryCallerSession) IsMember(operator common.Address, operatorSet OperatorSet) (bool, error) {
 	return _ContractIAVSDirectory.Contract.IsMember(&_ContractIAVSDirectory.CallOpts, operator, operatorSet)
 }
 
@@ -568,6 +760,68 @@ func (_ContractIAVSDirectory *ContractIAVSDirectoryCallerSession) IsOperatorSetA
 	return _ContractIAVSDirectory.Contract.IsOperatorSetAVS(&_ContractIAVSDirectory.CallOpts, avs)
 }
 
+// IsOperatorSetBatch is a free data retrieval call binding the contract method 0x20c4e236.
+//
+// Solidity: function isOperatorSetBatch((address,uint32)[] operatorSets) view returns(bool)
+func (_ContractIAVSDirectory *ContractIAVSDirectoryCaller) IsOperatorSetBatch(opts *bind.CallOpts, operatorSets []OperatorSet) (bool, error) {
+	var out []interface{}
+	err := _ContractIAVSDirectory.contract.Call(opts, &out, "isOperatorSetBatch", operatorSets)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
+}
+
+// IsOperatorSetBatch is a free data retrieval call binding the contract method 0x20c4e236.
+//
+// Solidity: function isOperatorSetBatch((address,uint32)[] operatorSets) view returns(bool)
+func (_ContractIAVSDirectory *ContractIAVSDirectorySession) IsOperatorSetBatch(operatorSets []OperatorSet) (bool, error) {
+	return _ContractIAVSDirectory.Contract.IsOperatorSetBatch(&_ContractIAVSDirectory.CallOpts, operatorSets)
+}
+
+// IsOperatorSetBatch is a free data retrieval call binding the contract method 0x20c4e236.
+//
+// Solidity: function isOperatorSetBatch((address,uint32)[] operatorSets) view returns(bool)
+func (_ContractIAVSDirectory *ContractIAVSDirectoryCallerSession) IsOperatorSetBatch(operatorSets []OperatorSet) (bool, error) {
+	return _ContractIAVSDirectory.Contract.IsOperatorSetBatch(&_ContractIAVSDirectory.CallOpts, operatorSets)
+}
+
+// IsOperatorSlashable is a free data retrieval call binding the contract method 0x1352c3e6.
+//
+// Solidity: function isOperatorSlashable(address operator, (address,uint32) operatorSet) view returns(bool)
+func (_ContractIAVSDirectory *ContractIAVSDirectoryCaller) IsOperatorSlashable(opts *bind.CallOpts, operator common.Address, operatorSet OperatorSet) (bool, error) {
+	var out []interface{}
+	err := _ContractIAVSDirectory.contract.Call(opts, &out, "isOperatorSlashable", operator, operatorSet)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
+}
+
+// IsOperatorSlashable is a free data retrieval call binding the contract method 0x1352c3e6.
+//
+// Solidity: function isOperatorSlashable(address operator, (address,uint32) operatorSet) view returns(bool)
+func (_ContractIAVSDirectory *ContractIAVSDirectorySession) IsOperatorSlashable(operator common.Address, operatorSet OperatorSet) (bool, error) {
+	return _ContractIAVSDirectory.Contract.IsOperatorSlashable(&_ContractIAVSDirectory.CallOpts, operator, operatorSet)
+}
+
+// IsOperatorSlashable is a free data retrieval call binding the contract method 0x1352c3e6.
+//
+// Solidity: function isOperatorSlashable(address operator, (address,uint32) operatorSet) view returns(bool)
+func (_ContractIAVSDirectory *ContractIAVSDirectoryCallerSession) IsOperatorSlashable(operator common.Address, operatorSet OperatorSet) (bool, error) {
+	return _ContractIAVSDirectory.Contract.IsOperatorSlashable(&_ContractIAVSDirectory.CallOpts, operator, operatorSet)
+}
+
 // OperatorSaltIsSpent is a free data retrieval call binding the contract method 0x374823b5.
 //
 // Solidity: function operatorSaltIsSpent(address operator, bytes32 salt) view returns(bool)
@@ -597,6 +851,134 @@ func (_ContractIAVSDirectory *ContractIAVSDirectorySession) OperatorSaltIsSpent(
 // Solidity: function operatorSaltIsSpent(address operator, bytes32 salt) view returns(bool)
 func (_ContractIAVSDirectory *ContractIAVSDirectoryCallerSession) OperatorSaltIsSpent(operator common.Address, salt [32]byte) (bool, error) {
 	return _ContractIAVSDirectory.Contract.OperatorSaltIsSpent(&_ContractIAVSDirectory.CallOpts, operator, salt)
+}
+
+// OperatorSetMemberAtIndex is a free data retrieval call binding the contract method 0x411d415b.
+//
+// Solidity: function operatorSetMemberAtIndex((address,uint32) operatorSet, uint256 index) view returns(address)
+func (_ContractIAVSDirectory *ContractIAVSDirectoryCaller) OperatorSetMemberAtIndex(opts *bind.CallOpts, operatorSet OperatorSet, index *big.Int) (common.Address, error) {
+	var out []interface{}
+	err := _ContractIAVSDirectory.contract.Call(opts, &out, "operatorSetMemberAtIndex", operatorSet, index)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// OperatorSetMemberAtIndex is a free data retrieval call binding the contract method 0x411d415b.
+//
+// Solidity: function operatorSetMemberAtIndex((address,uint32) operatorSet, uint256 index) view returns(address)
+func (_ContractIAVSDirectory *ContractIAVSDirectorySession) OperatorSetMemberAtIndex(operatorSet OperatorSet, index *big.Int) (common.Address, error) {
+	return _ContractIAVSDirectory.Contract.OperatorSetMemberAtIndex(&_ContractIAVSDirectory.CallOpts, operatorSet, index)
+}
+
+// OperatorSetMemberAtIndex is a free data retrieval call binding the contract method 0x411d415b.
+//
+// Solidity: function operatorSetMemberAtIndex((address,uint32) operatorSet, uint256 index) view returns(address)
+func (_ContractIAVSDirectory *ContractIAVSDirectoryCallerSession) OperatorSetMemberAtIndex(operatorSet OperatorSet, index *big.Int) (common.Address, error) {
+	return _ContractIAVSDirectory.Contract.OperatorSetMemberAtIndex(&_ContractIAVSDirectory.CallOpts, operatorSet, index)
+}
+
+// OperatorSetStatus is a free data retrieval call binding the contract method 0x1e68134e.
+//
+// Solidity: function operatorSetStatus(address avs, address operator, uint32 operatorSetId) view returns(bool registered, uint32 lastDeregisteredTimestamp)
+func (_ContractIAVSDirectory *ContractIAVSDirectoryCaller) OperatorSetStatus(opts *bind.CallOpts, avs common.Address, operator common.Address, operatorSetId uint32) (struct {
+	Registered                bool
+	LastDeregisteredTimestamp uint32
+}, error) {
+	var out []interface{}
+	err := _ContractIAVSDirectory.contract.Call(opts, &out, "operatorSetStatus", avs, operator, operatorSetId)
+
+	outstruct := new(struct {
+		Registered                bool
+		LastDeregisteredTimestamp uint32
+	})
+	if err != nil {
+		return *outstruct, err
+	}
+
+	outstruct.Registered = *abi.ConvertType(out[0], new(bool)).(*bool)
+	outstruct.LastDeregisteredTimestamp = *abi.ConvertType(out[1], new(uint32)).(*uint32)
+
+	return *outstruct, err
+
+}
+
+// OperatorSetStatus is a free data retrieval call binding the contract method 0x1e68134e.
+//
+// Solidity: function operatorSetStatus(address avs, address operator, uint32 operatorSetId) view returns(bool registered, uint32 lastDeregisteredTimestamp)
+func (_ContractIAVSDirectory *ContractIAVSDirectorySession) OperatorSetStatus(avs common.Address, operator common.Address, operatorSetId uint32) (struct {
+	Registered                bool
+	LastDeregisteredTimestamp uint32
+}, error) {
+	return _ContractIAVSDirectory.Contract.OperatorSetStatus(&_ContractIAVSDirectory.CallOpts, avs, operator, operatorSetId)
+}
+
+// OperatorSetStatus is a free data retrieval call binding the contract method 0x1e68134e.
+//
+// Solidity: function operatorSetStatus(address avs, address operator, uint32 operatorSetId) view returns(bool registered, uint32 lastDeregisteredTimestamp)
+func (_ContractIAVSDirectory *ContractIAVSDirectoryCallerSession) OperatorSetStatus(avs common.Address, operator common.Address, operatorSetId uint32) (struct {
+	Registered                bool
+	LastDeregisteredTimestamp uint32
+}, error) {
+	return _ContractIAVSDirectory.Contract.OperatorSetStatus(&_ContractIAVSDirectory.CallOpts, avs, operator, operatorSetId)
+}
+
+// OperatorSetsMemberOfAtIndex is a free data retrieval call binding the contract method 0xb5a768ca.
+//
+// Solidity: function operatorSetsMemberOfAtIndex(address operator, uint256 index) view returns((address,uint32))
+func (_ContractIAVSDirectory *ContractIAVSDirectoryCaller) OperatorSetsMemberOfAtIndex(opts *bind.CallOpts, operator common.Address, index *big.Int) (OperatorSet, error) {
+	var out []interface{}
+	err := _ContractIAVSDirectory.contract.Call(opts, &out, "operatorSetsMemberOfAtIndex", operator, index)
+
+	if err != nil {
+		return *new(OperatorSet), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(OperatorSet)).(*OperatorSet)
+
+	return out0, err
+
+}
+
+// OperatorSetsMemberOfAtIndex is a free data retrieval call binding the contract method 0xb5a768ca.
+//
+// Solidity: function operatorSetsMemberOfAtIndex(address operator, uint256 index) view returns((address,uint32))
+func (_ContractIAVSDirectory *ContractIAVSDirectorySession) OperatorSetsMemberOfAtIndex(operator common.Address, index *big.Int) (OperatorSet, error) {
+	return _ContractIAVSDirectory.Contract.OperatorSetsMemberOfAtIndex(&_ContractIAVSDirectory.CallOpts, operator, index)
+}
+
+// OperatorSetsMemberOfAtIndex is a free data retrieval call binding the contract method 0xb5a768ca.
+//
+// Solidity: function operatorSetsMemberOfAtIndex(address operator, uint256 index) view returns((address,uint32))
+func (_ContractIAVSDirectory *ContractIAVSDirectoryCallerSession) OperatorSetsMemberOfAtIndex(operator common.Address, index *big.Int) (OperatorSet, error) {
+	return _ContractIAVSDirectory.Contract.OperatorSetsMemberOfAtIndex(&_ContractIAVSDirectory.CallOpts, operator, index)
+}
+
+// AddStrategiesToOperatorSet is a paid mutator transaction binding the contract method 0x76999342.
+//
+// Solidity: function addStrategiesToOperatorSet(uint32 operatorSetId, address[] strategies) returns()
+func (_ContractIAVSDirectory *ContractIAVSDirectoryTransactor) AddStrategiesToOperatorSet(opts *bind.TransactOpts, operatorSetId uint32, strategies []common.Address) (*types.Transaction, error) {
+	return _ContractIAVSDirectory.contract.Transact(opts, "addStrategiesToOperatorSet", operatorSetId, strategies)
+}
+
+// AddStrategiesToOperatorSet is a paid mutator transaction binding the contract method 0x76999342.
+//
+// Solidity: function addStrategiesToOperatorSet(uint32 operatorSetId, address[] strategies) returns()
+func (_ContractIAVSDirectory *ContractIAVSDirectorySession) AddStrategiesToOperatorSet(operatorSetId uint32, strategies []common.Address) (*types.Transaction, error) {
+	return _ContractIAVSDirectory.Contract.AddStrategiesToOperatorSet(&_ContractIAVSDirectory.TransactOpts, operatorSetId, strategies)
+}
+
+// AddStrategiesToOperatorSet is a paid mutator transaction binding the contract method 0x76999342.
+//
+// Solidity: function addStrategiesToOperatorSet(uint32 operatorSetId, address[] strategies) returns()
+func (_ContractIAVSDirectory *ContractIAVSDirectoryTransactorSession) AddStrategiesToOperatorSet(operatorSetId uint32, strategies []common.Address) (*types.Transaction, error) {
+	return _ContractIAVSDirectory.Contract.AddStrategiesToOperatorSet(&_ContractIAVSDirectory.TransactOpts, operatorSetId, strategies)
 }
 
 // BecomeOperatorSetAVS is a paid mutator transaction binding the contract method 0xaec205c5.
@@ -725,6 +1107,27 @@ func (_ContractIAVSDirectory *ContractIAVSDirectoryTransactorSession) ForceDereg
 	return _ContractIAVSDirectory.Contract.ForceDeregisterFromOperatorSets(&_ContractIAVSDirectory.TransactOpts, operator, avs, operatorSetIds, operatorSignature)
 }
 
+// Initialize is a paid mutator transaction binding the contract method 0x1794bb3c.
+//
+// Solidity: function initialize(address initialOwner, address _pauserRegistry, uint256 initialPausedStatus) returns()
+func (_ContractIAVSDirectory *ContractIAVSDirectoryTransactor) Initialize(opts *bind.TransactOpts, initialOwner common.Address, _pauserRegistry common.Address, initialPausedStatus *big.Int) (*types.Transaction, error) {
+	return _ContractIAVSDirectory.contract.Transact(opts, "initialize", initialOwner, _pauserRegistry, initialPausedStatus)
+}
+
+// Initialize is a paid mutator transaction binding the contract method 0x1794bb3c.
+//
+// Solidity: function initialize(address initialOwner, address _pauserRegistry, uint256 initialPausedStatus) returns()
+func (_ContractIAVSDirectory *ContractIAVSDirectorySession) Initialize(initialOwner common.Address, _pauserRegistry common.Address, initialPausedStatus *big.Int) (*types.Transaction, error) {
+	return _ContractIAVSDirectory.Contract.Initialize(&_ContractIAVSDirectory.TransactOpts, initialOwner, _pauserRegistry, initialPausedStatus)
+}
+
+// Initialize is a paid mutator transaction binding the contract method 0x1794bb3c.
+//
+// Solidity: function initialize(address initialOwner, address _pauserRegistry, uint256 initialPausedStatus) returns()
+func (_ContractIAVSDirectory *ContractIAVSDirectoryTransactorSession) Initialize(initialOwner common.Address, _pauserRegistry common.Address, initialPausedStatus *big.Int) (*types.Transaction, error) {
+	return _ContractIAVSDirectory.Contract.Initialize(&_ContractIAVSDirectory.TransactOpts, initialOwner, _pauserRegistry, initialPausedStatus)
+}
+
 // MigrateOperatorsToOperatorSets is a paid mutator transaction binding the contract method 0xef2dfa8d.
 //
 // Solidity: function migrateOperatorsToOperatorSets(address[] operators, uint32[][] operatorSetIds) returns()
@@ -786,6 +1189,27 @@ func (_ContractIAVSDirectory *ContractIAVSDirectorySession) RegisterOperatorToOp
 // Solidity: function registerOperatorToOperatorSets(address operator, uint32[] operatorSetIds, (bytes,bytes32,uint256) operatorSignature) returns()
 func (_ContractIAVSDirectory *ContractIAVSDirectoryTransactorSession) RegisterOperatorToOperatorSets(operator common.Address, operatorSetIds []uint32, operatorSignature ISignatureUtilsSignatureWithSaltAndExpiry) (*types.Transaction, error) {
 	return _ContractIAVSDirectory.Contract.RegisterOperatorToOperatorSets(&_ContractIAVSDirectory.TransactOpts, operator, operatorSetIds, operatorSignature)
+}
+
+// RemoveStrategiesFromOperatorSet is a paid mutator transaction binding the contract method 0xce7b5e4b.
+//
+// Solidity: function removeStrategiesFromOperatorSet(uint32 operatorSetId, address[] strategies) returns()
+func (_ContractIAVSDirectory *ContractIAVSDirectoryTransactor) RemoveStrategiesFromOperatorSet(opts *bind.TransactOpts, operatorSetId uint32, strategies []common.Address) (*types.Transaction, error) {
+	return _ContractIAVSDirectory.contract.Transact(opts, "removeStrategiesFromOperatorSet", operatorSetId, strategies)
+}
+
+// RemoveStrategiesFromOperatorSet is a paid mutator transaction binding the contract method 0xce7b5e4b.
+//
+// Solidity: function removeStrategiesFromOperatorSet(uint32 operatorSetId, address[] strategies) returns()
+func (_ContractIAVSDirectory *ContractIAVSDirectorySession) RemoveStrategiesFromOperatorSet(operatorSetId uint32, strategies []common.Address) (*types.Transaction, error) {
+	return _ContractIAVSDirectory.Contract.RemoveStrategiesFromOperatorSet(&_ContractIAVSDirectory.TransactOpts, operatorSetId, strategies)
+}
+
+// RemoveStrategiesFromOperatorSet is a paid mutator transaction binding the contract method 0xce7b5e4b.
+//
+// Solidity: function removeStrategiesFromOperatorSet(uint32 operatorSetId, address[] strategies) returns()
+func (_ContractIAVSDirectory *ContractIAVSDirectoryTransactorSession) RemoveStrategiesFromOperatorSet(operatorSetId uint32, strategies []common.Address) (*types.Transaction, error) {
+	return _ContractIAVSDirectory.Contract.RemoveStrategiesFromOperatorSet(&_ContractIAVSDirectory.TransactOpts, operatorSetId, strategies)
 }
 
 // UpdateAVSMetadataURI is a paid mutator transaction binding the contract method 0xa98fb355.
@@ -1322,7 +1746,7 @@ func (it *ContractIAVSDirectoryOperatorAddedToOperatorSetIterator) Close() error
 // ContractIAVSDirectoryOperatorAddedToOperatorSet represents a OperatorAddedToOperatorSet event raised by the ContractIAVSDirectory contract.
 type ContractIAVSDirectoryOperatorAddedToOperatorSet struct {
 	Operator    common.Address
-	OperatorSet IAVSDirectoryOperatorSet
+	OperatorSet OperatorSet
 	Raw         types.Log // Blockchain specific contextual infos
 }
 
@@ -1621,7 +2045,7 @@ func (it *ContractIAVSDirectoryOperatorRemovedFromOperatorSetIterator) Close() e
 // ContractIAVSDirectoryOperatorRemovedFromOperatorSet represents a OperatorRemovedFromOperatorSet event raised by the ContractIAVSDirectory contract.
 type ContractIAVSDirectoryOperatorRemovedFromOperatorSet struct {
 	Operator    common.Address
-	OperatorSet IAVSDirectoryOperatorSet
+	OperatorSet OperatorSet
 	Raw         types.Log // Blockchain specific contextual infos
 }
 
@@ -1765,7 +2189,7 @@ func (it *ContractIAVSDirectoryOperatorSetCreatedIterator) Close() error {
 
 // ContractIAVSDirectoryOperatorSetCreated represents a OperatorSetCreated event raised by the ContractIAVSDirectory contract.
 type ContractIAVSDirectoryOperatorSetCreated struct {
-	OperatorSet IAVSDirectoryOperatorSet
+	OperatorSet OperatorSet
 	Raw         types.Log // Blockchain specific contextual infos
 }
 
@@ -1824,6 +2248,276 @@ func (_ContractIAVSDirectory *ContractIAVSDirectoryFilterer) WatchOperatorSetCre
 func (_ContractIAVSDirectory *ContractIAVSDirectoryFilterer) ParseOperatorSetCreated(log types.Log) (*ContractIAVSDirectoryOperatorSetCreated, error) {
 	event := new(ContractIAVSDirectoryOperatorSetCreated)
 	if err := _ContractIAVSDirectory.contract.UnpackLog(event, "OperatorSetCreated", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// ContractIAVSDirectoryStrategyAddedToOperatorSetIterator is returned from FilterStrategyAddedToOperatorSet and is used to iterate over the raw logs and unpacked data for StrategyAddedToOperatorSet events raised by the ContractIAVSDirectory contract.
+type ContractIAVSDirectoryStrategyAddedToOperatorSetIterator struct {
+	Event *ContractIAVSDirectoryStrategyAddedToOperatorSet // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *ContractIAVSDirectoryStrategyAddedToOperatorSetIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(ContractIAVSDirectoryStrategyAddedToOperatorSet)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(ContractIAVSDirectoryStrategyAddedToOperatorSet)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *ContractIAVSDirectoryStrategyAddedToOperatorSetIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *ContractIAVSDirectoryStrategyAddedToOperatorSetIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// ContractIAVSDirectoryStrategyAddedToOperatorSet represents a StrategyAddedToOperatorSet event raised by the ContractIAVSDirectory contract.
+type ContractIAVSDirectoryStrategyAddedToOperatorSet struct {
+	OperatorSet OperatorSet
+	Strategy    common.Address
+	Raw         types.Log // Blockchain specific contextual infos
+}
+
+// FilterStrategyAddedToOperatorSet is a free log retrieval operation binding the contract event 0x7ab260fe0af193db5f4986770d831bda4ea46099dc817e8b6716dcae8af8e88b.
+//
+// Solidity: event StrategyAddedToOperatorSet((address,uint32) operatorSet, address strategy)
+func (_ContractIAVSDirectory *ContractIAVSDirectoryFilterer) FilterStrategyAddedToOperatorSet(opts *bind.FilterOpts) (*ContractIAVSDirectoryStrategyAddedToOperatorSetIterator, error) {
+
+	logs, sub, err := _ContractIAVSDirectory.contract.FilterLogs(opts, "StrategyAddedToOperatorSet")
+	if err != nil {
+		return nil, err
+	}
+	return &ContractIAVSDirectoryStrategyAddedToOperatorSetIterator{contract: _ContractIAVSDirectory.contract, event: "StrategyAddedToOperatorSet", logs: logs, sub: sub}, nil
+}
+
+// WatchStrategyAddedToOperatorSet is a free log subscription operation binding the contract event 0x7ab260fe0af193db5f4986770d831bda4ea46099dc817e8b6716dcae8af8e88b.
+//
+// Solidity: event StrategyAddedToOperatorSet((address,uint32) operatorSet, address strategy)
+func (_ContractIAVSDirectory *ContractIAVSDirectoryFilterer) WatchStrategyAddedToOperatorSet(opts *bind.WatchOpts, sink chan<- *ContractIAVSDirectoryStrategyAddedToOperatorSet) (event.Subscription, error) {
+
+	logs, sub, err := _ContractIAVSDirectory.contract.WatchLogs(opts, "StrategyAddedToOperatorSet")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(ContractIAVSDirectoryStrategyAddedToOperatorSet)
+				if err := _ContractIAVSDirectory.contract.UnpackLog(event, "StrategyAddedToOperatorSet", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseStrategyAddedToOperatorSet is a log parse operation binding the contract event 0x7ab260fe0af193db5f4986770d831bda4ea46099dc817e8b6716dcae8af8e88b.
+//
+// Solidity: event StrategyAddedToOperatorSet((address,uint32) operatorSet, address strategy)
+func (_ContractIAVSDirectory *ContractIAVSDirectoryFilterer) ParseStrategyAddedToOperatorSet(log types.Log) (*ContractIAVSDirectoryStrategyAddedToOperatorSet, error) {
+	event := new(ContractIAVSDirectoryStrategyAddedToOperatorSet)
+	if err := _ContractIAVSDirectory.contract.UnpackLog(event, "StrategyAddedToOperatorSet", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// ContractIAVSDirectoryStrategyRemovedFromOperatorSetIterator is returned from FilterStrategyRemovedFromOperatorSet and is used to iterate over the raw logs and unpacked data for StrategyRemovedFromOperatorSet events raised by the ContractIAVSDirectory contract.
+type ContractIAVSDirectoryStrategyRemovedFromOperatorSetIterator struct {
+	Event *ContractIAVSDirectoryStrategyRemovedFromOperatorSet // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *ContractIAVSDirectoryStrategyRemovedFromOperatorSetIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(ContractIAVSDirectoryStrategyRemovedFromOperatorSet)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(ContractIAVSDirectoryStrategyRemovedFromOperatorSet)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *ContractIAVSDirectoryStrategyRemovedFromOperatorSetIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *ContractIAVSDirectoryStrategyRemovedFromOperatorSetIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// ContractIAVSDirectoryStrategyRemovedFromOperatorSet represents a StrategyRemovedFromOperatorSet event raised by the ContractIAVSDirectory contract.
+type ContractIAVSDirectoryStrategyRemovedFromOperatorSet struct {
+	OperatorSet OperatorSet
+	Strategy    common.Address
+	Raw         types.Log // Blockchain specific contextual infos
+}
+
+// FilterStrategyRemovedFromOperatorSet is a free log retrieval operation binding the contract event 0x7b4b073d80dcac55a11177d8459ad9f664ceeb91f71f27167bb14f8152a7eeee.
+//
+// Solidity: event StrategyRemovedFromOperatorSet((address,uint32) operatorSet, address strategy)
+func (_ContractIAVSDirectory *ContractIAVSDirectoryFilterer) FilterStrategyRemovedFromOperatorSet(opts *bind.FilterOpts) (*ContractIAVSDirectoryStrategyRemovedFromOperatorSetIterator, error) {
+
+	logs, sub, err := _ContractIAVSDirectory.contract.FilterLogs(opts, "StrategyRemovedFromOperatorSet")
+	if err != nil {
+		return nil, err
+	}
+	return &ContractIAVSDirectoryStrategyRemovedFromOperatorSetIterator{contract: _ContractIAVSDirectory.contract, event: "StrategyRemovedFromOperatorSet", logs: logs, sub: sub}, nil
+}
+
+// WatchStrategyRemovedFromOperatorSet is a free log subscription operation binding the contract event 0x7b4b073d80dcac55a11177d8459ad9f664ceeb91f71f27167bb14f8152a7eeee.
+//
+// Solidity: event StrategyRemovedFromOperatorSet((address,uint32) operatorSet, address strategy)
+func (_ContractIAVSDirectory *ContractIAVSDirectoryFilterer) WatchStrategyRemovedFromOperatorSet(opts *bind.WatchOpts, sink chan<- *ContractIAVSDirectoryStrategyRemovedFromOperatorSet) (event.Subscription, error) {
+
+	logs, sub, err := _ContractIAVSDirectory.contract.WatchLogs(opts, "StrategyRemovedFromOperatorSet")
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(ContractIAVSDirectoryStrategyRemovedFromOperatorSet)
+				if err := _ContractIAVSDirectory.contract.UnpackLog(event, "StrategyRemovedFromOperatorSet", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseStrategyRemovedFromOperatorSet is a log parse operation binding the contract event 0x7b4b073d80dcac55a11177d8459ad9f664ceeb91f71f27167bb14f8152a7eeee.
+//
+// Solidity: event StrategyRemovedFromOperatorSet((address,uint32) operatorSet, address strategy)
+func (_ContractIAVSDirectory *ContractIAVSDirectoryFilterer) ParseStrategyRemovedFromOperatorSet(log types.Log) (*ContractIAVSDirectoryStrategyRemovedFromOperatorSet, error) {
+	event := new(ContractIAVSDirectoryStrategyRemovedFromOperatorSet)
+	if err := _ContractIAVSDirectory.contract.UnpackLog(event, "StrategyRemovedFromOperatorSet", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
