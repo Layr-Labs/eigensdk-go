@@ -15,7 +15,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"path/filepath"
 	"regexp"
 )
@@ -53,14 +52,6 @@ var (
 	// Regular expression to validate URLs
 	urlPattern = regexp.MustCompile(`^(https?)://[^\s/$.?#].[^\s]*$`)
 )
-
-func ReadFile(path string) ([]byte, error) {
-	b, err := os.ReadFile(filepath.Clean(path))
-	if err != nil {
-		return nil, err
-	}
-	return b, nil
-}
 
 func EcdsaPrivateKeyToAddress(privateKey *ecdsa.PrivateKey) (gethcommon.Address, error) {
 	publicKey := privateKey.Public()
