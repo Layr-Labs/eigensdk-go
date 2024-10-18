@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -151,5 +152,17 @@ func AdvanceChainByNBlocksExecInContainer(ctx context.Context, n int, anvilC tes
 	}
 	if c != 0 {
 		log.Fatalf("Unable to advance anvil chain by n blocks. Expected return code 0, got %v", c)
+	}
+}
+
+type TestConfig struct {
+	AnvilStateFileName string
+	LogLevel           slog.Level
+}
+
+func GetDefaultTestConfig() TestConfig {
+	return TestConfig{
+		AnvilStateFileName: "contracts-deployed-anvil-state.json",
+		LogLevel:           slog.LevelDebug,
 	}
 }
