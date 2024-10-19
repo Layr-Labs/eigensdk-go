@@ -68,24 +68,6 @@ func TestChainReader(t *testing.T) {
 		assert.NotEmpty(t, tokenName)
 	})
 
-	t.Run("service manager can slash operator until block", func(t *testing.T) {
-		_, err := clients.ElChainReader.ServiceManagerCanSlashOperatorUntilBlock(
-			&bind.CallOpts{},
-			common.HexToAddress(operator.Address),
-			contractAddrs.ServiceManager,
-		)
-		assert.NoError(t, err)
-	})
-
-	t.Run("operator is frozen", func(t *testing.T) {
-		isFrozen, err := clients.ElChainReader.OperatorIsFrozen(
-			&bind.CallOpts{},
-			common.HexToAddress(operator.Address),
-		)
-		assert.NoError(t, err)
-		assert.Equal(t, isFrozen, false)
-	})
-
 	t.Run("get operator shares in strategy", func(t *testing.T) {
 		shares, err := clients.ElChainReader.GetOperatorSharesInStrategy(
 			&bind.CallOpts{},
