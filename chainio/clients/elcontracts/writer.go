@@ -12,9 +12,9 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
+	avsdirectory "github.com/Layr-Labs/eigensdk-go/contracts/bindings/AVSDirectory"
+	allocationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/AllocationManager"
 	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
-	avsdirectory "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IAVSDirectory"
-	allocationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IAllocationManager"
 	erc20 "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IERC20"
 	rewardscoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IRewardsCoordinator"
 	strategy "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IStrategy"
@@ -35,8 +35,8 @@ type ChainWriter struct {
 	delegationManager   *delegationmanager.ContractDelegationManager
 	strategyManager     *strategymanager.ContractStrategyManager
 	rewardsCoordinator  *rewardscoordinator.ContractIRewardsCoordinator
-	avsDirectory        *avsdirectory.ContractIAVSDirectory
-	allocationManager   *allocationmanager.ContractIAllocationManager
+	avsDirectory        *avsdirectory.ContractAVSDirectory
+	allocationManager   *allocationmanager.ContractAllocationManager
 	strategyManagerAddr gethcommon.Address
 	elChainReader       Reader
 	ethClient           eth.HttpBackend
@@ -48,8 +48,8 @@ func NewChainWriter(
 	delegationManager *delegationmanager.ContractDelegationManager,
 	strategyManager *strategymanager.ContractStrategyManager,
 	rewardsCoordinator *rewardscoordinator.ContractIRewardsCoordinator,
-	avsDirectory *avsdirectory.ContractIAVSDirectory,
-	allocationManager *allocationmanager.ContractIAllocationManager,
+	avsDirectory *avsdirectory.ContractAVSDirectory,
+	allocationManager *allocationmanager.ContractAllocationManager,
 	strategyManagerAddr gethcommon.Address,
 	elChainReader Reader,
 	ethClient eth.HttpBackend,
