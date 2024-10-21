@@ -116,12 +116,7 @@ func NewReaderFromConfig(
 
 // GetStakerShares returns the amount of shares that a staker has in all of the strategies in which they have nonzero shares
 func (r *ChainReader) GetStakerShares(opts *bind.CallOpts, stakerAddress gethcommon.Address, blockNumber *big.Int) ([]gethcommon.Address, []*big.Int, error) {
-	strategies, shares, err := r.delegationManager.GetDepositedShares(opts, stakerAddress)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return strategies, shares, nil
+	return r.delegationManager.GetDepositedShares(opts, stakerAddress)
 }
 
 // GetDelegatedOperator returns the operator that a staker has delegated to
