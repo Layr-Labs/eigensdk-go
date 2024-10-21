@@ -29,7 +29,7 @@ import (
 
 type eLReader interface {
 	CalculateOperatorAVSRegistrationDigestHash(
-		opts *bind.CallOpts,
+		ctx context.Context,
 		operatorAddr gethcommon.Address,
 		serviceManagerAddr gethcommon.Address,
 		operatorToAvsRegistrationSigSalt [32]byte,
@@ -233,7 +233,7 @@ func (w *ChainWriter) RegisterOperatorInQuorumWithAVSRegistryCoordinator(
 
 	// params to register operator in delegation manager's operator-avs mapping
 	msgToSign, err := w.elReader.CalculateOperatorAVSRegistrationDigestHash(
-		&bind.CallOpts{},
+		ctx,
 		operatorAddr,
 		w.serviceManagerAddr,
 		operatorToAvsRegistrationSigSalt,
@@ -355,7 +355,7 @@ func (w *ChainWriter) RegisterOperator(
 
 	// params to register operator in delegation manager's operator-avs mapping
 	msgToSign, err := w.elReader.CalculateOperatorAVSRegistrationDigestHash(
-		&bind.CallOpts{},
+		ctx,
 		operatorAddr,
 		w.serviceManagerAddr,
 		operatorToAvsRegistrationSigSalt,

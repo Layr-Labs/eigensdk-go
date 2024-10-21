@@ -1,6 +1,7 @@
 package elcontracts_test
 
 import (
+	"context"
 	"math/big"
 	"testing"
 
@@ -15,6 +16,7 @@ import (
 
 func TestChainReader(t *testing.T) {
 	clients, anvilHttpEndpoint := testclients.BuildTestClients(t)
+	ctx := context.Background()
 
 	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
 	operator := types.Operator{
@@ -22,13 +24,13 @@ func TestChainReader(t *testing.T) {
 	}
 
 	t.Run("is operator registered", func(t *testing.T) {
-		isOperator, err := clients.ElChainReader.IsOperatorRegistered(&bind.CallOpts{}, operator)
+		isOperator, err := clients.ElChainReader.IsOperatorRegistered(ctx, operator)
 		assert.NoError(t, err)
 		assert.Equal(t, isOperator, true)
 	})
 
 	t.Run("get operator details", func(t *testing.T) {
-		operatorDetails, err := clients.ElChainReader.GetOperatorDetails(&bind.CallOpts{}, operator)
+		operatorDetails, err := clients.ElChainReader.GetOperatorDetails(ctx, operator)
 		assert.NoError(t, err)
 		assert.NotNil(t, operatorDetails)
 		assert.Equal(t, operator.Address, operatorDetails.Address)
@@ -37,7 +39,7 @@ func TestChainReader(t *testing.T) {
 	t.Run("get strategy and underlying token", func(t *testing.T) {
 		strategyAddr := contractAddrs.Erc20MockStrategy
 		strategy, underlyingTokenAddr, err := clients.ElChainReader.GetStrategyAndUnderlyingToken(
-			&bind.CallOpts{},
+			ctx,
 			strategyAddr,
 		)
 		assert.NoError(t, err)
@@ -55,7 +57,7 @@ func TestChainReader(t *testing.T) {
 	t.Run("get strategy and underlying ERC20 token", func(t *testing.T) {
 		strategyAddr := contractAddrs.Erc20MockStrategy
 		strategy, contractUnderlyingToken, underlyingTokenAddr, err := clients.ElChainReader.GetStrategyAndUnderlyingERC20Token(
-			&bind.CallOpts{},
+			ctx,
 			strategyAddr,
 		)
 		assert.NoError(t, err)
@@ -70,7 +72,7 @@ func TestChainReader(t *testing.T) {
 
 	t.Run("service manager can slash operator until block", func(t *testing.T) {
 		_, err := clients.ElChainReader.ServiceManagerCanSlashOperatorUntilBlock(
-			&bind.CallOpts{},
+			ctx,
 			common.HexToAddress(operator.Address),
 			contractAddrs.ServiceManager,
 		)
@@ -79,7 +81,7 @@ func TestChainReader(t *testing.T) {
 
 	t.Run("operator is frozen", func(t *testing.T) {
 		isFrozen, err := clients.ElChainReader.OperatorIsFrozen(
-			&bind.CallOpts{},
+			ctx,
 			common.HexToAddress(operator.Address),
 		)
 		assert.NoError(t, err)
@@ -88,7 +90,7 @@ func TestChainReader(t *testing.T) {
 
 	t.Run("get operator shares in strategy", func(t *testing.T) {
 		shares, err := clients.ElChainReader.GetOperatorSharesInStrategy(
-			&bind.CallOpts{},
+			ctx,
 			common.HexToAddress(operator.Address),
 			contractAddrs.Erc20MockStrategy,
 		)
@@ -102,7 +104,7 @@ func TestChainReader(t *testing.T) {
 		approverSalt := [32]byte{}
 		expiry := big.NewInt(0)
 		digest, err := clients.ElChainReader.CalculateDelegationApprovalDigestHash(
-			&bind.CallOpts{},
+			ctx,
 			staker,
 			common.HexToAddress(operator.Address),
 			delegationApprover,
@@ -118,7 +120,7 @@ func TestChainReader(t *testing.T) {
 		salt := [32]byte{}
 		expiry := big.NewInt(0)
 		digest, err := clients.ElChainReader.CalculateOperatorAVSRegistrationDigestHash(
-			&bind.CallOpts{},
+			ctx,
 			common.HexToAddress(operator.Address),
 			avs,
 			salt,

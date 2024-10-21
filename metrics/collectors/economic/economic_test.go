@@ -1,6 +1,7 @@
 package economic
 
 import (
+	"context"
 	"math/big"
 	"testing"
 
@@ -29,7 +30,7 @@ func newFakeELReader() *fakeELReader {
 	}
 }
 
-func (f *fakeELReader) OperatorIsFrozen(opts *bind.CallOpts, operatorAddr common.Address) (bool, error) {
+func (f *fakeELReader) OperatorIsFrozen(ctx context.Context, operatorAddr common.Address) (bool, error) {
 	return f.registeredOperators[operatorAddr], nil
 }
 
