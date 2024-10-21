@@ -30,6 +30,10 @@ type Operator struct {
 
 	// MetadataUrl URL where operator metadata is stored
 	MetadataUrl string `yaml:"metadata_url" json:"metadata_url"`
+
+	// AllocationDelay is the delay in seconds where an operator is allowed to change allocation
+	// This can only be set once by the operator. Once set this can't be changed
+	AllocationDelay uint32 `yaml:"allocation_delay" json:"allocation_delay"`
 }
 
 func (o Operator) Validate() error {
