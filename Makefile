@@ -59,7 +59,7 @@ lint: ## runs all linters
 
 ___BINDINGS___: ## 
 
-core_default := "DelegationManager IRewardsCoordinator ISlasher StrategyManager EigenPod EigenPodManager IStrategy IAVSDirectory"
+core_default := "DelegationManager IRewardsCoordinator StrategyManager EigenPod EigenPodManager IStrategy AVSDirectory AllocationManager"
 core_location := "./lib/eigenlayer-middleware/lib/eigenlayer-contracts"
 core_bindings_location := "../../../../bindings"
 
