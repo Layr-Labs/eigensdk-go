@@ -114,13 +114,22 @@ func NewReaderFromConfig(
 	), nil
 }
 
-// GetStakerShares returns the amount of shares that a staker has in all of the strategies in which they have nonzero shares
-func (r *ChainReader) GetStakerShares(opts *bind.CallOpts, stakerAddress gethcommon.Address, blockNumber *big.Int) ([]gethcommon.Address, []*big.Int, error) {
+// GetStakerShares returns the amount of shares that a staker has in all of the strategies in which they have nonzero
+// shares
+func (r *ChainReader) GetStakerShares(
+	opts *bind.CallOpts,
+	stakerAddress gethcommon.Address,
+	blockNumber *big.Int,
+) ([]gethcommon.Address, []*big.Int, error) {
 	return r.delegationManager.GetDepositedShares(opts, stakerAddress)
 }
 
 // GetDelegatedOperator returns the operator that a staker has delegated to
-func (r *ChainReader) GetDelegatedOperator(opts *bind.CallOpts, stakerAddress gethcommon.Address, blockNumber *big.Int) (gethcommon.Address, error) {
+func (r *ChainReader) GetDelegatedOperator(
+	opts *bind.CallOpts,
+	stakerAddress gethcommon.Address,
+	blockNumber *big.Int,
+) (gethcommon.Address, error) {
 	return r.delegationManager.DelegatedTo(opts, stakerAddress)
 }
 
@@ -153,7 +162,10 @@ func (r *ChainReader) GetOperatorDetails(opts *bind.CallOpts, operator types.Ope
 		return types.Operator{}, err
 	}
 
-	allocationDelayDetails, err := r.allocationManager.GetAllocationDelay(opts, gethcommon.HexToAddress(operator.Address))
+	allocationDelayDetails, err := r.allocationManager.GetAllocationDelay(
+		opts,
+		gethcommon.HexToAddress(operator.Address),
+	)
 	if err == nil {
 		return types.Operator{}, err
 	}
@@ -386,19 +398,30 @@ func (r *ChainReader) GetOperatorsShares(
 
 // GetNumberOfOperatorSetsForOperator returns the number of operator sets that an operator is part of
 // Doesn't include M2 AVSs
-func (r *ChainReader) GetNumOperatorSetsForOperator(opts *bind.CallOpts, operatorAddress gethcommon.Address) (*big.Int, error) {
+func (r *ChainReader) GetNumOperatorSetsForOperator(
+	opts *bind.CallOpts,
+	operatorAddress gethcommon.Address,
+) (*big.Int, error) {
 	return r.avsDirectory.GetNumOperatorSetsOfOperator(opts, operatorAddress)
 }
 
 // GetOperatorSetsForOperator returns the list of operator sets that an operator is part of
 // Doesn't include M2 AVSs
-func (r *ChainReader) GetOperatorSetsForOperator(opts *bind.CallOpts, operatorAddress gethcommon.Address) ([]avsdirectory.OperatorSet, error) {
-	// TODO: we're fetching max int64 operatorSets here. What's the practical limit for timeout by RPC? do we need to paginate?
+func (r *ChainReader) GetOperatorSetsForOperator(
+	opts *bind.CallOpts,
+	operatorAddress gethcommon.Address,
+) ([]avsdirectory.OperatorSet, error) {
+	// TODO: we're fetching max int64 operatorSets here. What's the practical limit for timeout by RPC? do we need to
+	// paginate?
 	return r.avsDirectory.GetOperatorSetsOfOperator(opts, operatorAddress, gethcommon.Big0, big.NewInt(math.MaxInt64))
 }
 
 // IsOperatorRegisteredWithOperatorSet returns if an operator is registered with a specific operator set
-func (r *ChainReader) IsOperatorRegisteredWithOperatorSet(opts *bind.CallOpts, operatorAddress gethcommon.Address, operatorSet avsdirectory.OperatorSet) (bool, error) {
+func (r *ChainReader) IsOperatorRegisteredWithOperatorSet(
+	opts *bind.CallOpts,
+	operatorAddress gethcommon.Address,
+	operatorSet avsdirectory.OperatorSet,
+) (bool, error) {
 	if operatorSet.OperatorSetId == 0 {
 		// this is an M2 AVS
 		status, err := r.avsDirectory.AvsOperatorStatus(opts, operatorSet.Avs, operatorAddress)
@@ -419,7 +442,10 @@ func (r *ChainReader) IsOperatorRegisteredWithOperatorSet(opts *bind.CallOpts, o
 
 // GetOperatorsForOperatorSet returns the list of operators in a specific operator set
 // Not supported for M2 AVSs
-func (r *ChainReader) GetOperatorsForOperatorSet(opts *bind.CallOpts, operatorSet avsdirectory.OperatorSet) ([]gethcommon.Address, error) {
+func (r *ChainReader) GetOperatorsForOperatorSet(
+	opts *bind.CallOpts,
+	operatorSet avsdirectory.OperatorSet,
+) ([]gethcommon.Address, error) {
 	if operatorSet.OperatorSetId == 0 {
 		return nil, errLegacyAVSsNotSupported
 	} else {
@@ -428,7 +454,10 @@ func (r *ChainReader) GetOperatorsForOperatorSet(opts *bind.CallOpts, operatorSe
 }
 
 // GetNumOperatorsForOperatorSet returns the number of operators in a specific operator set
-func (r *ChainReader) GetNumOperatorsForOperatorSet(opts *bind.CallOpts, operatorSet avsdirectory.OperatorSet) (*big.Int, error) {
+func (r *ChainReader) GetNumOperatorsForOperatorSet(
+	opts *bind.CallOpts,
+	operatorSet avsdirectory.OperatorSet,
+) (*big.Int, error) {
 	if operatorSet.OperatorSetId == 0 {
 		return nil, errLegacyAVSsNotSupported
 	} else {
@@ -438,7 +467,10 @@ func (r *ChainReader) GetNumOperatorsForOperatorSet(opts *bind.CallOpts, operato
 
 // GetStrategiesForOperatorSet returns the list of strategies that an operator set takes into account
 // Not supported for M2 AVSs
-func (r *ChainReader) GetStrategiesForOperatorSet(opts *bind.CallOpts, operatorSet avsdirectory.OperatorSet) ([]gethcommon.Address, error) {
+func (r *ChainReader) GetStrategiesForOperatorSet(
+	opts *bind.CallOpts,
+	operatorSet avsdirectory.OperatorSet,
+) ([]gethcommon.Address, error) {
 	if operatorSet.OperatorSetId == 0 {
 		return nil, errLegacyAVSsNotSupported
 	} else {
@@ -454,10 +486,14 @@ type OperatorSetStakes struct {
 	SlashableStakes [][]*big.Int
 }
 
-// GetDelegatedAndSlashableSharesForOperatorSets returns the strategies the operatorSets take into account, their operators,
+// GetDelegatedAndSlashableSharesForOperatorSets returns the strategies the operatorSets take into account, their
+// operators,
 // and the minimum amount of shares that multiple operators delegated to them and slashable by the operatorSets.
 // Not supported for M2 AVSs
-func (r *ChainReader) GetDelegatedAndSlashableSharesForOperatorSets(opts *bind.CallOpts, operatorSets []avsdirectory.OperatorSet) ([]OperatorSetStakes, error) {
+func (r *ChainReader) GetDelegatedAndSlashableSharesForOperatorSets(
+	opts *bind.CallOpts,
+	operatorSets []avsdirectory.OperatorSet,
+) ([]OperatorSetStakes, error) {
 	operatorSetStakes := make([]OperatorSetStakes, len(operatorSets))
 	for i, operatorSet := range operatorSets {
 		operators, err := r.GetOperatorsForOperatorSet(opts, operatorSet)
@@ -495,11 +531,16 @@ func (r *ChainReader) GetDelegatedAndSlashableSharesForOperatorSets(opts *bind.C
 	return operatorSetStakes, nil
 }
 
-// GetDelegatedAndSlashableSharesForOperatorSetsBefore returns the strategies the operatorSets take into account, their operators,
-// and the minimum amount of shares that multiple operators delegated to them and slashable by the operatorSets before a given timestamp.
+// GetDelegatedAndSlashableSharesForOperatorSetsBefore returns the strategies the operatorSets take into account, their
+// operators, and the minimum amount of shares that multiple operators delegated to them and slashable by the
+// operatorSets before a given timestamp.
 // Timestamp must be in the future. Used to underestimate future slashable stake.
 // Not supported for M2 AVSs
-func (r *ChainReader) GetDelegatedAndSlashableSharesForOperatorSetsBefore(opts *bind.CallOpts, operatorSets []avsdirectory.OperatorSet, beforeTimestamp uint32) ([]OperatorSetStakes, error) {
+func (r *ChainReader) GetDelegatedAndSlashableSharesForOperatorSetsBefore(
+	opts *bind.CallOpts,
+	operatorSets []avsdirectory.OperatorSet,
+	beforeTimestamp uint32,
+) ([]OperatorSetStakes, error) {
 	operatorSetStakes := make([]OperatorSetStakes, len(operatorSets))
 	for i, operatorSet := range operatorSets {
 		operators, err := r.GetOperatorsForOperatorSet(opts, operatorSet)
