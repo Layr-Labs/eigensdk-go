@@ -1,6 +1,7 @@
 package elcontracts
 
 import (
+	"context"
 	"errors"
 
 	"math/big"
@@ -112,13 +113,16 @@ func NewReaderFromConfig(
 	), nil
 }
 
-func (r *ChainReader) IsOperatorRegistered(opts *bind.CallOpts, operator types.Operator) (bool, error) {
+func (r *ChainReader) IsOperatorRegistered(
+	ctx context.Context,
+	operator types.Operator,
+) (bool, error) {
 	if r.delegationManager == nil {
 		return false, errors.New("DelegationManager contract not provided")
 	}
 
 	isOperator, err := r.delegationManager.IsOperator(
-		opts,
+		&bind.CallOpts{Context: ctx},
 		gethcommon.HexToAddress(operator.Address),
 	)
 	if err != nil {
@@ -128,13 +132,16 @@ func (r *ChainReader) IsOperatorRegistered(opts *bind.CallOpts, operator types.O
 	return isOperator, nil
 }
 
-func (r *ChainReader) GetOperatorDetails(opts *bind.CallOpts, operator types.Operator) (types.Operator, error) {
+func (r *ChainReader) GetOperatorDetails(
+	ctx context.Context,
+	operator types.Operator,
+) (types.Operator, error) {
 	if r.delegationManager == nil {
 		return types.Operator{}, errors.New("DelegationManager contract not provided")
 	}
 
 	operatorDetails, err := r.delegationManager.OperatorDetails(
-		opts,
+		&bind.CallOpts{Context: ctx},
 		gethcommon.HexToAddress(operator.Address),
 	)
 	if err != nil {
@@ -150,13 +157,14 @@ func (r *ChainReader) GetOperatorDetails(opts *bind.CallOpts, operator types.Ope
 
 // GetStrategyAndUnderlyingToken returns the strategy contract and the underlying token address
 func (r *ChainReader) GetStrategyAndUnderlyingToken(
-	opts *bind.CallOpts, strategyAddr gethcommon.Address,
+	ctx context.Context,
+	strategyAddr gethcommon.Address,
 ) (*strategy.ContractIStrategy, gethcommon.Address, error) {
 	contractStrategy, err := strategy.NewContractIStrategy(strategyAddr, r.ethClient)
 	if err != nil {
 		return nil, common.Address{}, utils.WrapError("Failed to fetch strategy contract", err)
 	}
-	underlyingTokenAddr, err := contractStrategy.UnderlyingToken(opts)
+	underlyingTokenAddr, err := contractStrategy.UnderlyingToken(&bind.CallOpts{Context: ctx})
 	if err != nil {
 		return nil, common.Address{}, utils.WrapError("Failed to fetch token contract", err)
 	}
@@ -166,13 +174,14 @@ func (r *ChainReader) GetStrategyAndUnderlyingToken(
 // GetStrategyAndUnderlyingERC20Token returns the strategy contract, the erc20 bindings for the underlying token
 // and the underlying token address
 func (r *ChainReader) GetStrategyAndUnderlyingERC20Token(
-	opts *bind.CallOpts, strategyAddr gethcommon.Address,
+	ctx context.Context,
+	strategyAddr gethcommon.Address,
 ) (*strategy.ContractIStrategy, erc20.ContractIERC20Methods, gethcommon.Address, error) {
 	contractStrategy, err := strategy.NewContractIStrategy(strategyAddr, r.ethClient)
 	if err != nil {
 		return nil, nil, common.Address{}, utils.WrapError("Failed to fetch strategy contract", err)
 	}
-	underlyingTokenAddr, err := contractStrategy.UnderlyingToken(opts)
+	underlyingTokenAddr, err := contractStrategy.UnderlyingToken(&bind.CallOpts{Context: ctx})
 	if err != nil {
 		return nil, nil, common.Address{}, utils.WrapError("Failed to fetch token contract", err)
 	}
@@ -184,7 +193,7 @@ func (r *ChainReader) GetStrategyAndUnderlyingERC20Token(
 }
 
 func (r *ChainReader) ServiceManagerCanSlashOperatorUntilBlock(
-	opts *bind.CallOpts,
+	ctx context.Context,
 	operatorAddr gethcommon.Address,
 	serviceManagerAddr gethcommon.Address,
 ) (uint32, error) {
@@ -193,20 +202,23 @@ func (r *ChainReader) ServiceManagerCanSlashOperatorUntilBlock(
 	}
 
 	return r.slasher.ContractCanSlashOperatorUntilBlock(
-		opts, operatorAddr, serviceManagerAddr,
+		&bind.CallOpts{Context: ctx}, operatorAddr, serviceManagerAddr,
 	)
 }
 
-func (r *ChainReader) OperatorIsFrozen(opts *bind.CallOpts, operatorAddr gethcommon.Address) (bool, error) {
+func (r *ChainReader) OperatorIsFrozen(
+	ctx context.Context,
+	operatorAddr gethcommon.Address,
+) (bool, error) {
 	if r.slasher == nil {
 		return false, errors.New("slasher contract not provided")
 	}
 
-	return r.slasher.IsFrozen(opts, operatorAddr)
+	return r.slasher.IsFrozen(&bind.CallOpts{Context: ctx}, operatorAddr)
 }
 
 func (r *ChainReader) GetOperatorSharesInStrategy(
-	opts *bind.CallOpts,
+	ctx context.Context,
 	operatorAddr gethcommon.Address,
 	strategyAddr gethcommon.Address,
 ) (*big.Int, error) {
@@ -215,55 +227,72 @@ func (r *ChainReader) GetOperatorSharesInStrategy(
 	}
 
 	return r.delegationManager.OperatorShares(
-		opts,
+		&bind.CallOpts{Context: ctx},
 		operatorAddr,
 		strategyAddr,
 	)
 }
 
 func (r *ChainReader) CalculateDelegationApprovalDigestHash(
-	opts *bind.CallOpts, staker gethcommon.Address, operator gethcommon.Address,
-	delegationApprover gethcommon.Address, approverSalt [32]byte, expiry *big.Int,
+	ctx context.Context,
+	staker gethcommon.Address,
+	operator gethcommon.Address,
+	delegationApprover gethcommon.Address,
+	approverSalt [32]byte,
+	expiry *big.Int,
 ) ([32]byte, error) {
 	if r.delegationManager == nil {
 		return [32]byte{}, errors.New("DelegationManager contract not provided")
 	}
 
 	return r.delegationManager.CalculateDelegationApprovalDigestHash(
-		opts, staker, operator, delegationApprover, approverSalt, expiry,
+		&bind.CallOpts{Context: ctx},
+		staker,
+		operator,
+		delegationApprover,
+		approverSalt,
+		expiry,
 	)
 }
 
 func (r *ChainReader) CalculateOperatorAVSRegistrationDigestHash(
-	opts *bind.CallOpts, operator gethcommon.Address, avs gethcommon.Address, salt [32]byte, expiry *big.Int,
+	ctx context.Context,
+	operator gethcommon.Address,
+	avs gethcommon.Address,
+	salt [32]byte,
+	expiry *big.Int,
 ) ([32]byte, error) {
 	if r.avsDirectory == nil {
 		return [32]byte{}, errors.New("AVSDirectory contract not provided")
 	}
 
 	return r.avsDirectory.CalculateOperatorAVSRegistrationDigestHash(
-		opts, operator, avs, salt, expiry,
+		&bind.CallOpts{Context: ctx},
+		operator,
+		avs,
+		salt,
+		expiry,
 	)
 }
 
-func (r *ChainReader) GetDistributionRootsLength(opts *bind.CallOpts) (*big.Int, error) {
+func (r *ChainReader) GetDistributionRootsLength(ctx context.Context) (*big.Int, error) {
 	if r.rewardsCoordinator == nil {
 		return nil, errors.New("RewardsCoordinator contract not provided")
 	}
 
-	return r.rewardsCoordinator.GetDistributionRootsLength(opts)
+	return r.rewardsCoordinator.GetDistributionRootsLength(&bind.CallOpts{Context: ctx})
 }
 
-func (r *ChainReader) CurrRewardsCalculationEndTimestamp(opts *bind.CallOpts) (uint32, error) {
+func (r *ChainReader) CurrRewardsCalculationEndTimestamp(ctx context.Context) (uint32, error) {
 	if r.rewardsCoordinator == nil {
 		return 0, errors.New("RewardsCoordinator contract not provided")
 	}
 
-	return r.rewardsCoordinator.CurrRewardsCalculationEndTimestamp(opts)
+	return r.rewardsCoordinator.CurrRewardsCalculationEndTimestamp(&bind.CallOpts{Context: ctx})
 }
 
 func (r *ChainReader) GetCurrentClaimableDistributionRoot(
-	opts *bind.CallOpts,
+	ctx context.Context,
 ) (rewardscoordinator.IRewardsCoordinatorDistributionRoot, error) {
 	if r.rewardsCoordinator == nil {
 		return rewardscoordinator.IRewardsCoordinatorDistributionRoot{}, errors.New(
@@ -271,19 +300,22 @@ func (r *ChainReader) GetCurrentClaimableDistributionRoot(
 		)
 	}
 
-	return r.rewardsCoordinator.GetCurrentClaimableDistributionRoot(opts)
+	return r.rewardsCoordinator.GetCurrentClaimableDistributionRoot(&bind.CallOpts{Context: ctx})
 }
 
-func (r *ChainReader) GetRootIndexFromHash(opts *bind.CallOpts, rootHash [32]byte) (uint32, error) {
+func (r *ChainReader) GetRootIndexFromHash(
+	ctx context.Context,
+	rootHash [32]byte,
+) (uint32, error) {
 	if r.rewardsCoordinator == nil {
 		return 0, errors.New("RewardsCoordinator contract not provided")
 	}
 
-	return r.rewardsCoordinator.GetRootIndexFromHash(opts, rootHash)
+	return r.rewardsCoordinator.GetRootIndexFromHash(&bind.CallOpts{Context: ctx}, rootHash)
 }
 
 func (r *ChainReader) GetCumulativeClaimed(
-	opts *bind.CallOpts,
+	ctx context.Context,
 	earner gethcommon.Address,
 	token gethcommon.Address,
 ) (*big.Int, error) {
@@ -291,16 +323,16 @@ func (r *ChainReader) GetCumulativeClaimed(
 		return nil, errors.New("RewardsCoordinator contract not provided")
 	}
 
-	return r.rewardsCoordinator.CumulativeClaimed(opts, earner, token)
+	return r.rewardsCoordinator.CumulativeClaimed(&bind.CallOpts{Context: ctx}, earner, token)
 }
 
 func (r *ChainReader) CheckClaim(
-	opts *bind.CallOpts,
+	ctx context.Context,
 	claim rewardscoordinator.IRewardsCoordinatorRewardsMerkleClaim,
 ) (bool, error) {
 	if r.rewardsCoordinator == nil {
 		return false, errors.New("RewardsCoordinator contract not provided")
 	}
 
-	return r.rewardsCoordinator.CheckClaim(opts, claim)
+	return r.rewardsCoordinator.CheckClaim(&bind.CallOpts{Context: ctx}, claim)
 }
