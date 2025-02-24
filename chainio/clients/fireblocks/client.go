@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 )
@@ -93,7 +94,7 @@ func NewClient(
 	c := http.Client{Timeout: timeout}
 	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM(secretKey)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing RSA private key: %w", err)
+		return nil, utils.WrapError("error parsing RSA private key", err)
 	}
 
 	return &client{
@@ -116,7 +117,7 @@ func (f *client) signJwt(path string, bodyJson interface{}, durationSeconds int6
 
 	bodyBytes, err := json.Marshal(bodyJson)
 	if err != nil {
-		return "", fmt.Errorf("error marshaling JSON: %w", err)
+		return "", utils.WrapError("error marshaling JSON", err)
 	}
 
 	h := sha256.New()
@@ -135,7 +136,7 @@ func (f *client) signJwt(path string, bodyJson interface{}, durationSeconds int6
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	tokenString, err := token.SignedString(f.privateKey)
 	if err != nil {
-		return "", fmt.Errorf("error signing token: %w", err)
+		return "", utils.WrapError("error signing token", err)
 	}
 
 	return tokenString, nil
@@ -148,17 +149,18 @@ func (f *client) makeRequest(ctx context.Context, method, path string, body inte
 	// remove query parameters from path and join with baseURL
 	pathURI, err := url.Parse(path)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing URL: %w", err)
+		return nil, utils.WrapError("error parsing URL", err)
 	}
 	query := pathURI.Query()
 	pathURI.RawQuery = ""
 	urlStr, err := url.JoinPath(f.baseURL, pathURI.String())
 	if err != nil {
-		return nil, fmt.Errorf("error joining URL path with %s and %s: %w", f.baseURL, path, err)
+		text := fmt.Sprintf("error joining URL path with %s and %s", f.baseURL, path)
+		return nil, utils.WrapError(text, err)
 	}
 	url, err := url.Parse(urlStr)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing URL: %w", err)
+		return nil, utils.WrapError("error parsing URL", err)
 	}
 	// add query parameters back to path
 	url.RawQuery = query.Encode()
@@ -168,18 +170,18 @@ func (f *client) makeRequest(ctx context.Context, method, path string, body inte
 		var err error
 		reqBodyBytes, err = json.Marshal(body)
 		if err != nil {
-			return nil, fmt.Errorf("error marshaling request body: %w", err)
+			return nil, utils.WrapError("error marshaling request body", err)
 		}
 	}
 
 	token, err := f.signJwt(path, body, int64(f.timeout.Seconds()))
 	if err != nil {
-		return nil, fmt.Errorf("error signing JWT: %w", err)
+		return nil, utils.WrapError("error signing JWT", err)
 	}
 
 	req, err := http.NewRequest(method, url.String(), bytes.NewBuffer(reqBodyBytes))
 	if err != nil {
-		return nil, fmt.Errorf("error creating HTTP request: %w", err)
+		return nil, utils.WrapError("error creating HTTP request", err)
 	}
 
 	if method == "POST" {
@@ -191,27 +193,27 @@ func (f *client) makeRequest(ctx context.Context, method, path string, body inte
 
 	resp, err := f.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("error sending HTTP request: %w", err)
+		return nil, utils.WrapError("error sending HTTP request", err)
 	}
 	defer resp.Body.Close()
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("error reading response body: %w", err)
+		return nil, utils.WrapError("error reading response body", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
 		var errResp ErrorResponse
 		err = json.Unmarshal(respBody, &errResp)
 		if err != nil {
-			return nil, fmt.Errorf("error parsing error response: %w", err)
+			return nil, utils.WrapError("error parsing error response", err)
 		}
-		return nil, fmt.Errorf(
-			"error response (%d) from Fireblocks with code %d: %s",
+
+		text := fmt.Sprintf("error response (%d) from Fireblocks with code %d: %s",
 			resp.StatusCode,
 			errResp.Code,
-			errResp.Message,
-		)
+			errResp.Message)
+		return nil, utils.WrapError(text, err)
 	}
 
 	return respBody, nil

@@ -12,6 +12,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/signerv2"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 
 	"github.com/aws/aws-sdk-go-v2/service/kms/types"
 
@@ -51,30 +52,30 @@ func setup() error {
 	var err error
 	localstack, err = testutils.StartLocalstackContainer("kms_signer_test")
 	if err != nil {
-		return fmt.Errorf("failed to start Localstack container: %w", err)
+		return utils.WrapError("failed to start Localstack container", err)
 	}
 	mappedPort, err := localstack.MappedPort(context.Background(), testutils.LocalStackPort)
 	if err != nil {
-		return fmt.Errorf("failed to get mapped port: %w", err)
+		return utils.WrapError("failed to get mapped port", err)
 	}
 	mappedLocalstackPort = string(mappedPort)
 
 	anvil, err = testutils.StartAnvilContainer("")
 	if err != nil {
-		return fmt.Errorf("failed to start Anvil container: %w", err)
+		return utils.WrapError("failed to start Anvil container", err)
 	}
 	endpoint, err := anvil.Endpoint(context.Background(), "")
 	if err != nil {
-		return fmt.Errorf("failed to get Anvil endpoint: %w", err)
+		return utils.WrapError("failed to get Anvil endpoint", err)
 	}
 	anvilEndpoint = fmt.Sprintf("http://%s", endpoint)
 	rpcClient, err = rpc.Dial(anvilEndpoint)
 	if err != nil {
-		return fmt.Errorf("failed to dial Anvil RPC: %w", err)
+		return utils.WrapError("failed to dial Anvil RPC", err)
 	}
 	keyMetadata, err = testutils.CreateKMSKey(mappedLocalstackPort)
 	if err != nil {
-		return fmt.Errorf("failed to create KMS key: %w", err)
+		return utils.WrapError("failed to create KMS key", err)
 	}
 	return nil
 }

@@ -4,12 +4,13 @@ import (
 	"bufio"
 	"crypto/ecdsa"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/ethereum/go-ethereum/accounts/keystore"
@@ -110,17 +111,18 @@ func GetAddressFromKeyStoreFile(keyStoreFile string) (gethcommon.Address, error)
 	}
 
 	if address, ok := m["address"].(string); !ok {
-		return gethcommon.Address{}, fmt.Errorf("address not found in key file")
+		return gethcommon.Address{}, errors.New("address not found in key file")
 	} else {
 		return gethcommon.HexToAddress(address), nil
 	}
 }
 
-func KeyAndAddressFromHexKey(hexkey string) (*ecdsa.PrivateKey, common.Address, error) {
+func KeyAndAddressFromHexKey(hexkey string) (*ecdsa.PrivateKey, gethcommon.Address, error) {
 	hexkey = strings.TrimPrefix(hexkey, "0x")
 	ecdsaSk, err := crypto.HexToECDSA(hexkey)
 	if err != nil {
-		return nil, common.Address{}, fmt.Errorf("failed to convert hexkey %s to ecdsa key: %w", hexkey, err)
+		text := fmt.Sprintf("failed to convert hexkey %s to ecdsa key", hexkey)
+		return nil, gethcommon.Address{}, utils.WrapError(text, err)
 	}
 	pk := ecdsaSk.Public()
 	address := crypto.PubkeyToAddress(*pk.(*ecdsa.PublicKey))

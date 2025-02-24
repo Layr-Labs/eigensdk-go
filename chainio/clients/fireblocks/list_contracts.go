@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -24,12 +25,13 @@ func (f *client) ListContracts(ctx context.Context) ([]WhitelistedContract, erro
 	var contracts []WhitelistedContract
 	res, err := f.makeRequest(ctx, "GET", "/v1/contracts", nil)
 	if err != nil {
-		return contracts, fmt.Errorf("error making request: %w", err)
+		return contracts, utils.WrapError("error making request", err)
 	}
 	body := string(res)
 	err = json.NewDecoder(strings.NewReader(body)).Decode(&contracts)
 	if err != nil {
-		return contracts, fmt.Errorf("error parsing response body: %s: %w", body, err)
+		text := fmt.Sprintf("error parsing response body: %s", body)
+		return contracts, utils.WrapError(text, err)
 	}
 
 	return contracts, nil

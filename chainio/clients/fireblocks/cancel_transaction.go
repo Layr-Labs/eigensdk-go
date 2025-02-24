@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
 type CancelTransactionResponse struct {
@@ -16,12 +18,12 @@ func (f *client) CancelTransaction(ctx context.Context, txID string) (bool, erro
 	path := fmt.Sprintf("/v1/transactions/%s/cancel", txID)
 	res, err := f.makeRequest(ctx, "POST", path, nil)
 	if err != nil {
-		return false, fmt.Errorf("error making request: %w", err)
+		return false, utils.WrapError("error making request", err)
 	}
 	var response CancelTransactionResponse
 	err = json.NewDecoder(strings.NewReader(string(res))).Decode(&response)
 	if err != nil {
-		return false, fmt.Errorf("error parsing response body: %w", err)
+		return false, utils.WrapError("error parsing response body", err)
 	}
 
 	return response.Success, nil

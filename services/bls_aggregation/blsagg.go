@@ -21,7 +21,8 @@ var (
 	// error string directly.
 	//       see https://go.dev/blog/go1.13-errors
 	TaskInitializationErrorFn = func(err error, taskIndex types.TaskIndex) error {
-		return fmt.Errorf("failed to initialize task %d: %w", taskIndex, err)
+		text := fmt.Sprintf("failed to initialize task %d", taskIndex)
+		return utils.WrapError(text, err)
 	}
 	TaskAlreadyInitializedErrorFn = func(taskIndex types.TaskIndex) error {
 		return fmt.Errorf("task %d already initialized", taskIndex)
@@ -36,10 +37,10 @@ var (
 		return fmt.Errorf("operator %x not part of task %d's quorum", operatorId, taskIndex)
 	}
 	HashFunctionError = func(err error) error {
-		return fmt.Errorf("failed to hash task response: %w", err)
+		return utils.WrapError("failed to hash task response", err)
 	}
 	SignatureVerificationError = func(err error) error {
-		return fmt.Errorf("failed to verify signature: %w", err)
+		return utils.WrapError("failed to verify signature", err)
 	}
 	ErrIncorrectSignature = errors.New("signature verification failed. incorrect signature")
 )
@@ -445,8 +446,12 @@ func (a *BlsAggregatorBuilder) singleTaskAggregatorGoroutineFunc(
 			"err",
 			err,
 		)
+		text := fmt.Sprintf(
+			"AggregatorService failed to get operators state from avs registry at blockNum %d",
+			metadata.taskCreatedBlock,
+		)
 		aggregatedResponsesC <- BlsAggregationServiceResponse{
-			Err:       TaskInitializationErrorFn(fmt.Errorf("AggregatorService failed to get operators state from avs registry at blockNum %d: %w", metadata.taskCreatedBlock, err), metadata.taskIndex),
+			Err:       TaskInitializationErrorFn(utils.WrapError(text, err), metadata.taskIndex),
 			TaskIndex: metadata.taskIndex,
 		}
 		return
@@ -465,7 +470,7 @@ func (a *BlsAggregatorBuilder) singleTaskAggregatorGoroutineFunc(
 			err,
 		)
 		aggregatedResponsesC <- BlsAggregationServiceResponse{
-			Err:       TaskInitializationErrorFn(fmt.Errorf("aggregator failed to get quorums state from avs registry: %w", err), metadata.taskIndex),
+			Err:       TaskInitializationErrorFn(utils.WrapError("aggregator failed to get quorums state from avs registry", err), metadata.taskIndex),
 			TaskIndex: metadata.taskIndex,
 		}
 		return

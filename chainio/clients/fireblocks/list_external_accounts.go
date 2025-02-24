@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -26,12 +27,13 @@ func (f *client) ListExternalWallets(ctx context.Context) ([]WhitelistedAccount,
 	var accounts []WhitelistedAccount
 	res, err := f.makeRequest(ctx, "GET", "/v1/external_wallets", nil)
 	if err != nil {
-		return accounts, fmt.Errorf("error making request: %w", err)
+		return accounts, utils.WrapError("error making request", err)
 	}
 	body := string(res)
 	err = json.NewDecoder(strings.NewReader(body)).Decode(&accounts)
 	if err != nil {
-		return accounts, fmt.Errorf("error parsing response body: %s: %w", body, err)
+		text := fmt.Sprintf("error parsing response body: %s", body)
+		return accounts, utils.WrapError(text, err)
 	}
 
 	return accounts, nil

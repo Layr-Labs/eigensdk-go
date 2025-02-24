@@ -233,7 +233,8 @@ func (t *GeometricTxManager) processTransaction(ctx context.Context, req *txnReq
 			retryFromFailure++
 			continue
 		} else if err != nil {
-			return nil, utils.WrapError(fmt.Errorf("failed to send txn %s", txn.Hash().Hex()), err)
+			text := fmt.Sprintf("failed to send txn %s", txn.Hash().Hex())
+			return nil, utils.WrapError(text, err)
 		} else {
 			t.logger.Debug("successfully sent txn", "txID", txID, "txHash", txn.Hash().Hex())
 			break
@@ -241,7 +242,8 @@ func (t *GeometricTxManager) processTransaction(ctx context.Context, req *txnReq
 	}
 	// if all attempts to send the tx failed, return an error
 	if txn == nil || txID == "" {
-		return nil, utils.WrapError(fmt.Errorf("failed to send txn %s", req.tx.Hash().Hex()), err)
+		text := fmt.Sprintf("failed to send txn %s", req.tx.Hash().Hex())
+		return nil, utils.WrapError(text, err)
 	}
 
 	req.tx = txn
@@ -349,7 +351,7 @@ func (t *GeometricTxManager) ensureAnyTransactionConfirmed(
 		}
 
 		if len(txnsToQuery) == 0 {
-			return nil, fmt.Errorf("all transactions failed")
+			return nil, errors.New("all transactions failed")
 		}
 
 		// Wait for the next round.

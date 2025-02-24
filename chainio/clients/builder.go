@@ -3,7 +3,7 @@ package clients
 import (
 	"context"
 	"crypto/ecdsa"
-	"fmt"
+	"errors"
 	"time"
 
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -256,27 +256,27 @@ func BuildAll(
 func (config *BuildAllConfig) validate(logger logging.Logger) error {
 	if config.EthHttpUrl == "" {
 		logger.Error("BuildAllConfig.validate: Missing eth http url")
-		return fmt.Errorf("BuildAllConfig.validate: Missing eth http url")
+		return errors.New("BuildAllConfig.validate: Missing eth http url")
 	}
 	if config.EthWsUrl == "" {
 		logger.Error("BuildAllConfig.validate: Missing eth ws url")
-		return fmt.Errorf("BuildAllConfig.validate: Missing eth ws url")
+		return errors.New("BuildAllConfig.validate: Missing eth ws url")
 	}
 	if config.AvsName == "" {
 		logger.Error("BuildAllConfig.validate: Missing avs name")
-		return fmt.Errorf("BuildAllConfig.validate: Missing avs name")
+		return errors.New("BuildAllConfig.validate: Missing avs name")
 	}
 	if config.PromMetricsIpPortAddress == "" {
 		logger.Error("BuildAllConfig.validate: Missing prometheus metrics ip port address")
-		return fmt.Errorf("BuildAllConfig.validate: Missing prometheus metrics ip port address")
+		return errors.New("BuildAllConfig.validate: Missing prometheus metrics ip port address")
 	}
 	if config.RegistryCoordinatorAddr == "" {
 		logger.Error("BuildAllConfig.validate: Missing bls registry coordinator address")
-		return fmt.Errorf("BuildAllConfig.validate: Missing bls registry coordinator address")
+		return errors.New("BuildAllConfig.validate: Missing bls registry coordinator address")
 	}
 	if config.OperatorStateRetrieverAddr == "" {
 		logger.Error("BuildAllConfig.validate: Missing bls operator state retriever address")
-		return fmt.Errorf("BuildAllConfig.validate: Missing bls operator state retriever address")
+		return errors.New("BuildAllConfig.validate: Missing bls operator state retriever address")
 	}
 	if config.RewardsCoordinatorAddress == "" {
 		logger.Info("BuildAllConfig.validate: Missing optional rewards coordinator address")
