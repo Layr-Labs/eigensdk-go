@@ -994,18 +994,11 @@ func (r *ChainReader) GetSlashableShares(
 		return nil, errors.New("AllocationManager contract not provided")
 	}
 
-	currentBlock, err := r.ethClient.BlockNumber(ctx)
-	// This call should not fail since it's a getter
-	if err != nil {
-		return nil, err
-	}
-
-	slashableShares, err := r.allocationManager.GetMinimumSlashableStake(
+	slashableShares, err := r.allocationManager.GetAllocatedStake(
 		&bind.CallOpts{Context: ctx},
 		operatorSet,
 		[]gethcommon.Address{operatorAddress},
 		strategies,
-		uint32(currentBlock),
 	)
 	// This call should not fail since it's a getter
 	if err != nil {
