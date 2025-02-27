@@ -746,7 +746,7 @@ func TestSetAccountIdentifier(t *testing.T) {
 	require.NoError(t, err)
 
 	// At first, accountIdentifier is service manager address
-	accountIdentifier, err := registryCoordinatorContract.AccountIdentifier(&bind.CallOpts{})
+	accountIdentifier, err := registryCoordinatorContract.Avs(&bind.CallOpts{})
 	require.NoError(t, err)
 	assert.Equal(t, accountIdentifier, contractAddrs.ServiceManager)
 
@@ -756,7 +756,7 @@ func TestSetAccountIdentifier(t *testing.T) {
 	require.Equal(t, receipt.Status, gethtypes.ReceiptStatusSuccessful)
 
 	// After change, accountIdentifier is the value set
-	newAccountIdentifier, err := registryCoordinatorContract.AccountIdentifier(&bind.CallOpts{})
+	newAccountIdentifier, err := registryCoordinatorContract.Avs(&bind.CallOpts{})
 	require.NoError(t, err)
 	assert.Equal(t, newAccountIdentifier.String(), testutils.ANVIL_SECOND_ADDRESS)
 }
