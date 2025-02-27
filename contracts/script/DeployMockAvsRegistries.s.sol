@@ -16,7 +16,7 @@ import {RegistryCoordinator} from "eigenlayer-middleware/src/RegistryCoordinator
 import {BLSApkRegistry, IBLSApkRegistry} from "eigenlayer-middleware/src/BLSApkRegistry.sol";
 import {IndexRegistry, IIndexRegistry} from "eigenlayer-middleware/src/IndexRegistry.sol";
 import {StakeRegistry, IStakeRegistry, IStakeRegistryTypes} from "eigenlayer-middleware/src/StakeRegistry.sol";
-import {SocketRegistry, ISocketRegistry, IRegistryCoordinator} from "eigenlayer-middleware/src/SocketRegistry.sol";
+import {SocketRegistry, ISocketRegistry} from "eigenlayer-middleware/src/SocketRegistry.sol";
 import {OperatorStateRetriever} from "eigenlayer-middleware/src/OperatorStateRetriever.sol";
 import {MockAvsContracts} from "./parsers/MockAvsContractsParser.sol";
 import {EigenlayerContracts, EigenlayerContractsParser} from "./parsers/EigenlayerContractsParser.sol";
