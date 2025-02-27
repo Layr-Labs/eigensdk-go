@@ -19,6 +19,9 @@ import {ContractsRegistry} from "../src/ContractsRegistry.sol";
 
 import "forge-std/Script.sol";
 import "forge-std/StdJson.sol";
+import {
+    AllocationManager
+} from "eigenlayer-contracts/src/contracts/core/AllocationManager.sol";
 
 contract DeployTokensStrategiesCreateQuorums is Script, EigenlayerContractsParser, MockAvsContractsParser {
     uint256 MINT_AMOUNT = 5_000 ether;
@@ -113,6 +116,10 @@ contract DeployTokensStrategiesCreateQuorums is Script, EigenlayerContractsParse
             //    weight += uint96(sharesAmount * strategyAndMultiplier.multiplier / WEIGHTING_DIVISOR);
             multiplier: 1 ether
         });
+
+        // Update the metadata so does not fail with error InvalidAVSWithNoMetadataRegistered()
+        AllocationManager allocationManager = AllocationManager(0x8A791620dd6260079BF849Dc5567aDC3F2FdC318);
+        allocationManager.updateAVSMetadataURI(address(0xa82fF9aFd8f496c3d6ac40E2a0F282E47488CFc9), "metadataURI");
 
         RegistryCoordinator(address(mockAvsRegCoord)).createTotalDelegatedStakeQuorum(
             quorumOperatorSetParams, quorumMinimumStake, quorumStrategyParams
