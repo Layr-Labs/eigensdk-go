@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
 	chainioutils "github.com/Layr-Labs/eigensdk-go/chainio/utils"
 	avsdirectory "github.com/Layr-Labs/eigensdk-go/contracts/bindings/AVSDirectory"
 	regcoord "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
@@ -25,24 +26,10 @@ import (
 )
 
 func TestWriterMethods(t *testing.T) {
-	testConfig := testutils.GetDefaultTestConfig()
-	anvilC, err := testutils.StartAnvilContainer(testConfig.AnvilStateFileName)
-	require.NoError(t, err)
-
-	anvilHttpEndpoint, err := anvilC.Endpoint(context.Background(), "http")
-	require.NoError(t, err)
+	clients, anvilHttpEndpoint := testclients.BuildTestClients(t)
 	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
 
-	operatorPrivateKeyHex := testutils.ANVIL_FIRST_PRIVATE_KEY
-
-	config := avsregistry.Config{
-		RegistryCoordinatorAddress:    contractAddrs.RegistryCoordinator,
-		OperatorStateRetrieverAddress: contractAddrs.OperatorStateRetriever,
-		ServiceManagerAddress:         contractAddrs.ServiceManager,
-	}
-
-	chainWriter, err := testclients.NewTestAvsRegistryWriterFromConfig(anvilHttpEndpoint, operatorPrivateKeyHex, config)
-	require.NoError(t, err)
+	chainWriter := clients.AvsRegistryChainWriter
 
 	keypair, err := bls.NewKeyPairFromString("0x01")
 	require.NoError(t, err)
@@ -67,18 +54,26 @@ func TestWriterMethods(t *testing.T) {
 		assert.Nil(t, receipt)
 	})
 
-	t.Run("register operator", func(t *testing.T) {
-		receipt, err := chainWriter.RegisterOperator(
-			context.Background(),
-			ecdsaPrivateKey,
-			keypair,
-			quorumNumbers,
-			"",
-			true,
-		)
-		require.NoError(t, err)
-		require.NotNil(t, receipt)
-	})
+	otherKeyPair, err := bls.NewKeyPairFromString("0x01")
+	require.NoError(t, err)
+	request := elcontracts.RegistrationRequest{
+		OperatorAddress: addr,
+		AVSAddress:      contractAddrs.ServiceManager,
+		OperatorSetIds:  []uint32{0},
+		WaitForReceipt:  true,
+		Socket:          "socket",
+		BlsKeyPair:      otherKeyPair,
+	}
+
+	// Register operator
+	elWriter := clients.ElChainWriter
+	receipt, err := elWriter.SetAVSRegistrar(context.Background(), contractAddrs.ServiceManager, contractAddrs.RegistryCoordinator, true)
+	require.NoError(t, err)
+	require.NotNil(t, receipt)
+
+	receipt, err = elWriter.RegisterForOperatorSets(context.Background(), contractAddrs.RegistryCoordinator, request)
+	require.NoError(t, err)
+	require.NotNil(t, receipt)
 
 	t.Run("update stake of operator subset", func(t *testing.T) {
 		receipt, err := chainWriter.UpdateStakesOfOperatorSubsetForAllQuorums(
@@ -101,29 +96,7 @@ func TestWriterMethods(t *testing.T) {
 		require.NotNil(t, receipt)
 	})
 
-	t.Run("deregister operator", func(t *testing.T) {
-		receipt, err := chainWriter.DeregisterOperator(
-			context.Background(),
-			quorumNumbers,
-			chainioutils.ConvertToBN254G1Point(keypair.PubKey),
-			true,
-		)
-		require.NoError(t, err)
-		require.NotNil(t, receipt)
-	})
-
 	t.Run("update socket", func(t *testing.T) {
-		receipt, err := chainWriter.RegisterOperator(
-			context.Background(),
-			ecdsaPrivateKey,
-			keypair,
-			quorumNumbers,
-			"",
-			true,
-		)
-		require.NoError(t, err)
-		require.NotNil(t, receipt)
-
 		receipt, err = chainWriter.UpdateSocket(
 			context.Background(),
 			types.Socket(""),
@@ -232,18 +205,6 @@ func TestWriterMethods(t *testing.T) {
 		assert.Nil(t, receipt)
 	})
 
-	t.Run("fail deregister operator because of operator not registered", func(t *testing.T) {
-		quorumNumbers := types.QuorumNums{}
-		receipt, err := chainWriter.DeregisterOperator(
-			context.Background(),
-			quorumNumbers,
-			chainioutils.ConvertToBN254G1Point(keypair.PubKey),
-			true,
-		)
-		assert.Error(t, err)
-		assert.Nil(t, receipt)
-	})
-
 	t.Run("fail update socket cancelling context", func(t *testing.T) {
 		receipt, err := chainWriter.UpdateSocket(
 			subCtx,
@@ -255,27 +216,30 @@ func TestWriterMethods(t *testing.T) {
 	})
 
 	t.Run("set slashable stake lookahead", func(t *testing.T) {
-		// Create stakeRegistry contract
-		ethHttpClient, err := ethclient.Dial(anvilHttpEndpoint)
-		require.NoError(t, err)
+		operatorSetParams := regcoord.ISlashingRegistryCoordinatorTypesOperatorSetParam{
+			MaxOperatorCount: 5,
+		}
+		minimumStakeNeeded := big.NewInt(0)
 
-		contractBlsRegistryCoordinator, err := regcoord.NewContractRegistryCoordinator(
-			contractAddrs.RegistryCoordinator,
-			ethHttpClient,
+		strategyAddr := contractAddrs.Erc20MockStrategy
+		strategyParam := regcoord.IStakeRegistryTypesStrategyParams{
+			Strategy:   strategyAddr,
+			Multiplier: big.NewInt(1e18),
+		}
+
+		lookAheadPeriod := uint32(0)
+
+		receipt, err = chainWriter.CreateSlashableStakeQuorum(
+			context.Background(),
+			operatorSetParams,
+			minimumStakeNeeded,
+			[]regcoord.IStakeRegistryTypesStrategyParams{strategyParam},
+			lookAheadPeriod,
+			true,
 		)
-		require.NoError(t, err)
-
-		stakeRegistryAddr, err := contractBlsRegistryCoordinator.StakeRegistry(&bind.CallOpts{})
-		require.NoError(t, err)
-
-		stakeRegistry, err := stakeregistry.NewContractStakeRegistry(
-			stakeRegistryAddr,
-			ethHttpClient,
-		)
-		require.NoError(t, err)
 
 		// When not set, lookAheadPeriod is Zero
-		lookAheadPeriod, err := stakeRegistry.SlashableStakeLookAheadPerQuorum(&bind.CallOpts{}, 0)
+		lookAheadPeriod, err := clients.AvsRegistryChainReader.GetSlashableStakeLookAheadPerQuorum(&bind.CallOpts{}, 1)
 		require.NoError(t, err)
 		assert.Zero(t, lookAheadPeriod)
 
@@ -283,7 +247,7 @@ func TestWriterMethods(t *testing.T) {
 		newLookAheadPeriod := 32
 		receipt, err := chainWriter.SetSlashableStakeLookahead(
 			context.Background(),
-			0,
+			1,
 			uint32(newLookAheadPeriod),
 			true,
 		)
@@ -291,7 +255,7 @@ func TestWriterMethods(t *testing.T) {
 		require.NotNil(t, receipt)
 
 		// After modify, lookAheadPeriod's value is 32
-		lookAheadPeriod, err = stakeRegistry.SlashableStakeLookAheadPerQuorum(&bind.CallOpts{}, 0)
+		lookAheadPeriod, err = clients.AvsRegistryChainReader.GetSlashableStakeLookAheadPerQuorum(&bind.CallOpts{}, 1)
 		require.NoError(t, err)
 
 		assert.Equal(t, lookAheadPeriod, uint32(newLookAheadPeriod))
