@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 
 	"github.com/Layr-Labs/eigensdk-go/testutils"
@@ -14,7 +15,6 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/stretchr/testify/require"
 )
@@ -36,10 +36,6 @@ func TestReaderMethods(t *testing.T) {
 	}
 
 	chainWriter, err := testclients.NewTestAvsRegistryWriterFromConfig(anvilHttpEndpoint, operatorPrivateKeyHex, config)
-	require.NoError(t, err)
-
-	keypair, err := bls.NewKeyPairFromString("0x01")
-	require.NoError(t, err)
 	require.NoError(t, err)
 
 	t.Run("get quorum state", func(t *testing.T) {
@@ -194,20 +190,27 @@ func TestReaderMethods(t *testing.T) {
 		require.Equal(t, strategy, params.Strategy)
 	})
 
-	operatorPrivateKey, err := crypto.HexToECDSA(testutils.ANVIL_FIRST_PRIVATE_KEY)
-	require.NoError(t, err)
-
 	operatorAddress := common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
 
 	//REGISTER OPERATOR
-	receipt, err := chainWriter.RegisterOperator(
-		context.Background(),
-		operatorPrivateKey,
-		keypair,
-		quorumNumbers,
-		"",
-		true,
-	)
+	otherKeyPair, err := bls.NewKeyPairFromString("0x01")
+	require.NoError(t, err)
+	request := elcontracts.RegistrationRequest{
+		OperatorAddress: operatorAddress,
+		AVSAddress:      contractAddrs.ServiceManager,
+		OperatorSetIds:  []uint32{0},
+		WaitForReceipt:  true,
+		Socket:          "socket",
+		BlsKeyPair:      otherKeyPair,
+	}
+
+	// Register operator
+	elWriter := clients.ElChainWriter
+	receipt, err := elWriter.SetAVSRegistrar(context.Background(), contractAddrs.ServiceManager, contractAddrs.RegistryCoordinator, true)
+	require.NoError(t, err)
+	require.NotNil(t, receipt)
+
+	receipt, err = elWriter.RegisterForOperatorSets(context.Background(), contractAddrs.RegistryCoordinator, request)
 	require.NoError(t, err)
 	require.NotNil(t, receipt)
 
