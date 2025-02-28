@@ -19,9 +19,7 @@ import {ContractsRegistry} from "../src/ContractsRegistry.sol";
 
 import "forge-std/Script.sol";
 import "forge-std/StdJson.sol";
-import {
-    AllocationManager
-} from "eigenlayer-contracts/src/contracts/core/AllocationManager.sol";
+import {AllocationManager} from "eigenlayer-contracts/src/contracts/core/AllocationManager.sol";
 
 contract DeployTokensStrategiesCreateQuorums is Script, EigenlayerContractsParser, MockAvsContractsParser {
     uint256 MINT_AMOUNT = 5_000 ether;
