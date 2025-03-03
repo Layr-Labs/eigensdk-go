@@ -1,13 +1,12 @@
 module github.com/Layr-Labs/eigensdk-go
 
 go 1.22.0
-
-toolchain go1.22.5
+toolchain go1.23.6
 
 require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.11
 	github.com/consensys/gnark-crypto v0.16.0
-	github.com/ethereum/go-ethereum v1.15.0
+	github.com/ethereum/go-ethereum v1.15.4
 	github.com/google/uuid v1.6.0
 	github.com/lmittmann/tint v1.0.4
 	github.com/prometheus/client_golang v1.20.5
@@ -101,7 +100,7 @@ require (
 	github.com/shirou/gopsutil/v3 v3.23.12 // indirect
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
-	github.com/supranational/blst v0.3.13 // indirect
+	github.com/supranational/blst v0.3.14 // indirect
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
