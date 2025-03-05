@@ -1649,7 +1649,11 @@ func TestIntegrationBlsAgg(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, receipt)
 
-		receipt, err = elcontractsWriter.RegisterForOperatorSets(context.Background(), contractAddrs.RegistryCoordinator, request)
+		receipt, err = elcontractsWriter.RegisterForOperatorSets(
+			context.Background(),
+			contractAddrs.RegistryCoordinator,
+			request,
+		)
 		require.NoError(t, err)
 		require.NotNil(t, receipt)
 
@@ -1813,7 +1817,11 @@ func TestIntegrationBlsAgg(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, receipt)
 
-		receipt, err = elcontractsWriter.RegisterForOperatorSets(context.Background(), contractAddrs.RegistryCoordinator, request)
+		receipt, err = elcontractsWriter.RegisterForOperatorSets(
+			context.Background(),
+			contractAddrs.RegistryCoordinator,
+			request,
+		)
 		require.NoError(t, err)
 		require.NotNil(t, receipt)
 
