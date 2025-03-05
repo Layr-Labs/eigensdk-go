@@ -15,7 +15,7 @@ import (
 
 	dm "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
 	iblssigchecker "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IBLSSignatureChecker"
-	regcoord "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
+	slashregcoord "github.com/Layr-Labs/eigensdk-go/contracts/bindings/SlashingRegistryCoordinator"
 )
 
 var (
@@ -83,7 +83,7 @@ func printAddrs(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	avsContractAddrs, err := getAvsContractAddrs(client, registryCoordinatorAddr)
+	avsContractAddrs, err := getAvsContractAddrs(client, registryCoordinatorAddr, serviceManagerAddr)
 	if err != nil {
 		return err
 	}
@@ -111,14 +111,14 @@ func getRegCoordAndServiceMngrAddr(
 	registryCoordinatorAddrString := c.String(RegistryCoordinatorAddrFlag.Name)
 	if registryCoordinatorAddrString != "" {
 		registryCoordinatorAddr := common.HexToAddress(registryCoordinatorAddrString)
-		registryCoordinatorC, err := regcoord.NewContractRegistryCoordinator(
+		registryCoordinatorC, err := slashregcoord.NewContractSlashingRegistryCoordinator(
 			registryCoordinatorAddr,
 			client,
 		)
 		if err != nil {
 			return common.Address{}, common.Address{}, err
 		}
-		serviceManagerAddr, err := registryCoordinatorC.ServiceManager(&bind.CallOpts{})
+		serviceManagerAddr, err := registryCoordinatorC.Avs(&bind.CallOpts{})
 		if err != nil {
 			return common.Address{}, common.Address{}, err
 		}
@@ -151,8 +151,8 @@ func getRegCoordAndServiceMngrAddr(
 	)
 }
 
-func getAvsContractAddrs(client *ethclient.Client, registryCoordinatorAddr common.Address) (map[string]string, error) {
-	blsRegistryCoordinatorWithIndicesC, err := regcoord.NewContractRegistryCoordinator(
+func getAvsContractAddrs(client *ethclient.Client, registryCoordinatorAddr common.Address, serviceManagerAddr common.Address) (map[string]string, error) {
+	blsRegistryCoordinatorWithIndicesC, err := slashregcoord.NewContractSlashingRegistryCoordinator(
 		registryCoordinatorAddr,
 		client,
 	)
@@ -160,11 +160,6 @@ func getAvsContractAddrs(client *ethclient.Client, registryCoordinatorAddr commo
 		return nil, err
 	}
 	_ = blsRegistryCoordinatorWithIndicesC
-
-	serviceManagerAddr, err := blsRegistryCoordinatorWithIndicesC.ServiceManager(&bind.CallOpts{})
-	if err != nil {
-		return nil, err
-	}
 
 	// 3 registries
 	blsPubkeyApkAddr, err := blsRegistryCoordinatorWithIndicesC.BlsApkRegistry(&bind.CallOpts{})
