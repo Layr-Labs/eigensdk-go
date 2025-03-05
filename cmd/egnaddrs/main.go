@@ -151,7 +151,11 @@ func getRegCoordAndServiceMngrAddr(
 	)
 }
 
-func getAvsContractAddrs(client *ethclient.Client, registryCoordinatorAddr common.Address, serviceManagerAddr common.Address) (map[string]string, error) {
+func getAvsContractAddrs(
+	client *ethclient.Client,
+	registryCoordinatorAddr common.Address,
+	serviceManagerAddr common.Address,
+) (map[string]string, error) {
 	blsRegistryCoordinatorWithIndicesC, err := slashregcoord.NewContractSlashingRegistryCoordinator(
 		registryCoordinatorAddr,
 		client,
