@@ -115,17 +115,8 @@ func TestWriterMethods(t *testing.T) {
 		ethHttpClient, err := ethclient.Dial(anvilHttpEndpoint)
 		require.NoError(t, err)
 
-		contractBlsRegistryCoordinator, err := regcoord.NewContractRegistryCoordinator(
-			contractAddrs.RegistryCoordinator,
-			ethHttpClient,
-		)
-		require.NoError(t, err)
-
-		serviceManagerAddr, err := contractBlsRegistryCoordinator.ServiceManager(&bind.CallOpts{})
-		require.NoError(t, err)
-
 		serviceManager, err := servicemanager.NewContractServiceManagerBase(
-			serviceManagerAddr,
+			contractAddrs.ServiceManager,
 			ethHttpClient,
 		)
 		require.NoError(t, err)
