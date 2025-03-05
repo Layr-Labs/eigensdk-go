@@ -66,7 +66,12 @@ func TestWriterMethods(t *testing.T) {
 
 	// Register operator
 	elWriter := clients.ElChainWriter
-	receipt, err := elWriter.SetAVSRegistrar(context.Background(), contractAddrs.ServiceManager, contractAddrs.RegistryCoordinator, true)
+	receipt, err := elWriter.SetAVSRegistrar(
+		context.Background(),
+		contractAddrs.ServiceManager,
+		contractAddrs.RegistryCoordinator,
+		true,
+	)
 	require.NoError(t, err)
 	require.NotNil(t, receipt)
 
@@ -538,20 +543,23 @@ This test is commented because produces an edge case that leads to a bug
 
 		// After registration, operator is registered
 		elWriter := clients.ElChainWriter
-		receipt, err := elWriter.SetAVSRegistrar(context.Background(), contractAddrs.ServiceManager, contractAddrs.RegistryCoordinator, true)
-		require.NoError(t, err)
-		require.NotNil(t, receipt)
 
-		otherKeyPair, err := bls.NewKeyPairFromString("0x01")
-		require.NoError(t, err)
-		request := elcontracts.RegistrationRequest{
-			OperatorAddress: operatorAddr,
-			AVSAddress:      contractAddrs.ServiceManager,
-			OperatorSetIds:  []uint32{0},
-			WaitForReceipt:  true,
-			Socket:          "socket",
-			BlsKeyPair:      otherKeyPair,
-		}
+
+	receipt, err := elWriter.SetAVSRegistrar(context.Background(), contractAddrs.ServiceManager, contractAddrs.RegistryCoordinator, true)
+	require.NoError(t, err)
+	require.NotNil(t, receipt)
+
+	otherKeyPair, err := bls.NewKeyPairFromString("0x01")
+	require.NoError(t, err)
+	request := elcontracts.RegistrationRequest{
+		OperatorAddress: operatorAddr,
+		AVSAddress:      contractAddrs.ServiceManager,
+		OperatorSetIds:  []uint32{0},
+		WaitForReceipt:  true,
+		Socket:          "socket",
+		BlsKeyPair:      otherKeyPair,
+	}
+
 
 		receipt, err = elWriter.RegisterForOperatorSets(context.Background(), contractAddrs.RegistryCoordinator, request)
 		require.NoError(t, err)

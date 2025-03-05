@@ -1208,7 +1208,12 @@ func createOperatorSet(
 
 	waitForReceipt := true
 
-	_, err := clients.ElChainWriter.SetAVSRegistrar(context.Background(), avsAddress, registryCoordinatorAddress, waitForReceipt)
+	_, err := clients.ElChainWriter.SetAVSRegistrar(
+		context.Background(),
+		avsAddress,
+		registryCoordinatorAddress,
+		waitForReceipt,
+	)
 	if err != nil {
 		return err
 	}
