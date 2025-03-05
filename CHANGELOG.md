@@ -35,9 +35,9 @@ Each version will have a separate `Breaking Changes` section as well. To describ
     aggregationServiceResponse := <-aggResponsesC
     ```
 
-* Added field `DontUseAllocationManager` to `BuildAllConfig` in [#580](https://github.com/Layr-Labs/eigensdk-go/pull/580)
-* Added `AnvilC` field to `clients.Clients` struct in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
-* Added `GetAVSRegistrar` and `SetAVSRegistrar` methods to elcontracts chain reader and chain writer in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
+* Added field `DontUseAllocationManager` to `BuildAllConfig` by @MegaRedHand in [#580](https://github.com/Layr-Labs/eigensdk-go/pull/580)
+* Added `AnvilC` field to `clients.Clients` struct by @maximopalopoli in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
+* Added `GetAVSRegistrar` and `SetAVSRegistrar` methods to elcontracts chain reader and chain writer by @maximopalopoli in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
 
 ### Changed
 
@@ -121,9 +121,10 @@ Each version will have a separate `Breaking Changes` section as well. To describ
     ).WithWindowDuration(windowDuration)
     blsAggServ.InitializeNewTask(metadata)
     ```
+* fix: `IsOperatorRegisteredWithOperatorSet` only queries to AVSDirectory by @maximopalopoli in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
 
 ### Removed
-* Removed `IsOperatorSetQuorum` method of avsRegistry chain reader in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
+* Removed `IsOperatorSetQuorum` method of avsRegistry chain reader by @maximopalopoli in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
   * This function was removed in [the v1.1.1 eigenlayer-middleware release](https://github.com/Layr-Labs/eigenlayer-middleware/releases/tag/v1.1.1-testnet-slashing).
 
 ------------
