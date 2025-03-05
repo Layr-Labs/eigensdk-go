@@ -1238,66 +1238,22 @@ func TestProcessClaims(t *testing.T) {
 	require.Equal(t, gethtypes.ReceiptStatusSuccessful, receipt.Status)
 }
 
-// Creates an operator set with `avsAddress`, `operatorSetId` and `erc20MockStrategyAddr`.
+// Creates an operator set with an Avs address and an erc20MockStrategyAddr. Note that operator set Id will be
+// defined sequentially (as the new amount of operator sets minus one)
 func createOperatorSet(
+	clients *clients.Clients,
 	anvilHttpEndpoint string,
-	privateKeyHex string,
 	avsAddress common.Address,
-	operatorSetId uint32,
 	erc20MockStrategyAddr common.Address,
 ) error {
-	testConfig := testutils.GetDefaultTestConfig()
+
 	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
-	config := elcontracts.Config{
-		DelegationManagerAddress: contractAddrs.DelegationManager,
-	}
-	logger := logging.NewTextSLogger(os.Stdout, &logging.SLoggerOptions{Level: testConfig.LogLevel})
-	ethHttpClient, err := ethclient.Dial(anvilHttpEndpoint)
-	if err != nil {
-		return err
-	}
 
-	elBindings, err := elcontracts.NewBindingsFromConfig(config, ethHttpClient, logger)
-	if err != nil {
-		return err
-	}
-
-	allocationManager := elBindings.AllocationManager
 	registryCoordinatorAddress := contractAddrs.RegistryCoordinator
-	registryCoordinator, err := regcoord.NewContractRegistryCoordinator(
-		registryCoordinatorAddress,
-		ethHttpClient,
-	)
-	if err != nil {
-		return err
-	}
-	txManager, err := testclients.NewTestTxManager(anvilHttpEndpoint, privateKeyHex)
-	if err != nil {
-		return err
-	}
-	noSendTxOpts, err := txManager.GetNoSendTxOpts()
-	if err != nil {
-		return err
-	}
-
-	tx, err := allocationManager.SetAVSRegistrar(noSendTxOpts, avsAddress, registryCoordinatorAddress)
-	if err != nil {
-		return err
-	}
 
 	waitForReceipt := true
 
-	_, err = txManager.Send(context.Background(), tx, waitForReceipt)
-	if err != nil {
-		return err
-	}
-
-	tx, err = registryCoordinator.EnableOperatorSets(noSendTxOpts)
-	if err != nil {
-		return err
-	}
-
-	_, err = txManager.Send(context.Background(), tx, waitForReceipt)
+	_, err := clients.ElChainWriter.SetAVSRegistrar(context.Background(), avsAddress, registryCoordinatorAddress, waitForReceipt)
 	if err != nil {
 		return err
 	}
@@ -1315,35 +1271,19 @@ func createOperatorSet(
 	}
 	strategyParamsArray := []regcoord.IStakeRegistryTypesStrategyParams{strategyParams}
 	lookAheadPeriod := uint32(0)
-	tx, err = registryCoordinator.CreateSlashableStakeQuorum(
-		noSendTxOpts,
+	_, err = clients.AvsRegistryChainWriter.CreateSlashableStakeQuorum(
+		context.Background(),
 		operatorSetParam,
 		minimumStake,
 		strategyParamsArray,
 		lookAheadPeriod,
+		waitForReceipt,
 	)
 	if err != nil {
 		return err
 	}
 
-	_, err = txManager.Send(context.Background(), tx, waitForReceipt)
-	if err != nil {
-		return err
-	}
-
-	strategies := []common.Address{erc20MockStrategyAddr}
-	operatorSetParams := allocationmanager.IAllocationManagerTypesCreateSetParams{
-		OperatorSetId: operatorSetId,
-		Strategies:    strategies,
-	}
-	operatorSetParamsArray := []allocationmanager.IAllocationManagerTypesCreateSetParams{operatorSetParams}
-	tx, err = allocationManager.CreateOperatorSets(noSendTxOpts, avsAddress, operatorSetParamsArray)
-	if err != nil {
-		return err
-	}
-
-	_, err = txManager.Send(context.Background(), tx, waitForReceipt)
-	return err
+	return nil
 }
 
 // Sets the testing RewardsCoordinator's activationDelay.
