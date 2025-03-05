@@ -831,36 +831,21 @@ func (r *ChainReader) IsOperatorRegisteredWithOperatorSet(
 	operatorAddress gethcommon.Address,
 	operatorSet allocationmanager.OperatorSet,
 ) (bool, error) {
-	if operatorSet.Id == 0 {
-		// this is an M2 AVS
-		if r.avsDirectory == nil {
-			return false, errors.New("AVSDirectory contract not provided")
-		}
-
-		status, err := r.avsDirectory.AvsOperatorStatus(&bind.CallOpts{Context: ctx}, operatorSet.Avs, operatorAddress)
-		// This call should not fail since it's a getter
-		if err != nil {
-			return false, err
-		}
-
-		return status == 1, nil
-	} else {
-		if r.allocationManager == nil {
-			return false, errors.New("AllocationManager contract not provided")
-		}
-		registeredOperatorSets, err := r.allocationManager.GetRegisteredSets(&bind.CallOpts{Context: ctx}, operatorAddress)
-		// This call should not fail since it's a getter
-		if err != nil {
-			return false, err
-		}
-		for _, registeredOperatorSet := range registeredOperatorSets {
-			if registeredOperatorSet.Id == operatorSet.Id && registeredOperatorSet.Avs == operatorSet.Avs {
-				return true, nil
-			}
-		}
-
-		return false, nil
+	if r.allocationManager == nil {
+		return false, errors.New("AllocationManager contract not provided")
 	}
+	registeredOperatorSets, err := r.allocationManager.GetRegisteredSets(&bind.CallOpts{Context: ctx}, operatorAddress)
+	// This call should not fail since it's a getter
+	if err != nil {
+		return false, err
+	}
+	for _, registeredOperatorSet := range registeredOperatorSets {
+		if registeredOperatorSet.Id == operatorSet.Id && registeredOperatorSet.Avs == operatorSet.Avs {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 // Returns the list of operators in a specific operator set.
