@@ -59,6 +59,7 @@ func BuildTestClients(t *testing.T) (*clients.Clients, string) {
 		logger,
 	)
 	require.NoError(t, err)
+	clients.AnvilC = anvilC
 	return clients, anvilHttpEndpoint
 }
 
