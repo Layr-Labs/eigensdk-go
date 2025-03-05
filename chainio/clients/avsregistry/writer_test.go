@@ -520,30 +520,26 @@ func TestCreateDelegatedAndSlashableStakeQuorums(t *testing.T) {
 	assert.Equal(t, count, uint8(3))
 }
 
-/*
-This test is commented because produces an edge case that leads to a bug
+func TestEjectOperator(t *testing.T) {
+	// Test set up
+	clients, anvilHttpEndpoint := testclients.BuildTestClients(t)
 
-	func TestEjectOperator(t *testing.T) {
-		// Test set up
-		clients, anvilHttpEndpoint := testclients.BuildTestClients(t)
+	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
 
-		contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
+	chainReader := clients.ReadClients.AvsRegistryChainReader
+	chainWriter := clients.AvsRegistryChainWriter
 
-		chainReader := clients.ReadClients.AvsRegistryChainReader
-		chainWriter := clients.AvsRegistryChainWriter
+	operatorAddr := gethcommon.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
 
-		operatorAddr := gethcommon.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
+	quorumNumbers := types.QuorumNums{0}
 
-		quorumNumbers := types.QuorumNums{0}
+	// At the beginning, operator is not registered
+	isRegisterd, err := chainReader.IsOperatorRegistered(&bind.CallOpts{}, operatorAddr)
+	require.NoError(t, err)
+	require.False(t, isRegisterd)
 
-		// At the beginning, operator is not registered
-		isRegisterd, err := chainReader.IsOperatorRegistered(&bind.CallOpts{}, operatorAddr)
-		require.NoError(t, err)
-		require.False(t, isRegisterd)
-
-		// After registration, operator is registered
-		elWriter := clients.ElChainWriter
-
+	// After registration, operator is registered
+	elWriter := clients.ElChainWriter
 
 	receipt, err := elWriter.SetAVSRegistrar(context.Background(), contractAddrs.ServiceManager, contractAddrs.RegistryCoordinator, true)
 	require.NoError(t, err)
@@ -560,25 +556,24 @@ This test is commented because produces an edge case that leads to a bug
 		BlsKeyPair:      otherKeyPair,
 	}
 
+	receipt, err = elWriter.RegisterForOperatorSets(context.Background(), contractAddrs.RegistryCoordinator, request)
+	require.NoError(t, err)
+	require.NotNil(t, receipt)
 
-		receipt, err = elWriter.RegisterForOperatorSets(context.Background(), contractAddrs.RegistryCoordinator, request)
-		require.NoError(t, err)
-		require.NotNil(t, receipt)
+	isRegisterd, err = chainReader.IsOperatorRegistered(&bind.CallOpts{}, operatorAddr)
+	require.NoError(t, err)
+	require.True(t, isRegisterd)
 
-		isRegisterd, err = chainReader.IsOperatorRegistered(&bind.CallOpts{}, operatorAddr)
-		require.NoError(t, err)
-		require.True(t, isRegisterd)
+	// After being ejected, operator is not registered anymore
+	receipt, err = chainWriter.EjectOperator(context.Background(), operatorAddr, quorumNumbers, true)
+	require.NoError(t, err)
+	require.Equal(t, receipt.Status, gethtypes.ReceiptStatusSuccessful)
 
-		// After being ejected, operator is not registered anymore
-		receipt, err = chainWriter.EjectOperator(context.Background(), operatorAddr, quorumNumbers, true)
-		require.NoError(t, err)
-		require.Equal(t, receipt.Status, gethtypes.ReceiptStatusSuccessful)
+	isRegisterd, err = chainReader.IsOperatorRegistered(&bind.CallOpts{}, operatorAddr)
+	require.NoError(t, err)
+	require.False(t, isRegisterd)
+}
 
-		isRegisterd, err = chainReader.IsOperatorRegistered(&bind.CallOpts{}, operatorAddr)
-		require.NoError(t, err)
-		require.False(t, isRegisterd)
-	}
-*/
 func TestSetOperatorSetParams(t *testing.T) {
 	// Test set up
 	clients, anvilHttpEndpoint := testclients.BuildTestClients(t)

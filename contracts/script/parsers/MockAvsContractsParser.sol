@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.27;
 
-import {RegistryCoordinator} from "eigenlayer-middleware/src/RegistryCoordinator.sol";
+import {SlashingRegistryCoordinator} from "eigenlayer-middleware/src/SlashingRegistryCoordinator.sol";
 import {OperatorStateRetriever} from "eigenlayer-middleware/src/OperatorStateRetriever.sol";
 
 import {MockAvsServiceManager} from "../../src/MockAvsServiceManager.sol";
@@ -11,7 +11,7 @@ import "forge-std/StdJson.sol";
 
 struct MockAvsContracts {
     MockAvsServiceManager mockAvsServiceManager;
-    RegistryCoordinator registryCoordinator;
+    SlashingRegistryCoordinator registryCoordinator;
     OperatorStateRetriever operatorStateRetriever;
 }
 
@@ -24,8 +24,8 @@ contract MockAvsContractsParser is ConfigsReadWriter {
         require(
             address(mockAvsServiceManager) != address(0), "MockAvsContractsParser: mockAvsServiceManager address is 0"
         );
-        RegistryCoordinator registryCoordinator =
-            RegistryCoordinator(stdJson.readAddress(mockAvsDeployedContracts, ".addresses.registryCoordinator"));
+        SlashingRegistryCoordinator registryCoordinator =
+            SlashingRegistryCoordinator(stdJson.readAddress(mockAvsDeployedContracts, ".addresses.registryCoordinator"));
         require(address(registryCoordinator) != address(0), "MockAvsContractsParser: registryCoordinator address is 0");
         OperatorStateRetriever operatorStateRetriever =
             OperatorStateRetriever(stdJson.readAddress(mockAvsDeployedContracts, ".addresses.operatorStateRetriever"));
