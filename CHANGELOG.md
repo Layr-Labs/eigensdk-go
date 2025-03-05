@@ -36,6 +36,8 @@ Each version will have a separate `Breaking Changes` section as well. To describ
     ```
 
 * Added field `DontUseAllocationManager` to `BuildAllConfig` in [#580](https://github.com/Layr-Labs/eigensdk-go/pull/580)
+* Added `AnvilC` field to `clients.Clients` struct in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
+* Added `GetAVSRegistrar` and `SetAVSRegistrar` methods to elcontracts chain reader and chain writer in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
 
 ### Changed
 
@@ -121,6 +123,8 @@ Each version will have a separate `Breaking Changes` section as well. To describ
     ```
 
 ### Removed
+* Removed `IsOperatorSetQuorum` method of avsRegistry chain reader in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
+  * This function was removed in [the v1.1.1 eigenlayer-middleware release](https://github.com/Layr-Labs/eigenlayer-middleware/releases/tag/v1.1.1-testnet-slashing).
 
 ------------
 
