@@ -798,7 +798,6 @@ func TestGetAllocatableMagnitudeAndEncumberedMagnitudeAndGetMaxMagnitudes(t *tes
 
 	strategyAddr := contractAddrs.Erc20MockStrategy
 	testAddr := common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
-	operatorSetId := uint32(1)
 
 	strategies := []common.Address{strategyAddr}
 	maxMagnitudes, err := chainReader.GetMaxMagnitudes(ctx, testAddr, strategies)
@@ -833,7 +832,8 @@ func TestGetAllocatableMagnitudeAndEncumberedMagnitudeAndGetMaxMagnitudes(t *tes
 	_, err = chainReader.GetAllocationDelay(context.Background(), operatorAddr)
 	require.NoError(t, err)
 
-	err = createOperatorSet(anvilHttpEndpoint, privateKeyHex, testAddr, operatorSetId, strategyAddr)
+	operatorSetId := uint32(1)
+	err = createOperatorSet(anvilHttpEndpoint, privateKeyHex, contractAddrs.ServiceManager, operatorSetId, strategyAddr)
 	require.NoError(t, err)
 
 	operatorSet := allocationmanager.OperatorSet{
@@ -1327,7 +1327,7 @@ func TestOperatorSetsAndSlashableShares(t *testing.T) {
 	chainWriter, err := testclients.NewTestChainWriterFromConfig(anvilHttpEndpoint, operatorPrivateKeyHex, config)
 	require.NoError(t, err)
 
-	avsAddr := common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
+	avsAddr := contractAddrs.ServiceManager
 	avsPrivateKeyHex := testutils.ANVIL_FIRST_PRIVATE_KEY
 	operatorSetId := uint32(1)
 	operatorSet := allocationmanager.OperatorSet{
