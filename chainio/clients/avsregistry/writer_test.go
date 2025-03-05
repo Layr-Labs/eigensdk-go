@@ -66,16 +66,7 @@ func TestWriterMethods(t *testing.T) {
 
 	// Register operator
 	elWriter := clients.ElChainWriter
-	receipt, err := elWriter.SetAVSRegistrar(
-		context.Background(),
-		contractAddrs.ServiceManager,
-		contractAddrs.RegistryCoordinator,
-		true,
-	)
-	require.NoError(t, err)
-	require.NotNil(t, receipt)
-
-	receipt, err = elWriter.RegisterForOperatorSets(context.Background(), contractAddrs.RegistryCoordinator, request)
+	receipt, err := elWriter.RegisterForOperatorSets(context.Background(), contractAddrs.RegistryCoordinator, request)
 	require.NoError(t, err)
 	require.NotNil(t, receipt)
 
@@ -531,16 +522,6 @@ func TestEjectOperator(t *testing.T) {
 
 	// After registration, operator is registered
 	elWriter := clients.ElChainWriter
-
-	receipt, err := elWriter.SetAVSRegistrar(
-		context.Background(),
-		contractAddrs.ServiceManager,
-		contractAddrs.RegistryCoordinator,
-		true,
-	)
-	require.NoError(t, err)
-	require.NotNil(t, receipt)
-
 	otherKeyPair, err := bls.NewKeyPairFromString("0x01")
 	require.NoError(t, err)
 	request := elcontracts.RegistrationRequest{
@@ -552,7 +533,7 @@ func TestEjectOperator(t *testing.T) {
 		BlsKeyPair:      otherKeyPair,
 	}
 
-	receipt, err = elWriter.RegisterForOperatorSets(context.Background(), contractAddrs.RegistryCoordinator, request)
+	receipt, err := elWriter.RegisterForOperatorSets(context.Background(), contractAddrs.RegistryCoordinator, request)
 	require.NoError(t, err)
 	require.NotNil(t, receipt)
 

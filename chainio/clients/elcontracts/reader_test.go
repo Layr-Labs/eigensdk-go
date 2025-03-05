@@ -822,7 +822,7 @@ func TestGetAllocatableMagnitudeAndEncumberedMagnitudeAndGetMaxMagnitudes(t *tes
 	require.NoError(t, err)
 
 	operatorSetId := uint32(1)
-	err = createOperatorSet(clients, anvilHttpEndpoint, contractAddrs.ServiceManager, strategyAddr)
+	err = createOperatorSet(clients, strategyAddr)
 	require.NoError(t, err)
 
 	operatorSet := allocationmanager.OperatorSet{
@@ -1317,7 +1317,7 @@ func TestOperatorSetsAndSlashableShares(t *testing.T) {
 	strategyAddr := contractAddrs.Erc20MockStrategy
 	strategies := []common.Address{strategyAddr}
 
-	err := createOperatorSet(clients, anvilHttpEndpoint, avsAddr, strategyAddr)
+	err := createOperatorSet(clients, strategyAddr)
 	require.NoError(t, err)
 
 	keypair, err := bls.NewKeyPairFromString("0x01")

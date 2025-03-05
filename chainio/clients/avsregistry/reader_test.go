@@ -206,16 +206,7 @@ func TestReaderMethods(t *testing.T) {
 
 	// Register operator
 	elWriter := clients.ElChainWriter
-	receipt, err := elWriter.SetAVSRegistrar(
-		context.Background(),
-		contractAddrs.ServiceManager,
-		contractAddrs.RegistryCoordinator,
-		true,
-	)
-	require.NoError(t, err)
-	require.NotNil(t, receipt)
-
-	receipt, err = elWriter.RegisterForOperatorSets(context.Background(), contractAddrs.RegistryCoordinator, request)
+	receipt, err := elWriter.RegisterForOperatorSets(context.Background(), contractAddrs.RegistryCoordinator, request)
 	require.NoError(t, err)
 	require.NotNil(t, receipt)
 

@@ -138,8 +138,6 @@ func TestRegisterAndDeregisterFromOperatorSets(t *testing.T) {
 	// Create an operator set to register an operator on it
 	err := createOperatorSet(
 		clients,
-		anvilHttpEndpoint,
-		avsAddress,
 		erc20MockStrategyAddr,
 	)
 	require.NoError(t, err)
@@ -539,8 +537,6 @@ func TestSetOperatorSetSplit(t *testing.T) {
 	// Create an operator set to register an operator on it
 	err = createOperatorSet(
 		clients,
-		anvilHttpEndpoint,
-		avsAddress,
 		erc20MockStrategyAddr,
 	)
 	require.NoError(t, err)
@@ -778,7 +774,7 @@ func TestModifyAllocations(t *testing.T) {
 	_, err = chainReader.GetAllocationDelay(context.Background(), operatorAddr)
 	require.NoError(t, err)
 
-	err = createOperatorSet(clients, anvilHttpEndpoint, avsAddr, strategyAddr)
+	err = createOperatorSet(clients, strategyAddr)
 	require.NoError(t, err)
 
 	receipt, err = chainWriter.ModifyAllocations(context.Background(), operatorAddr, allocateParams, waitForReceipt)
@@ -850,7 +846,7 @@ func TestClearDeallocationQueue(t *testing.T) {
 	_, err = chainReader.GetAllocationDelay(context.Background(), operatorAddr)
 	require.NoError(t, err)
 
-	err = createOperatorSet(clients, anvilHttpEndpoint, avsAddr, strategyAddr)
+	err = createOperatorSet(clients, strategyAddr)
 	require.NoError(t, err)
 
 	receipt, err = chainWriter.ModifyAllocations(context.Background(), operatorAddr, allocateParams, waitForReceipt)
@@ -1194,26 +1190,9 @@ func TestProcessClaims(t *testing.T) {
 // defined sequentially (as the new amount of operator sets minus one)
 func createOperatorSet(
 	clients *clients.Clients,
-	anvilHttpEndpoint string,
-	avsAddress common.Address,
 	erc20MockStrategyAddr common.Address,
 ) error {
-
-	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
-
-	registryCoordinatorAddress := contractAddrs.RegistryCoordinator
-
 	waitForReceipt := true
-
-	_, err := clients.ElChainWriter.SetAVSRegistrar(
-		context.Background(),
-		avsAddress,
-		registryCoordinatorAddress,
-		waitForReceipt,
-	)
-	if err != nil {
-		return err
-	}
 
 	operatorSetParam := regcoord.ISlashingRegistryCoordinatorTypesOperatorSetParam{
 		MaxOperatorCount:        10,
@@ -1228,7 +1207,7 @@ func createOperatorSet(
 	}
 	strategyParamsArray := []regcoord.IStakeRegistryTypesStrategyParams{strategyParams}
 	lookAheadPeriod := uint32(0)
-	_, err = clients.AvsRegistryChainWriter.CreateSlashableStakeQuorum(
+	_, err := clients.AvsRegistryChainWriter.CreateSlashableStakeQuorum(
 		context.Background(),
 		operatorSetParam,
 		minimumStake,

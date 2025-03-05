@@ -1639,16 +1639,7 @@ func TestIntegrationBlsAgg(t *testing.T) {
 		}
 
 		// Register operator
-		receipt, err := elcontractsWriter.SetAVSRegistrar(
-			context.Background(),
-			contractAddrs.ServiceManager,
-			contractAddrs.RegistryCoordinator,
-			true,
-		)
-		require.NoError(t, err)
-		require.NotNil(t, receipt)
-
-		receipt, err = elcontractsWriter.RegisterForOperatorSets(
+		receipt, err := elcontractsWriter.RegisterForOperatorSets(
 			context.Background(),
 			contractAddrs.RegistryCoordinator,
 			request,
@@ -1807,16 +1798,7 @@ func TestIntegrationBlsAgg(t *testing.T) {
 		}
 
 		// Register operator
-		receipt, err := elcontractsWriter.SetAVSRegistrar(
-			context.Background(),
-			contractAddrs.ServiceManager,
-			contractAddrs.RegistryCoordinator,
-			true,
-		)
-		require.NoError(t, err)
-		require.NotNil(t, receipt)
-
-		receipt, err = elcontractsWriter.RegisterForOperatorSets(
+		receipt, err := elcontractsWriter.RegisterForOperatorSets(
 			context.Background(),
 			contractAddrs.RegistryCoordinator,
 			request,

@@ -59,6 +59,8 @@ contract DeployMockAvs is DeployMockAvsRegistries {
             address(eigenlayerContracts.rewardsCoordinator),
             eigenlayerContracts.rewardsCoordinator.createOperatorDirectedAVSRewardsSubmission.selector
         );
+        
+        eigenlayerContracts.allocationManager.setAVSRegistrar(avsAddress, mockAvsContracts.registryCoordinator);
 
         if (block.chainid == 31337 || block.chainid == 1337) {
             _writeContractsToRegistry(contractsRegistry, eigenlayerContracts, mockAvsContracts);
