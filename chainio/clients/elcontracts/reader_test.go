@@ -1297,16 +1297,14 @@ func TestInvalidConfig(t *testing.T) {
 }
 
 func TestOperatorSetsAndSlashableShares(t *testing.T) {
-	testConfig := testutils.GetDefaultTestConfig()
-	anvilC, err := testutils.StartAnvilContainer(testConfig.AnvilStateFileName)
-	require.NoError(t, err)
-
 	clients, anvilHttpEndpoint := testclients.BuildTestClients(t)
 	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
 
 	chainReader := clients.ElChainReader
 
-	operatorAddr := common.HexToAddress(testutils.ANVIL_SECOND_ADDRESS)
+	anvilC := clients.AnvilC
+
+	operatorAddr := common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
 	chainWriter := clients.ElChainWriter
 
 	avsAddr := contractAddrs.ServiceManager
@@ -1319,7 +1317,7 @@ func TestOperatorSetsAndSlashableShares(t *testing.T) {
 	strategyAddr := contractAddrs.Erc20MockStrategy
 	strategies := []common.Address{strategyAddr}
 
-	err = createOperatorSet(clients, anvilHttpEndpoint, avsAddr, strategyAddr)
+	err := createOperatorSet(clients, anvilHttpEndpoint, avsAddr, strategyAddr)
 	require.NoError(t, err)
 
 	keypair, err := bls.NewKeyPairFromString("0x01")
