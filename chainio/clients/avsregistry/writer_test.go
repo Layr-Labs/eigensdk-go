@@ -532,7 +532,12 @@ func TestEjectOperator(t *testing.T) {
 	// After registration, operator is registered
 	elWriter := clients.ElChainWriter
 
-	receipt, err := elWriter.SetAVSRegistrar(context.Background(), contractAddrs.ServiceManager, contractAddrs.RegistryCoordinator, true)
+	receipt, err := elWriter.SetAVSRegistrar(
+		context.Background(),
+		contractAddrs.ServiceManager,
+		contractAddrs.RegistryCoordinator,
+		true,
+	)
 	require.NoError(t, err)
 	require.NotNil(t, receipt)
 

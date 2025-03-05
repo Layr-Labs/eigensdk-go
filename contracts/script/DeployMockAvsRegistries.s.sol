@@ -132,7 +132,7 @@ contract DeployMockAvsRegistries is Script, ConfigsReadWriter, EigenlayerContrac
             new SocketRegistry(ISlashingRegistryCoordinator(address(deployed.coordinator)));
         _upgradeProxy(address(registries.socketRegistry), address(registries.socketRegistryImplementation));
 
-        deployed.coordinatorImplementation = new SlashingRegistryCoordinator(            
+        deployed.coordinatorImplementation = new SlashingRegistryCoordinator(
             //IServiceManager(address(manager)),
             registries.stakeRegistry,
             registries.blsApkRegistry,
