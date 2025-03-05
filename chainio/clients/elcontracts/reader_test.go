@@ -780,13 +780,10 @@ func TestGetAllocatableMagnitudeAndEncumberedMagnitudeAndGetMaxMagnitudes(t *tes
 	// Test setup
 	ctx := context.Background()
 
-	testConfig := testutils.GetDefaultTestConfig()
-	anvilC, err := testutils.StartAnvilContainer(testConfig.AnvilStateFileName)
-	require.NoError(t, err)
-
 	clients, anvilHttpEndpoint := testclients.BuildTestClients(t)
 	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
 
+	anvilC := clients.AnvilC
 	operatorAddr := common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
 
 	chainReader := clients.ElChainReader
@@ -829,7 +826,7 @@ func TestGetAllocatableMagnitudeAndEncumberedMagnitudeAndGetMaxMagnitudes(t *tes
 	require.NoError(t, err)
 
 	operatorSet := allocationmanager.OperatorSet{
-		Avs: testAddr,
+		Avs: contractAddrs.ServiceManager,
 		Id:  operatorSetId,
 	}
 	allocatable_reduction := uint64(100)
