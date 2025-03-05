@@ -823,9 +823,9 @@ func (r *ChainReader) GetOperatorSetsForOperator(
 	return r.allocationManager.GetAllocatedSets(&bind.CallOpts{Context: ctx}, operatorAddress)
 }
 
-// Returns `true` if an operator is registered with a specific operator set or M2 quorum.
-// Can return an error if the `AVSDirectory` or `AllocationManager` contract addresses were
-// not provided, or due to errors in the underlying contract call.
+// Returns `true` if an operator is registered with a specific operator set. Can return an
+// error if the `AllocationManager` contract addresses was not provided, or due to errors
+// in the underlying contract call.
 func (r *ChainReader) IsOperatorRegisteredWithOperatorSet(
 	ctx context.Context,
 	operatorAddress gethcommon.Address,
@@ -846,6 +846,27 @@ func (r *ChainReader) IsOperatorRegisteredWithOperatorSet(
 	}
 
 	return false, nil
+}
+
+// Returns `true` if an operator is registered with a specific M2 quorum, querying AVSDirectory.
+// Can return an error if the `AVSDirectory` contract addres was not provided, or due to errors
+// in the underlying contract call.
+func (r *ChainReader) IsOperatorRegisteredWithAvs(
+	ctx context.Context,
+	operatorAddress gethcommon.Address,
+	operatorSet allocationmanager.OperatorSet,
+) (bool, error) {
+	if r.avsDirectory == nil {
+		return false, errors.New("AVSDirectory contract not provided")
+	}
+
+	status, err := r.avsDirectory.AvsOperatorStatus(&bind.CallOpts{Context: ctx}, operatorSet.Avs, operatorAddress)
+	// This call should not fail since it's a getter
+	if err != nil {
+		return false, err
+	}
+
+	return status == 1, nil
 }
 
 // Returns the list of operators in a specific operator set.
