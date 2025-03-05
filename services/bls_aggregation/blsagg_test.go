@@ -961,7 +961,8 @@ func TestBlsAgg(t *testing.T) {
 
 	// this is an edge case as typically we would send new tasks and listen for task responses in a for select loop
 	// but this test makes sure the context deadline exceeded can get us out of a deadlock
-	t.Run("send new signedTaskDigest before listen on responseChan - context timeout cancels the request to prevent deadlock",
+	t.Run(
+		"send new signedTaskDigest before listen on responseChan - context timeout cancels the request to prevent deadlock",
 		func(t *testing.T) {
 			testOperator1 := types.TestOperator{
 				OperatorId:     types.OperatorId{1},
