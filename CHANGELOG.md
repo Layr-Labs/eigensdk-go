@@ -37,7 +37,8 @@ Each version will have a separate `Breaking Changes` section as well. To describ
 
 * Added field `DontUseAllocationManager` to `BuildAllConfig` by @MegaRedHand in [#580](https://github.com/Layr-Labs/eigensdk-go/pull/580)
 * Added `AnvilC` field to `clients.Clients` struct by @maximopalopoli in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
-* Added `GetAVSRegistrar` and `SetAVSRegistrar` methods to elcontracts chain reader and chain writer by @maximopalopoli in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
+* Added `IsOperatorRegisteredWithAvs`, `GetAVSRegistrar` methods to elcontracts chain reader and and `SetAVSRegistrar` to chain writer by @maximopalopoli in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
+
 
 ### Changed
 
@@ -121,7 +122,8 @@ Each version will have a separate `Breaking Changes` section as well. To describ
     ).WithWindowDuration(windowDuration)
     blsAggServ.InitializeNewTask(metadata)
     ```
-* fix: `IsOperatorRegisteredWithOperatorSet` only queries to AVSDirectory by @maximopalopoli in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
+* The elcontracts `chainReader.IsOperatorRegisteredWithOperatorSet` does not query to AVSDirectory anymore, only to allocationManager by @maximopalopoli in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
+  * The query to AVSDirectory i still available using `chainReader.IsOperatorRegisteredWithAvs` method
 
 ### Removed
 * Removed `IsOperatorSetQuorum` method of avsRegistry chain reader by @maximopalopoli in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
