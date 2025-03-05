@@ -10,9 +10,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients"
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/chainio/utils"
 	avssm "github.com/Layr-Labs/eigensdk-go/contracts/bindings/MockAvsServiceManager"
 	regcoord "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
@@ -1600,7 +1602,7 @@ func TestIntegrationBlsAgg(t *testing.T) {
 			ServiceManagerAddress:      contractAddrs.ServiceManager.String(),
 		}, ecdsaPrivKey, logger)
 		require.NoError(t, err)
-		avsWriter := avsClients.AvsRegistryChainWriter
+		elcontractsWriter := avsClients.ElChainWriter
 
 		// create aggregation service
 		operatorsInfoService := operatorsinfo.NewOperatorsInfoServiceInMemory(
@@ -1620,15 +1622,36 @@ func TestIntegrationBlsAgg(t *testing.T) {
 
 		// register operator
 		quorumNumbers := testData.Input.QuorumNumbers
-		_, err = avsWriter.RegisterOperator(
+		var quorumNumbersU32 []uint32
+		for _, qn := range quorumNumbers {
+			quorumNumbersU32 = append(quorumNumbersU32, uint32(qn))
+		}
+
+		operatorAddr := common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
+		otherKeyPair, err := bls.NewKeyPairFromString("0x01")
+		require.NoError(t, err)
+		request := elcontracts.RegistrationRequest{
+			OperatorAddress: operatorAddr,
+			AVSAddress:      contractAddrs.ServiceManager,
+			OperatorSetIds:  quorumNumbersU32,
+			WaitForReceipt:  true,
+			Socket:          "socket",
+			BlsKeyPair:      otherKeyPair,
+		}
+
+		// Register operator
+		receipt, err := elcontractsWriter.SetAVSRegistrar(
 			context.Background(),
-			ecdsaPrivKey,
-			blsKeyPair,
-			quorumNumbers,
-			"socket",
+			contractAddrs.ServiceManager,
+			contractAddrs.RegistryCoordinator,
 			true,
 		)
 		require.NoError(t, err)
+		require.NotNil(t, receipt)
+
+		receipt, err = elcontractsWriter.RegisterForOperatorSets(context.Background(), contractAddrs.RegistryCoordinator, request)
+		require.NoError(t, err)
+		require.NotNil(t, receipt)
 
 		// create the task related parameters: RBN, quorumThresholdPercentages, taskIndex and taskResponse
 		curBlockNum, err := ethHttpClient.BlockNumber(context.Background())
@@ -1702,7 +1725,7 @@ func TestIntegrationBlsAgg(t *testing.T) {
 			ServiceManagerAddress:      contractAddrs.ServiceManager.String(),
 		}, ecdsaPrivKey, logger)
 		require.NoError(t, err)
-		avsWriter := avsClients.AvsRegistryChainWriter
+		elcontractsWriter := avsClients.ElChainWriter
 		avsServiceManager, err := avssm.NewContractMockAvsServiceManager(contractAddrs.ServiceManager, ethHttpClient)
 		require.NoError(t, err)
 
@@ -1763,16 +1786,36 @@ func TestIntegrationBlsAgg(t *testing.T) {
 		// register operator
 		quorumNumbers := types.QuorumNums{1, 2}
 		quorumThresholdPercentages := []types.QuorumThresholdPercentage{100, 100}
+		var quorumNumbersU32 []uint32
+		for _, qn := range quorumNumbers {
+			quorumNumbersU32 = append(quorumNumbersU32, uint32(qn))
+		}
 
-		_, err = avsWriter.RegisterOperator(
+		operatorAddr := common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
+		otherKeyPair, err := bls.NewKeyPairFromString("0x01")
+		require.NoError(t, err)
+		request := elcontracts.RegistrationRequest{
+			OperatorAddress: operatorAddr,
+			AVSAddress:      contractAddrs.ServiceManager,
+			OperatorSetIds:  quorumNumbersU32,
+			WaitForReceipt:  true,
+			Socket:          "socket",
+			BlsKeyPair:      otherKeyPair,
+		}
+
+		// Register operator
+		receipt, err := elcontractsWriter.SetAVSRegistrar(
 			context.Background(),
-			ecdsaPrivKey,
-			blsKeyPair,
-			quorumNumbers,
-			"socket",
+			contractAddrs.ServiceManager,
+			contractAddrs.RegistryCoordinator,
 			true,
 		)
 		require.NoError(t, err)
+		require.NotNil(t, receipt)
+
+		receipt, err = elcontractsWriter.RegisterForOperatorSets(context.Background(), contractAddrs.RegistryCoordinator, request)
+		require.NoError(t, err)
+		require.NotNil(t, receipt)
 
 		// create the task related parameters: RBN, quorumThresholdPercentages, taskIndex and taskResponse
 		curBlockNum, err := ethHttpClient.BlockNumber(context.Background())
