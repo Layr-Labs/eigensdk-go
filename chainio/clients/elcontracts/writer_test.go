@@ -327,7 +327,9 @@ func TestEncodeChurnRegistrationParams(t *testing.T) {
 		},
 	}
 
-	signature, err := hex.DecodeString("d547fa0126f97d1752a3b3103c495961a4a6a7a5386feb32ac514289c578db5a0d64bfa34855c39d78cce241a9c73d5cae47dee02c691fd5320fdef4ad3e1f8e")
+	signature, err := hex.DecodeString(
+		"d547fa0126f97d1752a3b3103c495961a4a6a7a5386feb32ac514289c578db5a0d64bfa34855c39d78cce241a9c73d5cae47dee02c691fd5320fdef4ad3e1f8e",
+	)
 	require.NoError(t, err)
 	require.Equal(t, 64, len(signature))
 
@@ -335,7 +337,9 @@ func TestEncodeChurnRegistrationParams(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 32, len(salt))
 
-	expiry, ok := new(big.Int).SetString("138752197623537982159531315300136159918886501617089726422768086017712946835", 10)
+	expiry, ok := new(
+		big.Int,
+	).SetString("138752197623537982159531315300136159918886501617089726422768086017712946835", 10)
 	require.True(t, ok)
 
 	churnApproverSignature := elcontracts.SignatureWithSaltAndExpiry{

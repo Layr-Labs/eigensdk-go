@@ -1,6 +1,7 @@
 package elcontracts
 
 import (
+	"crypto/ecdsa"
 	"math/big"
 
 	allocationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/AllocationManager"
@@ -49,6 +50,13 @@ type RegistrationRequest struct {
 	WaitForReceipt  bool
 	BlsKeyPair      *bls.KeyPair
 	Socket          string
+
+	// The following are for registering with churn approval.
+
+	// The private key of the churn approver
+	ChurnApprovalEcdsaPrivateKey *ecdsa.PrivateKey
+	// The operators to kick on each quorum
+	OperatorKickParams []OperatorKickParam
 }
 
 // Parameters for removing an operator during churn.
@@ -60,7 +68,8 @@ type OperatorKickParam struct {
 	Operator common.Address
 }
 
-// Struct that bundles together a signature, a salt for uniqueness, and an expiration time for the signature. Used primarily for stack management.
+// Struct that bundles together a signature, a salt for uniqueness, and an expiration time for the signature. Used
+// primarily for stack management.
 type SignatureWithSaltAndExpiry struct {
 	// the signature itself, formatted as a single bytes object
 	Signature []byte
