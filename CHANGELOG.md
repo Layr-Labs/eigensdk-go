@@ -141,9 +141,9 @@ Each version will have a separate `Breaking Changes` section as well. To describ
     ).WithWindowDuration(windowDuration)
     blsAggServ.InitializeNewTask(metadata)
     ```
-* In elcontracts, `ChainReader.IsOperatorRegisteredWithOperatorSet` no longer queries the `AVSDirectory`, only `AllocationManager`, since only works for operator sets by @maximopalopoli in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
-  * To query if an operator is register to an m2 quorum you should now use `chainReader.IsOperatorRegisteredWithAvs` method, that queries the AVSDirectory.
-* `egnaddrs` utility now works with slashing version, and in case the registryCoordinator is the slashing version and service manager address is not passed by flag, then the returned service manager address will be address zero (0x00..00)
+* In elcontracts, `ChainReader.IsOperatorRegisteredWithOperatorSet` no longer queries the `AVSDirectory`, and so now only works for operator sets by @maximopalopoli in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
+  * To query if an operator is registered to an M2 quorum you should now use `chainReader.IsOperatorRegisteredWithAvs`, which queries the `AVSDirectory`.
+* `egnaddrs` utility now works with slashing release middleware contracts and, in that case, the returned service manager will be the zero address, unless the `--service-manager` is specified.
 
 ### Removed
 * Removed `IsOperatorSetQuorum` method of avsRegistry chain reader by @maximopalopoli in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
