@@ -806,7 +806,7 @@ func (w *ChainWriter) SetAccountIdentifier(
 	if err != nil {
 		return nil, err
 	}
-	tx, err := w.registryCoordinator.SetAccountIdentifier(noSendTxOpts, accountIdentifierAddress)
+	tx, err := w.registryCoordinator.SetAVS(noSendTxOpts, accountIdentifierAddress)
 	if err != nil {
 		return nil, err
 	}

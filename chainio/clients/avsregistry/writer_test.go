@@ -5,7 +5,7 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
 	chainioutils "github.com/Layr-Labs/eigensdk-go/chainio/utils"
 	avsdirectory "github.com/Layr-Labs/eigensdk-go/contracts/bindings/AVSDirectory"
 	regcoord "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
@@ -25,24 +25,10 @@ import (
 )
 
 func TestWriterMethods(t *testing.T) {
-	testConfig := testutils.GetDefaultTestConfig()
-	anvilC, err := testutils.StartAnvilContainer(testConfig.AnvilStateFileName)
-	require.NoError(t, err)
-
-	anvilHttpEndpoint, err := anvilC.Endpoint(context.Background(), "http")
-	require.NoError(t, err)
+	clients, anvilHttpEndpoint := testclients.BuildTestClients(t)
 	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
 
-	operatorPrivateKeyHex := testutils.ANVIL_FIRST_PRIVATE_KEY
-
-	config := avsregistry.Config{
-		RegistryCoordinatorAddress:    contractAddrs.RegistryCoordinator,
-		OperatorStateRetrieverAddress: contractAddrs.OperatorStateRetriever,
-		ServiceManagerAddress:         contractAddrs.ServiceManager,
-	}
-
-	chainWriter, err := testclients.NewTestAvsRegistryWriterFromConfig(anvilHttpEndpoint, operatorPrivateKeyHex, config)
-	require.NoError(t, err)
+	chainWriter := clients.AvsRegistryChainWriter
 
 	keypair, err := bls.NewKeyPairFromString("0x01")
 	require.NoError(t, err)
@@ -67,18 +53,22 @@ func TestWriterMethods(t *testing.T) {
 		assert.Nil(t, receipt)
 	})
 
-	t.Run("register operator", func(t *testing.T) {
-		receipt, err := chainWriter.RegisterOperator(
-			context.Background(),
-			ecdsaPrivateKey,
-			keypair,
-			quorumNumbers,
-			"",
-			true,
-		)
-		require.NoError(t, err)
-		require.NotNil(t, receipt)
-	})
+	otherKeyPair, err := bls.NewKeyPairFromString("0x01")
+	require.NoError(t, err)
+	request := elcontracts.RegistrationRequest{
+		OperatorAddress: addr,
+		AVSAddress:      contractAddrs.ServiceManager,
+		OperatorSetIds:  []uint32{0},
+		WaitForReceipt:  true,
+		Socket:          "socket",
+		BlsKeyPair:      otherKeyPair,
+	}
+
+	// Register operator
+	elWriter := clients.ElChainWriter
+	receipt, err := elWriter.RegisterForOperatorSets(context.Background(), contractAddrs.RegistryCoordinator, request)
+	require.NoError(t, err)
+	require.NotNil(t, receipt)
 
 	t.Run("update stake of operator subset", func(t *testing.T) {
 		receipt, err := chainWriter.UpdateStakesOfOperatorSubsetForAllQuorums(
@@ -101,29 +91,7 @@ func TestWriterMethods(t *testing.T) {
 		require.NotNil(t, receipt)
 	})
 
-	t.Run("deregister operator", func(t *testing.T) {
-		receipt, err := chainWriter.DeregisterOperator(
-			context.Background(),
-			quorumNumbers,
-			chainioutils.ConvertToBN254G1Point(keypair.PubKey),
-			true,
-		)
-		require.NoError(t, err)
-		require.NotNil(t, receipt)
-	})
-
 	t.Run("update socket", func(t *testing.T) {
-		receipt, err := chainWriter.RegisterOperator(
-			context.Background(),
-			ecdsaPrivateKey,
-			keypair,
-			quorumNumbers,
-			"",
-			true,
-		)
-		require.NoError(t, err)
-		require.NotNil(t, receipt)
-
 		receipt, err = chainWriter.UpdateSocket(
 			context.Background(),
 			types.Socket(""),
@@ -138,17 +106,8 @@ func TestWriterMethods(t *testing.T) {
 		ethHttpClient, err := ethclient.Dial(anvilHttpEndpoint)
 		require.NoError(t, err)
 
-		contractBlsRegistryCoordinator, err := regcoord.NewContractRegistryCoordinator(
-			contractAddrs.RegistryCoordinator,
-			ethHttpClient,
-		)
-		require.NoError(t, err)
-
-		serviceManagerAddr, err := contractBlsRegistryCoordinator.ServiceManager(&bind.CallOpts{})
-		require.NoError(t, err)
-
 		serviceManager, err := servicemanager.NewContractServiceManagerBase(
-			serviceManagerAddr,
+			contractAddrs.ServiceManager,
 			ethHttpClient,
 		)
 		require.NoError(t, err)
@@ -232,18 +191,6 @@ func TestWriterMethods(t *testing.T) {
 		assert.Nil(t, receipt)
 	})
 
-	t.Run("fail deregister operator because of operator not registered", func(t *testing.T) {
-		quorumNumbers := types.QuorumNums{}
-		receipt, err := chainWriter.DeregisterOperator(
-			context.Background(),
-			quorumNumbers,
-			chainioutils.ConvertToBN254G1Point(keypair.PubKey),
-			true,
-		)
-		assert.Error(t, err)
-		assert.Nil(t, receipt)
-	})
-
 	t.Run("fail update socket cancelling context", func(t *testing.T) {
 		receipt, err := chainWriter.UpdateSocket(
 			subCtx,
@@ -255,27 +202,30 @@ func TestWriterMethods(t *testing.T) {
 	})
 
 	t.Run("set slashable stake lookahead", func(t *testing.T) {
-		// Create stakeRegistry contract
-		ethHttpClient, err := ethclient.Dial(anvilHttpEndpoint)
-		require.NoError(t, err)
+		operatorSetParams := regcoord.ISlashingRegistryCoordinatorTypesOperatorSetParam{
+			MaxOperatorCount: 5,
+		}
+		minimumStakeNeeded := big.NewInt(0)
 
-		contractBlsRegistryCoordinator, err := regcoord.NewContractRegistryCoordinator(
-			contractAddrs.RegistryCoordinator,
-			ethHttpClient,
+		strategyAddr := contractAddrs.Erc20MockStrategy
+		strategyParam := regcoord.IStakeRegistryTypesStrategyParams{
+			Strategy:   strategyAddr,
+			Multiplier: big.NewInt(1e18),
+		}
+
+		lookAheadPeriod := uint32(0)
+
+		receipt, err = chainWriter.CreateSlashableStakeQuorum(
+			context.Background(),
+			operatorSetParams,
+			minimumStakeNeeded,
+			[]regcoord.IStakeRegistryTypesStrategyParams{strategyParam},
+			lookAheadPeriod,
+			true,
 		)
-		require.NoError(t, err)
-
-		stakeRegistryAddr, err := contractBlsRegistryCoordinator.StakeRegistry(&bind.CallOpts{})
-		require.NoError(t, err)
-
-		stakeRegistry, err := stakeregistry.NewContractStakeRegistry(
-			stakeRegistryAddr,
-			ethHttpClient,
-		)
-		require.NoError(t, err)
 
 		// When not set, lookAheadPeriod is Zero
-		lookAheadPeriod, err := stakeRegistry.SlashableStakeLookAheadPerQuorum(&bind.CallOpts{}, 0)
+		lookAheadPeriod, err := clients.AvsRegistryChainReader.GetSlashableStakeLookAheadPerQuorum(&bind.CallOpts{}, 1)
 		require.NoError(t, err)
 		assert.Zero(t, lookAheadPeriod)
 
@@ -283,7 +233,7 @@ func TestWriterMethods(t *testing.T) {
 		newLookAheadPeriod := 32
 		receipt, err := chainWriter.SetSlashableStakeLookahead(
 			context.Background(),
-			0,
+			1,
 			uint32(newLookAheadPeriod),
 			true,
 		)
@@ -291,7 +241,7 @@ func TestWriterMethods(t *testing.T) {
 		require.NotNil(t, receipt)
 
 		// After modify, lookAheadPeriod's value is 32
-		lookAheadPeriod, err = stakeRegistry.SlashableStakeLookAheadPerQuorum(&bind.CallOpts{}, 0)
+		lookAheadPeriod, err = clients.AvsRegistryChainReader.GetSlashableStakeLookAheadPerQuorum(&bind.CallOpts{}, 1)
 		require.NoError(t, err)
 
 		assert.Equal(t, lookAheadPeriod, uint32(newLookAheadPeriod))
@@ -334,6 +284,10 @@ func TestWriterMethods(t *testing.T) {
 		assert.Equal(t, newMinimumStakeForQuorum, big.NewInt(100))
 	})
 }
+
+/*
+This test is commented because we need to use the new flow functions, and RegisterOperatorWithChurn belongs to the old one. We can
+use RegisterOperatorForOperatorSet to register with churn, but we should expose a function registerOperatorForOperatorSetsWithChurn
 
 func TestRegisterOperatorWithChurn(t *testing.T) {
 	clients, anvilHttpEndpoint := testclients.BuildTestClients(t)
@@ -452,6 +406,7 @@ func TestRegisterOperatorWithChurn(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, registeredOperatorWithChurn)
 }
+*/
 
 // Compliance test for BLS signature
 func TestBlsSignature(t *testing.T) {
@@ -529,24 +484,6 @@ func TestCreateDelegatedAndSlashableStakeQuorums(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, count, uint8(2))
 
-	// Enabling operator sets to create slashable stake quorums
-	registryCoordinatorAddress := contractAddrs.RegistryCoordinator
-	registryCoordinator, err := regcoord.NewContractRegistryCoordinator(
-		registryCoordinatorAddress,
-		clients.EthHttpClient,
-	)
-	require.NoError(t, err)
-
-	txManager := clients.TxManager
-	noSendTxOpts, err := txManager.GetNoSendTxOpts()
-	require.NoError(t, err)
-
-	tx, err := registryCoordinator.EnableOperatorSets(noSendTxOpts)
-	require.NoError(t, err)
-
-	_, err = txManager.Send(context.Background(), tx, true)
-	require.NoError(t, err)
-
 	// Create a new slashable stake quorum
 	receipt, err = chainWriter.CreateSlashableStakeQuorum(
 		context.Background(),
@@ -567,50 +504,51 @@ func TestCreateDelegatedAndSlashableStakeQuorums(t *testing.T) {
 
 func TestEjectOperator(t *testing.T) {
 	// Test set up
-	clients, _ := testclients.BuildTestClients(t)
+	clients, anvilHttpEndpoint := testclients.BuildTestClients(t)
+
+	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
 
 	chainReader := clients.ReadClients.AvsRegistryChainReader
 	chainWriter := clients.AvsRegistryChainWriter
-
-	keypair, err := bls.NewKeyPairFromString("0x01")
-	require.NoError(t, err)
-
-	ecdsaPrivateKey, err := crypto.HexToECDSA(testutils.ANVIL_FIRST_PRIVATE_KEY)
-	require.NoError(t, err)
 
 	operatorAddr := gethcommon.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
 
 	quorumNumbers := types.QuorumNums{0}
 
 	// At the beginning, operator is not registered
-	isRegisterd, err := chainReader.IsOperatorRegistered(&bind.CallOpts{}, operatorAddr)
+	isRegistered, err := chainReader.IsOperatorRegistered(&bind.CallOpts{}, operatorAddr)
 	require.NoError(t, err)
-	require.False(t, isRegisterd)
+	require.False(t, isRegistered)
 
 	// After registration, operator is registered
-	receipt, err := chainWriter.RegisterOperator(
-		context.Background(),
-		ecdsaPrivateKey,
-		keypair,
-		quorumNumbers,
-		"",
-		true,
-	)
+	elWriter := clients.ElChainWriter
+	otherKeyPair, err := bls.NewKeyPairFromString("0x01")
 	require.NoError(t, err)
-	require.Equal(t, receipt.Status, gethtypes.ReceiptStatusSuccessful)
+	request := elcontracts.RegistrationRequest{
+		OperatorAddress: operatorAddr,
+		AVSAddress:      contractAddrs.ServiceManager,
+		OperatorSetIds:  []uint32{0},
+		WaitForReceipt:  true,
+		Socket:          "socket",
+		BlsKeyPair:      otherKeyPair,
+	}
 
-	isRegisterd, err = chainReader.IsOperatorRegistered(&bind.CallOpts{}, operatorAddr)
+	receipt, err := elWriter.RegisterForOperatorSets(context.Background(), contractAddrs.RegistryCoordinator, request)
 	require.NoError(t, err)
-	require.True(t, isRegisterd)
+	require.NotNil(t, receipt)
+
+	isRegistered, err = chainReader.IsOperatorRegistered(&bind.CallOpts{}, operatorAddr)
+	require.NoError(t, err)
+	require.True(t, isRegistered)
 
 	// After being ejected, operator is not registered anymore
 	receipt, err = chainWriter.EjectOperator(context.Background(), operatorAddr, quorumNumbers, true)
 	require.NoError(t, err)
 	require.Equal(t, receipt.Status, gethtypes.ReceiptStatusSuccessful)
 
-	isRegisterd, err = chainReader.IsOperatorRegistered(&bind.CallOpts{}, operatorAddr)
+	isRegistered, err = chainReader.IsOperatorRegistered(&bind.CallOpts{}, operatorAddr)
 	require.NoError(t, err)
-	require.False(t, isRegisterd)
+	require.False(t, isRegistered)
 }
 
 func TestSetOperatorSetParams(t *testing.T) {
@@ -746,7 +684,7 @@ func TestSetAccountIdentifier(t *testing.T) {
 	require.NoError(t, err)
 
 	// At first, accountIdentifier is service manager address
-	accountIdentifier, err := registryCoordinatorContract.AccountIdentifier(&bind.CallOpts{})
+	accountIdentifier, err := registryCoordinatorContract.Avs(&bind.CallOpts{})
 	require.NoError(t, err)
 	assert.Equal(t, accountIdentifier, contractAddrs.ServiceManager)
 
@@ -756,7 +694,7 @@ func TestSetAccountIdentifier(t *testing.T) {
 	require.Equal(t, receipt.Status, gethtypes.ReceiptStatusSuccessful)
 
 	// After change, accountIdentifier is the value set
-	newAccountIdentifier, err := registryCoordinatorContract.AccountIdentifier(&bind.CallOpts{})
+	newAccountIdentifier, err := registryCoordinatorContract.Avs(&bind.CallOpts{})
 	require.NoError(t, err)
 	assert.Equal(t, newAccountIdentifier.String(), testutils.ANVIL_SECOND_ADDRESS)
 }

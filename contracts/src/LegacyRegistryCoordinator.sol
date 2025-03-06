@@ -44,6 +44,6 @@ contract LegacyRegistryCoordinator is RegistryCoordinator {
     /// Enables M2 quorums mode
     /// @dev USE ONLY FOR TESTING
     function enableM2QuorumRegistration() external onlyOwner {
-        m2QuorumsDisabled = false;
+        isM2QuorumRegistrationDisabled = false;
     }
 }

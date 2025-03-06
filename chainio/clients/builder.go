@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/testcontainers/testcontainers-go"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
@@ -61,6 +62,7 @@ type Clients struct {
 	TxManager              txmgr.TxManager
 	ElChainWriter          *elcontracts.ChainWriter
 	AvsRegistryChainWriter *avsregistry.ChainWriter
+	AnvilC                 testcontainers.Container
 }
 
 // BuildReadClients creates all the read clients needed to interact with the AVS and EL contracts.

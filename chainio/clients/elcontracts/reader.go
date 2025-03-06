@@ -6,7 +6,6 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
@@ -24,10 +23,10 @@ import (
 )
 
 type Config struct {
-	DelegationManagerAddress    common.Address
-	AvsDirectoryAddress         common.Address
-	RewardsCoordinatorAddress   common.Address
-	PermissionControllerAddress common.Address
+	DelegationManagerAddress    gethcommon.Address
+	AvsDirectoryAddress         gethcommon.Address
+	RewardsCoordinatorAddress   gethcommon.Address
+	PermissionControllerAddress gethcommon.Address
 
 	/// Setting this to true will disable the fetching of the AllocationManager address.
 	/// This is useful for older deployments, which don't have the contract deployed.
@@ -124,6 +123,19 @@ func (r *ChainReader) GetStakerShares(
 		return nil, nil, errors.New("DelegationManager contract not provided")
 	}
 	return r.delegationManager.GetDepositedShares(&bind.CallOpts{Context: ctx}, stakerAddress)
+}
+
+// Returns the AVSRegistrar of the avs received as parameter.
+// Can return an error if the `DelegationManager` contract address was not provided, or due to
+// errors in the underlying contract call.
+func (r *ChainReader) GetAVSRegistrar(
+	ctx context.Context,
+	avs gethcommon.Address,
+) (gethcommon.Address, error) {
+	if r.allocationManager == nil {
+		return gethcommon.Address{}, errors.New("AllocationManager contract not provided")
+	}
+	return r.allocationManager.GetAVSRegistrar(&bind.CallOpts{Context: ctx}, avs)
 }
 
 // Returns the operator that a staker has delegated to.
@@ -769,7 +781,7 @@ func (r *ChainReader) GetPendingWithdrawalStatus(
 // Returns the total number of withdrawals that have been queued for a given `staker`
 func (r *ChainReader) GetCumulativeWithdrawalsQueued(
 	ctx context.Context,
-	staker common.Address,
+	staker gethcommon.Address,
 ) (*big.Int, error) {
 	if r.delegationManager == nil {
 		return big.NewInt(0), errors.New("DelegationManager contract not provided")
@@ -811,44 +823,52 @@ func (r *ChainReader) GetOperatorSetsForOperator(
 	return r.allocationManager.GetAllocatedSets(&bind.CallOpts{Context: ctx}, operatorAddress)
 }
 
-// Returns `true` if an operator is registered with a specific operator set or M2 quorum.
-// Can return an error if the `AVSDirectory` or `AllocationManager` contract addresses were
-// not provided, or due to errors in the underlying contract call.
+// Returns `true` if an operator is registered with a specific operator set. Can return an
+// error if the `AllocationManager` contract addresses was not provided, or due to errors
+// in the underlying contract call.
+// Note: this method does not take into account M2 quorums
 func (r *ChainReader) IsOperatorRegisteredWithOperatorSet(
 	ctx context.Context,
 	operatorAddress gethcommon.Address,
 	operatorSet allocationmanager.OperatorSet,
 ) (bool, error) {
-	if operatorSet.Id == 0 {
-		// this is an M2 AVS
-		if r.avsDirectory == nil {
-			return false, errors.New("AVSDirectory contract not provided")
-		}
-
-		status, err := r.avsDirectory.AvsOperatorStatus(&bind.CallOpts{Context: ctx}, operatorSet.Avs, operatorAddress)
-		// This call should not fail since it's a getter
-		if err != nil {
-			return false, err
-		}
-
-		return status == 1, nil
-	} else {
-		if r.allocationManager == nil {
-			return false, errors.New("AllocationManager contract not provided")
-		}
-		registeredOperatorSets, err := r.allocationManager.GetRegisteredSets(&bind.CallOpts{Context: ctx}, operatorAddress)
-		// This call should not fail since it's a getter
-		if err != nil {
-			return false, err
-		}
-		for _, registeredOperatorSet := range registeredOperatorSets {
-			if registeredOperatorSet.Id == operatorSet.Id && registeredOperatorSet.Avs == operatorSet.Avs {
-				return true, nil
-			}
-		}
-
-		return false, nil
+	if r.allocationManager == nil {
+		return false, errors.New("AllocationManager contract not provided")
 	}
+	registeredOperatorSets, err := r.allocationManager.GetRegisteredSets(&bind.CallOpts{Context: ctx}, operatorAddress)
+	// This call should not fail since it's a getter
+	if err != nil {
+		return false, err
+	}
+	for _, registeredOperatorSet := range registeredOperatorSets {
+		if registeredOperatorSet.Id == operatorSet.Id && registeredOperatorSet.Avs == operatorSet.Avs {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+// Returns `true` if an operator is registered with a specific M2 quorum, querying AVSDirectory.
+// Can return an error if the `AVSDirectory` contract addres was not provided, or due to errors
+// in the underlying contract call.
+// Note: this method does not take into account operator sets
+func (r *ChainReader) IsOperatorRegisteredWithAvs(
+	ctx context.Context,
+	operatorAddress gethcommon.Address,
+	avsAddress gethcommon.Address,
+) (bool, error) {
+	if r.avsDirectory == nil {
+		return false, errors.New("AVSDirectory contract not provided")
+	}
+
+	status, err := r.avsDirectory.AvsOperatorStatus(&bind.CallOpts{Context: ctx}, avsAddress, operatorAddress)
+	// This call should not fail since it's a getter
+	if err != nil {
+		return false, err
+	}
+
+	return status == 1, nil
 }
 
 // Returns the list of operators in a specific operator set.
