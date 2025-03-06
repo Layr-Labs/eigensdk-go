@@ -826,7 +826,7 @@ func (r *ChainReader) GetOperatorSetsForOperator(
 // Returns `true` if an operator is registered with a specific operator set. Can return an
 // error if the `AllocationManager` contract addresses was not provided, or due to errors
 // in the underlying contract call.
-// Note: this method does not work for M2 quorums
+// Note: this method does not take into account M2 quorums
 func (r *ChainReader) IsOperatorRegisteredWithOperatorSet(
 	ctx context.Context,
 	operatorAddress gethcommon.Address,
@@ -852,7 +852,7 @@ func (r *ChainReader) IsOperatorRegisteredWithOperatorSet(
 // Returns `true` if an operator is registered with a specific M2 quorum, querying AVSDirectory.
 // Can return an error if the `AVSDirectory` contract addres was not provided, or due to errors
 // in the underlying contract call.
-// Note: this method does not work for not M2 quorums
+// Note: this method does not take into account operator sets
 func (r *ChainReader) IsOperatorRegisteredWithAvs(
 	ctx context.Context,
 	operatorAddress gethcommon.Address,
