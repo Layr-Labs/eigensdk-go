@@ -793,26 +793,26 @@ func (w *ChainWriter) ModifyStrategyParams(
 	return receipt, nil
 }
 
-// Sets the accountIdentifier as the address received as parameter. Identifier should only be set once, since
+// Sets the avs as the address received as parameter. Identifier should only be set once, since
 // changing it could break existing operator sets. Returns the receipt of the transaction in case of success.
-func (w *ChainWriter) SetAccountIdentifier(
+func (w *ChainWriter) SetAvs(
 	ctx context.Context,
-	accountIdentifierAddress gethcommon.Address,
+	avsAddress gethcommon.Address,
 	waitForReceipt bool,
 ) (*gethtypes.Receipt, error) {
-	w.logger.Info("setting account identifier with address ", accountIdentifierAddress)
+	w.logger.Info("setting account identifier with address ", avsAddress)
 
 	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
 	if err != nil {
 		return nil, err
 	}
-	tx, err := w.registryCoordinator.SetAVS(noSendTxOpts, accountIdentifierAddress)
+	tx, err := w.registryCoordinator.SetAVS(noSendTxOpts, avsAddress)
 	if err != nil {
 		return nil, err
 	}
 	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt)
 	if err != nil {
-		return nil, utils.WrapError("failed to send SetAccountIdentifier tx with err", err)
+		return nil, utils.WrapError("failed to send SetAvs tx with err", err)
 	}
 	return receipt, nil
 }
