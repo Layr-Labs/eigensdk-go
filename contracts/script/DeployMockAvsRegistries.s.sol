@@ -133,7 +133,6 @@ contract DeployMockAvsRegistries is Script, ConfigsReadWriter, EigenlayerContrac
         _upgradeProxy(address(registries.socketRegistry), address(registries.socketRegistryImplementation));
 
         deployed.coordinatorImplementation = new SlashingRegistryCoordinator(
-            //IServiceManager(address(manager)),
             registries.stakeRegistry,
             registries.blsApkRegistry,
             registries.indexRegistry,
@@ -158,8 +157,6 @@ contract DeployMockAvsRegistries is Script, ConfigsReadWriter, EigenlayerContrac
                 (config.communityMultisig, config.churner, config.ejector, 0, address(manager))
             )
         );
-        // LegacyRegistryCoordinator(address(deployed.coordinator)).enableM2QuorumRegistration();
-        // LegacyRegistryCoordinator(address(deployed.coordinator)).disableOperatorSets();
     }
 
     function _setupPermissions(address avs, EigenlayerContracts memory elContracts) internal {
