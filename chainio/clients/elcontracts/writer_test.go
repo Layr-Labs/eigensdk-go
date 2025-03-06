@@ -253,12 +253,25 @@ func TestRegisterOperatorSetWithChurn(t *testing.T) {
 	}
 
 	avsWriter := clients.AvsRegistryChainWriter
-	avsAddress := contractAddrs.RegistryCoordinator
+	avsAddress := common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
 
 	op1Address := common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
 	// Create ChainWriter for second operator
 	op2PrivateKeyHex := testutils.ANVIL_SECOND_PRIVATE_KEY
 	op2ChainWriter, err := testclients.NewTestChainWriterFromConfig(anvilHttpEndpoint, op2PrivateKeyHex, config)
+	require.NoError(t, err)
+
+	// Create an operator set with max 1 operator
+	operatorSetId := uint32(1)
+	erc20MockStrategyAddr := contractAddrs.Erc20MockStrategy
+
+	err = createOperatorSet(
+		anvilHttpEndpoint,
+		testutils.ANVIL_FIRST_PRIVATE_KEY,
+		avsAddress,
+		operatorSetId,
+		erc20MockStrategyAddr,
+	)
 	require.NoError(t, err)
 
 	// Allow only 1 operator
@@ -268,7 +281,7 @@ func TestRegisterOperatorSetWithChurn(t *testing.T) {
 		KickBIPsOfTotalStake:    10000,
 	}
 
-	receipt, err := avsWriter.SetOperatorSetParams(context.TODO(), 0, opsetParams, true)
+	receipt, err := avsWriter.SetOperatorSetParams(context.TODO(), uint8(operatorSetId), opsetParams, true)
 	require.NoError(t, err)
 	require.Equal(t, gethtypes.ReceiptStatusSuccessful, receipt.Status)
 
@@ -278,7 +291,7 @@ func TestRegisterOperatorSetWithChurn(t *testing.T) {
 	registrationRequest := elcontracts.RegistrationRequest{
 		OperatorAddress: op1Address,
 		AVSAddress:      avsAddress,
-		OperatorSetIds:  []uint32{0},
+		OperatorSetIds:  []uint32{operatorSetId},
 		WaitForReceipt:  true,
 		Socket:          "socket",
 		BlsKeyPair:      privKey1,
@@ -312,7 +325,7 @@ func TestRegisterOperatorSetWithChurn(t *testing.T) {
 	// Check operator 1 is no longer registered
 	operatorSet := allocationmanager.OperatorSet{
 		Avs: avsAddress,
-		Id:  0,
+		Id:  operatorSetId,
 	}
 	isRegistered, err := clients.ElChainReader.IsOperatorRegisteredWithOperatorSet(
 		context.Background(),
