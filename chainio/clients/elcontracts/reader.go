@@ -856,13 +856,13 @@ func (r *ChainReader) IsOperatorRegisteredWithOperatorSet(
 func (r *ChainReader) IsOperatorRegisteredWithAvs(
 	ctx context.Context,
 	operatorAddress gethcommon.Address,
-	operatorSet allocationmanager.OperatorSet,
+	avsAddress gethcommon.Address,
 ) (bool, error) {
 	if r.avsDirectory == nil {
 		return false, errors.New("AVSDirectory contract not provided")
 	}
 
-	status, err := r.avsDirectory.AvsOperatorStatus(&bind.CallOpts{Context: ctx}, operatorSet.Avs, operatorAddress)
+	status, err := r.avsDirectory.AvsOperatorStatus(&bind.CallOpts{Context: ctx}, avsAddress, operatorAddress)
 	// This call should not fail since it's a getter
 	if err != nil {
 		return false, err

@@ -41,7 +41,7 @@ Each version will have a separate `Breaking Changes` section as well. To describ
   * An example for `IsOperatorRegisteredWithAvs` would be the following:
     ```go
       // Given an operator registered to a M2 Quorum
-      isOperator, err := clients.ElChainReader.IsOperatorRegistered(ctx, operator)
+      isOperator, err := clients.ElChainReader.IsOperatorRegisteredWithAvs(ctx, operatorAddress, avsAddress)
       assert.NoError(t, err)
       assert.Equal(t, isOperator, true) // Assuming is registered
     ```
