@@ -270,43 +270,44 @@ func TestRegisterOperatorSetWithChurn(t *testing.T) {
 
 	receipt, err := avsWriter.SetOperatorSetParams(context.TODO(), 0, opsetParams, true)
 	require.NoError(t, err)
-	require.NotNil(t, receipt)
+	require.Equal(t, gethtypes.ReceiptStatusSuccessful, receipt.Status)
 
 	// Register first operator
-	privKey1, err := bls.NewPrivateKey("0x01")
+	privKey1, err := bls.NewKeyPairFromString("0x01")
 	require.NoError(t, err)
-	_, err = clients.ElChainWriter.RegisterForOperatorSets(context.TODO(), contractAddrs.RegistryCoordinator, elcontracts.RegistrationRequest{
+	registrationRequest := elcontracts.RegistrationRequest{
 		OperatorAddress: op1Address,
 		AVSAddress:      avsAddress,
 		OperatorSetIds:  []uint32{0},
 		WaitForReceipt:  true,
 		Socket:          "socket",
-		BlsKeyPair:      bls.NewKeyPair(privKey1),
-	})
+		BlsKeyPair:      privKey1,
+	}
+
+	receipt, err = clients.ElChainWriter.RegisterForOperatorSets(context.TODO(), contractAddrs.RegistryCoordinator, registrationRequest)
 	require.NoError(t, err)
+	require.Equal(t, gethtypes.ReceiptStatusSuccessful, receipt.Status)
 
 	// Register second operator with churn
 	op2Address := common.HexToAddress(testutils.ANVIL_SECOND_ADDRESS)
-	privKey2, err := bls.NewPrivateKey("0x02")
+	privKey2, err := bls.NewKeyPairFromString("0x02")
 	require.NoError(t, err)
 	churnApproverKey, err := crypto.HexToECDSA(testutils.ANVIL_FIRST_PRIVATE_KEY)
 	require.NoError(t, err)
-	_, err = op2ChainWriter.RegisterForOperatorSets(context.TODO(), contractAddrs.RegistryCoordinator, elcontracts.RegistrationRequest{
-		OperatorAddress:              op2Address,
-		AVSAddress:                   avsAddress,
-		OperatorSetIds:               []uint32{0},
-		WaitForReceipt:               true,
-		Socket:                       "socket",
-		BlsKeyPair:                   bls.NewKeyPair(privKey2),
-		ChurnApprovalEcdsaPrivateKey: churnApproverKey,
-		OperatorKickParams: []elcontracts.OperatorKickParam{
-			{
-				QuorumNumber: 0,
-				Operator:     op1Address,
-			},
+
+	registrationRequest.OperatorAddress = op2Address
+	registrationRequest.BlsKeyPair = privKey2
+	registrationRequest.ChurnApprovalEcdsaPrivateKey = churnApproverKey
+	registrationRequest.OperatorKickParams = []elcontracts.OperatorKickParam{
+		{
+			QuorumNumber: 0,
+			Operator:     op1Address,
 		},
-	})
+	}
+
+	receipt, err = op2ChainWriter.RegisterForOperatorSets(context.TODO(), contractAddrs.RegistryCoordinator, registrationRequest)
 	require.NoError(t, err)
+	require.Equal(t, gethtypes.ReceiptStatusSuccessful, receipt.Status)
 
 	// Check operator 1 is no longer registered
 	operatorSet := allocationmanager.OperatorSet{
