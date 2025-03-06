@@ -38,6 +38,25 @@ Each version will have a separate `Breaking Changes` section as well. To describ
 * Added field `DontUseAllocationManager` to `BuildAllConfig` by @MegaRedHand in [#580](https://github.com/Layr-Labs/eigensdk-go/pull/580)
 * Added `AnvilC` field to `clients.Clients` struct by @maximopalopoli in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
 * Added `IsOperatorRegisteredWithAvs`, `GetAVSRegistrar` methods to elcontracts chain reader and and `SetAVSRegistrar` to chain writer by @maximopalopoli in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
+  * An example for `IsOperatorRegisteredWithAvs` would be the following:
+    ```go
+      // Given an operator registered to a M2 Quorum
+      isOperator, err := clients.ElChainReader.IsOperatorRegistered(ctx, operator)
+      assert.NoError(t, err)
+      assert.Equal(t, isOperator, true) // Assuming is registered
+    ```
+  * An example for `GetAVSRegistrar` would be the following:
+    ```go
+      avsRegistrar, err := clients.ElChainReader.GetAVSRegistrar(context.Background(), avsAddress)
+      assert.NoError(t, err)
+    ```
+  * An example for `SetAVSRegistrar` would be the following:
+    ```go
+      // Usually the AVSRegistrar is the registryCoordinator
+      receipt, err := clients.ElChainWriter.SetAVSRegistrar(context.Background(), avsAddress, contractAddrs.RegistryCoordinator, true)
+      require.NoError(t, err)
+      require.Equal(t, gethtypes.ReceiptStatusSuccessful, receipt.Status)
+    ```
 
 
 ### Changed
