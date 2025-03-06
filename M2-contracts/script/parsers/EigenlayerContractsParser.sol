@@ -56,7 +56,7 @@ contract EigenlayerContractsParser is ConfigsReadWriter {
         IDelegationManager delegationManager = IDelegationManager(
             stdJson.readAddress(
                 eigenlayerDeployedContracts,
-                ".addresses.delegation"
+                ".addresses.delegationManager"
             )
         );
         IAVSDirectory avsDirectory = IAVSDirectory(

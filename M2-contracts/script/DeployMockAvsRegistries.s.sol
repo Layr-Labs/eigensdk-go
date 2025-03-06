@@ -12,10 +12,11 @@ import "eigenlayer-contracts/src/test/mocks/EmptyContract.sol";
 
 import "eigenlayer-middleware/src/RegistryCoordinator.sol" as blsregcoord;
 import {IServiceManager} from "eigenlayer-middleware/src/interfaces/IServiceManager.sol";
-import {IBLSApkRegistry, IIndexRegistry, IStakeRegistry} from "eigenlayer-middleware/src/RegistryCoordinator.sol";
+import {IBLSApkRegistry, IIndexRegistry, IStakeRegistry, ISocketRegistry} from "eigenlayer-middleware/src/RegistryCoordinator.sol";
 import {BLSApkRegistry} from "eigenlayer-middleware/src/BLSApkRegistry.sol";
 import {IndexRegistry} from "eigenlayer-middleware/src/IndexRegistry.sol";
 import {StakeRegistry} from "eigenlayer-middleware/src/StakeRegistry.sol";
+import {SocketRegistry} from "eigenlayer-middleware/src/SocketRegistry.sol";
 import {OperatorStateRetriever} from "eigenlayer-middleware/src/OperatorStateRetriever.sol";
 
 import {MockAvsContracts} from "./parsers/MockAvsContractsParser.sol";
@@ -43,6 +44,8 @@ contract DeployMockAvsRegistries is
     IIndexRegistry public indexRegistryImplementation;
     IStakeRegistry public stakeRegistry;
     IStakeRegistry public stakeRegistryImplementation;
+    ISocketRegistry public socketRegistry;
+    ISocketRegistry public socketRegistryImplementation;
     OperatorStateRetriever public operatorStateRetriever;
     EmptyContract public emptyContract;
 
@@ -124,6 +127,15 @@ contract DeployMockAvsRegistries is
                 )
             )
         );
+        socketRegistry = ISocketRegistry(
+            address(
+                new TransparentUpgradeableProxy(
+                    address(emptyContract),
+                    address(mockAvsProxyAdmin),
+                    ""
+                )
+            )
+        );
 
         operatorStateRetriever = new OperatorStateRetriever();
 
@@ -154,11 +166,19 @@ contract DeployMockAvsRegistries is
             );
         }
 
+        socketRegistryImplementation = new SocketRegistry(registryCoordinator);
+
+        mockAvsProxyAdmin.upgrade(
+            TransparentUpgradeableProxy(payable(address(socketRegistry))),
+            address(socketRegistryImplementation)
+        );
+
         registryCoordinatorImplementation = new blsregcoord.RegistryCoordinator(
             blsregcoord.IServiceManager(address(mockAvsServiceManager)),
             blsregcoord.IStakeRegistry(address(stakeRegistry)),
             blsregcoord.IBLSApkRegistry(address(blsApkRegistry)),
-            blsregcoord.IIndexRegistry(address(indexRegistry))
+            blsregcoord.IIndexRegistry(address(indexRegistry)),
+            blsregcoord.ISocketRegistry(address(socketRegistry))
         );
 
         {
