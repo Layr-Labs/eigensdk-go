@@ -143,6 +143,7 @@ Each version will have a separate `Breaking Changes` section as well. To describ
     ```
 * In elcontracts, `ChainReader.IsOperatorRegisteredWithOperatorSet` no longer queries the `AVSDirectory`, only `AllocationManager`, since only works for operator sets by @maximopalopoli in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
   * To query if an operator is register to an m2 quorum you should now use `chainReader.IsOperatorRegisteredWithAvs` method, that queries the AVSDirectory.
+* `egnaddrs` utility now works with slashing version, and in case the registryCoordinator is the slashing version and service manager address is not passed by flag, then the returned service manager address will be address zero (0x00..00)
 
 ### Removed
 * Removed `IsOperatorSetQuorum` method of avsRegistry chain reader by @maximopalopoli in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
