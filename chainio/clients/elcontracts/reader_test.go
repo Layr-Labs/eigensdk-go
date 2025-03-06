@@ -780,25 +780,16 @@ func TestGetAllocatableMagnitudeAndEncumberedMagnitudeAndGetMaxMagnitudes(t *tes
 	// Test setup
 	ctx := context.Background()
 
-	testConfig := testutils.GetDefaultTestConfig()
-	anvilC, err := testutils.StartAnvilContainer(testConfig.AnvilStateFileName)
-	require.NoError(t, err)
-
-	anvilHttpEndpoint, err := anvilC.Endpoint(context.Background(), "http")
-	require.NoError(t, err)
+	clients, anvilHttpEndpoint := testclients.BuildTestClients(t)
 	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
 
+	anvilC := clients.AnvilC
 	operatorAddr := common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
-	config := elcontracts.Config{
-		DelegationManagerAddress: contractAddrs.DelegationManager,
-	}
 
-	chainReader, err := testclients.NewTestChainReaderFromConfig(anvilHttpEndpoint, config)
-	require.NoError(t, err)
+	chainReader := clients.ElChainReader
 
 	strategyAddr := contractAddrs.Erc20MockStrategy
 	testAddr := common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
-	operatorSetId := uint32(1)
 
 	strategies := []common.Address{strategyAddr}
 	maxMagnitudes, err := chainReader.GetMaxMagnitudes(ctx, testAddr, strategies)
@@ -815,10 +806,7 @@ func TestGetAllocatableMagnitudeAndEncumberedMagnitudeAndGetMaxMagnitudes(t *tes
 	assert.Equal(t, maxMagnitudes[0], allocable)
 
 	// Reduce allocatable magnitude for testAddr
-	privateKeyHex := testutils.ANVIL_FIRST_PRIVATE_KEY
-
-	chainWriter, err := testclients.NewTestChainWriterFromConfig(anvilHttpEndpoint, privateKeyHex, config)
-	require.NoError(t, err)
+	chainWriter := clients.ElChainWriter
 
 	waitForReceipt := true
 	delay := uint32(1)
@@ -833,11 +821,12 @@ func TestGetAllocatableMagnitudeAndEncumberedMagnitudeAndGetMaxMagnitudes(t *tes
 	_, err = chainReader.GetAllocationDelay(context.Background(), operatorAddr)
 	require.NoError(t, err)
 
-	err = createOperatorSet(anvilHttpEndpoint, privateKeyHex, testAddr, operatorSetId, strategyAddr)
+	operatorSetId := uint32(1)
+	err = createOperatorSet(clients, strategyAddr)
 	require.NoError(t, err)
 
 	operatorSet := allocationmanager.OperatorSet{
-		Avs: testAddr,
+		Avs: contractAddrs.ServiceManager,
 		Id:  operatorSetId,
 	}
 	allocatable_reduction := uint64(100)
@@ -1308,27 +1297,17 @@ func TestInvalidConfig(t *testing.T) {
 }
 
 func TestOperatorSetsAndSlashableShares(t *testing.T) {
-	testConfig := testutils.GetDefaultTestConfig()
-	anvilC, err := testutils.StartAnvilContainer(testConfig.AnvilStateFileName)
-	require.NoError(t, err)
-
-	anvilHttpEndpoint, err := anvilC.Endpoint(context.Background(), "http")
-	require.NoError(t, err)
+	clients, anvilHttpEndpoint := testclients.BuildTestClients(t)
 	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
 
-	config := elcontracts.Config{
-		DelegationManagerAddress: contractAddrs.DelegationManager,
-	}
-	chainReader, err := testclients.NewTestChainReaderFromConfig(anvilHttpEndpoint, config)
-	require.NoError(t, err)
+	chainReader := clients.ElChainReader
 
-	operatorAddr := common.HexToAddress(testutils.ANVIL_SECOND_ADDRESS)
-	operatorPrivateKeyHex := testutils.ANVIL_SECOND_PRIVATE_KEY
-	chainWriter, err := testclients.NewTestChainWriterFromConfig(anvilHttpEndpoint, operatorPrivateKeyHex, config)
-	require.NoError(t, err)
+	anvilC := clients.AnvilC
 
-	avsAddr := common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
-	avsPrivateKeyHex := testutils.ANVIL_FIRST_PRIVATE_KEY
+	operatorAddr := common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
+	chainWriter := clients.ElChainWriter
+
+	avsAddr := contractAddrs.ServiceManager
 	operatorSetId := uint32(1)
 	operatorSet := allocationmanager.OperatorSet{
 		Avs: avsAddr,
@@ -1338,7 +1317,7 @@ func TestOperatorSetsAndSlashableShares(t *testing.T) {
 	strategyAddr := contractAddrs.Erc20MockStrategy
 	strategies := []common.Address{strategyAddr}
 
-	err = createOperatorSet(anvilHttpEndpoint, avsPrivateKeyHex, avsAddr, operatorSetId, strategyAddr)
+	err := createOperatorSet(clients, strategyAddr)
 	require.NoError(t, err)
 
 	keypair, err := bls.NewKeyPairFromString("0x01")

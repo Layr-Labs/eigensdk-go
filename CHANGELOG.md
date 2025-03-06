@@ -35,7 +35,29 @@ Each version will have a separate `Breaking Changes` section as well. To describ
     aggregationServiceResponse := <-aggResponsesC
     ```
 
-* Added field `DontUseAllocationManager` to `BuildAllConfig` in [#580](https://github.com/Layr-Labs/eigensdk-go/pull/580)
+* Added field `DontUseAllocationManager` to `BuildAllConfig` by @MegaRedHand in [#580](https://github.com/Layr-Labs/eigensdk-go/pull/580)
+* Added `AnvilC` field to `clients.Clients` struct by @maximopalopoli in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
+* Added `IsOperatorRegisteredWithAvs`, `GetAVSRegistrar` methods to elcontracts chain reader and and `SetAVSRegistrar` to chain writer by @maximopalopoli in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
+  * An example for `IsOperatorRegisteredWithAvs` would be the following:
+    ```go
+      // Given an operator registered to a M2 Quorum
+      isOperator, err := clients.ElChainReader.IsOperatorRegisteredWithAvs(ctx, operatorAddress, avsAddress)
+      assert.NoError(t, err)
+      assert.Equal(t, isOperator, true) // Assuming is registered
+    ```
+  * An example for `GetAVSRegistrar` would be the following:
+    ```go
+      avsRegistrar, err := clients.ElChainReader.GetAVSRegistrar(context.Background(), avsAddress)
+      assert.NoError(t, err)
+    ```
+  * An example for `SetAVSRegistrar` would be the following:
+    ```go
+      // Usually the AVSRegistrar is the registryCoordinator
+      receipt, err := clients.ElChainWriter.SetAVSRegistrar(context.Background(), avsAddress, contractAddrs.RegistryCoordinator, true)
+      require.NoError(t, err)
+      require.Equal(t, gethtypes.ReceiptStatusSuccessful, receipt.Status)
+    ```
+
 
 * Added support for registering operators in operator sets with churn approval in [#596](https://github.com/Layr-Labs/eigensdk-go/pull/596)
   * We added the fields `ChurnApprovalEcdsaPrivateKey` and `OperatorKickParams` to `elcontracts.RegistrationRequest`. Specifying the first one makes the `ChainWriter.RegisterForOperatorSets` function sign a churn approval for the operator registration, making the AVS eject operators specified by the other field to make space for the registering operator.
@@ -135,8 +157,13 @@ Each version will have a separate `Breaking Changes` section as well. To describ
     ).WithWindowDuration(windowDuration)
     blsAggServ.InitializeNewTask(metadata)
     ```
+* In elcontracts, `ChainReader.IsOperatorRegisteredWithOperatorSet` no longer queries the `AVSDirectory`, and so now only works for operator sets by @maximopalopoli in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
+  * To query if an operator is registered to an M2 quorum you should now use `chainReader.IsOperatorRegisteredWithAvs`, which queries the `AVSDirectory`.
+* `egnaddrs` utility now works with slashing release middleware contracts and, in that case, the returned service manager will be the zero address, unless the `--service-manager` is specified.
 
 ### Removed
+* Removed `IsOperatorSetQuorum` method of avsRegistry chain reader by @maximopalopoli in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
+  * This function was removed in [the v1.1.1 eigenlayer-middleware release](https://github.com/Layr-Labs/eigenlayer-middleware/releases/tag/v1.1.1-testnet-slashing).
 
 ------------
 
