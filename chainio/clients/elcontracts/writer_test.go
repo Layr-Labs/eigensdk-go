@@ -175,7 +175,7 @@ func TestRegisterAndDeregisterFromOperatorSets(t *testing.T) {
 
 	operatorSet := allocationmanager.OperatorSet{
 		Avs: avsAddress,
-		Id:  uint32(operatorSetId),
+		Id:  operatorSetId,
 	}
 	t.Run("register operator for operator set", func(t *testing.T) {
 		registryCoordinatorAddress := contractAddrs.RegistryCoordinator
@@ -239,6 +239,96 @@ func TestRegisterAndDeregisterFromOperatorSets(t *testing.T) {
 		)
 		require.Error(t, err, "cannot deregister an operator that is not registered")
 	})
+}
+
+func TestRegisterOperatorSetWithChurn(t *testing.T) {
+	clients, anvilHttpEndpoint := testclients.BuildTestClients(t)
+	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
+
+	rewardsCoordinatorAddr := contractAddrs.RewardsCoordinator
+	config := elcontracts.Config{
+		DelegationManagerAddress:    contractAddrs.DelegationManager,
+		RewardsCoordinatorAddress:   rewardsCoordinatorAddr,
+		PermissionControllerAddress: contractAddrs.PermissionController,
+	}
+
+	avsWriter := clients.AvsRegistryChainWriter
+	avsAddress := contractAddrs.RegistryCoordinator
+
+	op1Address := common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
+	// Create ChainWriter for second operator
+	op2PrivateKeyHex := testutils.ANVIL_SECOND_PRIVATE_KEY
+	op2ChainWriter, err := testclients.NewTestChainWriterFromConfig(anvilHttpEndpoint, op2PrivateKeyHex, config)
+	require.NoError(t, err)
+
+	// Allow only 1 operator
+	opsetParams := regcoord.ISlashingRegistryCoordinatorTypesOperatorSetParam{
+		MaxOperatorCount:        1,
+		KickBIPsOfOperatorStake: 10,
+		KickBIPsOfTotalStake:    10000,
+	}
+
+	receipt, err := avsWriter.SetOperatorSetParams(context.TODO(), 0, opsetParams, true)
+	require.NoError(t, err)
+	require.NotNil(t, receipt)
+
+	// Register first operator
+	privKey1, err := bls.NewPrivateKey("0x01")
+	require.NoError(t, err)
+	_, err = clients.ElChainWriter.RegisterForOperatorSets(context.TODO(), contractAddrs.RegistryCoordinator, elcontracts.RegistrationRequest{
+		OperatorAddress: op1Address,
+		AVSAddress:      avsAddress,
+		OperatorSetIds:  []uint32{0},
+		WaitForReceipt:  true,
+		Socket:          "socket",
+		BlsKeyPair:      bls.NewKeyPair(privKey1),
+	})
+	require.NoError(t, err)
+
+	// Register second operator with churn
+	op2Address := common.HexToAddress(testutils.ANVIL_SECOND_ADDRESS)
+	privKey2, err := bls.NewPrivateKey("0x02")
+	require.NoError(t, err)
+	churnApproverKey, err := crypto.HexToECDSA(testutils.ANVIL_FIRST_PRIVATE_KEY)
+	require.NoError(t, err)
+	_, err = op2ChainWriter.RegisterForOperatorSets(context.TODO(), contractAddrs.RegistryCoordinator, elcontracts.RegistrationRequest{
+		OperatorAddress:              op2Address,
+		AVSAddress:                   avsAddress,
+		OperatorSetIds:               []uint32{0},
+		WaitForReceipt:               true,
+		Socket:                       "socket",
+		BlsKeyPair:                   bls.NewKeyPair(privKey2),
+		ChurnApprovalEcdsaPrivateKey: churnApproverKey,
+		OperatorKickParams: []elcontracts.OperatorKickParam{
+			{
+				QuorumNumber: 0,
+				Operator:     op1Address,
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	// Check operator 1 is no longer registered
+	operatorSet := allocationmanager.OperatorSet{
+		Avs: avsAddress,
+		Id:  0,
+	}
+	isRegistered, err := clients.ElChainReader.IsOperatorRegisteredWithOperatorSet(
+		context.Background(),
+		op1Address,
+		operatorSet,
+	)
+	require.NoError(t, err)
+	require.False(t, isRegistered)
+
+	// Check operator 2 is registered
+	isRegistered, err = clients.ElChainReader.IsOperatorRegisteredWithOperatorSet(
+		context.Background(),
+		op2Address,
+		operatorSet,
+	)
+	require.NoError(t, err)
+	require.True(t, isRegistered)
 }
 
 func getExampleRegistrationParams(t *testing.T) regcoord.IBLSApkRegistryTypesPubkeyRegistrationParams {
