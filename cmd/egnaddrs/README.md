@@ -39,3 +39,5 @@ $$$ egnaddrs --registry-coordinator 0x9E545E3C0baAB3E08CdfD552C960A1050f373042
   }
 }
 ```
+
+Note: If working with the slashing version of contracts, in case the service manager address is not passed, then the returned service manager address will be zero.
