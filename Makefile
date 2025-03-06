@@ -122,6 +122,9 @@ ___CONTRACTS___: ##
 deploy-contracts-to-anvil-and-save-state: ##
 	./contracts/anvil/deploy-contracts-save-anvil-state.sh
 
+deploy-M2-contracts-to-anvil-and-save-state: ##
+	./M2-contracts/anvil/deploy-contracts-save-anvil-state.sh
+
 .PHONY: start-anvil-with-contracts-deployed
 start-anvil-with-contracts-deployed: ## 
 	./contracts/anvil/start-anvil-chain-with-el-and-avs-deployed.sh
