@@ -7,6 +7,8 @@ import {ISlashingRegistryCoordinatorTypes} from "eigenlayer-middleware/src/inter
 import {IBLSApkRegistryTypes} from "eigenlayer-middleware/src/interfaces/IBLSApkRegistry.sol";
 import {ISignatureUtils} from "eigenlayer-contracts/src/contracts/interfaces/ISignatureUtils.sol";
 
+// Tests are used to verify the encoding of operator registration parameters are correct.
+// The results are used in chainio/clients/elcontracts/writer_test.go
 contract RegistrationEncodingTest is Test {
     function getPubkeyRegistrationParams()
         internal
