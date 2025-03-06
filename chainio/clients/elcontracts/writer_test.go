@@ -227,15 +227,14 @@ func TestRegisterOperatorSetWithChurn(t *testing.T) {
 	clients, anvilHttpEndpoint := testclients.BuildTestClients(t)
 	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
 
-	rewardsCoordinatorAddr := contractAddrs.RewardsCoordinator
 	config := elcontracts.Config{
 		DelegationManagerAddress:    contractAddrs.DelegationManager,
-		RewardsCoordinatorAddress:   rewardsCoordinatorAddr,
+		RewardsCoordinatorAddress:   contractAddrs.RewardsCoordinator,
 		PermissionControllerAddress: contractAddrs.PermissionController,
 	}
 
 	avsWriter := clients.AvsRegistryChainWriter
-	avsAddress := common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
+	avsAddress := contractAddrs.ServiceManager
 
 	op1Address := common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
 	// Create ChainWriter for second operator
@@ -243,17 +242,11 @@ func TestRegisterOperatorSetWithChurn(t *testing.T) {
 	op2ChainWriter, err := testclients.NewTestChainWriterFromConfig(anvilHttpEndpoint, op2PrivateKeyHex, config)
 	require.NoError(t, err)
 
-	// Create an operator set with max 1 operator
+	// Create an operator set
 	operatorSetId := uint32(1)
 	erc20MockStrategyAddr := contractAddrs.Erc20MockStrategy
 
-	err = createOperatorSet(
-		anvilHttpEndpoint,
-		testutils.ANVIL_FIRST_PRIVATE_KEY,
-		avsAddress,
-		operatorSetId,
-		erc20MockStrategyAddr,
-	)
+	err = createOperatorSet(clients, erc20MockStrategyAddr)
 	require.NoError(t, err)
 
 	// Allow only 1 operator
@@ -295,7 +288,7 @@ func TestRegisterOperatorSetWithChurn(t *testing.T) {
 	registrationRequest.ChurnApprovalEcdsaPrivateKey = churnApproverKey
 	registrationRequest.OperatorKickParams = []elcontracts.OperatorKickParam{
 		{
-			QuorumNumber: 0,
+			QuorumNumber: uint8(operatorSetId),
 			Operator:     op1Address,
 		},
 	}
@@ -1347,7 +1340,7 @@ func TestProcessClaims(t *testing.T) {
 	require.Equal(t, gethtypes.ReceiptStatusSuccessful, receipt.Status)
 }
 
-// Creates an operator set with an Avs address and an erc20MockStrategyAddr. Note that operator set Id will be
+// Creates an operator set with a single strategy. Note that operator set Id will be
 // defined sequentially (as the new amount of operator sets minus one)
 func createOperatorSet(
 	clients *clients.Clients,
@@ -1376,11 +1369,7 @@ func createOperatorSet(
 		lookAheadPeriod,
 		waitForReceipt,
 	)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // Sets the testing RewardsCoordinator's activationDelay.
