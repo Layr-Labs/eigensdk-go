@@ -126,7 +126,8 @@ func getRegCoordAndServiceMngrAddr(
 
 			serviceManagerAddr, err := registryCoordinatorC.ServiceManager(&bind.CallOpts{})
 			if err != nil {
-				// We assume a failure here means it's a `SlashingRegistryCoordinator`, which doesn't have a `serviceManager()` method.
+				// We assume a failure here means it's a `SlashingRegistryCoordinator`, which doesn't have a
+				// `serviceManager()` method.
 				// In that case, we just return a zero address for the `ServiceManager`.
 				return registryCoordinatorAddr, common.Address{}, nil
 			}
