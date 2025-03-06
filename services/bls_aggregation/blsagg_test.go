@@ -1009,9 +1009,8 @@ func TestBlsAgg(t *testing.T) {
 			taskResponseDigest2, err := hashFunction(taskResponse2)
 			require.Nil(t, err)
 			blsSigOp2 := testOperator2BlsKeypair.SignMessage(taskResponseDigest2)
-			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Nanosecond)
+			ctx, cancel := context.WithTimeout(context.Background(), 0)
 			defer cancel()
-			time.Sleep(1 * time.Millisecond)
 
 			taskSignature2 := NewTaskSignature(taskIndex, taskResponse2, blsSigOp2, testOperator2OperatorId)
 			err = blsAggServ.ProcessNewSignature(
