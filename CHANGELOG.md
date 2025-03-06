@@ -141,8 +141,8 @@ Each version will have a separate `Breaking Changes` section as well. To describ
     ).WithWindowDuration(windowDuration)
     blsAggServ.InitializeNewTask(metadata)
     ```
-* In elcontracts, `ChainReader.IsOperatorRegisteredWithOperatorSet` no longer queries the `AVSDirectory`. It now only queries the `AllocationManager` by @maximopalopoli in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
-  * The query to AVSDirectory is still available using `chainReader.IsOperatorRegisteredWithAvs` method
+* In elcontracts, `ChainReader.IsOperatorRegisteredWithOperatorSet` no longer queries the `AVSDirectory`, only `AllocationManager`, since only works for operator sets by @maximopalopoli in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
+  * To query if an operator is register to an m2 quorum you should now use `chainReader.IsOperatorRegisteredWithAvs` method, that queries the AVSDirectory.
 
 ### Removed
 * Removed `IsOperatorSetQuorum` method of avsRegistry chain reader by @maximopalopoli in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
