@@ -42,7 +42,7 @@ type M2Operator struct {
 	Address string `yaml:"address" json:"address"`
 
 	// If set, the delegation approver's signature is required when delegating to another operator
-	DelegationApproverAddress string `yaml:"delegation_approver_address"  json:"delegation_approver_address"`
+	DelegationApproverAddress string `yaml:"delegation_approver_address" json:"delegation_approver_address"`
 
 	// A minimum delay enforced between the operator tries to register for a service and the operator completing
 	// registration for the service. Note that for a specific operator, this value cannot be decreased after init.

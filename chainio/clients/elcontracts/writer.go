@@ -41,12 +41,14 @@ type Reader interface {
 // The ChainWriter provides methods to call the
 // EigenLayer core contract's state-changing functions.
 type ChainWriter struct {
-	delegationManager     *delegationmanager.ContractDelegationManager
-	strategyManager       *strategymanager.ContractStrategyManager
-	rewardsCoordinator    *rewardscoordinator.ContractRewardsCoordinator
-	avsDirectory          *avsdirectory.ContractAVSDirectory
-	allocationManager     *allocationmanager.ContractAllocationManager
-	permissionController  *permissioncontroller.ContractPermissionController
+	delegationManager    *delegationmanager.ContractDelegationManager
+	strategyManager      *strategymanager.ContractStrategyManager
+	rewardsCoordinator   *rewardscoordinator.ContractRewardsCoordinator
+	avsDirectory         *avsdirectory.ContractAVSDirectory
+	allocationManager    *allocationmanager.ContractAllocationManager
+	permissionController *permissioncontroller.ContractPermissionController
+	// This field exists to handle M2 contracts, so the address is used to create
+	// the M2 delegationManager binding in registerAsOperatorPreSlashing.
 	delegationManagerAddr gethcommon.Address
 	strategyManagerAddr   gethcommon.Address
 	elChainReader         Reader
