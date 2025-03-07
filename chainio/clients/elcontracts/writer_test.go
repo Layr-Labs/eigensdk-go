@@ -273,7 +273,11 @@ func TestRegisterOperatorSetWithChurn(t *testing.T) {
 		BlsKeyPair:      privKey1,
 	}
 
-	receipt, err = clients.ElChainWriter.RegisterForOperatorSets(context.TODO(), contractAddrs.RegistryCoordinator, registrationRequest)
+	receipt, err = clients.ElChainWriter.RegisterForOperatorSets(
+		context.TODO(),
+		contractAddrs.RegistryCoordinator,
+		registrationRequest,
+	)
 	require.NoError(t, err)
 	require.Equal(t, gethtypes.ReceiptStatusSuccessful, receipt.Status)
 
@@ -293,7 +297,11 @@ func TestRegisterOperatorSetWithChurn(t *testing.T) {
 		},
 	}
 
-	receipt, err = op2ChainWriter.RegisterForOperatorSets(context.TODO(), contractAddrs.RegistryCoordinator, registrationRequest)
+	receipt, err = op2ChainWriter.RegisterForOperatorSets(
+		context.TODO(),
+		contractAddrs.RegistryCoordinator,
+		registrationRequest,
+	)
 	require.NoError(t, err)
 	require.Equal(t, gethtypes.ReceiptStatusSuccessful, receipt.Status)
 
