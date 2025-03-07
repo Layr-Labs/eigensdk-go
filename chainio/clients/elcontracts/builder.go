@@ -67,13 +67,13 @@ func BuildClients(
 
 	elChainWriter := NewChainWriter(
 		elContractBindings.DelegationManager,
-		elContractBindings.M2DelegationManager,
 		elContractBindings.StrategyManager,
 		elContractBindings.RewardsCoordinator,
 		elContractBindings.AvsDirectory,
 		elContractBindings.AllocationManager,
 		elContractBindings.PermissionController,
 		elContractBindings.StrategyManagerAddr,
+		elContractBindings.DelegationManagerAddr,
 		elChainReader,
 		client,
 		logger,

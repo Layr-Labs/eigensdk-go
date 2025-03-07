@@ -3,7 +3,6 @@
 package elcontracts
 
 import (
-	m2delegationmanager "github.com/Layr-Labs/eigensdk-go/M2-contracts/bindings/DelegationManager"
 	permissioncontroller "github.com/Layr-Labs/eigensdk-go/contracts/bindings/PermissionController"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -29,7 +28,6 @@ type ContractBindings struct {
 	RewardsCoordinatorAddress gethcommon.Address
 	AllocationManagerAddr     gethcommon.Address
 	DelegationManager         *delegationmanager.ContractDelegationManager
-	M2DelegationManager       *m2delegationmanager.ContractDelegationManager
 	StrategyManager           *strategymanager.ContractStrategyManager
 	AvsDirectory              *avsdirectory.ContractAVSDirectory
 	RewardsCoordinator        *rewardscoordinator.ContractRewardsCoordinator
@@ -45,15 +43,14 @@ func NewBindingsFromConfig(
 	var (
 		err error
 
-		contractDelegationManager   *delegationmanager.ContractDelegationManager
-		contractM2DelegationManager *m2delegationmanager.ContractDelegationManager
-		contractStrategyManager     *strategymanager.ContractStrategyManager
-		contractAllocationManager   *allocationmanager.ContractAllocationManager
-		strategyManagerAddr         gethcommon.Address
-		allocationManagerAddr       gethcommon.Address
-		avsDirectory                *avsdirectory.ContractAVSDirectory
-		rewardsCoordinator          *rewardscoordinator.ContractRewardsCoordinator
-		permissionController        *permissioncontroller.ContractPermissionController
+		contractDelegationManager *delegationmanager.ContractDelegationManager
+		contractStrategyManager   *strategymanager.ContractStrategyManager
+		contractAllocationManager *allocationmanager.ContractAllocationManager
+		strategyManagerAddr       gethcommon.Address
+		allocationManagerAddr     gethcommon.Address
+		avsDirectory              *avsdirectory.ContractAVSDirectory
+		rewardsCoordinator        *rewardscoordinator.ContractRewardsCoordinator
+		permissionController      *permissioncontroller.ContractPermissionController
 	)
 
 	if isZeroAddress(cfg.DelegationManagerAddress) {
@@ -83,11 +80,6 @@ func NewBindingsFromConfig(
 			contractAllocationManager, err = allocationmanager.NewContractAllocationManager(allocationManagerAddr, client)
 			if err != nil {
 				return nil, utils.WrapError("Failed to fetch AllocationManager contract", err)
-			}
-		} else {
-			contractM2DelegationManager, err = m2delegationmanager.NewContractDelegationManager(cfg.DelegationManagerAddress, client)
-			if err != nil {
-				return nil, utils.WrapError("Failed to fetch M2DelegationManager contract", err)
 			}
 		}
 	}
@@ -129,7 +121,6 @@ func NewBindingsFromConfig(
 		RewardsCoordinatorAddress: cfg.RewardsCoordinatorAddress,
 		StrategyManager:           contractStrategyManager,
 		DelegationManager:         contractDelegationManager,
-		M2DelegationManager:       contractM2DelegationManager,
 		AvsDirectory:              avsDirectory,
 		RewardsCoordinator:        rewardsCoordinator,
 		AllocationManager:         contractAllocationManager,

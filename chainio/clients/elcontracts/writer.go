@@ -41,30 +41,30 @@ type Reader interface {
 // The ChainWriter provides methods to call the
 // EigenLayer core contract's state-changing functions.
 type ChainWriter struct {
-	delegationManager    *delegationmanager.ContractDelegationManager
-	m2DelegationManager  *m2delegationmanager.ContractDelegationManager
-	strategyManager      *strategymanager.ContractStrategyManager
-	rewardsCoordinator   *rewardscoordinator.ContractRewardsCoordinator
-	avsDirectory         *avsdirectory.ContractAVSDirectory
-	allocationManager    *allocationmanager.ContractAllocationManager
-	permissionController *permissioncontroller.ContractPermissionController
-	strategyManagerAddr  gethcommon.Address
-	elChainReader        Reader
-	ethClient            eth.HttpBackend
-	logger               logging.Logger
-	txMgr                txmgr.TxManager
+	delegationManager     *delegationmanager.ContractDelegationManager
+	strategyManager       *strategymanager.ContractStrategyManager
+	rewardsCoordinator    *rewardscoordinator.ContractRewardsCoordinator
+	avsDirectory          *avsdirectory.ContractAVSDirectory
+	allocationManager     *allocationmanager.ContractAllocationManager
+	permissionController  *permissioncontroller.ContractPermissionController
+	delegationManagerAddr gethcommon.Address
+	strategyManagerAddr   gethcommon.Address
+	elChainReader         Reader
+	ethClient             eth.HttpBackend
+	logger                logging.Logger
+	txMgr                 txmgr.TxManager
 }
 
 // Returns a new instance of ChainWriter.
 func NewChainWriter(
 	delegationManager *delegationmanager.ContractDelegationManager,
-	m2DelegationManager *m2delegationmanager.ContractDelegationManager,
 	strategyManager *strategymanager.ContractStrategyManager,
 	rewardsCoordinator *rewardscoordinator.ContractRewardsCoordinator,
 	avsDirectory *avsdirectory.ContractAVSDirectory,
 	allocationManager *allocationmanager.ContractAllocationManager,
 	permissionController *permissioncontroller.ContractPermissionController,
 	strategyManagerAddr gethcommon.Address,
+	delegationManagerAddr gethcommon.Address,
 	elChainReader Reader,
 	ethClient eth.HttpBackend,
 	logger logging.Logger,
@@ -74,18 +74,18 @@ func NewChainWriter(
 	logger = logger.With(logging.ComponentKey, "elcontracts/writer")
 
 	return &ChainWriter{
-		delegationManager:    delegationManager,
-		m2DelegationManager:  m2DelegationManager,
-		strategyManager:      strategyManager,
-		strategyManagerAddr:  strategyManagerAddr,
-		rewardsCoordinator:   rewardsCoordinator,
-		allocationManager:    allocationManager,
-		permissionController: permissionController,
-		avsDirectory:         avsDirectory,
-		elChainReader:        elChainReader,
-		logger:               logger,
-		ethClient:            ethClient,
-		txMgr:                txMgr,
+		delegationManager:     delegationManager,
+		delegationManagerAddr: delegationManagerAddr,
+		strategyManager:       strategyManager,
+		strategyManagerAddr:   strategyManagerAddr,
+		rewardsCoordinator:    rewardsCoordinator,
+		allocationManager:     allocationManager,
+		permissionController:  permissionController,
+		avsDirectory:          avsDirectory,
+		elChainReader:         elChainReader,
+		logger:                logger,
+		ethClient:             ethClient,
+		txMgr:                 txMgr,
 	}
 }
 
@@ -117,13 +117,13 @@ func NewWriterFromConfig(
 	)
 	return NewChainWriter(
 		elContractBindings.DelegationManager,
-		elContractBindings.M2DelegationManager,
 		elContractBindings.StrategyManager,
 		elContractBindings.RewardsCoordinator,
 		elContractBindings.AvsDirectory,
 		elContractBindings.AllocationManager,
 		elContractBindings.PermissionController,
 		elContractBindings.StrategyManagerAddr,
+		elContractBindings.DelegationManagerAddr,
 		elChainReader,
 		ethClient,
 		logger,
@@ -173,6 +173,12 @@ func (w *ChainWriter) RegisterAsOperatorPreSlashing(
 	waitForReceipt bool,
 ) (*gethtypes.Receipt, error) {
 	w.logger.Infof("registering operator %s to EigenLayer", operator.Address)
+
+	m2DelegationManager, err := m2delegationmanager.NewContractDelegationManager(w.delegationManagerAddr, w.ethClient)
+	if err != nil {
+		return nil, utils.WrapError("Failed to fetch m2DelegationManager contract", err)
+	}
+
 	opDetails := m2delegationmanager.IDelegationManagerOperatorDetails{
 		// Earning receiver has been deprecated, so we just use the operator address as a dummy value
 		// Any reward related setup is via RewardsCoordinator contract
@@ -185,7 +191,7 @@ func (w *ChainWriter) RegisterAsOperatorPreSlashing(
 	if err != nil {
 		return nil, err
 	}
-	tx, err := w.m2DelegationManager.RegisterAsOperator(noSendTxOpts, opDetails, operator.MetadataUrl)
+	tx, err := m2DelegationManager.RegisterAsOperator(noSendTxOpts, opDetails, operator.MetadataUrl)
 	if err != nil {
 		return nil, err
 	}
