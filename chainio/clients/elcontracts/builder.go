@@ -67,6 +67,7 @@ func BuildClients(
 
 	elChainWriter := NewChainWriter(
 		elContractBindings.DelegationManager,
+		elContractBindings.M2DelegationManager,
 		elContractBindings.StrategyManager,
 		elContractBindings.RewardsCoordinator,
 		elContractBindings.AvsDirectory,

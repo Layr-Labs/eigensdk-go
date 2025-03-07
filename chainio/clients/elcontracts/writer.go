@@ -12,6 +12,7 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
 
+	m2delegationmanager "github.com/Layr-Labs/eigensdk-go/M2-contracts/bindings/DelegationManager"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	chainioutils "github.com/Layr-Labs/eigensdk-go/chainio/utils"
@@ -41,6 +42,7 @@ type Reader interface {
 // EigenLayer core contract's state-changing functions.
 type ChainWriter struct {
 	delegationManager    *delegationmanager.ContractDelegationManager
+	m2DelegationManager  *m2delegationmanager.ContractDelegationManager
 	strategyManager      *strategymanager.ContractStrategyManager
 	rewardsCoordinator   *rewardscoordinator.ContractRewardsCoordinator
 	avsDirectory         *avsdirectory.ContractAVSDirectory
@@ -56,6 +58,7 @@ type ChainWriter struct {
 // Returns a new instance of ChainWriter.
 func NewChainWriter(
 	delegationManager *delegationmanager.ContractDelegationManager,
+	m2DelegationManager *m2delegationmanager.ContractDelegationManager,
 	strategyManager *strategymanager.ContractStrategyManager,
 	rewardsCoordinator *rewardscoordinator.ContractRewardsCoordinator,
 	avsDirectory *avsdirectory.ContractAVSDirectory,
@@ -72,6 +75,7 @@ func NewChainWriter(
 
 	return &ChainWriter{
 		delegationManager:    delegationManager,
+		m2DelegationManager:  m2DelegationManager,
 		strategyManager:      strategyManager,
 		strategyManagerAddr:  strategyManagerAddr,
 		rewardsCoordinator:   rewardsCoordinator,
@@ -113,6 +117,7 @@ func NewWriterFromConfig(
 	)
 	return NewChainWriter(
 		elContractBindings.DelegationManager,
+		elContractBindings.M2DelegationManager,
 		elContractBindings.StrategyManager,
 		elContractBindings.RewardsCoordinator,
 		elContractBindings.AvsDirectory,
