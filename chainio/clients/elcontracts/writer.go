@@ -596,6 +596,36 @@ func (w *ChainWriter) SetAllocationDelay(
 	return receipt, nil
 }
 
+// Sets the avsRegistrar for the received avs.
+// The avsRegistrar is the contract called to complete registration,
+// usually a RegistryCoordinator
+func (w *ChainWriter) SetAVSRegistrar(
+	ctx context.Context,
+	avs gethcommon.Address,
+	registrar gethcommon.Address,
+	waitForReceipt bool,
+) (*gethtypes.Receipt, error) {
+	if w.allocationManager == nil {
+		return nil, errors.New("AllocationManager contract not provided")
+	}
+
+	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
+	if err != nil {
+		return nil, utils.WrapError("failed to get no send tx opts", err)
+	}
+
+	tx, err := w.allocationManager.SetAVSRegistrar(noSendTxOpts, avs, registrar)
+	if err != nil {
+		return nil, utils.WrapError("failed to create SetAVSRegistrar tx", err)
+	}
+	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt)
+	if err != nil {
+		return nil, utils.WrapError("failed to send tx", err)
+	}
+
+	return receipt, nil
+}
+
 // Deregister an operator from one or more of the AVS's operator sets.
 // If the operator has any slashable stake allocated to the AVS,
 // it remains slashable until the deallocation delay has passed.

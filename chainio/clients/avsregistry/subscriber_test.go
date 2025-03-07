@@ -5,19 +5,23 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
 	"github.com/Layr-Labs/eigensdk-go/testutils/testclients"
 	"github.com/Layr-Labs/eigensdk-go/types"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestSubscriberAvsRegistry(t *testing.T) {
-	client, _ := testclients.BuildTestClients(t)
-	chainSubscriber := client.AvsRegistryChainSubscriber
-	chainWriter := client.AvsRegistryChainWriter
+	clients, anvilHttpEndpoint := testclients.BuildTestClients(t)
+	chainSubscriber := clients.AvsRegistryChainSubscriber
+	chainWriter := clients.AvsRegistryChainWriter
+
+	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
 
 	t.Run("subscribe to new pubkey registrations", func(t *testing.T) {
 		pubKeyRegistrationsC, event, err := chainSubscriber.SubscribeToNewPubkeyRegistrations()
@@ -31,15 +35,24 @@ func TestSubscriberAvsRegistry(t *testing.T) {
 		ecdsaPrivateKey, err := crypto.HexToECDSA(testutils.ANVIL_FIRST_PRIVATE_KEY)
 		require.NoError(t, err)
 
-		quorumNumbers := types.QuorumNums{0}
+		//quorumNumbers := types.QuorumNums{0}
 
-		receipt, err := chainWriter.RegisterOperator(
+		require.NoError(t, err)
+		request := elcontracts.RegistrationRequest{
+			OperatorAddress: common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS),
+			AVSAddress:      contractAddrs.ServiceManager,
+			OperatorSetIds:  []uint32{0},
+			WaitForReceipt:  true,
+			Socket:          "socket",
+			BlsKeyPair:      keypair,
+		}
+
+		// Register operator
+		elWriter := clients.ElChainWriter
+		receipt, err := elWriter.RegisterForOperatorSets(
 			context.Background(),
-			ecdsaPrivateKey,
-			keypair,
-			quorumNumbers,
-			"",
-			true,
+			contractAddrs.RegistryCoordinator,
+			request,
 		)
 		require.NoError(t, err)
 		require.NotNil(t, receipt)
