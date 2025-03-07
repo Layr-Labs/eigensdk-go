@@ -1786,72 +1786,50 @@ func TestM2Registering(t *testing.T) {
 		DontUseAllocationManager:   true,
 	}
 
-	t.Run("register as an operator", func(t *testing.T) {
-		// Fund the new address with 5 ether
-		fundedAccount := "0x408EfD9C90d59298A9b32F4441aC9Df6A2d8C3E1"
-		fundedPrivateKeyHex := "3339854a8622364bcd5650fa92eac82d5dccf04089f5575a761c9b7d3c405b1c"
-		richPrivateKeyHex := testutils.ANVIL_FIRST_PRIVATE_KEY
-		code, _, err := anvilC.Exec(
-			context.Background(),
-			[]string{"cast",
-				"send",
-				fundedAccount,
-				"--value",
-				"5ether",
-				"--private-key",
-				richPrivateKeyHex,
-			},
-		)
-		assert.NoError(t, err)
-		assert.Equal(t, 0, code)
-		time.Sleep(500 * time.Millisecond) // wait for the account to be funded
+	// Fund the new address with 5 ether
+	fundedAccount := "0x408EfD9C90d59298A9b32F4441aC9Df6A2d8C3E1"
+	fundedPrivateKeyHex := "3339854a8622364bcd5650fa92eac82d5dccf04089f5575a761c9b7d3c405b1c"
+	richPrivateKeyHex := testutils.ANVIL_FIRST_PRIVATE_KEY
+	code, _, err := anvilC.Exec(
+		context.Background(),
+		[]string{"cast",
+			"send",
+			fundedAccount,
+			"--value",
+			"5ether",
+			"--private-key",
+			richPrivateKeyHex,
+		},
+	)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, code)
+	time.Sleep(500 * time.Millisecond) // wait for the account to be funded
 
-		ecdsaPrivateKey, err := crypto.HexToECDSA(fundedPrivateKeyHex)
-		require.NoError(t, err)
+	ecdsaPrivateKey, err := crypto.HexToECDSA(fundedPrivateKeyHex)
+	require.NoError(t, err)
 
-		clients, err := clients.BuildAll(
-			chainioConfig,
-			ecdsaPrivateKey,
-			logger,
-		)
-		require.NoError(t, err)
+	clients, err := clients.BuildAll(
+		chainioConfig,
+		ecdsaPrivateKey,
+		logger,
+	)
+	require.NoError(t, err)
 
-		operator :=
-			types.M2Operator{
-				Address:                   fundedAccount,
-				DelegationApproverAddress: "0xd5e099c71b797516c10ed0f0d895f429c2781142",
-				StakerOptOutWindowBlocks:  100,
-				MetadataUrl:               "https://madhur-test-public.s3.us-east-2.amazonaws.com/metadata.json",
-			}
+	// Register an operator with success
+	operator :=
+		types.M2Operator{
+			Address:                   fundedAccount,
+			DelegationApproverAddress: "0xd5e099c71b797516c10ed0f0d895f429c2781142",
+			StakerOptOutWindowBlocks:  100,
+			MetadataUrl:               "https://madhur-test-public.s3.us-east-2.amazonaws.com/metadata.json",
+		}
 
-		receipt, err := clients.ElChainWriter.RegisterAsOperatorPreSlashing(context.Background(), operator, true)
-		assert.NoError(t, err)
-		assert.True(t, receipt.Status == 1)
-	})
+	receipt, err := clients.ElChainWriter.RegisterAsOperatorPreSlashing(context.Background(), operator, true)
+	assert.NoError(t, err)
+	assert.True(t, receipt.Status == 1)
 
-	t.Run("register as an operator already registered", func(t *testing.T) {
-		operatorAddress := "0x408EfD9C90d59298A9b32F4441aC9Df6A2d8C3E1"
-		operatorPrivateKeyHex := "3339854a8622364bcd5650fa92eac82d5dccf04089f5575a761c9b7d3c405b1c"
-
-		ecdsaPrivateKey, err := crypto.HexToECDSA(operatorPrivateKeyHex)
-		require.NoError(t, err)
-
-		clients, err := clients.BuildAll(
-			chainioConfig,
-			ecdsaPrivateKey,
-			logger,
-		)
-		require.NoError(t, err)
-
-		operator :=
-			types.M2Operator{
-				Address:                   operatorAddress,
-				DelegationApproverAddress: "0xd5e099c71b797516c10ed0f0d895f429c2781142",
-				StakerOptOutWindowBlocks:  100,
-				MetadataUrl:               "https://madhur-test-public.s3.us-east-2.amazonaws.com/metadata.json",
-			}
-
-		_, err = clients.ElChainWriter.RegisterAsOperatorPreSlashing(context.Background(), operator, true)
-		assert.Error(t, err)
-	})
+	// Register the same operator again will return an error
+	_, err = clients.ElChainWriter.RegisterAsOperatorPreSlashing(context.Background(), operator, true)
+	assert.Error(t, err)
+	assert.ErrorContains(t, err, "caller is already actively delegated")
 }
