@@ -6,7 +6,6 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
@@ -24,10 +23,10 @@ import (
 )
 
 type Config struct {
-	DelegationManagerAddress    common.Address
-	AvsDirectoryAddress         common.Address
-	RewardsCoordinatorAddress   common.Address
-	PermissionControllerAddress common.Address
+	DelegationManagerAddress    gethcommon.Address
+	AvsDirectoryAddress         gethcommon.Address
+	RewardsCoordinatorAddress   gethcommon.Address
+	PermissionControllerAddress gethcommon.Address
 
 	/// Setting this to true will disable the fetching of the AllocationManager address.
 	/// This is useful for older deployments, which don't have the contract deployed.
@@ -769,7 +768,7 @@ func (r *ChainReader) GetPendingWithdrawalStatus(
 // Returns the total number of withdrawals that have been queued for a given `staker`
 func (r *ChainReader) GetCumulativeWithdrawalsQueued(
 	ctx context.Context,
-	staker common.Address,
+	staker gethcommon.Address,
 ) (*big.Int, error) {
 	if r.delegationManager == nil {
 		return big.NewInt(0), errors.New("DelegationManager contract not provided")
