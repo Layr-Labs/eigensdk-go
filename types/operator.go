@@ -24,7 +24,7 @@ type Operator struct {
 	// Address of the operator
 	Address string `yaml:"address" json:"address"`
 
-	// https://github.com/Layr-Labs/eigenlayer-contracts/blob/delegation-redesign/src/contracts/interfaces/IDelegationManager.sol#L18
+	// If set, the delegation approver's signature is required when delegating to another operator
 	DelegationApproverAddress string `yaml:"delegation_approver_address" json:"delegation_approver_address"`
 
 	// MetadataUrl URL where operator metadata is stored
@@ -35,14 +35,18 @@ type Operator struct {
 	AllocationDelay uint32 `yaml:"allocation_delay" json:"allocation_delay"`
 }
 
-// Operator represents EigenLayer's view of an operator
+// Operator represents EigenLayer's view of an M2 operator. The differebce between this and slashing version is the
+// StakerOptOutWindowBlocks field only in M2 Operator, and the AllocationDelay field only in slashing one.
 type M2Operator struct {
 	// Address of the operator
 	Address string `yaml:"address" json:"address"`
 
-	// https://github.com/Layr-Labs/eigenlayer-contracts/blob/delegation-redesign/src/contracts/interfaces/IDelegationManager.sol#L18
+	// If set, the delegation approver's signature is required when delegating to another operator
 	DelegationApproverAddress string `yaml:"delegation_approver_address"  json:"delegation_approver_address"`
-	StakerOptOutWindowBlocks  uint32 `yaml:"staker_opt_out_window_blocks" json:"staker_opt_out_window_blocks"`
+
+	// A minimum delay enforced between the operator tries to register for a service and the operator completing
+	// registration for the service. Note that for a specific operator, this value cannot be decreased after init.
+	StakerOptOutWindowBlocks uint32 `yaml:"staker_opt_out_window_blocks" json:"staker_opt_out_window_blocks"`
 
 	// MetadataUrl URL where operator metadata is stored
 	MetadataUrl string `yaml:"metadata_url" json:"metadata_url"`
