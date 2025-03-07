@@ -35,6 +35,19 @@ type Operator struct {
 	AllocationDelay uint32 `yaml:"allocation_delay" json:"allocation_delay"`
 }
 
+// Operator represents EigenLayer's view of an operator
+type M2Operator struct {
+	// Address of the operator
+	Address string `yaml:"address" json:"address"`
+
+	// https://github.com/Layr-Labs/eigenlayer-contracts/blob/delegation-redesign/src/contracts/interfaces/IDelegationManager.sol#L18
+	DelegationApproverAddress string `yaml:"delegation_approver_address"  json:"delegation_approver_address"`
+	StakerOptOutWindowBlocks  uint32 `yaml:"staker_opt_out_window_blocks" json:"staker_opt_out_window_blocks"`
+
+	// MetadataUrl URL where operator metadata is stored
+	MetadataUrl string `yaml:"metadata_url" json:"metadata_url"`
+}
+
 func (o Operator) Validate() error {
 	if !utils.IsValidEthereumAddress(o.Address) {
 		return ErrInvalidOperatorAddress

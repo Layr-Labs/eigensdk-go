@@ -167,6 +167,37 @@ func (w *ChainWriter) RegisterAsOperator(
 	return receipt, nil
 }
 
+func (w *ChainWriter) RegisterAsOperatorPreSlashing(
+	ctx context.Context,
+	operator types.M2Operator,
+	waitForReceipt bool,
+) (*gethtypes.Receipt, error) {
+	w.logger.Infof("registering operator %s to EigenLayer", operator.Address)
+	opDetails := m2delegationmanager.IDelegationManagerOperatorDetails{
+		// Earning receiver has been deprecated, so we just use the operator address as a dummy value
+		// Any reward related setup is via RewardsCoordinator contract
+		DeprecatedEarningsReceiver: gethcommon.HexToAddress(operator.Address),
+		StakerOptOutWindowBlocks:   operator.StakerOptOutWindowBlocks,
+		DelegationApprover:         gethcommon.HexToAddress(operator.DelegationApproverAddress),
+	}
+
+	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
+	if err != nil {
+		return nil, err
+	}
+	tx, err := w.m2DelegationManager.RegisterAsOperator(noSendTxOpts, opDetails, operator.MetadataUrl)
+	if err != nil {
+		return nil, err
+	}
+	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt)
+	if err != nil {
+		return nil, errors.New("failed to send tx with err: " + err.Error())
+	}
+	w.logger.Info("tx successfully included", "txHash", receipt.TxHash.String())
+
+	return receipt, nil
+}
+
 // Updates an operator's stored `delegationApprover` with
 // the given `operator.DelegationApproverAddress` by calling
 // the `modifyOperatorDetails` function in the DelegationManager contract.
