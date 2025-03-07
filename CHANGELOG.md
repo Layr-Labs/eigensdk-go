@@ -161,6 +161,9 @@ Each version will have a separate `Breaking Changes` section as well. To describ
   * To query if an operator is registered to an M2 quorum you should now use `chainReader.IsOperatorRegisteredWithAvs`, which queries the `AVSDirectory`.
 * `egnaddrs` utility now works with slashing release middleware contracts and, in that case, the returned service manager will be the zero address, unless the `--service-manager` is specified.
 
+* Renamed `SetAccountIdentifier` to `SetAvs` [#597](https://github.com/Layr-Labs/eigensdk-go/pull/597)
+  * The underlying call was renamed in [the v1.1.1 eigenlayer-middleware release](https://github.com/Layr-Labs/eigenlayer-middleware/releases/tag/v1.1.1-testnet-slashing).
+
 ### Removed
 * Removed `IsOperatorSetQuorum` method of avsRegistry chain reader by @maximopalopoli in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
   * This function was removed in [the v1.1.1 eigenlayer-middleware release](https://github.com/Layr-Labs/eigenlayer-middleware/releases/tag/v1.1.1-testnet-slashing).
