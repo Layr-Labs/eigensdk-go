@@ -279,6 +279,7 @@ func (w *ChainWriter) UpdateStakesOfEntireOperatorSetForQuorums(
 
 // Registers an operator while replacing existing operators in full quorums. If any quorum reaches its maximum
 // operator capacity, `operatorKickParams` is used to replace an old operator with the new one.
+// Note: This method is only works on the pre-slashing (M2) version of the contracts.
 func (w *ChainWriter) RegisterOperatorWithChurn(
 	ctx context.Context,
 	operatorEcdsaPrivateKey *ecdsa.PrivateKey,
@@ -290,17 +291,22 @@ func (w *ChainWriter) RegisterOperatorWithChurn(
 	socket string,
 	waitForReceipt bool,
 ) (*gethtypes.Receipt, error) {
+	m2registryCoordinator, err := m2regcoord.NewContractRegistryCoordinator(w.registryCoordinatorAddr, w.ethClient)
+	if err != nil {
+		return nil, utils.WrapError("Failed to fetch m2DelegationManager contract", err)
+	}
+
 	operatorAddr := crypto.PubkeyToAddress(operatorEcdsaPrivateKey.PublicKey)
-	g1HashedMsgToSign, err := w.registryCoordinator.PubkeyRegistrationMessageHash(&bind.CallOpts{}, operatorAddr)
+	g1HashedMsgToSign, err := m2registryCoordinator.PubkeyRegistrationMessageHash(&bind.CallOpts{}, operatorAddr)
 	if err != nil {
 		return nil, err
 	}
-	signedMsg := chainioutils.ConvertToBN254G1Point(
-		blsKeyPair.SignHashedToCurveMessage(chainioutils.ConvertBn254GethToGnark(g1HashedMsgToSign)).G1Point,
+	signedMsg := chainioutils.ConvertToM2BN254G1Point(
+		blsKeyPair.SignHashedToCurveMessage(chainioutils.ConvertM2Bn254GethToGnark(g1HashedMsgToSign)).G1Point,
 	)
-	G1pubkeyBN254 := chainioutils.ConvertToBN254G1Point(blsKeyPair.GetPubKeyG1())
-	G2pubkeyBN254 := chainioutils.ConvertToBN254G2Point(blsKeyPair.GetPubKeyG2())
-	pubkeyRegParams := regcoord.IBLSApkRegistryTypesPubkeyRegistrationParams{
+	G1pubkeyBN254 := chainioutils.ConvertToM2BN254G1Point(blsKeyPair.GetPubKeyG1())
+	G2pubkeyBN254 := chainioutils.ConvertToM2BN254G2Point(blsKeyPair.GetPubKeyG2())
+	pubkeyRegParams := m2regcoord.IBLSApkRegistryPubkeyRegistrationParams{
 		PubkeyRegistrationSignature: signedMsg,
 		PubkeyG1:                    G1pubkeyBN254,
 		PubkeyG2:                    G2pubkeyBN254,
@@ -345,15 +351,15 @@ func (w *ChainWriter) RegisterOperatorWithChurn(
 	// see https://github.com/ethereum/go-ethereum/issues/28757#issuecomment-1874525854
 	// and https://twitter.com/pcaversaccio/status/1671488928262529031
 	operatorSignature[64] += 27
-	operatorSignatureWithSaltAndExpiry := regcoord.ISignatureUtilsSignatureWithSaltAndExpiry{
+	operatorSignatureWithSaltAndExpiry := m2regcoord.ISignatureUtilsSignatureWithSaltAndExpiry{
 		Signature: operatorSignature,
 		Salt:      signatureSalt,
 		Expiry:    signatureExpiry,
 	}
 
-	var operatorKickParams []regcoord.ISlashingRegistryCoordinatorTypesOperatorKickParam
+	var operatorKickParams []m2regcoord.IRegistryCoordinatorOperatorKickParam
 	for i, operatorToKick := range operatorsToKick {
-		operatorKickParams = append(operatorKickParams, regcoord.ISlashingRegistryCoordinatorTypesOperatorKickParam{
+		operatorKickParams = append(operatorKickParams, m2regcoord.IRegistryCoordinatorOperatorKickParam{
 			Operator:     operatorToKick,
 			QuorumNumber: quorumNumbersToKick[i].UnderlyingType(),
 		})
@@ -376,7 +382,7 @@ func (w *ChainWriter) RegisterOperatorWithChurn(
 	}
 	copy(operatorIdBytes[:], operatorIdBytesDecoded)
 
-	churnMsgToSign, err := w.registryCoordinator.CalculateOperatorChurnApprovalDigestHash(
+	churnMsgToSign, err := m2registryCoordinator.CalculateOperatorChurnApprovalDigestHash(
 		&bind.CallOpts{Context: ctx},
 		operatorAddr,
 		operatorIdBytes,
@@ -397,7 +403,7 @@ func (w *ChainWriter) RegisterOperatorWithChurn(
 	// see https://github.com/ethereum/go-ethereum/issues/28757#issuecomment-1874525854
 	// and https://twitter.com/pcaversaccio/status/1671488928262529031
 	churnApprovalSignature[64] += 27
-	churnApproverSignatureWithSaltAndExpiry := regcoord.ISignatureUtilsSignatureWithSaltAndExpiry{
+	churnApproverSignatureWithSaltAndExpiry := m2regcoord.ISignatureUtilsSignatureWithSaltAndExpiry{
 		Signature: churnApprovalSignature,
 		Salt:      churnSignatureSalt,
 		Expiry:    signatureExpiry,
@@ -408,7 +414,7 @@ func (w *ChainWriter) RegisterOperatorWithChurn(
 		return nil, err
 	}
 
-	tx, err := w.registryCoordinator.RegisterOperatorWithChurn(
+	tx, err := m2registryCoordinator.RegisterOperatorWithChurn(
 		noSendTxOpts,
 		quorumNumbers.UnderlyingType(),
 		socket,
