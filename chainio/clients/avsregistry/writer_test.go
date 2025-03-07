@@ -3,8 +3,12 @@ package avsregistry_test
 import (
 	"context"
 	"math/big"
+	"os"
 	"testing"
 
+	m2regcoord "github.com/Layr-Labs/eigensdk-go/M2-contracts/bindings/RegistryCoordinator"
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients"
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
 	chainioutils "github.com/Layr-Labs/eigensdk-go/chainio/utils"
 	avsdirectory "github.com/Layr-Labs/eigensdk-go/contracts/bindings/AVSDirectory"
@@ -12,6 +16,7 @@ import (
 	servicemanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/ServiceManagerBase"
 	stakeregistry "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StakeRegistry"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
+	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
 	"github.com/Layr-Labs/eigensdk-go/testutils/testclients"
 	"github.com/Layr-Labs/eigensdk-go/types"
@@ -285,14 +290,46 @@ func TestWriterMethods(t *testing.T) {
 	})
 }
 
-/*
-This test is commented because we need to use the new flow functions, and RegisterOperatorWithChurn belongs to the old one. We can
-use RegisterOperatorForOperatorSet to register with churn, but we should expose a function registerOperatorForOperatorSetsWithChurn
-
+// This test is commented because we need to use the new flow functions, and RegisterOperatorWithChurn belongs to the
+// old one. We can use RegisterOperatorForOperatorSet to register with churn, but we should expose a function
+// registerOperatorForOperatorSetsWithChurn
 func TestRegisterOperatorWithChurn(t *testing.T) {
-	clients, anvilHttpEndpoint := testclients.BuildTestClients(t)
+	testConfig := testutils.GetDefaultTestConfig()
+	anvilC, err := testutils.StartM2AnvilContainer(testConfig.AnvilStateFileName)
+	require.NoError(t, err)
 
-	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
+	anvilHttpEndpoint, err := anvilC.Endpoint(context.Background(), "http")
+	require.NoError(t, err)
+
+	anvilWsEndpoint, err := anvilC.Endpoint(context.Background(), "ws")
+	require.NoError(t, err)
+	logger := logging.NewTextSLogger(os.Stdout, &logging.SLoggerOptions{Level: testConfig.LogLevel})
+
+	privateKeyHex := testutils.ANVIL_FIRST_PRIVATE_KEY
+	ecdsaPrivateKey, err := crypto.HexToECDSA(privateKeyHex)
+	require.NoError(t, err)
+
+	contractAddrs := testutils.GetM2ContractAddressesFromContractRegistry(anvilHttpEndpoint)
+	require.NoError(t, err)
+
+	chainioConfig := clients.BuildAllConfig{
+		EthHttpUrl:                 anvilHttpEndpoint,
+		EthWsUrl:                   anvilWsEndpoint,
+		RegistryCoordinatorAddr:    contractAddrs.RegistryCoordinator.String(),
+		OperatorStateRetrieverAddr: contractAddrs.OperatorStateRetriever.String(),
+		AvsName:                    "exampleAvs",
+		PromMetricsIpPortAddress:   ":9090",
+		ServiceManagerAddress:      contractAddrs.ServiceManager.String(),
+		RewardsCoordinatorAddress:  contractAddrs.RewardsCoordinator.String(),
+		DontUseAllocationManager:   true,
+	}
+
+	clients, err := clients.BuildAll(
+		chainioConfig,
+		ecdsaPrivateKey,
+		logger,
+	)
+	require.NoError(t, err)
 
 	chainWriter := clients.AvsRegistryChainWriter
 	chainReader := clients.AvsRegistryChainReader
@@ -307,7 +344,7 @@ func TestRegisterOperatorWithChurn(t *testing.T) {
 
 	ethHttpClient := clients.EthHttpClient
 
-	registryCoordinatorContract, err := regcoord.NewContractRegistryCoordinator(
+	registryCoordinatorContract, err := m2regcoord.NewContractRegistryCoordinator(
 		contractAddrs.RegistryCoordinator,
 		ethHttpClient,
 	)
@@ -333,11 +370,14 @@ func TestRegisterOperatorWithChurn(t *testing.T) {
 	assert.Equal(t, newApprover.String(), testutils.ANVIL_SECOND_ADDRESS)
 
 	//Register ANVIL_FIRST_ADDRESS as operator
-	receipt, err = chainWriter.RegisterOperator(
+	receipt, err = chainWriter.RegisterOperatorWithChurn(
 		context.Background(),
 		firstOperatorECDSAPrivateKey,
+		churnECDSAPrivateKey,
 		firstOperatorKeyPair,
 		quorumNumbers,
+		quorumNumbers,
+		[]gethcommon.Address{firstOperatorAddress},
 		"",
 		true,
 	)
@@ -372,6 +412,7 @@ func TestRegisterOperatorWithChurn(t *testing.T) {
 		RegistryCoordinatorAddress:    contractAddrs.RegistryCoordinator,
 		OperatorStateRetrieverAddress: contractAddrs.OperatorStateRetriever,
 		ServiceManagerAddress:         contractAddrs.ServiceManager,
+		DontUseAllocationManager:      true,
 	}
 	chainWriter3, err := testclients.NewTestAvsRegistryWriterFromConfig(
 		anvilHttpEndpoint,
@@ -406,7 +447,6 @@ func TestRegisterOperatorWithChurn(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, registeredOperatorWithChurn)
 }
-*/
 
 // Compliance test for BLS signature
 func TestBlsSignature(t *testing.T) {
