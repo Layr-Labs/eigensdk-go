@@ -136,7 +136,7 @@ func TestRegisterAndDeregisterFromOperatorSets(t *testing.T) {
 	erc20MockStrategyAddr := contractAddrs.Erc20MockStrategy
 
 	// Create an operator set to register an operator on it
-	err := createOperatorSet(
+	err := createTotalStakeOperatorSet(
 		clients,
 		erc20MockStrategyAddr,
 	)
@@ -238,6 +238,7 @@ func TestRegisterOperatorSetWithChurn(t *testing.T) {
 
 	op1Address := common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
 	// Create ChainWriter for second operator
+	op2Address := common.HexToAddress(testutils.ANVIL_SECOND_ADDRESS)
 	op2PrivateKeyHex := testutils.ANVIL_SECOND_PRIVATE_KEY
 	op2ChainWriter, err := testclients.NewTestChainWriterFromConfig(anvilHttpEndpoint, op2PrivateKeyHex, config)
 	require.NoError(t, err)
@@ -246,7 +247,7 @@ func TestRegisterOperatorSetWithChurn(t *testing.T) {
 	operatorSetId := uint32(1)
 	erc20MockStrategyAddr := contractAddrs.Erc20MockStrategy
 
-	err = createOperatorSet(clients, erc20MockStrategyAddr)
+	err = createTotalStakeOperatorSet(clients, erc20MockStrategyAddr)
 	require.NoError(t, err)
 
 	// Allow only 1 operator
@@ -277,7 +278,6 @@ func TestRegisterOperatorSetWithChurn(t *testing.T) {
 	require.Equal(t, gethtypes.ReceiptStatusSuccessful, receipt.Status)
 
 	// Register second operator with churn
-	op2Address := common.HexToAddress(testutils.ANVIL_SECOND_ADDRESS)
 	privKey2, err := bls.NewKeyPairFromString("0x02")
 	require.NoError(t, err)
 	churnApproverKey, err := crypto.HexToECDSA(testutils.ANVIL_FIRST_PRIVATE_KEY)
@@ -689,7 +689,7 @@ func TestSetOperatorSetSplit(t *testing.T) {
 	erc20MockStrategyAddr := contractAddrs.Erc20MockStrategy
 
 	// Create an operator set to register an operator on it
-	err = createOperatorSet(
+	err = createTotalStakeOperatorSet(
 		clients,
 		erc20MockStrategyAddr,
 	)
@@ -928,7 +928,7 @@ func TestModifyAllocations(t *testing.T) {
 	_, err = chainReader.GetAllocationDelay(context.Background(), operatorAddr)
 	require.NoError(t, err)
 
-	err = createOperatorSet(clients, strategyAddr)
+	err = createTotalStakeOperatorSet(clients, strategyAddr)
 	require.NoError(t, err)
 
 	receipt, err = chainWriter.ModifyAllocations(context.Background(), operatorAddr, allocateParams, waitForReceipt)
@@ -1000,7 +1000,7 @@ func TestClearDeallocationQueue(t *testing.T) {
 	_, err = chainReader.GetAllocationDelay(context.Background(), operatorAddr)
 	require.NoError(t, err)
 
-	err = createOperatorSet(clients, strategyAddr)
+	err = createTotalStakeOperatorSet(clients, strategyAddr)
 	require.NoError(t, err)
 
 	receipt, err = chainWriter.ModifyAllocations(context.Background(), operatorAddr, allocateParams, waitForReceipt)
@@ -1342,7 +1342,7 @@ func TestProcessClaims(t *testing.T) {
 
 // Creates an operator set with a single strategy. Note that operator set Id will be
 // defined sequentially (as the new amount of operator sets minus one)
-func createOperatorSet(
+func createTotalStakeOperatorSet(
 	clients *clients.Clients,
 	erc20MockStrategyAddr common.Address,
 ) error {
@@ -1353,20 +1353,18 @@ func createOperatorSet(
 		KickBIPsOfOperatorStake: 100,
 		KickBIPsOfTotalStake:    1000,
 	}
-	minimumStake := big.NewInt(0)
+	minimumStake := big.NewInt(1)
 
 	strategyParams := regcoord.IStakeRegistryTypesStrategyParams{
 		Strategy:   erc20MockStrategyAddr,
 		Multiplier: big.NewInt(1),
 	}
 	strategyParamsArray := []regcoord.IStakeRegistryTypesStrategyParams{strategyParams}
-	lookAheadPeriod := uint32(0)
-	_, err := clients.AvsRegistryChainWriter.CreateSlashableStakeQuorum(
+	_, err := clients.AvsRegistryChainWriter.CreateTotalDelegatedStakeQuorum(
 		context.Background(),
 		operatorSetParam,
 		minimumStake,
 		strategyParamsArray,
-		lookAheadPeriod,
 		waitForReceipt,
 	)
 	return err
