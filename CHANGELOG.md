@@ -57,7 +57,22 @@ Each version will have a separate `Breaking Changes` section as well. To describ
       require.NoError(t, err)
       require.Equal(t, gethtypes.ReceiptStatusSuccessful, receipt.Status)
     ```
+* Added `RegisterAsOperatorPreSlashing` to register an operator in M2 workflows (not available for slashing) by @maximopalopoli in [#595](https://github.com/Layr-Labs/eigensdk-go/pull/595)
+  * A use example would be the following:
+    ```go
+      operator :=
+        types.M2Operator{
+          Address:                   fundedAccount,
+          DelegationApproverAddress: "0xd5e099c71b797516c10ed0f0d895f429c2781142",
+          StakerOptOutWindowBlocks:  100,
+          MetadataUrl:               "https://madhur-test-public.s3.us-east-2.amazonaws.com/metadata.json",
+        }
 
+      receipt, err := clients.ElChainWriter.RegisterAsOperatorPreSlashing(context.Background(), operator, true)
+      assert.NoError(t, err)
+      assert.True(t, receipt.Status == 1)
+    ```
+  Note that this PR also introduces M2 operator
 
 ### Changed
 
