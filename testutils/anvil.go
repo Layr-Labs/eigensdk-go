@@ -68,6 +68,7 @@ func StartAnvilContainer(anvilStateFileName string) (testcontainers.Container, e
 	return anvilC, nil
 }
 
+// This function is for M2 functionality
 func StartM2AnvilContainer(anvilStateFileName string) (testcontainers.Container, error) {
 	ctx := context.Background()
 	req := testcontainers.ContainerRequest{
@@ -197,6 +198,7 @@ func GetContractAddressesFromContractRegistry(ethHttpUrl string) (mockAvsContrac
 	return mockAvsContracts
 }
 
+// This function is for M2 functionality
 func GetM2ContractAddressesFromContractRegistry(ethHttpUrl string) (mockAvsContracts ContractAddresses) {
 	ethHttpClient, err := ethclient.Dial(ethHttpUrl)
 	if err != nil {

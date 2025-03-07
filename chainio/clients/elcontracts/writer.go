@@ -170,7 +170,7 @@ func (w *ChainWriter) RegisterAsOperator(
 }
 
 // Registers the caller as an operator in EigenLayer through the M2 DelegationManager contract.
-// Note: This method is only available for M2 workflows, slahing ones should not call it.
+// Note: This method is only works on the pre-slashing (M2) version of the contracts.
 func (w *ChainWriter) RegisterAsOperatorPreSlashing(
 	ctx context.Context,
 	operator types.M2Operator,

@@ -13,6 +13,7 @@ import (
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
+	m2regcoord "github.com/Layr-Labs/eigensdk-go/M2-contracts/bindings/RegistryCoordinator"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
@@ -41,20 +42,22 @@ type eLReader interface {
 // The ChainWriter provides methods to call the
 // AVS registry contract's state-changing functions.
 type ChainWriter struct {
-	serviceManagerAddr     gethcommon.Address
-	registryCoordinator    *regcoord.ContractRegistryCoordinator
-	operatorStateRetriever *opstateretriever.ContractOperatorStateRetriever
-	stakeRegistry          *stakeregistry.ContractStakeRegistry
-	blsApkRegistry         *blsapkregistry.ContractBLSApkRegistry
-	elReader               eLReader
-	logger                 logging.Logger
-	ethClient              eth.HttpBackend
-	txMgr                  txmgr.TxManager
+	serviceManagerAddr      gethcommon.Address
+	registryCoordinatorAddr gethcommon.Address
+	registryCoordinator     *regcoord.ContractRegistryCoordinator
+	operatorStateRetriever  *opstateretriever.ContractOperatorStateRetriever
+	stakeRegistry           *stakeregistry.ContractStakeRegistry
+	blsApkRegistry          *blsapkregistry.ContractBLSApkRegistry
+	elReader                eLReader
+	logger                  logging.Logger
+	ethClient               eth.HttpBackend
+	txMgr                   txmgr.TxManager
 }
 
 // Returns a new instance of ChainWriter.
 func NewChainWriter(
 	serviceManagerAddr gethcommon.Address,
+	registryCoordinatorAddr gethcommon.Address,
 	registryCoordinator *regcoord.ContractRegistryCoordinator,
 	operatorStateRetriever *opstateretriever.ContractOperatorStateRetriever,
 	stakeRegistry *stakeregistry.ContractStakeRegistry,
@@ -67,15 +70,16 @@ func NewChainWriter(
 	logger = logger.With(logging.ComponentKey, "avsregistry/ChainWriter")
 
 	return &ChainWriter{
-		serviceManagerAddr:     serviceManagerAddr,
-		registryCoordinator:    registryCoordinator,
-		operatorStateRetriever: operatorStateRetriever,
-		stakeRegistry:          stakeRegistry,
-		blsApkRegistry:         blsApkRegistry,
-		elReader:               elReader,
-		logger:                 logger,
-		ethClient:              ethClient,
-		txMgr:                  txMgr,
+		serviceManagerAddr:      serviceManagerAddr,
+		registryCoordinatorAddr: registryCoordinatorAddr,
+		registryCoordinator:     registryCoordinator,
+		operatorStateRetriever:  operatorStateRetriever,
+		stakeRegistry:           stakeRegistry,
+		blsApkRegistry:          blsApkRegistry,
+		elReader:                elReader,
+		logger:                  logger,
+		ethClient:               ethClient,
+		txMgr:                   txMgr,
 	}
 }
 
@@ -101,6 +105,7 @@ func NewWriterFromConfig(
 
 	return NewChainWriter(
 		bindings.ServiceManagerAddr,
+		bindings.RegistryCoordinatorAddr,
 		bindings.RegistryCoordinator,
 		bindings.OperatorStateRetriever,
 		bindings.StakeRegistry,
