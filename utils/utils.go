@@ -106,7 +106,7 @@ func ReadPublicURL(url string) ([]byte, error) {
 		// since MaxBytesError has pointer receiver. Not sure what is the correct
 		// way to do this.
 		maxByteErr := http.MaxBytesError{}
-		if err.Error() == maxByteErr.Error() {
+		if errors.Is(err, &http.MaxBytesError{}) {
 			return nil, ErrResponseTooLarge
 		}
 		return nil, err
