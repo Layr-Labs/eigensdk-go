@@ -74,6 +74,22 @@ Each version will have a separate `Breaking Changes` section as well. To describ
     ```
   This PR also introduces the `M2Operator` type
 
+* Added support for registering operators in operator sets with churn approval in [#596](https://github.com/Layr-Labs/eigensdk-go/pull/596)
+  * We added the fields `ChurnApprovalEcdsaPrivateKey` and `OperatorKickParams` to `elcontracts.RegistrationRequest`. Specifying the first one makes the `ChainWriter.RegisterForOperatorSets` function sign a churn approval for the operator registration, making the AVS eject operators specified by the other field to make space for the registering operator.
+
+    ```go
+    request := elcontracts.RegistrationRequest{
+      // ...old fields are required...
+      ChurnApprovalEcdsaPrivateKey: /* ECDSA key of the AVS churn approver */,
+      OperatorKickParams:  /* which operators to kick for each registering quorum */,
+    }
+    receipt, err := chainWriter.RegisterForOperatorSets(
+      context.Background(),
+      registryCoordinatorAddress,
+      request,
+    )
+    ```
+
 ### Changed
 
 * Fixed BLS aggregation for multiple quorums by @TomasArrachea in [#394](https://github.com/Layr-Labs/eigensdk-go/pull/394)

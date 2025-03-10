@@ -136,7 +136,7 @@ func TestRegisterAndDeregisterFromOperatorSets(t *testing.T) {
 	erc20MockStrategyAddr := contractAddrs.Erc20MockStrategy
 
 	// Create an operator set to register an operator on it
-	err := createOperatorSet(
+	err := createTotalStakeOperatorSet(
 		clients,
 		erc20MockStrategyAddr,
 	)
@@ -157,7 +157,7 @@ func TestRegisterAndDeregisterFromOperatorSets(t *testing.T) {
 
 	operatorSet := allocationmanager.OperatorSet{
 		Avs: avsAddress,
-		Id:  uint32(operatorSetId),
+		Id:  operatorSetId,
 	}
 	t.Run("register operator for operator set", func(t *testing.T) {
 		registryCoordinatorAddress := contractAddrs.RegistryCoordinator
@@ -223,8 +223,113 @@ func TestRegisterAndDeregisterFromOperatorSets(t *testing.T) {
 	})
 }
 
-func TestEncodeRegistrationParams(t *testing.T) {
-	// Values are random
+func TestRegisterOperatorSetWithChurn(t *testing.T) {
+	clients, anvilHttpEndpoint := testclients.BuildTestClients(t)
+	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
+
+	config := elcontracts.Config{
+		DelegationManagerAddress:    contractAddrs.DelegationManager,
+		RewardsCoordinatorAddress:   contractAddrs.RewardsCoordinator,
+		PermissionControllerAddress: contractAddrs.PermissionController,
+	}
+
+	avsWriter := clients.AvsRegistryChainWriter
+	avsAddress := contractAddrs.ServiceManager
+
+	op1Address := common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
+	// Create ChainWriter for second operator
+	op2Address := common.HexToAddress(testutils.ANVIL_SECOND_ADDRESS)
+	op2PrivateKeyHex := testutils.ANVIL_SECOND_PRIVATE_KEY
+	op2ChainWriter, err := testclients.NewTestChainWriterFromConfig(anvilHttpEndpoint, op2PrivateKeyHex, config)
+	require.NoError(t, err)
+
+	// Create an operator set
+	operatorSetId := uint32(1)
+	erc20MockStrategyAddr := contractAddrs.Erc20MockStrategy
+
+	err = createTotalStakeOperatorSet(clients, erc20MockStrategyAddr)
+	require.NoError(t, err)
+
+	// Allow only 1 operator
+	opsetParams := regcoord.ISlashingRegistryCoordinatorTypesOperatorSetParam{
+		MaxOperatorCount:        1,
+		KickBIPsOfOperatorStake: 10,
+		KickBIPsOfTotalStake:    10000,
+	}
+
+	receipt, err := avsWriter.SetOperatorSetParams(context.TODO(), uint8(operatorSetId), opsetParams, true)
+	require.NoError(t, err)
+	require.Equal(t, gethtypes.ReceiptStatusSuccessful, receipt.Status)
+
+	// Register first operator
+	privKey1, err := bls.NewKeyPairFromString("0x01")
+	require.NoError(t, err)
+	registrationRequest := elcontracts.RegistrationRequest{
+		OperatorAddress: op1Address,
+		AVSAddress:      avsAddress,
+		OperatorSetIds:  []uint32{operatorSetId},
+		WaitForReceipt:  true,
+		Socket:          "socket",
+		BlsKeyPair:      privKey1,
+	}
+
+	receipt, err = clients.ElChainWriter.RegisterForOperatorSets(
+		context.TODO(),
+		contractAddrs.RegistryCoordinator,
+		registrationRequest,
+	)
+	require.NoError(t, err)
+	require.Equal(t, gethtypes.ReceiptStatusSuccessful, receipt.Status)
+
+	// Register second operator with churn
+	privKey2, err := bls.NewKeyPairFromString("0x02")
+	require.NoError(t, err)
+	churnApproverKey, err := crypto.HexToECDSA(testutils.ANVIL_FIRST_PRIVATE_KEY)
+	require.NoError(t, err)
+
+	registrationRequest.OperatorAddress = op2Address
+	registrationRequest.BlsKeyPair = privKey2
+	registrationRequest.ChurnApprovalEcdsaPrivateKey = churnApproverKey
+	registrationRequest.OperatorKickParams = []elcontracts.OperatorKickParam{
+		{
+			QuorumNumber: uint8(operatorSetId),
+			Operator:     op1Address,
+		},
+	}
+
+	receipt, err = op2ChainWriter.RegisterForOperatorSets(
+		context.TODO(),
+		contractAddrs.RegistryCoordinator,
+		registrationRequest,
+	)
+	require.NoError(t, err)
+	require.Equal(t, gethtypes.ReceiptStatusSuccessful, receipt.Status)
+
+	// Check operator 1 is no longer registered
+	operatorSet := allocationmanager.OperatorSet{
+		Avs: avsAddress,
+		Id:  operatorSetId,
+	}
+	isRegistered, err := clients.ElChainReader.IsOperatorRegisteredWithOperatorSet(
+		context.Background(),
+		op1Address,
+		operatorSet,
+	)
+	require.NoError(t, err)
+	require.False(t, isRegistered)
+
+	// Check operator 2 is registered
+	isRegistered, err = clients.ElChainReader.IsOperatorRegisteredWithOperatorSet(
+		context.Background(),
+		op2Address,
+		operatorSet,
+	)
+	require.NoError(t, err)
+	require.True(t, isRegistered)
+}
+
+func getExampleRegistrationParams(t *testing.T) regcoord.IBLSApkRegistryTypesPubkeyRegistrationParams {
+	// Values are the same as in contracts/test/RegistrationEncoding.t.sol
 	signatureX, ok := new(
 		big.Int,
 	).SetString("756874975973566196338995715738218418291193261429375530560923897690728869289", 10)
@@ -274,8 +379,12 @@ func TestEncodeRegistrationParams(t *testing.T) {
 			Y: [2]*big.Int{g2PubkeyY0, g2PubkeyY1},
 		},
 	}
-	result, err := elcontracts.AbiEncodeRegistrationParams(
-		elcontracts.RegistrationTypeNormal,
+	return registrationParams
+}
+
+func TestEncodeRegistrationParams(t *testing.T) {
+	registrationParams := getExampleRegistrationParams(t)
+	result, err := elcontracts.AbiEncodeNormalRegistrationParams(
 		"unused",
 		registrationParams,
 	)
@@ -284,6 +393,59 @@ func TestEncodeRegistrationParams(t *testing.T) {
 	// This value was generated by running `abi.encode(...)` on the Solidity equivalent of the above struct
 	expected, err := hex.DecodeString(
 		"0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000014001ac6045296d64b31ed644e53ce1a1c4f72f67a2d47b06b652ca8167f1b2ada900fb7cd59f322f4dffa18360bfcdc15f1f6cd09aea573efa919dc828dfabaf5f16ee091592629fc566636de7b3d53322f4833014b4655dd57279cfb2828bbc6e0c5cb58c8d572dc9dcf5f5999501533e22243fac4f8ee4452a6dd0d4bcaeb2e403006a43453d56eafa7dc4ddcbd41b2330031f58e437ee3806c50a9e554a0cbc0bae792831463d56a1a9983647b77fcdbae38a6621ceef9e147614bb4869bf36267e47def74c144f8e7238dd088097943d1007f8ce7cab028151e9a1beac6d500e56fef5ea67a586d1fbb03dcc0a268f6c4835ad1c215eadc77cc676c378101d0000000000000000000000000000000000000000000000000000000000000006756e757365640000000000000000000000000000000000000000000000000000",
+	)
+	require.NoError(t, err)
+
+	require.Equal(t, expected, result)
+}
+
+func TestEncodeChurnRegistrationParams(t *testing.T) {
+	registrationParams := getExampleRegistrationParams(t)
+
+	// Values are the same as in contracts/test/RegistrationEncoding.t.sol
+	operatorKickParams := []elcontracts.OperatorKickParam{
+		{
+			QuorumNumber: 0x0,
+			Operator:     common.HexToAddress("0x1374038C2E2403f9aB7db62EE7516e0119F1124A"),
+		},
+		{
+			QuorumNumber: 0x1,
+			Operator:     common.HexToAddress("0xD393FD495367164d7eB53840e59469c13266bA59"),
+		},
+	}
+
+	signature, err := hex.DecodeString(
+		"d547fa0126f97d1752a3b3103c495961a4a6a7a5386feb32ac514289c578db5a0d64bfa34855c39d78cce241a9c73d5cae47dee02c691fd5320fdef4ad3e1f8e",
+	)
+	require.NoError(t, err)
+	require.Equal(t, 64, len(signature))
+
+	salt, err := hex.DecodeString("7879ea091cd16d7afec6bc1e96b92f2229f744c703fb9603b2ca6f60ea9df6c0")
+	require.NoError(t, err)
+	require.Equal(t, 32, len(salt))
+
+	expiry, ok := new(
+		big.Int,
+	).SetString("138752197623537982159531315300136159918886501617089726422768086017712946835", 10)
+	require.True(t, ok)
+
+	churnApproverSignature := elcontracts.SignatureWithSaltAndExpiry{
+		Signature: signature,
+		Salt:      [32]byte(salt),
+		Expiry:    expiry,
+	}
+
+	result, err := elcontracts.AbiEncodeRegistrationWithChurnParams(
+		"unused",
+		registrationParams,
+		operatorKickParams,
+		churnApproverSignature,
+	)
+	require.NoError(t, err)
+
+	// This value was generated by running `abi.encode(...)` on the Solidity equivalent of the above struct
+	expected, err := hex.DecodeString(
+		"0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000018001ac6045296d64b31ed644e53ce1a1c4f72f67a2d47b06b652ca8167f1b2ada900fb7cd59f322f4dffa18360bfcdc15f1f6cd09aea573efa919dc828dfabaf5f16ee091592629fc566636de7b3d53322f4833014b4655dd57279cfb2828bbc6e0c5cb58c8d572dc9dcf5f5999501533e22243fac4f8ee4452a6dd0d4bcaeb2e403006a43453d56eafa7dc4ddcbd41b2330031f58e437ee3806c50a9e554a0cbc0bae792831463d56a1a9983647b77fcdbae38a6621ceef9e147614bb4869bf36267e47def74c144f8e7238dd088097943d1007f8ce7cab028151e9a1beac6d500e56fef5ea67a586d1fbb03dcc0a268f6c4835ad1c215eadc77cc676c378101d00000000000000000000000000000000000000000000000000000000000001c000000000000000000000000000000000000000000000000000000000000002600000000000000000000000000000000000000000000000000000000000000006756e757365640000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000000000000000000000000001374038c2e2403f9ab7db62ee7516e0119f1124a0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000d393fd495367164d7eb53840e59469c13266ba5900000000000000000000000000000000000000000000000000000000000000607879ea091cd16d7afec6bc1e96b92f2229f744c703fb9603b2ca6f60ea9df6c0004e87ed0c684886b5b2e661e58348383df270f2ad5630aaadde83c88c517e930000000000000000000000000000000000000000000000000000000000000040d547fa0126f97d1752a3b3103c495961a4a6a7a5386feb32ac514289c578db5a0d64bfa34855c39d78cce241a9c73d5cae47dee02c691fd5320fdef4ad3e1f8e",
 	)
 	require.NoError(t, err)
 
@@ -535,7 +697,7 @@ func TestSetOperatorSetSplit(t *testing.T) {
 	erc20MockStrategyAddr := contractAddrs.Erc20MockStrategy
 
 	// Create an operator set to register an operator on it
-	err = createOperatorSet(
+	err = createTotalStakeOperatorSet(
 		clients,
 		erc20MockStrategyAddr,
 	)
@@ -774,7 +936,7 @@ func TestModifyAllocations(t *testing.T) {
 	_, err = chainReader.GetAllocationDelay(context.Background(), operatorAddr)
 	require.NoError(t, err)
 
-	err = createOperatorSet(clients, strategyAddr)
+	err = createTotalStakeOperatorSet(clients, strategyAddr)
 	require.NoError(t, err)
 
 	receipt, err = chainWriter.ModifyAllocations(context.Background(), operatorAddr, allocateParams, waitForReceipt)
@@ -846,7 +1008,7 @@ func TestClearDeallocationQueue(t *testing.T) {
 	_, err = chainReader.GetAllocationDelay(context.Background(), operatorAddr)
 	require.NoError(t, err)
 
-	err = createOperatorSet(clients, strategyAddr)
+	err = createTotalStakeOperatorSet(clients, strategyAddr)
 	require.NoError(t, err)
 
 	receipt, err = chainWriter.ModifyAllocations(context.Background(), operatorAddr, allocateParams, waitForReceipt)
@@ -1186,9 +1348,9 @@ func TestProcessClaims(t *testing.T) {
 	require.Equal(t, gethtypes.ReceiptStatusSuccessful, receipt.Status)
 }
 
-// Creates an operator set with an Avs address and an erc20MockStrategyAddr. Note that operator set Id will be
+// Creates an operator set with a single strategy. Note that operator set Id will be
 // defined sequentially (as the new amount of operator sets minus one)
-func createOperatorSet(
+func createTotalStakeOperatorSet(
 	clients *clients.Clients,
 	erc20MockStrategyAddr common.Address,
 ) error {
@@ -1199,27 +1361,21 @@ func createOperatorSet(
 		KickBIPsOfOperatorStake: 100,
 		KickBIPsOfTotalStake:    1000,
 	}
-	minimumStake := big.NewInt(0)
+	minimumStake := big.NewInt(1)
 
 	strategyParams := regcoord.IStakeRegistryTypesStrategyParams{
 		Strategy:   erc20MockStrategyAddr,
 		Multiplier: big.NewInt(1),
 	}
 	strategyParamsArray := []regcoord.IStakeRegistryTypesStrategyParams{strategyParams}
-	lookAheadPeriod := uint32(0)
-	_, err := clients.AvsRegistryChainWriter.CreateSlashableStakeQuorum(
+	_, err := clients.AvsRegistryChainWriter.CreateTotalDelegatedStakeQuorum(
 		context.Background(),
 		operatorSetParam,
 		minimumStake,
 		strategyParamsArray,
-		lookAheadPeriod,
 		waitForReceipt,
 	)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // Sets the testing RewardsCoordinator's activationDelay.

@@ -1,6 +1,7 @@
 package elcontracts
 
 import (
+	"crypto/ecdsa"
 	"math/big"
 
 	allocationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/AllocationManager"
@@ -49,7 +50,35 @@ type RegistrationRequest struct {
 	WaitForReceipt  bool
 	BlsKeyPair      *bls.KeyPair
 	Socket          string
+
+	// The following are for registering with churn approval.
+
+	// The private key of the churn approver
+	ChurnApprovalEcdsaPrivateKey *ecdsa.PrivateKey
+	// The operators to kick on each quorum
+	OperatorKickParams []OperatorKickParam
 }
+
+// Parameters for removing an operator during churn.
+// Used in RegistrationRequest to specify which operator to replace.
+type OperatorKickParam struct {
+	// Quorum from which to remove the operator.
+	QuorumNumber uint8
+	// Address of the operator to be removed.
+	Operator common.Address
+}
+
+// Struct that bundles together a signature, a salt for uniqueness, and an expiration time for the signature. Used
+// primarily for stack management.
+type SignatureWithSaltAndExpiry struct {
+	// the signature itself, formatted as a single bytes object
+	Signature []byte
+	// the salt used to generate the signature
+	Salt [32]byte
+	// the expiration timestamp (UTC) of the signature
+	Expiry *big.Int
+}
+
 type RemovePermissionRequest struct {
 	AccountAddress   common.Address
 	AppointeeAddress common.Address

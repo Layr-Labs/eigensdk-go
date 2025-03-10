@@ -2,10 +2,13 @@ package elcontracts
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/rand"
 	"errors"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/crypto"
 
 	"math/big"
 
@@ -673,6 +676,8 @@ func (w *ChainWriter) DeregisterFromOperatorSets(
 }
 
 // Register an operator for one or more operator sets for an AVS.
+// If `churnApprovalEcdsaPrivateKey` is provided, the churn approver
+// parameters will be used for replacing existing operators in full quorums.
 // If the operator has any stake allocated to these operator sets,
 // it immediately becomes slashable.
 func (w *ChainWriter) RegisterForOperatorSets(
@@ -699,9 +704,37 @@ func (w *ChainWriter) RegisterForOperatorSets(
 		return nil, utils.WrapError("failed to get public key registration params", err)
 	}
 
-	data, err := AbiEncodeRegistrationParams(RegistrationTypeNormal, request.Socket, *pubkeyRegParams)
-	if err != nil {
-		return nil, utils.WrapError("failed to encode registration params", err)
+	var data []byte
+
+	if request.ChurnApprovalEcdsaPrivateKey != nil {
+		// it's a registration with churn approval
+		signatureWithSaltAndExpiry, err := signChurnRegistration(
+			ctx,
+			w.ethClient,
+			registryCoordinatorAddr,
+			request.OperatorAddress,
+			request.ChurnApprovalEcdsaPrivateKey,
+			request.BlsKeyPair.GetPubKeyG1(),
+			request.OperatorKickParams,
+		)
+		if err != nil {
+			return nil, utils.WrapError("failed to compute churn registration signature", err)
+		}
+		data, err = AbiEncodeRegistrationWithChurnParams(
+			request.Socket,
+			*pubkeyRegParams,
+			request.OperatorKickParams,
+			signatureWithSaltAndExpiry,
+		)
+		if err != nil {
+			return nil, utils.WrapError("failed to encode churn registration params", err)
+		}
+	} else {
+		// it's a normal registration
+		data, err = AbiEncodeNormalRegistrationParams(request.Socket, *pubkeyRegParams)
+		if err != nil {
+			return nil, utils.WrapError("failed to encode normal registration params", err)
+		}
 	}
 	tx, err := w.allocationManager.RegisterForOperatorSets(
 		noSendTxOpts,
@@ -941,13 +974,76 @@ func getPubkeyRegistrationParams(
 	return &pubkeyRegParams, nil
 }
 
-// Returns the ABI encoding of the given registration params.
-func AbiEncodeRegistrationParams(
-	registrationType RegistrationType,
-	socket string,
-	pubkeyRegistrationParams regcoord.IBLSApkRegistryTypesPubkeyRegistrationParams,
-) ([]byte, error) {
-	registrationParamsType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
+// Returns the pubkey registration params for the operator given by `operatorAddress`.
+func signChurnRegistration(
+	ctx context.Context,
+	ethClient eth.HttpBackend,
+	registryCoordinatorAddr, operatorAddress gethcommon.Address,
+	churnApprovalEcdsaPrivateKey *ecdsa.PrivateKey,
+	pubKeyG1 *bls.G1Point,
+	operatorKickParams []OperatorKickParam,
+) (SignatureWithSaltAndExpiry, error) {
+	curBlockNum, err := ethClient.BlockNumber(context.Background())
+	if err != nil {
+		return SignatureWithSaltAndExpiry{}, err
+	}
+	curBlock, err := ethClient.BlockByNumber(context.Background(), new(big.Int).SetUint64(curBlockNum))
+	if err != nil {
+		return SignatureWithSaltAndExpiry{}, err
+	}
+
+	sigValidForSeconds := int64(60 * 60) // 1 hour
+
+	curTime := new(big.Int).SetUint64(curBlock.Time())
+	expiry := new(big.Int).Add(curTime, big.NewInt(sigValidForSeconds))
+
+	var salt [32]byte
+	_, err = rand.Read(salt[:])
+	if err != nil {
+		return SignatureWithSaltAndExpiry{}, err
+	}
+	registryCoordinator, err := regcoord.NewContractRegistryCoordinator(registryCoordinatorAddr, ethClient)
+	if err != nil {
+		return SignatureWithSaltAndExpiry{}, utils.WrapError("failed to create registry coordinator", err)
+	}
+	operatorId := types.OperatorIdFromG1Pubkey(pubKeyG1)
+	kickParams := make([]regcoord.ISlashingRegistryCoordinatorTypesOperatorKickParam, len(operatorKickParams))
+	for i, kickParam := range operatorKickParams {
+		kickParams[i] = regcoord.ISlashingRegistryCoordinatorTypesOperatorKickParam{
+			QuorumNumber: kickParam.QuorumNumber,
+			Operator:     kickParam.Operator,
+		}
+	}
+	msgToSign, err := registryCoordinator.CalculateOperatorChurnApprovalDigestHash(
+		&bind.CallOpts{Context: ctx},
+		operatorAddress,
+		operatorId,
+		kickParams,
+		salt,
+		expiry,
+	)
+	if err != nil {
+		return SignatureWithSaltAndExpiry{}, err
+	}
+	signature, err := crypto.Sign(msgToSign[:], churnApprovalEcdsaPrivateKey)
+	if err != nil {
+		return SignatureWithSaltAndExpiry{}, err
+	}
+	// the crypto library is low level and deals with 0/1 v values, whereas ethereum expects 27/28, so we add 27
+	// see https://github.com/ethereum/go-ethereum/issues/28757#issuecomment-1874525854
+	// and https://twitter.com/pcaversaccio/status/1671488928262529031
+	signature[64] += 27
+
+	signatureWithSaltAndExpiry := SignatureWithSaltAndExpiry{
+		Signature: signature,
+		Salt:      salt,
+		Expiry:    expiry,
+	}
+	return signatureWithSaltAndExpiry, nil
+}
+
+func getNormalRegistrationAbi() []abi.ArgumentMarshaling {
+	return []abi.ArgumentMarshaling{
 		{Name: "RegistrationType", Type: "uint8"},
 		{Name: "Socket", Type: "string"},
 		{Name: "PubkeyRegParams", Type: "tuple", Components: []abi.ArgumentMarshaling{
@@ -964,7 +1060,29 @@ func AbiEncodeRegistrationParams(
 				{Name: "Y", Type: "uint256[2]"},
 			}},
 		}},
-	})
+	}
+}
+
+func getRegistrationWithChurnAbi() []abi.ArgumentMarshaling {
+	return append(getNormalRegistrationAbi(), []abi.ArgumentMarshaling{
+		{Name: "OperatorKickParams", Type: "tuple[]", Components: []abi.ArgumentMarshaling{
+			{Name: "QuorumNumber", Type: "uint8"},
+			{Name: "Operator", Type: "address"},
+		}},
+		{Name: "SignatureWithSaltAndExpiry", Type: "tuple", Components: []abi.ArgumentMarshaling{
+			{Name: "Signature", Type: "bytes"},
+			{Name: "Salt", Type: "bytes32"},
+			{Name: "Expiry", Type: "uint256"},
+		}},
+	}...)
+}
+
+// Returns the ABI encoding of the given normal registration params.
+func AbiEncodeNormalRegistrationParams(
+	socket string,
+	pubkeyRegistrationParams regcoord.IBLSApkRegistryTypesPubkeyRegistrationParams,
+) ([]byte, error) {
+	registrationParamsType, err := abi.NewType("tuple", "", getNormalRegistrationAbi())
 	if err != nil {
 		return nil, err
 	}
@@ -974,9 +1092,48 @@ func AbiEncodeRegistrationParams(
 		Socket           string
 		PubkeyRegParams  regcoord.IBLSApkRegistryTypesPubkeyRegistrationParams
 	}{
-		registrationType,
+		RegistrationTypeNormal,
 		socket,
 		pubkeyRegistrationParams,
+	}
+
+	args := abi.Arguments{
+		{Type: registrationParamsType, Name: "registrationParams"},
+	}
+
+	data, err := args.Pack(&registrationParams)
+	if err != nil {
+		return nil, err
+	}
+	// The encoder is prepending 32 bytes to the data as if it was used in a dynamic function parameter.
+	// This is not used when decoding the bytes directly, so we need to remove it.
+	return data[32:], nil
+}
+
+// Returns the ABI encoding of the given registration with churn params.
+func AbiEncodeRegistrationWithChurnParams(
+	socket string,
+	pubkeyRegistrationParams regcoord.IBLSApkRegistryTypesPubkeyRegistrationParams,
+	operatorKickParams []OperatorKickParam,
+	churnApproverSignature SignatureWithSaltAndExpiry,
+) ([]byte, error) {
+	registrationParamsType, err := abi.NewType("tuple", "", getRegistrationWithChurnAbi())
+	if err != nil {
+		return nil, err
+	}
+
+	registrationParams := struct {
+		RegistrationType           RegistrationType
+		Socket                     string
+		PubkeyRegParams            regcoord.IBLSApkRegistryTypesPubkeyRegistrationParams
+		OperatorKickParams         []OperatorKickParam
+		SignatureWithSaltAndExpiry SignatureWithSaltAndExpiry
+	}{
+		RegistrationTypeChurn,
+		socket,
+		pubkeyRegistrationParams,
+		operatorKickParams,
+		churnApproverSignature,
 	}
 
 	args := abi.Arguments{
