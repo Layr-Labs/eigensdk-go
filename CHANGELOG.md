@@ -72,7 +72,7 @@ Each version will have a separate `Breaking Changes` section as well. To describ
       assert.NoError(t, err)
       assert.True(t, receipt.Status == 1)
     ```
-  Note that this PR also introduces M2 operator
+  This PR also introduces the `M2Operator` type
 
 ### Changed
 
