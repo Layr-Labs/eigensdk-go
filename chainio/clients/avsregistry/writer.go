@@ -13,7 +13,6 @@ import (
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	m2regcoord "github.com/Layr-Labs/eigensdk-go/M2-contracts/bindings/RegistryCoordinator"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
@@ -42,22 +41,20 @@ type eLReader interface {
 // The ChainWriter provides methods to call the
 // AVS registry contract's state-changing functions.
 type ChainWriter struct {
-	serviceManagerAddr      gethcommon.Address
-	registryCoordinatorAddr gethcommon.Address
-	registryCoordinator     *regcoord.ContractRegistryCoordinator
-	operatorStateRetriever  *opstateretriever.ContractOperatorStateRetriever
-	stakeRegistry           *stakeregistry.ContractStakeRegistry
-	blsApkRegistry          *blsapkregistry.ContractBLSApkRegistry
-	elReader                eLReader
-	logger                  logging.Logger
-	ethClient               eth.HttpBackend
-	txMgr                   txmgr.TxManager
+	serviceManagerAddr     gethcommon.Address
+	registryCoordinator    *regcoord.ContractRegistryCoordinator
+	operatorStateRetriever *opstateretriever.ContractOperatorStateRetriever
+	stakeRegistry          *stakeregistry.ContractStakeRegistry
+	blsApkRegistry         *blsapkregistry.ContractBLSApkRegistry
+	elReader               eLReader
+	logger                 logging.Logger
+	ethClient              eth.HttpBackend
+	txMgr                  txmgr.TxManager
 }
 
 // Returns a new instance of ChainWriter.
 func NewChainWriter(
 	serviceManagerAddr gethcommon.Address,
-	registryCoordinatorAddr gethcommon.Address,
 	registryCoordinator *regcoord.ContractRegistryCoordinator,
 	operatorStateRetriever *opstateretriever.ContractOperatorStateRetriever,
 	stakeRegistry *stakeregistry.ContractStakeRegistry,
@@ -70,16 +67,15 @@ func NewChainWriter(
 	logger = logger.With(logging.ComponentKey, "avsregistry/ChainWriter")
 
 	return &ChainWriter{
-		serviceManagerAddr:      serviceManagerAddr,
-		registryCoordinatorAddr: registryCoordinatorAddr,
-		registryCoordinator:     registryCoordinator,
-		operatorStateRetriever:  operatorStateRetriever,
-		stakeRegistry:           stakeRegistry,
-		blsApkRegistry:          blsApkRegistry,
-		elReader:                elReader,
-		logger:                  logger,
-		ethClient:               ethClient,
-		txMgr:                   txMgr,
+		serviceManagerAddr:     serviceManagerAddr,
+		registryCoordinator:    registryCoordinator,
+		operatorStateRetriever: operatorStateRetriever,
+		stakeRegistry:          stakeRegistry,
+		blsApkRegistry:         blsApkRegistry,
+		elReader:               elReader,
+		logger:                 logger,
+		ethClient:              ethClient,
+		txMgr:                  txMgr,
 	}
 }
 
@@ -105,7 +101,6 @@ func NewWriterFromConfig(
 
 	return NewChainWriter(
 		bindings.ServiceManagerAddr,
-		bindings.RegistryCoordinatorAddr,
 		bindings.RegistryCoordinator,
 		bindings.OperatorStateRetriever,
 		bindings.StakeRegistry,
@@ -291,22 +286,17 @@ func (w *ChainWriter) RegisterOperatorWithChurn(
 	socket string,
 	waitForReceipt bool,
 ) (*gethtypes.Receipt, error) {
-	m2registryCoordinator, err := m2regcoord.NewContractRegistryCoordinator(w.registryCoordinatorAddr, w.ethClient)
-	if err != nil {
-		return nil, utils.WrapError("Failed to fetch m2DelegationManager contract", err)
-	}
-
 	operatorAddr := crypto.PubkeyToAddress(operatorEcdsaPrivateKey.PublicKey)
-	g1HashedMsgToSign, err := m2registryCoordinator.PubkeyRegistrationMessageHash(&bind.CallOpts{}, operatorAddr)
+	g1HashedMsgToSign, err := w.registryCoordinator.PubkeyRegistrationMessageHash(&bind.CallOpts{}, operatorAddr)
 	if err != nil {
 		return nil, err
 	}
-	signedMsg := chainioutils.ConvertToM2BN254G1Point(
-		blsKeyPair.SignHashedToCurveMessage(chainioutils.ConvertM2Bn254GethToGnark(g1HashedMsgToSign)).G1Point,
+	signedMsg := chainioutils.ConvertToBN254G1Point(
+		blsKeyPair.SignHashedToCurveMessage(chainioutils.ConvertBn254GethToGnark(g1HashedMsgToSign)).G1Point,
 	)
-	G1pubkeyBN254 := chainioutils.ConvertToM2BN254G1Point(blsKeyPair.GetPubKeyG1())
-	G2pubkeyBN254 := chainioutils.ConvertToM2BN254G2Point(blsKeyPair.GetPubKeyG2())
-	pubkeyRegParams := m2regcoord.IBLSApkRegistryPubkeyRegistrationParams{
+	G1pubkeyBN254 := chainioutils.ConvertToBN254G1Point(blsKeyPair.GetPubKeyG1())
+	G2pubkeyBN254 := chainioutils.ConvertToBN254G2Point(blsKeyPair.GetPubKeyG2())
+	pubkeyRegParams := regcoord.IBLSApkRegistryTypesPubkeyRegistrationParams{
 		PubkeyRegistrationSignature: signedMsg,
 		PubkeyG1:                    G1pubkeyBN254,
 		PubkeyG2:                    G2pubkeyBN254,
@@ -351,15 +341,15 @@ func (w *ChainWriter) RegisterOperatorWithChurn(
 	// see https://github.com/ethereum/go-ethereum/issues/28757#issuecomment-1874525854
 	// and https://twitter.com/pcaversaccio/status/1671488928262529031
 	operatorSignature[64] += 27
-	operatorSignatureWithSaltAndExpiry := m2regcoord.ISignatureUtilsSignatureWithSaltAndExpiry{
+	operatorSignatureWithSaltAndExpiry := regcoord.ISignatureUtilsSignatureWithSaltAndExpiry{
 		Signature: operatorSignature,
 		Salt:      signatureSalt,
 		Expiry:    signatureExpiry,
 	}
 
-	var operatorKickParams []m2regcoord.IRegistryCoordinatorOperatorKickParam
+	var operatorKickParams []regcoord.ISlashingRegistryCoordinatorTypesOperatorKickParam
 	for i, operatorToKick := range operatorsToKick {
-		operatorKickParams = append(operatorKickParams, m2regcoord.IRegistryCoordinatorOperatorKickParam{
+		operatorKickParams = append(operatorKickParams, regcoord.ISlashingRegistryCoordinatorTypesOperatorKickParam{
 			Operator:     operatorToKick,
 			QuorumNumber: quorumNumbersToKick[i].UnderlyingType(),
 		})
@@ -382,7 +372,7 @@ func (w *ChainWriter) RegisterOperatorWithChurn(
 	}
 	copy(operatorIdBytes[:], operatorIdBytesDecoded)
 
-	churnMsgToSign, err := m2registryCoordinator.CalculateOperatorChurnApprovalDigestHash(
+	churnMsgToSign, err := w.registryCoordinator.CalculateOperatorChurnApprovalDigestHash(
 		&bind.CallOpts{Context: ctx},
 		operatorAddr,
 		operatorIdBytes,
@@ -403,7 +393,7 @@ func (w *ChainWriter) RegisterOperatorWithChurn(
 	// see https://github.com/ethereum/go-ethereum/issues/28757#issuecomment-1874525854
 	// and https://twitter.com/pcaversaccio/status/1671488928262529031
 	churnApprovalSignature[64] += 27
-	churnApproverSignatureWithSaltAndExpiry := m2regcoord.ISignatureUtilsSignatureWithSaltAndExpiry{
+	churnApproverSignatureWithSaltAndExpiry := regcoord.ISignatureUtilsSignatureWithSaltAndExpiry{
 		Signature: churnApprovalSignature,
 		Salt:      churnSignatureSalt,
 		Expiry:    signatureExpiry,
@@ -414,7 +404,7 @@ func (w *ChainWriter) RegisterOperatorWithChurn(
 		return nil, err
 	}
 
-	tx, err := m2registryCoordinator.RegisterOperatorWithChurn(
+	tx, err := w.registryCoordinator.RegisterOperatorWithChurn(
 		noSendTxOpts,
 		quorumNumbers.UnderlyingType(),
 		socket,

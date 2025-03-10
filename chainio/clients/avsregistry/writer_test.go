@@ -289,6 +289,7 @@ func TestWriterMethods(t *testing.T) {
 		assert.Equal(t, newMinimumStakeForQuorum, big.NewInt(100))
 	})
 }
+
 func TestRegisterOperatorWithChurn(t *testing.T) {
 	testConfig := testutils.GetDefaultTestConfig()
 	anvilC, err := testutils.StartM2AnvilContainer(testConfig.AnvilStateFileName)
