@@ -289,10 +289,6 @@ func TestWriterMethods(t *testing.T) {
 		assert.Equal(t, newMinimumStakeForQuorum, big.NewInt(100))
 	})
 }
-
-// This test is commented because we need to use the new flow functions, and RegisterOperatorWithChurn belongs to the
-// old one. We can use RegisterOperatorForOperatorSet to register with churn, but we should expose a function
-// registerOperatorForOperatorSetsWithChurn
 func TestRegisterOperatorWithChurn(t *testing.T) {
 	testConfig := testutils.GetDefaultTestConfig()
 	anvilC, err := testutils.StartM2AnvilContainer(testConfig.AnvilStateFileName)
