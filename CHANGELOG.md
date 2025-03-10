@@ -158,7 +158,8 @@ Each version will have a separate `Breaking Changes` section as well. To describ
     ```
 * In elcontracts, `ChainReader.IsOperatorRegisteredWithOperatorSet` no longer queries the `AVSDirectory`, and so now only works for operator sets by @maximopalopoli in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
   * To query if an operator is registered to an M2 quorum you should now use `chainReader.IsOperatorRegisteredWithAvs`, which queries the `AVSDirectory`.
-* `egnaddrs` utility now works with slashing release middleware contracts and, in that case, the returned service manager will be the zero address, unless the `--service-manager` is specified.
+* `egnaddrs` utility now works with slashing release middleware contracts and, in that case, the returned service manager will be the zero address, unless the `--service-manager` is specified by @maximopalopoli in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585).
+* The `elcontracts.NewChainWriter` function now receives an additional parameter, the delegation manager address by @maximopalopoli in [#595](https://github.com/Layr-Labs/eigensdk-go/pull/595).
 
 ### Removed
 * Removed `IsOperatorSetQuorum` method of avsRegistry chain reader by @maximopalopoli in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
