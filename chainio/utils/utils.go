@@ -3,6 +3,7 @@ package utils
 import (
 	"math/big"
 
+	m2regcoord "github.com/Layr-Labs/eigensdk-go/M2-contracts/bindings/RegistryCoordinator"
 	regcoord "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/consensys/gnark-crypto/ecc/bn254"
@@ -27,6 +28,29 @@ func ConvertToBN254G1Point(input *bls.G1Point) regcoord.BN254G1Point {
 
 func ConvertToBN254G2Point(input *bls.G2Point) regcoord.BN254G2Point {
 	output := regcoord.BN254G2Point{
+		X: [2]*big.Int{input.X.A1.BigInt(big.NewInt(0)), input.X.A0.BigInt(big.NewInt(0))},
+		Y: [2]*big.Int{input.Y.A1.BigInt(big.NewInt(0)), input.Y.A0.BigInt(big.NewInt(0))},
+	}
+	return output
+}
+
+// This function is for M2 functionality
+func ConvertM2Bn254GethToGnark(input m2regcoord.BN254G1Point) *bn254.G1Affine {
+	return bls.NewG1Point(input.X, input.Y).G1Affine
+}
+
+// This function is for M2 functionality
+func ConvertToM2BN254G1Point(input *bls.G1Point) m2regcoord.BN254G1Point {
+	output := m2regcoord.BN254G1Point{
+		X: input.X.BigInt(big.NewInt(0)),
+		Y: input.Y.BigInt(big.NewInt(0)),
+	}
+	return output
+}
+
+// This function is for M2 functionality
+func ConvertToM2BN254G2Point(input *bls.G2Point) m2regcoord.BN254G2Point {
+	output := m2regcoord.BN254G2Point{
 		X: [2]*big.Int{input.X.A1.BigInt(big.NewInt(0)), input.X.A0.BigInt(big.NewInt(0))},
 		Y: [2]*big.Int{input.Y.A1.BigInt(big.NewInt(0)), input.Y.A0.BigInt(big.NewInt(0))},
 	}
