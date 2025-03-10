@@ -15,6 +15,7 @@ import (
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
 
+	m2delegationmanager "github.com/Layr-Labs/eigensdk-go/M2-contracts/bindings/DelegationManager"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	chainioutils "github.com/Layr-Labs/eigensdk-go/chainio/utils"
@@ -49,11 +50,14 @@ type ChainWriter struct {
 	avsDirectory         *avsdirectory.ContractAVSDirectory
 	allocationManager    *allocationmanager.ContractAllocationManager
 	permissionController *permissioncontroller.ContractPermissionController
-	strategyManagerAddr  gethcommon.Address
-	elChainReader        Reader
-	ethClient            eth.HttpBackend
-	logger               logging.Logger
-	txMgr                txmgr.TxManager
+	// This field exists to handle M2 contracts, so the address is used to create
+	// the M2 delegationManager binding in registerAsOperatorPreSlashing.
+	delegationManagerAddr gethcommon.Address
+	strategyManagerAddr   gethcommon.Address
+	elChainReader         Reader
+	ethClient             eth.HttpBackend
+	logger                logging.Logger
+	txMgr                 txmgr.TxManager
 }
 
 // Returns a new instance of ChainWriter.
@@ -65,6 +69,7 @@ func NewChainWriter(
 	allocationManager *allocationmanager.ContractAllocationManager,
 	permissionController *permissioncontroller.ContractPermissionController,
 	strategyManagerAddr gethcommon.Address,
+	delegationManagerAddr gethcommon.Address,
 	elChainReader Reader,
 	ethClient eth.HttpBackend,
 	logger logging.Logger,
@@ -74,17 +79,18 @@ func NewChainWriter(
 	logger = logger.With(logging.ComponentKey, "elcontracts/writer")
 
 	return &ChainWriter{
-		delegationManager:    delegationManager,
-		strategyManager:      strategyManager,
-		strategyManagerAddr:  strategyManagerAddr,
-		rewardsCoordinator:   rewardsCoordinator,
-		allocationManager:    allocationManager,
-		permissionController: permissionController,
-		avsDirectory:         avsDirectory,
-		elChainReader:        elChainReader,
-		logger:               logger,
-		ethClient:            ethClient,
-		txMgr:                txMgr,
+		delegationManager:     delegationManager,
+		delegationManagerAddr: delegationManagerAddr,
+		strategyManager:       strategyManager,
+		strategyManagerAddr:   strategyManagerAddr,
+		rewardsCoordinator:    rewardsCoordinator,
+		allocationManager:     allocationManager,
+		permissionController:  permissionController,
+		avsDirectory:          avsDirectory,
+		elChainReader:         elChainReader,
+		logger:                logger,
+		ethClient:             ethClient,
+		txMgr:                 txMgr,
 	}
 }
 
@@ -122,6 +128,7 @@ func NewWriterFromConfig(
 		elContractBindings.AllocationManager,
 		elContractBindings.PermissionController,
 		elContractBindings.StrategyManagerAddr,
+		elContractBindings.DelegationManagerAddr,
 		elChainReader,
 		ethClient,
 		logger,
@@ -159,6 +166,45 @@ func (w *ChainWriter) RegisterAsOperator(
 	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt)
 	if err != nil {
 		return nil, utils.WrapError("failed to send tx", err)
+	}
+	w.logger.Info("tx successfully included", "txHash", receipt.TxHash.String())
+
+	return receipt, nil
+}
+
+// Registers the caller as an operator in EigenLayer through the M2 DelegationManager contract.
+// Note: This method is only works on the pre-slashing (M2) version of the contracts.
+func (w *ChainWriter) RegisterAsOperatorPreSlashing(
+	ctx context.Context,
+	operator types.M2Operator,
+	waitForReceipt bool,
+) (*gethtypes.Receipt, error) {
+	w.logger.Infof("registering operator %s to EigenLayer", operator.Address)
+
+	m2DelegationManager, err := m2delegationmanager.NewContractDelegationManager(w.delegationManagerAddr, w.ethClient)
+	if err != nil {
+		return nil, utils.WrapError("Failed to fetch m2DelegationManager contract", err)
+	}
+
+	opDetails := m2delegationmanager.IDelegationManagerOperatorDetails{
+		// Earning receiver has been deprecated, so we just use the operator address as a dummy value
+		// Any reward related setup is via RewardsCoordinator contract
+		DeprecatedEarningsReceiver: gethcommon.HexToAddress(operator.Address),
+		StakerOptOutWindowBlocks:   operator.StakerOptOutWindowBlocks,
+		DelegationApprover:         gethcommon.HexToAddress(operator.DelegationApproverAddress),
+	}
+
+	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
+	if err != nil {
+		return nil, err
+	}
+	tx, err := m2DelegationManager.RegisterAsOperator(noSendTxOpts, opDetails, operator.MetadataUrl)
+	if err != nil {
+		return nil, err
+	}
+	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt)
+	if err != nil {
+		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
 	w.logger.Info("tx successfully included", "txHash", receipt.TxHash.String())
 

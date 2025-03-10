@@ -73,6 +73,7 @@ func BuildClients(
 		elContractBindings.AllocationManager,
 		elContractBindings.PermissionController,
 		elContractBindings.StrategyManagerAddr,
+		elContractBindings.DelegationManagerAddr,
 		elChainReader,
 		client,
 		logger,
