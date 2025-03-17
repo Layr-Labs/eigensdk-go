@@ -897,6 +897,32 @@ func (r *ChainReader) IsOperatorSlashable(
 	return isSlashable, nil
 }
 
+// Returns the current allocated stake, despite the operator's slashable status for the operatorSet.
+// Note: this method does not take into account M2 quorums
+func (r *ChainReader) GetAllocatedStake(
+	ctx context.Context,
+	operatorSet allocationmanager.OperatorSet,
+	operatorAddresses []gethcommon.Address,
+	strategyAddresses []gethcommon.Address,
+) ([][]*big.Int, error) {
+	if r.allocationManager == nil {
+		return nil, errors.New("AllocationManager contract not provided")
+	}
+
+	isSlashable, err := r.allocationManager.GetAllocatedStake(
+		&bind.CallOpts{Context: ctx},
+		operatorSet,
+		operatorAddresses,
+		strategyAddresses,
+	)
+	// This call should not fail since it's a getter
+	if err != nil {
+		return nil, err
+	}
+
+	return isSlashable, nil
+}
+
 // Returns the list of operators in a specific operator set.
 // Not supported for M2 AVSs.
 // Can return an error if the `AllocationManager` contract address was not provided, or due to
