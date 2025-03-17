@@ -871,6 +871,32 @@ func (r *ChainReader) IsOperatorRegisteredWithAvs(
 	return status == 1, nil
 }
 
+// Returns true if the received operator is slashable by the received operator set. This means the operator is
+// registered or their slashableUntil block has not passed (after deregistered, operators remain slashable for a period
+// of time).
+// Note: this method does not take into account M2 quorums
+func (r *ChainReader) IsOperatorSlashable(
+	ctx context.Context,
+	operatorAddress gethcommon.Address,
+	operatorSet allocationmanager.OperatorSet,
+) (bool, error) {
+	if r.allocationManager == nil {
+		return false, errors.New("AllocationManager contract not provided")
+	}
+
+	isSlashable, err := r.allocationManager.IsOperatorSlashable(
+		&bind.CallOpts{Context: ctx},
+		operatorAddress,
+		operatorSet,
+	)
+	// This call should not fail since it's a getter
+	if err != nil {
+		return false, err
+	}
+
+	return isSlashable, nil
+}
+
 // Returns the list of operators in a specific operator set.
 // Not supported for M2 AVSs.
 // Can return an error if the `AllocationManager` contract address was not provided, or due to
