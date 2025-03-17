@@ -180,6 +180,8 @@ Each version will have a separate `Breaking Changes` section as well. To describ
 * Renamed `SetAccountIdentifier` to `SetAvs` [#597](https://github.com/Layr-Labs/eigensdk-go/pull/597)
   * The underlying call was renamed in [the v1.1.1 eigenlayer-middleware release](https://github.com/Layr-Labs/eigenlayer-middleware/releases/tag/v1.1.1-testnet-slashing).
 
+* Bumped up slashing bindings to [v1.3.0-rc.0](https://github.com/Layr-Labs/eigenlayer-contracts/releases/tag/v1.3.0) by @maximopalopoli in [#602](https://github.com/Layr-Labs/eigensdk-go/pull/602)
+
 ### Removed
 * Removed `IsOperatorSetQuorum` method of avsRegistry chain reader by @maximopalopoli in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
   * This function was removed in [the v1.1.1 eigenlayer-middleware release](https://github.com/Layr-Labs/eigenlayer-middleware/releases/tag/v1.1.1-testnet-slashing).
