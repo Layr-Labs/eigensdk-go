@@ -193,7 +193,7 @@ func (w *ChainWriter) RegisterOperator(
 	// see https://github.com/ethereum/go-ethereum/issues/28757#issuecomment-1874525854
 	// and https://twitter.com/pcaversaccio/status/1671488928262529031
 	operatorSignature[64] += 27
-	operatorSignatureWithSaltAndExpiry := regcoord.ISignatureUtilsSignatureWithSaltAndExpiry{
+	operatorSignatureWithSaltAndExpiry := regcoord.ISignatureUtilsMixinTypesSignatureWithSaltAndExpiry{
 		Signature: operatorSignature,
 		Salt:      signatureSalt,
 		Expiry:    signatureExpiry,
@@ -341,7 +341,7 @@ func (w *ChainWriter) RegisterOperatorWithChurn(
 	// see https://github.com/ethereum/go-ethereum/issues/28757#issuecomment-1874525854
 	// and https://twitter.com/pcaversaccio/status/1671488928262529031
 	operatorSignature[64] += 27
-	operatorSignatureWithSaltAndExpiry := regcoord.ISignatureUtilsSignatureWithSaltAndExpiry{
+	operatorSignatureWithSaltAndExpiry := regcoord.ISignatureUtilsMixinTypesSignatureWithSaltAndExpiry{
 		Signature: operatorSignature,
 		Salt:      signatureSalt,
 		Expiry:    signatureExpiry,
@@ -393,7 +393,7 @@ func (w *ChainWriter) RegisterOperatorWithChurn(
 	// see https://github.com/ethereum/go-ethereum/issues/28757#issuecomment-1874525854
 	// and https://twitter.com/pcaversaccio/status/1671488928262529031
 	churnApprovalSignature[64] += 27
-	churnApproverSignatureWithSaltAndExpiry := regcoord.ISignatureUtilsSignatureWithSaltAndExpiry{
+	churnApproverSignatureWithSaltAndExpiry := regcoord.ISignatureUtilsMixinTypesSignatureWithSaltAndExpiry{
 		Signature: churnApprovalSignature,
 		Salt:      churnSignatureSalt,
 		Expiry:    signatureExpiry,

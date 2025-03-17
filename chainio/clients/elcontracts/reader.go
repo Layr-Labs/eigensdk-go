@@ -644,7 +644,7 @@ func (r *ChainReader) GetEncumberedMagnitude(
 		return 0, errors.New("AllocationManager contract not provided")
 	}
 
-	return r.allocationManager.EncumberedMagnitude(&bind.CallOpts{Context: ctx}, operatorAddress, strategyAddress)
+	return r.allocationManager.GetEncumberedMagnitude(&bind.CallOpts{Context: ctx}, operatorAddress, strategyAddress)
 }
 
 // Returns the delay within which deallocations are slashable.
