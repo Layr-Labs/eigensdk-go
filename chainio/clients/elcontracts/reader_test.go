@@ -576,7 +576,7 @@ func TestChainReader(t *testing.T) {
 		require.False(t, isSlashable)
 	})
 
-	t.Run("get operator stake", func(t *testing.T) {
+	t.Run("get allocated stake", func(t *testing.T) {
 		chainWriter := clients.ElChainWriter
 
 		chainReader := clients.ElChainReader
