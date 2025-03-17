@@ -575,6 +575,100 @@ func TestChainReader(t *testing.T) {
 		require.NoError(t, err)
 		require.False(t, isSlashable)
 	})
+
+	t.Run("get operator stake", func(t *testing.T) {
+		chainWriter := clients.ElChainWriter
+
+		chainReader := clients.ElChainReader
+
+		avsAddress := contractAddrs.ServiceManager
+		operatorSetId := uint32(1)
+		erc20MockStrategyAddr := contractAddrs.Erc20MockStrategy
+
+		// After registration, operator has zero stake in specified strategy
+		err := createTotalStakeOperatorSet(
+			clients,
+			erc20MockStrategyAddr,
+		)
+		require.NoError(t, err)
+
+		operatorAddress := common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
+		keypair, err := bls.NewKeyPairFromString("0x01")
+		require.NoError(t, err)
+
+		request := elcontracts.RegistrationRequest{
+			OperatorAddress: operatorAddress,
+			AVSAddress:      avsAddress,
+			OperatorSetIds:  []uint32{operatorSetId},
+			WaitForReceipt:  true,
+			Socket:          "socket",
+			BlsKeyPair:      keypair,
+		}
+
+		operatorSet := allocationmanager.OperatorSet{
+			Avs: avsAddress,
+			Id:  operatorSetId,
+		}
+
+		registryCoordinatorAddress := contractAddrs.RegistryCoordinator
+		receipt, err := chainWriter.RegisterForOperatorSets(
+			context.Background(),
+			registryCoordinatorAddress,
+			request,
+		)
+		require.NoError(t, err)
+		require.Equal(t, gethtypes.ReceiptStatusSuccessful, receipt.Status)
+
+		operatorAddresses := []common.Address{operatorAddress}
+		strategyAddresses := []common.Address{erc20MockStrategyAddr}
+		allocatedStakes, err := chainReader.GetAllocatedStake(
+			context.Background(),
+			operatorSet,
+			operatorAddresses,
+			strategyAddresses,
+		)
+		require.NoError(t, err)
+		require.Zero(t, allocatedStakes[0][0].Int64())
+
+		// Allocate stake to the operator in the required strategy
+		allocatable_reduction := uint64(100)
+		allocateParams := []allocationmanager.IAllocationManagerTypesAllocateParams{
+			{
+				OperatorSet:   operatorSet,
+				Strategies:    []common.Address{erc20MockStrategyAddr},
+				NewMagnitudes: []uint64{allocatable_reduction},
+			},
+		}
+
+		waitForReceipt := true
+		delay := uint32(1)
+		receipt, err = chainWriter.SetAllocationDelay(context.Background(), operatorAddress, delay, waitForReceipt)
+		require.NoError(t, err)
+		require.Equal(t, gethtypes.ReceiptStatusSuccessful, receipt.Status)
+
+		allocationConfigurationDelay := 1200
+		testutils.AdvanceChainByNBlocksExecInContainer(context.Background(), allocationConfigurationDelay+1, anvilC)
+
+		receipt, err = chainWriter.ModifyAllocations(
+			context.Background(),
+			operatorAddress,
+			allocateParams,
+			waitForReceipt,
+		)
+		require.NoError(t, err)
+		require.Equal(t, gethtypes.ReceiptStatusSuccessful, receipt.Status)
+
+		testutils.AdvanceChainByNBlocksExecInContainer(context.Background(), allocationConfigurationDelay+1, anvilC)
+
+		allocatedStakes, err = chainReader.GetAllocatedStake(
+			context.Background(),
+			operatorSet,
+			operatorAddresses,
+			strategyAddresses,
+		)
+		require.NoError(t, err)
+		require.NotZero(t, allocatedStakes[0][0].Int64())
+	})
 }
 
 func TestGetCurrentClaimableDistributionRoot(t *testing.T) {
