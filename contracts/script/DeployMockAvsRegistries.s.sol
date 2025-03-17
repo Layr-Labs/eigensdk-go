@@ -143,14 +143,14 @@ contract DeployMockAvsRegistries is Script, ConfigsReadWriter, EigenlayerContrac
     }
 
     function _upgradeProxy(address proxy, address implementation) internal {
-        deployed.proxyAdmin.upgrade(TransparentUpgradeableProxy(payable(proxy)), implementation);
+        deployed.proxyAdmin.upgrade(ITransparentUpgradeableProxy(payable(proxy)), implementation);
     }
 
     function _initializeRegistryCoordinator(MockAvsOpsAddresses memory config, MockAvsServiceManager manager)
         internal
     {
         deployed.proxyAdmin.upgradeAndCall(
-            TransparentUpgradeableProxy(payable(address(deployed.coordinator))),
+            ITransparentUpgradeableProxy(payable(address(deployed.coordinator))),
             address(deployed.coordinatorImplementation),
             abi.encodeCall(
                 deployed.coordinator.initialize,

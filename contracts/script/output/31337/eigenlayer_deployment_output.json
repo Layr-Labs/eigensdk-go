@@ -1,5 +1,6 @@
 {
   "addresses": {
+    "TestToken": "0xc5a5C42992dECbae36851359345FE25997F5C42d",
     "allocationManager": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
     "allocationManagerImplementation": "0x68B1D87F95878fE05B998F19b66F4baba5De1aed",
     "avsDirectory": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
@@ -22,6 +23,7 @@
     "strategies": {
       "WETH": "0x67d269191c92Caf3cD7723F116c85e6E9bf55933"
     },
+    "strategy": "0x67d269191c92Caf3cD7723F116c85e6E9bf55933",
     "strategyManager": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
     "strategyManagerImplementation": "0x9A676e781A523b5d0C0e43731313A708CB607508",
     "token": {
