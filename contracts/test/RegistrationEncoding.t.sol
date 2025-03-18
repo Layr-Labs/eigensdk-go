@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 
 import {ISlashingRegistryCoordinatorTypes} from "eigenlayer-middleware/src/interfaces/ISlashingRegistryCoordinator.sol";
 import {IBLSApkRegistryTypes} from "eigenlayer-middleware/src/interfaces/IBLSApkRegistry.sol";
-import {ISignatureUtils} from "eigenlayer-contracts/src/contracts/interfaces/ISignatureUtils.sol";
+import {ISignatureUtilsMixinTypes} from "eigenlayer-contracts/src/contracts/interfaces/ISignatureUtilsMixin.sol";
 
 // Tests are used to verify the encoding of operator registration parameters are correct.
 // The results are used in chainio/clients/elcontracts/writer_test.go
@@ -60,7 +60,7 @@ contract RegistrationEncodingTest is Test {
         operatorKickParams[1].operator = 0xD393FD495367164d7eB53840e59469c13266bA59;
 
         // Values are random
-        ISignatureUtils.SignatureWithSaltAndExpiry memory churnApproverSignature;
+        ISignatureUtilsMixinTypes.SignatureWithSaltAndExpiry memory churnApproverSignature;
         churnApproverSignature.signature =
             hex"d547fa0126f97d1752a3b3103c495961a4a6a7a5386feb32ac514289c578db5a0d64bfa34855c39d78cce241a9c73d5cae47dee02c691fd5320fdef4ad3e1f8e";
         churnApproverSignature.salt = hex"7879ea091cd16d7afec6bc1e96b92f2229f744c703fb9603b2ca6f60ea9df6c0";
