@@ -180,6 +180,16 @@ Each version will have a separate `Breaking Changes` section as well. To describ
 * Renamed `SetAccountIdentifier` to `SetAvs` [#597](https://github.com/Layr-Labs/eigensdk-go/pull/597)
   * The underlying call was renamed in [the v1.1.1 eigenlayer-middleware release](https://github.com/Layr-Labs/eigenlayer-middleware/releases/tag/v1.1.1-testnet-slashing).
 
+* Added bindings for M2 contracts by @maximopalopoli in [595](https://github.com/Layr-Labs/eigensdk-go/pull/595)
+  * The M2 bindings are available at `github.com/Layr-Labs/eigensdk-goM2-contracts/bindings`. Users that wish to use an old version of a binding should change the `contracts` part of the import for `M2-contracts`:
+    ```go
+      // slashing bindings import
+      // import "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
+
+      // M2 bindings import
+      import "github.com/Layr-Labs/eigensdk-go/M2-contracts/bindings/RegistryCoordinator"
+    ```
+
 * Bumped up slashing bindings to [v1.3.0-rc.0](https://github.com/Layr-Labs/eigenlayer-contracts/releases/tag/v1.3.0) by @maximopalopoli in [#602](https://github.com/Layr-Labs/eigensdk-go/pull/602)
   * Introduces two new functions for `elcontracts.chainReader`: `IsOperatorSlashable` and `GetAllocatedStake`. The first can be used this way:
     ``` Go
