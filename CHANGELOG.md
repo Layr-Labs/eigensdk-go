@@ -180,6 +180,23 @@ Each version will have a separate `Breaking Changes` section as well. To describ
 * Renamed `SetAccountIdentifier` to `SetAvs` [#597](https://github.com/Layr-Labs/eigensdk-go/pull/597)
   * The underlying call was renamed in [the v1.1.1 eigenlayer-middleware release](https://github.com/Layr-Labs/eigenlayer-middleware/releases/tag/v1.1.1-testnet-slashing).
 
+* Added M2 version for middleware contracts by @maximopalopoli in [595](https://github.com/Layr-Labs/eigensdk-go/pull/595)
+  * The M2 version bindings are available at `M2-contracts/bindings` folder, here is an example of use:
+    ``` Go
+      import (
+        ...
+        m2regcoord "github.com/Layr-Labs/eigensdk-go/M2-contracts/bindings/RegistryCoordinator"
+        ...
+      )
+
+      // Creating a Registry Coordinator contract binding with M2 version
+      registryCoordinatorContract, err := m2regcoord.NewContractRegistryCoordinator(
+        contractAddrs.RegistryCoordinator,
+        ethHttpClient,
+      )
+      require.NoError(t, err)
+    ```
+
 ### Removed
 * Removed `IsOperatorSetQuorum` method of avsRegistry chain reader by @maximopalopoli in [#585](https://github.com/Layr-Labs/eigensdk-go/pull/585)
   * This function was removed in [the v1.1.1 eigenlayer-middleware release](https://github.com/Layr-Labs/eigenlayer-middleware/releases/tag/v1.1.1-testnet-slashing).
