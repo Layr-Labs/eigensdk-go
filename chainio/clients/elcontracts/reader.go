@@ -644,7 +644,7 @@ func (r *ChainReader) GetEncumberedMagnitude(
 		return 0, errors.New("AllocationManager contract not provided")
 	}
 
-	return r.allocationManager.EncumberedMagnitude(&bind.CallOpts{Context: ctx}, operatorAddress, strategyAddress)
+	return r.allocationManager.GetEncumberedMagnitude(&bind.CallOpts{Context: ctx}, operatorAddress, strategyAddress)
 }
 
 // Returns the delay within which deallocations are slashable.
@@ -869,6 +869,58 @@ func (r *ChainReader) IsOperatorRegisteredWithAvs(
 	}
 
 	return status == 1, nil
+}
+
+// Returns true if the received operator is slashable by the received operator set. This means the operator is
+// registered or their slashableUntil block has not passed (after deregistered, operators remain slashable for a period
+// of time).
+// Note: this method does not take into account M2 quorums
+func (r *ChainReader) IsOperatorSlashable(
+	ctx context.Context,
+	operatorAddress gethcommon.Address,
+	operatorSet allocationmanager.OperatorSet,
+) (bool, error) {
+	if r.allocationManager == nil {
+		return false, errors.New("AllocationManager contract not provided")
+	}
+
+	isSlashable, err := r.allocationManager.IsOperatorSlashable(
+		&bind.CallOpts{Context: ctx},
+		operatorAddress,
+		operatorSet,
+	)
+	// This call should not fail since it's a getter
+	if err != nil {
+		return false, err
+	}
+
+	return isSlashable, nil
+}
+
+// Returns the current allocated stake, despite the operator's slashable status for the operatorSet.
+// Note: this method does not take into account M2 quorums
+func (r *ChainReader) GetAllocatedStake(
+	ctx context.Context,
+	operatorSet allocationmanager.OperatorSet,
+	operatorAddresses []gethcommon.Address,
+	strategyAddresses []gethcommon.Address,
+) ([][]*big.Int, error) {
+	if r.allocationManager == nil {
+		return nil, errors.New("AllocationManager contract not provided")
+	}
+
+	isSlashable, err := r.allocationManager.GetAllocatedStake(
+		&bind.CallOpts{Context: ctx},
+		operatorSet,
+		operatorAddresses,
+		strategyAddresses,
+	)
+	// This call should not fail since it's a getter
+	if err != nil {
+		return nil, err
+	}
+
+	return isSlashable, nil
 }
 
 // Returns the list of operators in a specific operator set.

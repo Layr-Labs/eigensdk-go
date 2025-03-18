@@ -42,7 +42,7 @@ contract DeployMockAvs is DeployMockAvsRegistries {
         );
 
         mockAvsProxyAdmin.upgradeAndCall(
-            TransparentUpgradeableProxy(payable(address(mockAvsServiceManager))),
+            ITransparentUpgradeableProxy(payable(address(mockAvsServiceManager))),
             address(mockAvsServiceManagerImplementation),
             abi.encodeWithSelector(mockAvsServiceManager.initialize.selector, addressConfig.communityMultisig)
         );
