@@ -57,6 +57,8 @@ contract DeployMockAvsRegistries is Script, ConfigsReadWriter, EigenlayerContrac
         address ejector;
     }
 
+    string internal constant MIDDLEWARE_VERSION = "v1.3.0-rc.0";
+
     Registries private registries;
     DeployedContracts private deployed;
 
@@ -138,7 +140,8 @@ contract DeployMockAvsRegistries is Script, ConfigsReadWriter, EigenlayerContrac
             registries.indexRegistry,
             registries.socketRegistry,
             eigen.allocationManager,
-            deployed.pauserReg
+            deployed.pauserReg,
+            MIDDLEWARE_VERSION
         );
     }
 

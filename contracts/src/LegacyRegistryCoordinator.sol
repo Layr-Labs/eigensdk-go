@@ -2,6 +2,9 @@
 pragma solidity ^0.8.27;
 
 import {RegistryCoordinator} from "eigenlayer-middleware/src/RegistryCoordinator.sol";
+import {
+    IRegistryCoordinator, IRegistryCoordinatorTypes
+} from "eigenlayer-middleware/src/interfaces/IRegistryCoordinator.sol";
 import {SlashingRegistryCoordinator} from "eigenlayer-middleware/src/SlashingRegistryCoordinator.sol";
 
 import {IPauserRegistry} from "eigenlayer-contracts/src/contracts/interfaces/IPauserRegistry.sol";
@@ -24,15 +27,19 @@ contract LegacyRegistryCoordinator is RegistryCoordinator {
         IAllocationManager _allocationManager,
         IPauserRegistry _pauserRegistry
     )
-        RegistryCoordinator(
-            _serviceManager,
-            _stakeRegistry,
-            _blsApkRegistry,
-            _indexRegistry,
-            _socketRegistry,
-            _allocationManager,
-            _pauserRegistry
-        )
+    RegistryCoordinator(
+        IRegistryCoordinatorTypes.RegistryCoordinatorParams({
+            serviceManager: _serviceManager,
+            slashingParams: IRegistryCoordinatorTypes.SlashingRegistryParams({
+                stakeRegistry: _stakeRegistry,
+                blsApkRegistry: _blsApkRegistry,
+                indexRegistry: _indexRegistry,
+                socketRegistry: _socketRegistry,
+                allocationManager: _allocationManager,
+                pauserRegistry: _pauserRegistry
+            })
+        })
+    )
     {}
 
     /// Disables operator sets mode
