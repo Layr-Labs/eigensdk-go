@@ -23,7 +23,6 @@ import {EigenlayerContracts, EigenlayerContractsParser} from "./parsers/Eigenlay
 import {ConfigsReadWriter} from "./parsers/ConfigsReadWriter.sol";
 import {MockAvsServiceManager} from "../src/MockAvsServiceManager.sol";
 import {ContractsRegistry} from "../src/ContractsRegistry.sol";
-import {LegacyRegistryCoordinator} from "../src/LegacyRegistryCoordinator.sol";
 
 import "forge-std/Script.sol";
 import "forge-std/console.sol";
