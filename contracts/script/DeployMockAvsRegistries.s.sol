@@ -23,7 +23,6 @@ import {EigenlayerContracts, EigenlayerContractsParser} from "./parsers/Eigenlay
 import {ConfigsReadWriter} from "./parsers/ConfigsReadWriter.sol";
 import {MockAvsServiceManager} from "../src/MockAvsServiceManager.sol";
 import {ContractsRegistry} from "../src/ContractsRegistry.sol";
-import {LegacyRegistryCoordinator} from "../src/LegacyRegistryCoordinator.sol";
 
 import "forge-std/Script.sol";
 import "forge-std/console.sol";
@@ -56,6 +55,8 @@ contract DeployMockAvsRegistries is Script, ConfigsReadWriter, EigenlayerContrac
         address churner;
         address ejector;
     }
+
+    string internal constant MIDDLEWARE_VERSION = "v1.3.0-rc.0";
 
     Registries private registries;
     DeployedContracts private deployed;
@@ -138,7 +139,8 @@ contract DeployMockAvsRegistries is Script, ConfigsReadWriter, EigenlayerContrac
             registries.indexRegistry,
             registries.socketRegistry,
             eigen.allocationManager,
-            deployed.pauserReg
+            deployed.pauserReg,
+            MIDDLEWARE_VERSION
         );
     }
 
