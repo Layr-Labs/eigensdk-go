@@ -90,6 +90,8 @@ Each version will have a separate `Breaking Changes` section as well. To describ
     )
     ```
 
+* Bump middleware contracts version up to [v1.3.0-rc.0](https://github.com/Layr-Labs/eigenlayer-middleware/releases/tag/v1.3.0-rc.0) by @maximopalopoli in [#605](https://github.com/Layr-Labs/eigensdk-go/pull/605).
+
 ### Changed
 
 * Fixed BLS aggregation for multiple quorums by @TomasArrachea in [#394](https://github.com/Layr-Labs/eigensdk-go/pull/394)
