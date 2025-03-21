@@ -3,11 +3,11 @@ package integration_test
 import (
 	"context"
 	"crypto/sha256"
+	"fmt"
 	"log"
 	"math/big"
 	"testing"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	strategy "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IStrategy"
 	mockerc20 "github.com/Layr-Labs/eigensdk-go/contracts/bindings/MockERC20"
 	rewardsCoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RewardsCoordinator"
@@ -86,43 +86,25 @@ func TestIntegrationRewards(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, receipt.Status, uint64(1))
 
-	// The same as noSendTxOpts but changing the sender
-	customOpts := bind.TransactOpts{
-		From:   common.HexToAddress("0x18a0f92Ad9645385E8A8f3db7d0f6CF7aBBb0aD4"),
-		NoSend: true,
-		Signer: txmgr.NoopSigner,
-	}
 	contractRewardsCoordinator, err := rewardsCoordinator.NewContractRewardsCoordinator(contractAddrs.RewardsCoordinator, clients.EthHttpClient)
 	require.NoError(t, err)
 
 	tokenLeaves, err := CreateTokenLeaves(contractRewardsCoordinator, 1, 100, tokenAddr)
 	require.NoError(t, err)
 
-	earners := getEarners(common.HexToAddress("0x01"))
+	earners := getEarners(common.HexToAddress("0x01")) // Maybe should be the deployer addr
 	earnerLeaves := CreateEarnerLeaves(earners, tokenLeaves)
 	require.NoError(t, err)
 
-	root, err := createPaymentRoot(contractRewardsCoordinator, tokenLeaves, earnerLeaves, 8, 1)
+	leaves, root, err := createPaymentRoot(contractRewardsCoordinator, tokenLeaves, earnerLeaves, 8, 1)
 	require.NoError(t, err)
 
-	tx, err = mockToken.IncreaseAllowance(noSendTxOpts, common.HexToAddress("0x18a0f92Ad9645385E8A8f3db7d0f6CF7aBBb0aD4"),
-		big.NewInt(amountPerPayment*numPayments),
-	)
+	tx, err = contractRewardsCoordinator.SubmitRoot(noSendTxOpts, root, 100)
 	require.NoError(t, err)
 
 	receipt, err = txMgr.Send(context.Background(), tx, true)
 	require.NoError(t, err)
 	require.Equal(t, receipt.Status, uint64(1))
-
-	tx, err = contractRewardsCoordinator.SubmitRoot(&customOpts, root, 100)
-	require.NoError(t, err)
-
-	receipt, err = txMgr.Send(context.Background(), tx, true)
-	require.NoError(t, err)
-	require.Equal(t, receipt.Status, 1)
-
-	// Continue
-	// elWriter.ProcessClaim(context.Background(), )
 }
 
 // These utils were inspired in those used in rewards scripts in Go Inc Squaring:
@@ -157,7 +139,7 @@ func CreateTokenLeaves(
 	leaves := make([][32]byte, numTokenEarnings)
 
 	for i := 0; i < numTokenEarnings; i++ {
-		leaf := DefaultTokenLeaf(tokenEarnings, tokenAddr)
+		leaf := defaultTokenLeaf(tokenEarnings, tokenAddr)
 		leafBytes, err := rewardsCoordinator.CalculateTokenLeafHash(&bind.CallOpts{}, leaf)
 		if err != nil {
 			return [][32]byte{}, sdkutils.WrapError("Failed to call CalculateEarnerLeafHash", err)
@@ -167,7 +149,7 @@ func CreateTokenLeaves(
 	return leaves, nil
 }
 
-func DefaultTokenLeaf(tokenEarnings uint64, tokenAddr common.Address) rewardsCoordinator.IRewardsCoordinatorTypesTokenTreeMerkleLeaf {
+func defaultTokenLeaf(tokenEarnings uint64, tokenAddr common.Address) rewardsCoordinator.IRewardsCoordinatorTypesTokenTreeMerkleLeaf {
 	return rewardsCoordinator.IRewardsCoordinatorTypesTokenTreeMerkleLeaf{
 		Token:              tokenAddr,
 		CumulativeEarnings: big.NewInt(int64(tokenEarnings)),
@@ -180,19 +162,19 @@ func createPaymentRoot(
 	earnerLeaves []rewardsCoordinator.IRewardsCoordinatorTypesEarnerTreeMerkleLeaf,
 	NUM_PAYMENTS int,
 	NUM_TOKEN_EARNINGS int,
-) ([32]byte, error) {
+) ([][32]byte, [32]byte, error) {
 	if len(earnerLeaves) != NUM_PAYMENTS {
-		panic("Number of earners must match number of payments")
+		return [][32]byte{}, [32]byte{}, fmt.Errorf("Number of earners must match number of payments")
 	}
 	if len(tokenLeaves) != NUM_TOKEN_EARNINGS {
-		panic("Number of token leaves must match number of token earnings")
+		return [][32]byte{}, [32]byte{}, fmt.Errorf("Number of token leaves must match number of token earnings")
 	}
 
 	leaves := make([][32]byte, NUM_PAYMENTS)
 	for i := 0; i < NUM_PAYMENTS; i++ {
 		leaf, err := rewardsCoordinator.CalculateEarnerLeafHash(&bind.CallOpts{}, earnerLeaves[i])
 		if err != nil {
-			return [32]byte{}, sdkutils.WrapError("Failed to call CalculateEarnerLeafHash", err)
+			return [][32]byte{}, [32]byte{}, sdkutils.WrapError("Failed to call CalculateEarnerLeafHash", err)
 		}
 		leaves[i] = leaf
 	}
