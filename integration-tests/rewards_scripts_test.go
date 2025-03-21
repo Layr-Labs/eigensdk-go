@@ -105,6 +105,41 @@ func TestIntegrationRewards(t *testing.T) {
 	receipt, err = txMgr.Send(context.Background(), tx, true)
 	require.NoError(t, err)
 	require.Equal(t, receipt.Status, uint64(1))
+
+	// this workflow assumes a new root submitted for every payment claimed.  So we get the latest rood index to process a claim for
+	rootLength, err := contractRewardsCoordinator.GetDistributionRootsLength(&bind.CallOpts{})
+	require.NoError(t, err)
+	rootIndex := rootLength.Uint64() - 1
+
+	indexToProve := 0
+	proof, err := generateMerkleProof(leaves, indexToProve)
+	require.NoError(t, err)
+
+	tokenProof, err := generateMerkleProof(tokenLeaves, indexToProve)
+	require.NoError(t, err)
+
+	tokenIndices := make([]uint32, 1)
+	tokenProofs := make([][]byte, 1)
+	tokenProofs[0] = tokenProof
+
+	newTokenLeaves := make([]rewardsCoordinator.IRewardsCoordinatorTypesTokenTreeMerkleLeaf, 1)
+	newTokenLeaves[0] = defaultTokenLeaf(100, contractAddrs.Erc20MockStrategy)
+
+	claim := rewardsCoordinator.IRewardsCoordinatorTypesRewardsMerkleClaim{
+		RootIndex:       uint32(rootIndex),
+		EarnerIndex:     0,
+		EarnerTreeProof: proof,
+		EarnerLeaf:      earnerLeaves[indexToProve],
+		TokenIndices:    tokenIndices,
+		TokenTreeProofs: tokenProofs,
+		TokenLeaves:     newTokenLeaves,
+	}
+
+	testutils.AdvanceChainByNBlocks(1, anvilHttpEndpoint)
+
+	receipt, err = clients.ElChainWriter.ProcessClaim(context.Background(), claim, common.HexToAddress("0x01"), true)
+	require.NoError(t, err)
+	require.Equal(t, receipt.Status, uint64(1))
 }
 
 // These utils were inspired in those used in rewards scripts in Go Inc Squaring:
@@ -180,7 +215,50 @@ func createPaymentRoot(
 	}
 
 	//writeLeavesToJson(leaves, tokenLeaves, filePath)
-	return merkleizeKeccak(leaves), nil
+	return leaves, merkleizeKeccak(leaves), nil
+}
+
+func generateMerkleProof(leaves [][32]byte, index int) ([]byte, error) {
+	if len(leaves) == 0 {
+		return nil, fmt.Errorf("leaves array cannot be empty")
+	}
+	if index < 0 || index >= len(leaves) {
+		return nil, fmt.Errorf("index out of bounds")
+	}
+
+	leaves = padLeaves(leaves)
+
+	n := len(leaves)
+	depth := 0
+	for (1 << depth) < n {
+		depth++
+	}
+
+	var proofBytes []byte
+
+	for i := 0; i < depth; i++ {
+		levelSize := (n + 1) / 2
+		siblingIndex := index ^ 1
+
+		if siblingIndex < n {
+			proofBytes = append(proofBytes, leaves[siblingIndex][:]...)
+		}
+
+		for j := 0; j < levelSize; j++ {
+			if 2*j+1 < n {
+				concatenated := append(leaves[2*j][:], leaves[2*j+1][:]...)
+				hash := sha256.Sum256(concatenated)
+				leaves[j] = hash
+			} else {
+				leaves[j] = leaves[2*j]
+			}
+		}
+
+		n = levelSize
+		index /= 2
+	}
+
+	return proofBytes, nil
 }
 
 func merkleizeKeccak(leaves [][32]byte) [32]byte {
