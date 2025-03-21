@@ -44,6 +44,17 @@ func TestIntegrationRewards(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, receipt.Status, uint64(1))
 
+	amountPerPayment := int64(100)
+	numPayments := int64(8)
+	tx, err = mockToken.IncreaseAllowance(noSendTxOpts, contractAddrs.ServiceManager,
+		big.NewInt(amountPerPayment*numPayments*100000),
+	)
+	require.NoError(t, err)
+
+	receipt, err = txMgr.Send(context.Background(), tx, true)
+	require.NoError(t, err)
+	require.Equal(t, receipt.Status, uint64(1))
+
 	// Initially, claimer balance in strategy is zero
 	initialBalance, err := mockToken.BalanceOf(&bind.CallOpts{}, common.HexToAddress("0x0000000000000000000000000000000000000001"))
 	require.NoError(t, err)
@@ -61,7 +72,7 @@ func TestIntegrationRewards(t *testing.T) {
 		{
 			StrategiesAndMultipliers: stratAndMul,
 			Token:                    tokenAddr,
-			Amount:                   big.NewInt(1000),
+			Amount:                   big.NewInt(100),
 			StartTimestamp:           1743033600,
 			Duration:                 6048000,
 		},
