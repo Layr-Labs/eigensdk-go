@@ -2,15 +2,19 @@ package integration_test
 
 import (
 	"context"
+	"crypto/sha256"
 	"log"
 	"math/big"
 	"testing"
 
+	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	strategy "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IStrategy"
 	mockerc20 "github.com/Layr-Labs/eigensdk-go/contracts/bindings/MockERC20"
+	rewardsCoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RewardsCoordinator"
 	servicemanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/ServiceManagerBase"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
 	"github.com/Layr-Labs/eigensdk-go/testutils/testclients"
+	sdkutils "github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
@@ -81,4 +85,158 @@ func TestIntegrationRewards(t *testing.T) {
 	receipt, err = clients.AvsRegistryChainWriter.CreateAVSRewardsSubmission(context.Background(), rewardsSubmission, true)
 	require.NoError(t, err)
 	require.Equal(t, receipt.Status, uint64(1))
+
+	// The same as noSendTxOpts but changing the sender
+	customOpts := bind.TransactOpts{
+		From:   common.HexToAddress("0x18a0f92Ad9645385E8A8f3db7d0f6CF7aBBb0aD4"),
+		NoSend: true,
+		Signer: txmgr.NoopSigner,
+	}
+	contractRewardsCoordinator, err := rewardsCoordinator.NewContractRewardsCoordinator(contractAddrs.RewardsCoordinator, clients.EthHttpClient)
+	require.NoError(t, err)
+
+	tokenLeaves, err := CreateTokenLeaves(contractRewardsCoordinator, 1, 100, tokenAddr)
+	require.NoError(t, err)
+
+	earners := getEarners(common.HexToAddress("0x01"))
+	earnerLeaves := CreateEarnerLeaves(earners, tokenLeaves)
+	require.NoError(t, err)
+
+	root, err := createPaymentRoot(contractRewardsCoordinator, tokenLeaves, earnerLeaves, 8, 1)
+	require.NoError(t, err)
+
+	tx, err = mockToken.IncreaseAllowance(noSendTxOpts, common.HexToAddress("0x18a0f92Ad9645385E8A8f3db7d0f6CF7aBBb0aD4"),
+		big.NewInt(amountPerPayment*numPayments),
+	)
+	require.NoError(t, err)
+
+	receipt, err = txMgr.Send(context.Background(), tx, true)
+	require.NoError(t, err)
+	require.Equal(t, receipt.Status, uint64(1))
+
+	tx, err = contractRewardsCoordinator.SubmitRoot(&customOpts, root, 100)
+	require.NoError(t, err)
+
+	receipt, err = txMgr.Send(context.Background(), tx, true)
+	require.NoError(t, err)
+	require.Equal(t, receipt.Status, 1)
+
+	// Continue
+	// elWriter.ProcessClaim(context.Background(), )
+}
+
+// These utils were inspired in those used in rewards scripts in Go Inc Squaring:
+// https://github.com/Layr-Labs/incredible-squaring-avs/blob/dev/contracts/script/utils/SetupDistributionsLib.sol
+func getEarners(deployer common.Address) []common.Address {
+	earners := make([]common.Address, 8)
+	for i := range earners {
+		earners[i] = deployer
+	}
+	return earners
+}
+
+func CreateEarnerLeaves(earners []common.Address, tokenLeaves [][32]byte) []rewardsCoordinator.IRewardsCoordinatorTypesEarnerTreeMerkleLeaf {
+	leaves := make([]rewardsCoordinator.IRewardsCoordinatorTypesEarnerTreeMerkleLeaf, len(earners))
+	tokenRoot := CreateTokenRoot(tokenLeaves)
+
+	for i, earner := range earners {
+		leaves[i] = rewardsCoordinator.IRewardsCoordinatorTypesEarnerTreeMerkleLeaf{
+			Earner:          earner,
+			EarnerTokenRoot: tokenRoot,
+		}
+	}
+	return leaves
+}
+
+func CreateTokenLeaves(
+	rewardsCoordinator *rewardsCoordinator.ContractRewardsCoordinator,
+	numTokenEarnings int,
+	tokenEarnings uint64,
+	tokenAddr common.Address,
+) ([][32]byte, error) {
+	leaves := make([][32]byte, numTokenEarnings)
+
+	for i := 0; i < numTokenEarnings; i++ {
+		leaf := DefaultTokenLeaf(tokenEarnings, tokenAddr)
+		leafBytes, err := rewardsCoordinator.CalculateTokenLeafHash(&bind.CallOpts{}, leaf)
+		if err != nil {
+			return [][32]byte{}, sdkutils.WrapError("Failed to call CalculateEarnerLeafHash", err)
+		}
+		leaves[i] = leafBytes
+	}
+	return leaves, nil
+}
+
+func DefaultTokenLeaf(tokenEarnings uint64, tokenAddr common.Address) rewardsCoordinator.IRewardsCoordinatorTypesTokenTreeMerkleLeaf {
+	return rewardsCoordinator.IRewardsCoordinatorTypesTokenTreeMerkleLeaf{
+		Token:              tokenAddr,
+		CumulativeEarnings: big.NewInt(int64(tokenEarnings)),
+	}
+}
+
+func createPaymentRoot(
+	rewardsCoordinator *rewardsCoordinator.ContractRewardsCoordinator,
+	tokenLeaves [][32]byte,
+	earnerLeaves []rewardsCoordinator.IRewardsCoordinatorTypesEarnerTreeMerkleLeaf,
+	NUM_PAYMENTS int,
+	NUM_TOKEN_EARNINGS int,
+) ([32]byte, error) {
+	if len(earnerLeaves) != NUM_PAYMENTS {
+		panic("Number of earners must match number of payments")
+	}
+	if len(tokenLeaves) != NUM_TOKEN_EARNINGS {
+		panic("Number of token leaves must match number of token earnings")
+	}
+
+	leaves := make([][32]byte, NUM_PAYMENTS)
+	for i := 0; i < NUM_PAYMENTS; i++ {
+		leaf, err := rewardsCoordinator.CalculateEarnerLeafHash(&bind.CallOpts{}, earnerLeaves[i])
+		if err != nil {
+			return [32]byte{}, sdkutils.WrapError("Failed to call CalculateEarnerLeafHash", err)
+		}
+		leaves[i] = leaf
+	}
+
+	//writeLeavesToJson(leaves, tokenLeaves, filePath)
+	return merkleizeKeccak(leaves), nil
+}
+
+func merkleizeKeccak(leaves [][32]byte) [32]byte {
+	leaves = padLeaves(leaves)
+
+	numNodesInLayer := len(leaves) / 2
+	layer := make([][32]byte, numNodesInLayer)
+
+	for i := 0; i < numNodesInLayer; i++ {
+		layer[i] = keccak256(append(leaves[2*i][:], leaves[2*i+1][:]...))
+	}
+
+	for numNodesInLayer > 1 {
+		numNodesInLayer /= 2
+		for i := 0; i < numNodesInLayer; i++ {
+			layer[i] = keccak256(append(layer[2*i][:], layer[2*i+1][:]...))
+		}
+	}
+
+	return layer[0]
+}
+
+func padLeaves(leaves [][32]byte) [][32]byte {
+	paddedLength := 2
+	for paddedLength < len(leaves) {
+		paddedLength *= 2
+	}
+
+	paddedLeaves := make([][32]byte, paddedLength)
+	copy(paddedLeaves, leaves)
+	return paddedLeaves
+}
+
+func keccak256(data []byte) [32]byte {
+	hash := sha256.Sum256(data)
+	return hash
+}
+
+func CreateTokenRoot(tokenLeaves [][32]byte) [32]byte {
+	return merkleizeKeccak(tokenLeaves)
 }
