@@ -8,10 +8,12 @@ import (
 
 	strategy "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IStrategy"
 	mockerc20 "github.com/Layr-Labs/eigensdk-go/contracts/bindings/MockERC20"
+	servicemanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/ServiceManagerBase"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
 	"github.com/Layr-Labs/eigensdk-go/testutils/testclients"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -39,6 +41,33 @@ func TestIntegrationRewards(t *testing.T) {
 	require.NoError(t, err)
 
 	receipt, err := txMgr.Send(context.Background(), tx, true)
+	require.NoError(t, err)
+	require.Equal(t, receipt.Status, uint64(1))
+
+	// Initially, claimer balance in strategy is zero
+	initialBalance, err := mockToken.BalanceOf(&bind.CallOpts{}, common.HexToAddress("0x0000000000000000000000000000000000000001"))
+	require.NoError(t, err)
+	assert.Zero(t, initialBalance.Int64())
+
+	// Now call the rewards scripts or related and assert the balance has changed.
+	stratAndMul := []servicemanager.IRewardsCoordinatorTypesStrategyAndMultiplier{
+		{
+			Strategy:   contractAddrs.Erc20MockStrategy,
+			Multiplier: big.NewInt(1_000_000),
+		},
+	}
+	// These values were taken from Go Incredible Squaring AVS's rewards scripts
+	rewardsSubmission := []servicemanager.IRewardsCoordinatorTypesRewardsSubmission{
+		{
+			StrategiesAndMultipliers: stratAndMul,
+			Token:                    tokenAddr,
+			Amount:                   big.NewInt(1000),
+			StartTimestamp:           1743033600,
+			Duration:                 6048000,
+		},
+	}
+
+	receipt, err = clients.AvsRegistryChainWriter.CreateAVSRewardsSubmission(context.Background(), rewardsSubmission, true)
 	require.NoError(t, err)
 	require.Equal(t, receipt.Status, uint64(1))
 }
