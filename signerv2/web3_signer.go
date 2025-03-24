@@ -5,12 +5,12 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/ethereum/go-ethereum/rlp"
 	"net/http"
 
 	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/google/uuid"
 )
 
@@ -25,7 +25,6 @@ type JsonRpcRequest struct {
 
 type Web3SignerClient interface {
 	SignTransaction(from common.Address, tx *types.Transaction) (*types.Transaction, error)
-	SignMessage(from common.Address, message []byte) ([]byte, error) // New method for arbitrary data signing
 }
 
 // Web3Signer is a client for a remote signer
@@ -39,51 +38,6 @@ type Web3Signer struct {
 func NewWeb3SignerClient(url string) Web3SignerClient {
 	client := http.Client{}
 	return &Web3Signer{client: client, url: url}
-}
-
-func (r Web3Signer) SignMessage(from common.Address, message []byte) ([]byte, error) {
-	method := "eth_sign"
-	id := uuid.New().String()
-	params := []interface{}{
-		from.Hex(),
-		utils.Add0x(hex.EncodeToString(message)),
-	}
-
-	request := JsonRpcRequest{
-		JsonRPC: "2.0",
-		Method:  method,
-		Params:  params,
-		ID:      id,
-	}
-
-	jsonData, err := json.Marshal(request)
-	if err != nil {
-		return nil, utils.WrapError("error marshalling request", err)
-	}
-
-	resp, err := r.client.Post(r.url, "application/json", bytes.NewBuffer(jsonData))
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	var result map[string]interface{}
-	if err = json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, utils.WrapError("error decoding response", err)
-	}
-
-	if result["error"] != nil {
-		return nil, utils.WrapError("error in response", fmt.Errorf("%v", result["error"]))
-	}
-
-	signedMessage := result["result"].(string)
-	signedMessage = utils.Trim0x(signedMessage)
-	signedBytes, err := hex.DecodeString(signedMessage)
-	if err != nil {
-		return nil, err
-	}
-
-	return signedBytes, nil
 }
 
 func (r Web3Signer) SignTransaction(
