@@ -89,6 +89,13 @@ func TestIntegrationRewards(t *testing.T) {
 	contractRewardsCoordinator, err := rewardsCoordinator.NewContractRewardsCoordinator(contractAddrs.RewardsCoordinator, clients.EthHttpClient)
 	require.NoError(t, err)
 
+	tx, err = contractRewardsCoordinator.SetActivationDelay(noSendTxOpts, 0)
+	require.NoError(t, err)
+
+	receipt, err = txMgr.Send(context.Background(), tx, true)
+	require.NoError(t, err)
+	require.Equal(t, receipt.Status, uint64(1))
+
 	tokenLeaves, err := CreateTokenLeaves(contractRewardsCoordinator, 1, 100, tokenAddr)
 	require.NoError(t, err)
 
