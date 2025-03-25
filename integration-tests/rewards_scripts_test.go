@@ -101,7 +101,7 @@ func TestIntegrationRewards(t *testing.T) {
 	tokenLeaves, err := CreateTokenLeaves(contractRewardsCoordinator, 1, 100, tokenAddr)
 	require.NoError(t, err)
 
-	earners := getEarners(common.HexToAddress("0x01")) // Maybe should be the deployer addr
+	earners := getEarners(common.HexToAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")) // Deployer address
 	earnerLeaves := CreateEarnerLeaves(earners, tokenLeaves)
 	require.NoError(t, err)
 
