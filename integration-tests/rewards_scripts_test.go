@@ -3,6 +3,7 @@ package integration_test
 import (
 	"context"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"log"
 	"math/big"
@@ -19,6 +20,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/crypto/sha3"
 )
 
 func TestIntegrationRewards(t *testing.T) {
@@ -113,16 +115,14 @@ func TestIntegrationRewards(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, receipt.Status, uint64(1))
 
-	// this workflow assumes a new root submitted for every payment claimed.  So we get the latest rood index to process a claim for
-	rootLength, err := contractRewardsCoordinator.GetDistributionRootsLength(&bind.CallOpts{})
-	require.NoError(t, err)
-	rootIndex := rootLength.Uint64() - 1
+	// Process claim
 
 	indexToProve := 0
-	proof, err := generateMerkleProof(leaves, indexToProve)
+
+	proof, err := generateEarnerMerkleProof(leaves, indexToProve)
 	require.NoError(t, err)
 
-	tokenProof, err := generateMerkleProof(tokenLeaves, indexToProve)
+	tokenProof, err := generateTokenMerkleProof(tokenLeaves, indexToProve)
 	require.NoError(t, err)
 
 	tokenIndices := make([]uint32, 1)
@@ -130,7 +130,12 @@ func TestIntegrationRewards(t *testing.T) {
 	tokenProofs[0] = tokenProof
 
 	newTokenLeaves := make([]rewardsCoordinator.IRewardsCoordinatorTypesTokenTreeMerkleLeaf, 1)
-	newTokenLeaves[0] = defaultTokenLeaf(100, contractAddrs.Erc20MockStrategy)
+	newTokenLeaves[0] = defaultTokenLeaf(100, tokenAddr)
+
+	// this workflow assumes a new root submitted for every payment claimed.  So we get the latest rood index to process a claim for
+	rootLength, err := contractRewardsCoordinator.GetDistributionRootsLength(&bind.CallOpts{})
+	require.NoError(t, err)
+	rootIndex := rootLength.Uint64() - 1
 
 	claim := rewardsCoordinator.IRewardsCoordinatorTypesRewardsMerkleClaim{
 		RootIndex:       uint32(rootIndex),
@@ -225,7 +230,7 @@ func createPaymentRoot(
 	return leaves, merkleizeKeccak(leaves), nil
 }
 
-func generateMerkleProof(leaves [][32]byte, index int) ([]byte, error) {
+func generateTokenMerkleProof(leaves [][32]byte, index int) ([]byte, error) {
 	if len(leaves) == 0 {
 		return nil, fmt.Errorf("leaves array cannot be empty")
 	}
@@ -314,4 +319,71 @@ func keccak256(data []byte) [32]byte {
 
 func CreateTokenRoot(tokenLeaves [][32]byte) [32]byte {
 	return merkleizeKeccak(tokenLeaves)
+}
+
+func generateEarnerMerkleProof(leaves [][32]byte, index int) ([]byte, error) {
+	if len(leaves) == 0 {
+		return nil, errors.New("empty leaves array")
+	}
+
+	if index < 0 || index >= len(leaves) {
+		return nil, errors.New("index out of bounds")
+	}
+
+	tree := buildMerkleTree(leaves)
+
+	proof := make([]byte, 0)
+	currentIndex := index
+
+	for level := 0; level < len(tree)-1; level++ {
+		levelNodes := tree[level]
+		levelLength := len(levelNodes)
+
+		var sibling [32]byte
+		if currentIndex%2 == 1 {
+			sibling = levelNodes[currentIndex-1]
+		} else {
+			if currentIndex+1 < levelLength {
+				sibling = levelNodes[currentIndex+1]
+			} else {
+				currentIndex = currentIndex / 2
+				continue
+			}
+		}
+
+		proof = append(proof, sibling[:]...)
+
+		currentIndex = currentIndex / 2
+	}
+
+	return proof, nil
+}
+
+func buildMerkleTree(leaves [][32]byte) [][][32]byte {
+	tree := make([][][32]byte, 0)
+	tree = append(tree, leaves)
+
+	for len(tree[len(tree)-1]) > 1 {
+		lastLevel := tree[len(tree)-1]
+		newLevel := make([][32]byte, 0)
+
+		for i := 0; i < len(lastLevel); i += 2 {
+			var left, right [32]byte
+			left = lastLevel[i]
+
+			if i+1 < len(lastLevel) {
+				right = lastLevel[i+1]
+			} else {
+				right = left
+			}
+
+			combined := append(left[:], right[:]...)
+			parent := keccak256(combined)
+			newLevel = append(newLevel, parent)
+		}
+
+		tree = append(tree, newLevel)
+	}
+
+	return tree
 }
