@@ -278,11 +278,12 @@ func merkleizeKeccak(leaves [][32]byte) [32]byte {
 		layer[i] = keccak256(append(leaves[2*i][:], leaves[2*i+1][:]...))
 	}
 
-	for numNodesInLayer > 1 {
-		numNodesInLayer /= 2
+	numNodesInLayer /= 2
+	for numNodesInLayer != 0 {
 		for i := 0; i < numNodesInLayer; i++ {
 			layer[i] = keccak256(append(layer[2*i][:], layer[2*i+1][:]...))
 		}
+		numNodesInLayer /= 2
 	}
 
 	return layer[0]
@@ -300,7 +301,14 @@ func padLeaves(leaves [][32]byte) [][32]byte {
 }
 
 func keccak256(data []byte) [32]byte {
-	hash := sha256.Sum256(data)
+	var hash [32]byte
+
+	h := sha3.NewLegacyKeccak256()
+
+	h.Write(data)
+
+	h.Sum(hash[:0])
+
 	return hash
 }
 
