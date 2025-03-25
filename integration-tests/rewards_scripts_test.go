@@ -51,7 +51,7 @@ func TestIntegrationRewards(t *testing.T) {
 	amountPerPayment := int64(100)
 	numPayments := int64(8)
 	tx, err = mockToken.IncreaseAllowance(noSendTxOpts, contractAddrs.ServiceManager,
-		big.NewInt(amountPerPayment*numPayments*100000),
+		big.NewInt(amountPerPayment*numPayments),
 	)
 	require.NoError(t, err)
 
@@ -202,18 +202,18 @@ func createPaymentRoot(
 	rewardsCoordinator *rewardsCoordinator.ContractRewardsCoordinator,
 	tokenLeaves [][32]byte,
 	earnerLeaves []rewardsCoordinator.IRewardsCoordinatorTypesEarnerTreeMerkleLeaf,
-	NUM_PAYMENTS int,
-	NUM_TOKEN_EARNINGS int,
+	numPayments int,
+	numTokenEarnings int,
 ) ([][32]byte, [32]byte, error) {
-	if len(earnerLeaves) != NUM_PAYMENTS {
+	if len(earnerLeaves) != numPayments {
 		return [][32]byte{}, [32]byte{}, fmt.Errorf("Number of earners must match number of payments")
 	}
-	if len(tokenLeaves) != NUM_TOKEN_EARNINGS {
+	if len(tokenLeaves) != numTokenEarnings {
 		return [][32]byte{}, [32]byte{}, fmt.Errorf("Number of token leaves must match number of token earnings")
 	}
 
-	leaves := make([][32]byte, NUM_PAYMENTS)
-	for i := 0; i < NUM_PAYMENTS; i++ {
+	leaves := make([][32]byte, numPayments)
+	for i := 0; i < numPayments; i++ {
 		leaf, err := rewardsCoordinator.CalculateEarnerLeafHash(&bind.CallOpts{}, earnerLeaves[i])
 		if err != nil {
 			return [][32]byte{}, [32]byte{}, sdkutils.WrapError("Failed to call CalculateEarnerLeafHash", err)
