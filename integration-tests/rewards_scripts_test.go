@@ -85,7 +85,7 @@ func TestIntegrationRewards(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, receipt.Status, gethtypes.ReceiptStatusSuccessful)
 
-	tokenLeaves, err := createTokenLeaves(contractRewardsCoordinator, 1, 100, tokenAddr)
+	tokenLeaves := createTokenLeaves(contractRewardsCoordinator, 1, 100, tokenAddr)
 	require.NoError(t, err)
 
 	deployerAddress := common.HexToAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")
@@ -174,18 +174,18 @@ func createTokenLeaves(
 	numberOfTokenLeaves int,
 	tokensEarned uint64,
 	tokenAddr common.Address,
-) ([][32]byte, error) {
+) [][32]byte {
 	leaves := make([][32]byte, numberOfTokenLeaves)
 
 	for i := 0; i < numberOfTokenLeaves; i++ {
 		leaf := defaultTokenLeaf(tokensEarned, tokenAddr)
 		leafBytes, err := rewardsCoordinator.CalculateTokenLeafHash(&bind.CallOpts{}, leaf)
 		if err != nil {
-			return [][32]byte{}, sdkutils.WrapError("Failed to call CalculateEarnerLeafHash", err)
+			panic(sdkutils.WrapError("Failed to call CalculateEarnerLeafHash", err))
 		}
 		leaves[i] = leafBytes
 	}
-	return leaves, nil
+	return leaves
 }
 
 func defaultTokenLeaf(
