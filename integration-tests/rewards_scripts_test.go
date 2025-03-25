@@ -78,7 +78,7 @@ func TestIntegrationRewards(t *testing.T) {
 		{
 			StrategiesAndMultipliers: stratAndMul,
 			Token:                    tokenAddr,
-			Amount:                   big.NewInt(100),
+			Amount:                   big.NewInt(amountPerPayment),
 			StartTimestamp:           1743033600,
 			Duration:                 6048000,
 		},
@@ -152,6 +152,11 @@ func TestIntegrationRewards(t *testing.T) {
 	receipt, err = clients.ElChainWriter.ProcessClaim(context.Background(), claim, common.HexToAddress("0x01"), true)
 	require.NoError(t, err)
 	require.Equal(t, receipt.Status, uint64(1))
+
+	// After claim, claimer balance in strategy is zero
+	balanceAfterClaim, err := mockToken.BalanceOf(&bind.CallOpts{}, common.HexToAddress("0x0000000000000000000000000000000000000001"))
+	require.NoError(t, err)
+	assert.Equal(t, balanceAfterClaim.Int64(), amountPerPayment)
 }
 
 // These utils were inspired in those used in rewards scripts in Go Inc Squaring:
