@@ -188,7 +188,10 @@ func createTokenLeaves(
 	return leaves, nil
 }
 
-func defaultTokenLeaf(tokensEarned uint64, tokenAddr common.Address) rewardsCoordinator.IRewardsCoordinatorTypesTokenTreeMerkleLeaf {
+func defaultTokenLeaf(
+	tokensEarned uint64,
+	tokenAddr common.Address,
+) rewardsCoordinator.IRewardsCoordinatorTypesTokenTreeMerkleLeaf {
 	return rewardsCoordinator.IRewardsCoordinatorTypesTokenTreeMerkleLeaf{
 		Token:              tokenAddr,
 		CumulativeEarnings: big.NewInt(int64(tokensEarned)),
