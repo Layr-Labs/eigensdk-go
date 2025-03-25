@@ -42,24 +42,8 @@ func TestIntegrationRewards(t *testing.T) {
 	noSendTxOpts, err := txMgr.GetNoSendTxOpts()
 	require.NoError(t, err)
 
-	// This is the avsRegistry writer address (anvil nineth address)
-	tx, err := mockToken.Mint(noSendTxOpts, common.HexToAddress("0xa0Ee7A142d267C1f36714E4a8F75612F20a79720"), big.NewInt(1000))
-	require.NoError(t, err)
-
-	receipt, err := txMgr.Send(context.Background(), tx, true)
-	require.NoError(t, err)
-	require.Equal(t, receipt.Status, uint64(1))
-
 	amountPerPayment := int64(100)
 	numPayments := int64(8)
-	tx, err = mockToken.IncreaseAllowance(noSendTxOpts, contractAddrs.ServiceManager,
-		big.NewInt(amountPerPayment*numPayments),
-	)
-	require.NoError(t, err)
-
-	receipt, err = txMgr.Send(context.Background(), tx, true)
-	require.NoError(t, err)
-	require.Equal(t, receipt.Status, uint64(1))
 
 	// Initially, claimer balance in strategy is zero
 	initialBalance, err := mockToken.BalanceOf(&bind.CallOpts{}, common.HexToAddress("0x0000000000000000000000000000000000000001"))
@@ -84,14 +68,14 @@ func TestIntegrationRewards(t *testing.T) {
 		},
 	}
 
-	receipt, err = clients.AvsRegistryChainWriter.CreateAVSRewardsSubmission(context.Background(), rewardsSubmission, true)
+	receipt, err := clients.AvsRegistryChainWriter.CreateAVSRewardsSubmission(context.Background(), rewardsSubmission, true)
 	require.NoError(t, err)
 	require.Equal(t, receipt.Status, uint64(1))
 
 	contractRewardsCoordinator, err := rewardsCoordinator.NewContractRewardsCoordinator(contractAddrs.RewardsCoordinator, clients.EthHttpClient)
 	require.NoError(t, err)
 
-	tx, err = contractRewardsCoordinator.SetActivationDelay(noSendTxOpts, 0)
+	tx, err := contractRewardsCoordinator.SetActivationDelay(noSendTxOpts, 0)
 	require.NoError(t, err)
 
 	receipt, err = txMgr.Send(context.Background(), tx, true)
