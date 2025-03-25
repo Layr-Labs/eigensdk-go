@@ -171,14 +171,14 @@ func CreateEarnerLeaves(earners []common.Address, tokenLeaves [][32]byte) []rewa
 
 func CreateTokenLeaves(
 	rewardsCoordinator *rewardsCoordinator.ContractRewardsCoordinator,
-	numTokenEarnings int,
-	tokenEarnings uint64,
+	numberOfTokenLeaves int,
+	tokensEarned uint64,
 	tokenAddr common.Address,
 ) ([][32]byte, error) {
-	leaves := make([][32]byte, numTokenEarnings)
+	leaves := make([][32]byte, numberOfTokenLeaves)
 
-	for i := 0; i < numTokenEarnings; i++ {
-		leaf := defaultTokenLeaf(tokenEarnings, tokenAddr)
+	for i := 0; i < numberOfTokenLeaves; i++ {
+		leaf := defaultTokenLeaf(tokensEarned, tokenAddr)
 		leafBytes, err := rewardsCoordinator.CalculateTokenLeafHash(&bind.CallOpts{}, leaf)
 		if err != nil {
 			return [][32]byte{}, sdkutils.WrapError("Failed to call CalculateEarnerLeafHash", err)
@@ -188,10 +188,10 @@ func CreateTokenLeaves(
 	return leaves, nil
 }
 
-func defaultTokenLeaf(tokenEarnings uint64, tokenAddr common.Address) rewardsCoordinator.IRewardsCoordinatorTypesTokenTreeMerkleLeaf {
+func defaultTokenLeaf(tokensEarned uint64, tokenAddr common.Address) rewardsCoordinator.IRewardsCoordinatorTypesTokenTreeMerkleLeaf {
 	return rewardsCoordinator.IRewardsCoordinatorTypesTokenTreeMerkleLeaf{
 		Token:              tokenAddr,
-		CumulativeEarnings: big.NewInt(int64(tokenEarnings)),
+		CumulativeEarnings: big.NewInt(int64(tokensEarned)),
 	}
 }
 
@@ -200,12 +200,12 @@ func createPaymentRoot(
 	tokenLeaves [][32]byte,
 	earnerLeaves []rewardsCoordinator.IRewardsCoordinatorTypesEarnerTreeMerkleLeaf,
 	numPayments int,
-	numTokenEarnings int,
+	numberOfTokenLeaves int,
 ) ([][32]byte, [32]byte, error) {
 	if len(earnerLeaves) != numPayments {
 		return [][32]byte{}, [32]byte{}, fmt.Errorf("Number of earners must match number of payments")
 	}
-	if len(tokenLeaves) != numTokenEarnings {
+	if len(tokenLeaves) != numberOfTokenLeaves {
 		return [][32]byte{}, [32]byte{}, fmt.Errorf("Number of token leaves must match number of token earnings")
 	}
 
