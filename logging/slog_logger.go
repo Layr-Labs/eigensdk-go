@@ -52,7 +52,7 @@ var defaultTintOptions = tint.Options{
 	NoColor:     false,
 }
 
-// NewSlogTextLogger creates a new SLogger with a text handler
+// NewTextSLogger creates a new SLogger with a text handler
 // Default behavior is colored log outputs. To disable colors, set opts.NoColor to true.
 func NewTextSLogger(outputWriter io.Writer, opts *SLoggerOptions) *SLogger {
 	var tintOptions tint.Options
@@ -74,7 +74,7 @@ func NewTextSLogger(outputWriter io.Writer, opts *SLoggerOptions) *SLogger {
 	}
 }
 
-// NewSlogJsonLogger creates a new SLogger with a Json handler
+// NewJsonSLogger creates a new SLogger with a Json handler
 // Currently colors are not supported with json handler. If colors are required,
 // use NewTextSLogger instead.
 func NewJsonSLogger(outputWriter io.Writer, opts *SLoggerOptions) *SLogger {

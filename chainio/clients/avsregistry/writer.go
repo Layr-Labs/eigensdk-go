@@ -435,7 +435,7 @@ func (w *ChainWriter) RegisterOperatorWithChurn(
 	return receipt, nil
 }
 
-// Updates the stakes of a the given `operators` for all the quorums.
+// Updates the stakes of the given `operators` for all the quorums.
 // On success, returns the receipt of the transaction.
 func (w *ChainWriter) UpdateStakesOfOperatorSubsetForAllQuorums(
 	ctx context.Context,

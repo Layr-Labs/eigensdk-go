@@ -70,7 +70,7 @@ func (m *EigenMetrics) initMetrics() {
 	// them to be 0 on every json-rpc... but is that really necessary?
 }
 
-// AddEigenFeeEarnedTotal adds the fee earned to the total fee earned metric
+// AddFeeEarnedTotal adds the fee earned to the total fee earned metric
 func (m *EigenMetrics) AddFeeEarnedTotal(amount float64, token string) {
 	m.feeEarnedTotal.WithLabelValues(token).Add(amount)
 }
