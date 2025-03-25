@@ -93,7 +93,7 @@ func TestIntegrationRewards(t *testing.T) {
 	earnerLeaves := createEarnerLeaves(earners, tokenLeaves)
 	require.NoError(t, err)
 
-	leaves, root, err := createPaymentRoot(contractRewardsCoordinator, tokenLeaves, earnerLeaves, int(numPayments), 1)
+	leaves, root, err := createPaymentRoot(contractRewardsCoordinator, earnerLeaves, int(numPayments))
 	require.NoError(t, err)
 
 	tx, err = contractRewardsCoordinator.SubmitRoot(noSendTxOpts, root, 100)
@@ -200,18 +200,9 @@ func defaultTokenLeaf(
 
 func createPaymentRoot(
 	rewardsCoordinator *rewardsCoordinator.ContractRewardsCoordinator,
-	tokenLeaves [][32]byte,
 	earnerLeaves []rewardsCoordinator.IRewardsCoordinatorTypesEarnerTreeMerkleLeaf,
 	numPayments int,
-	numberOfTokenLeaves int,
 ) ([][32]byte, [32]byte, error) {
-	if len(earnerLeaves) != numPayments {
-		return [][32]byte{}, [32]byte{}, fmt.Errorf("Number of earners must match number of payments")
-	}
-	if len(tokenLeaves) != numberOfTokenLeaves {
-		return [][32]byte{}, [32]byte{}, fmt.Errorf("Number of token leaves must match number of token earnings")
-	}
-
 	leaves := make([][32]byte, numPayments)
 	for i := 0; i < numPayments; i++ {
 		leaf, err := rewardsCoordinator.CalculateEarnerLeafHash(&bind.CallOpts{}, earnerLeaves[i])
