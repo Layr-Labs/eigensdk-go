@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"errors"
-	"fmt"
 	"log"
 	"math/big"
 	"testing"
@@ -109,7 +108,7 @@ func TestIntegrationRewards(t *testing.T) {
 	proof, err := generateEarnerMerkleProof(leaves, indexToProve)
 	require.NoError(t, err)
 
-	tokenProof, err := generateTokenMerkleProof(tokenLeaves, indexToProve)
+	tokenProof := generateTokenMerkleProof(tokenLeaves, indexToProve)
 	require.NoError(t, err)
 
 	tokenIndices := make([]uint32, 1)
@@ -216,12 +215,12 @@ func createPaymentRoot(
 	return leaves, merkleizeKeccak(leaves), nil
 }
 
-func generateTokenMerkleProof(leaves [][32]byte, index int) ([]byte, error) {
+func generateTokenMerkleProof(leaves [][32]byte, index int) []byte {
 	if len(leaves) == 0 {
-		return nil, fmt.Errorf("leaves array cannot be empty")
+		panic("leaves array cannot be empty")
 	}
 	if index < 0 || index >= len(leaves) {
-		return nil, fmt.Errorf("index out of bounds")
+		panic("index out of bounds")
 	}
 
 	leaves = padLeaves(leaves)
@@ -256,7 +255,7 @@ func generateTokenMerkleProof(leaves [][32]byte, index int) ([]byte, error) {
 		index /= 2
 	}
 
-	return proofBytes, nil
+	return proofBytes
 }
 
 func merkleizeKeccak(leaves [][32]byte) [32]byte {
