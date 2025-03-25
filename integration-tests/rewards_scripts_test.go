@@ -85,11 +85,12 @@ func TestIntegrationRewards(t *testing.T) {
 	tokenLeaves, err := CreateTokenLeaves(contractRewardsCoordinator, 1, 100, tokenAddr)
 	require.NoError(t, err)
 
-	earners := getEarners(common.HexToAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")) // Deployer address
+	deployerAddress := common.HexToAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")
+	earners := getEarners(deployerAddress, int(numPayments))
 	earnerLeaves := CreateEarnerLeaves(earners, tokenLeaves)
 	require.NoError(t, err)
 
-	leaves, root, err := createPaymentRoot(contractRewardsCoordinator, tokenLeaves, earnerLeaves, 8, 1)
+	leaves, root, err := createPaymentRoot(contractRewardsCoordinator, tokenLeaves, earnerLeaves, int(numPayments), 1)
 	require.NoError(t, err)
 
 	tx, err = contractRewardsCoordinator.SubmitRoot(noSendTxOpts, root, 100)
@@ -145,8 +146,8 @@ func TestIntegrationRewards(t *testing.T) {
 
 // These utils were inspired in those used in rewards scripts in Go Inc Squaring:
 // https://github.com/Layr-Labs/incredible-squaring-avs/blob/dev/contracts/script/utils/SetupDistributionsLib.sol
-func getEarners(deployer common.Address) []common.Address {
-	earners := make([]common.Address, 8)
+func getEarners(deployer common.Address, numPayments int) []common.Address {
+	earners := make([]common.Address, numPayments)
 	for i := range earners {
 		earners[i] = deployer
 	}
