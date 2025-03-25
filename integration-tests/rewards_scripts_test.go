@@ -85,12 +85,12 @@ func TestIntegrationRewards(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, receipt.Status, gethtypes.ReceiptStatusSuccessful)
 
-	tokenLeaves, err := CreateTokenLeaves(contractRewardsCoordinator, 1, 100, tokenAddr)
+	tokenLeaves, err := createTokenLeaves(contractRewardsCoordinator, 1, 100, tokenAddr)
 	require.NoError(t, err)
 
 	deployerAddress := common.HexToAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")
 	earners := getEarners(deployerAddress, int(numPayments))
-	earnerLeaves := CreateEarnerLeaves(earners, tokenLeaves)
+	earnerLeaves := createEarnerLeaves(earners, tokenLeaves)
 	require.NoError(t, err)
 
 	leaves, root, err := createPaymentRoot(contractRewardsCoordinator, tokenLeaves, earnerLeaves, int(numPayments), 1)
@@ -156,9 +156,9 @@ func getEarners(deployer common.Address, numPayments int) []common.Address {
 	return earners
 }
 
-func CreateEarnerLeaves(earners []common.Address, tokenLeaves [][32]byte) []rewardsCoordinator.IRewardsCoordinatorTypesEarnerTreeMerkleLeaf {
+func createEarnerLeaves(earners []common.Address, tokenLeaves [][32]byte) []rewardsCoordinator.IRewardsCoordinatorTypesEarnerTreeMerkleLeaf {
 	leaves := make([]rewardsCoordinator.IRewardsCoordinatorTypesEarnerTreeMerkleLeaf, len(earners))
-	tokenRoot := CreateTokenRoot(tokenLeaves)
+	tokenRoot := createTokenRoot(tokenLeaves)
 
 	for i, earner := range earners {
 		leaves[i] = rewardsCoordinator.IRewardsCoordinatorTypesEarnerTreeMerkleLeaf{
@@ -169,7 +169,7 @@ func CreateEarnerLeaves(earners []common.Address, tokenLeaves [][32]byte) []rewa
 	return leaves
 }
 
-func CreateTokenLeaves(
+func createTokenLeaves(
 	rewardsCoordinator *rewardsCoordinator.ContractRewardsCoordinator,
 	numberOfTokenLeaves int,
 	tokensEarned uint64,
@@ -309,7 +309,7 @@ func keccak256(data []byte) [32]byte {
 	return hash
 }
 
-func CreateTokenRoot(tokenLeaves [][32]byte) [32]byte {
+func createTokenRoot(tokenLeaves [][32]byte) [32]byte {
 	return merkleizeKeccak(tokenLeaves)
 }
 
