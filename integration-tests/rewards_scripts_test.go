@@ -18,6 +18,7 @@ import (
 	sdkutils "github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	gethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/sha3"
@@ -70,7 +71,7 @@ func TestIntegrationRewards(t *testing.T) {
 
 	receipt, err := clients.AvsRegistryChainWriter.CreateAVSRewardsSubmission(context.Background(), rewardsSubmission, true)
 	require.NoError(t, err)
-	require.Equal(t, receipt.Status, uint64(1))
+	require.Equal(t, receipt.Status, gethtypes.ReceiptStatusSuccessful)
 
 	contractRewardsCoordinator, err := rewardsCoordinator.NewContractRewardsCoordinator(contractAddrs.RewardsCoordinator, clients.EthHttpClient)
 	require.NoError(t, err)
@@ -80,7 +81,7 @@ func TestIntegrationRewards(t *testing.T) {
 
 	receipt, err = txMgr.Send(context.Background(), tx, true)
 	require.NoError(t, err)
-	require.Equal(t, receipt.Status, uint64(1))
+	require.Equal(t, receipt.Status, gethtypes.ReceiptStatusSuccessful)
 
 	tokenLeaves, err := CreateTokenLeaves(contractRewardsCoordinator, 1, 100, tokenAddr)
 	require.NoError(t, err)
@@ -98,7 +99,7 @@ func TestIntegrationRewards(t *testing.T) {
 
 	receipt, err = txMgr.Send(context.Background(), tx, true)
 	require.NoError(t, err)
-	require.Equal(t, receipt.Status, uint64(1))
+	require.Equal(t, receipt.Status, gethtypes.ReceiptStatusSuccessful)
 
 	// Process claim
 
@@ -136,7 +137,7 @@ func TestIntegrationRewards(t *testing.T) {
 
 	receipt, err = clients.ElChainWriter.ProcessClaim(context.Background(), claim, common.HexToAddress("0x01"), true)
 	require.NoError(t, err)
-	require.Equal(t, receipt.Status, uint64(1))
+	require.Equal(t, receipt.Status, gethtypes.ReceiptStatusSuccessful)
 
 	// After claim, claimer balance in strategy is zero
 	balanceAfterClaim, err := mockToken.BalanceOf(&bind.CallOpts{}, common.HexToAddress("0x0000000000000000000000000000000000000001"))
