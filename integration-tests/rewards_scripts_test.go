@@ -25,8 +25,9 @@ import (
 )
 
 func TestIntegrationRewards(t *testing.T) {
-	log.Println("This test takes ~50 seconds to run...")
+	log.Println("This test takes ~10 seconds to run...")
 
+	// Test set up
 	clients, anvilHttpEndpoint := testclients.BuildTestClients(t)
 	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
 
@@ -51,7 +52,7 @@ func TestIntegrationRewards(t *testing.T) {
 	require.NoError(t, err)
 	assert.Zero(t, initialBalance.Int64())
 
-	// Now call the rewards scripts or related and assert the balance has changed.
+	// Create AVS rewards submission
 	stratAndMul := []servicemanager.IRewardsCoordinatorTypesStrategyAndMultiplier{
 		{
 			Strategy:   contractAddrs.Erc20MockStrategy,
@@ -73,6 +74,7 @@ func TestIntegrationRewards(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, receipt.Status, gethtypes.ReceiptStatusSuccessful)
 
+	// Submit the root for the submission
 	contractRewardsCoordinator, err := rewardsCoordinator.NewContractRewardsCoordinator(contractAddrs.RewardsCoordinator, clients.EthHttpClient)
 	require.NoError(t, err)
 
@@ -101,8 +103,7 @@ func TestIntegrationRewards(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, receipt.Status, gethtypes.ReceiptStatusSuccessful)
 
-	// Process claim
-
+	// Process the claim for the submitted root (and claim the rewards for the claimer)
 	indexToProve := 0
 
 	proof, err := generateEarnerMerkleProof(leaves, indexToProve)
