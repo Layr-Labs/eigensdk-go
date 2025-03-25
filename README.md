@@ -18,7 +18,7 @@ go get github.com/Layr-Labs/eigensdk-go
 We support following modules right now. 
 > **_NOTE:_** All modules are in active development and interfaces might change. 
 * [Logging](./logging/README.md)
-* [Signer](./signer/README.md)
+* [Signer](./signerv2/README.md)
 * [ChainIO](./chainio/README.md)
 * [Services](./services/README.md)
 
