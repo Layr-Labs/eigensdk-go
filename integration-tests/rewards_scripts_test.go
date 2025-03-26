@@ -130,7 +130,12 @@ func TestIntegrationRewards(t *testing.T) {
 		TokenLeaves:     newTokenLeaves,
 	}
 
-	testutils.AdvanceChainByNBlocks(1, anvilHttpEndpoint)
+	allocationConfigurationDelay := 1200
+	testutils.AdvanceChainByNBlocksExecInContainer(
+		context.Background(),
+		allocationConfigurationDelay+1,
+		clients.AnvilC,
+	)
 
 	receipt, err = clients.ElChainWriter.ProcessClaim(context.Background(), claim, common.HexToAddress("0x01"), true)
 	require.NoError(t, err)
