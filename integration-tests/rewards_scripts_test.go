@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"errors"
-	"log"
 	"math/big"
 	"testing"
 
@@ -24,8 +23,6 @@ import (
 )
 
 func TestIntegrationRewards(t *testing.T) {
-	log.Println("This test takes ~10 seconds to run...")
-
 	// Test set up
 	clients, anvilHttpEndpoint := testclients.BuildTestClients(t)
 	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
