@@ -45,14 +45,18 @@ forge create src/ContractsRegistry.sol:ContractsRegistry --rpc-url $ETH_HTTP_URL
 # DEPLOY EIGENLAYER
 EIGEN_CONTRACTS_DIR=$root_dir/contracts/lib/eigenlayer-middleware/lib/eigenlayer-contracts
 DEVNET_OUTPUT_DIR=$EIGEN_CONTRACTS_DIR/script/output/devnet
+
+cp config/core/31337.json $EIGEN_CONTRACTS_DIR/script/configs/temp.config.json
 # deployment overwrites this file, so we save it as backup, because we want that output in our local files, and not in the eigenlayer-contracts submodule files
 mv $DEVNET_OUTPUT_DIR/M2_from_scratch_deployment_data.json $DEVNET_OUTPUT_DIR/M2_from_scratch_deployment_data.json.bak
 cd $EIGEN_CONTRACTS_DIR
 forge script script/deploy/local/deploy_from_scratch.slashing.s.sol:DeployFromScratch --rpc-url $ETH_HTTP_URL \
     --private-key $DEPLOYER_PRIVATE_KEY --broadcast \
-    --sig "run(string memory configFileName)" -- local/deploy_from_scratch.slashing.anvil.config.json
+    --sig "run(string memory configFileName)" -- temp.config.json
 mv $DEVNET_OUTPUT_DIR/SLASHING_deploy_from_scratch_deployment_data.json $root_dir/contracts/script/output/${CHAIN_ID:?}/eigenlayer_deployment_output.json
 mv $DEVNET_OUTPUT_DIR/M2_from_scratch_deployment_data.json.bak $DEVNET_OUTPUT_DIR/M2_from_scratch_deployment_data.json
+
+rm script/configs/temp.config.json
 
 # DEPLOY MOCKAVS
 cd $root_dir/contracts
