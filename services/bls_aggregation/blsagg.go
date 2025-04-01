@@ -621,11 +621,11 @@ func (a *BlsAggregatorBuilder) singleTaskAggregatorGoroutineFunc(
 					quorumApksG1,
 					aggregatedResponsesC,
 				)
-			}
-
-			aggregatedResponsesC <- BlsAggregationServiceResponse{
-				Err:       TaskExpiredErrorFn(metadata.taskIndex),
-				TaskIndex: metadata.taskIndex,
+			} else {
+				aggregatedResponsesC <- BlsAggregationServiceResponse{
+					Err:       TaskExpiredErrorFn(metadata.taskIndex),
+					TaskIndex: metadata.taskIndex,
+				}
 			}
 			return
 		case <-windowTimer.C:
