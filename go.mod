@@ -1,8 +1,8 @@
 module github.com/Layr-Labs/eigensdk-go
 
-go 1.22.0
+go 1.23
 
-toolchain go1.22.5
+toolchain go1.23.5
 
 require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.11
@@ -20,6 +20,7 @@ require (
 )
 
 require (
+	github.com/BurntSushi/toml v1.4.1-0.20240526193622-a339e1f7089c // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.1 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.5 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.5 // indirect
@@ -45,6 +46,7 @@ require (
 	go.opentelemetry.io/otel v1.24.0 // indirect
 	go.opentelemetry.io/otel/metric v1.24.0 // indirect
 	go.opentelemetry.io/otel/trace v1.24.0 // indirect
+	golang.org/x/tools v0.30.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240318140521-94a12d6c2237 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
@@ -108,11 +110,12 @@ require (
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.32.0 // indirect
+	golang.org/x/crypto v0.32.0
 	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa // indirect
-	golang.org/x/sync v0.10.0
-	golang.org/x/sys v0.29.0 // indirect
+	golang.org/x/sync v0.11.0
+	golang.org/x/sys v0.30.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240318140521-94a12d6c2237 // indirect
 	google.golang.org/protobuf v1.34.2 // indirect
+	honnef.co/go/tools v0.6.1
 	rsc.io/tmplfunc v0.0.3 // indirect
 )
