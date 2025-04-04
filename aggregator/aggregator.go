@@ -43,13 +43,12 @@ type Aggregator struct {
 	//tasksMu               sync.RWMutex
 	//avsSubscriber         chainio.AvsSubscriberer
 	//newTaskCreatedChan    chan *cstaskmanager.ContractIncredibleSquaringTaskManagerNewTaskCreated
-	wsRpcUrl      string
-	taskProcessor TaskProcessor
-	eventHash     common.Hash
+	taskProcessor      TaskProcessor
+	newTaskCreatedLogs chan types.Log
 }
 
 // NewAggregator creates a new Aggregator with the provided config.
-func NewAggregator(c AggregatorConfig, taskProcessor TaskProcessor) (*Aggregator, error) {
+func NewAggregator(c AggregatorConfig, taskProcessor TaskProcessor, eventHash common.Hash) (*Aggregator, error) {
 	avsConfig := avsregistry.Config{
 		RegistryCoordinatorAddress:    c.RegistryCoordinatorAddress,
 		OperatorStateRetrieverAddress: c.OperatorStateRetrieverAddress,
@@ -133,12 +132,29 @@ func NewAggregator(c AggregatorConfig, taskProcessor TaskProcessor) (*Aggregator
 	avsRegistryService := avsregistryservice.NewAvsRegistryServiceChainCaller(avsReader, operatorPubkeysService, c.Logger)
 	blsAggregationService := blsagg.NewBlsAggregatorService(avsRegistryService, hashFunction, c.Logger)
 
+	client, err := ethclient.Dial(c.wsRpcUrl)
+	if err != nil {
+		c.Logger.Fatal("error connecting to web socket", "err", err)
+	}
+
+	query := ethereum.FilterQuery{
+		Addresses: []common.Address{},
+		Topics:    [][]common.Hash{{eventHash}},
+	}
+
+	newTaskCreatedLogs := make(chan types.Log)
+	_, err = client.SubscribeFilterLogs(context.Background(), query, newTaskCreatedLogs)
+	if err != nil {
+		c.Logger.Fatal("error subscribing to newTaskCreated events", "err", err)
+	}
+
 	return &Aggregator{
 		logger:                c.Logger,
 		serverIpPortAddr:      c.serverAddress,
 		avsWriter:             avsWriter,
 		blsAggregationService: blsAggregationService,
 		taskProcessor:         taskProcessor,
+		newTaskCreatedLogs:    newTaskCreatedLogs,
 	}, nil
 }
 
@@ -146,8 +162,6 @@ func (agg *Aggregator) Start(ctx context.Context) error {
 	agg.logger.Info("Starting aggregator.")
 	agg.logger.Info("Starting aggregator rpc server.")
 	go agg.startServer(ctx)
-
-	go agg.processTasksInit()
 
 	for {
 		select {
@@ -159,40 +173,7 @@ func (agg *Aggregator) Start(ctx context.Context) error {
 			if err != nil {
 				continue
 			}
-			//		case newTaskCreatedLog := <-agg.newTaskCreatedChan:
-			//			err := agg.processTaskGeneration(newTaskCreatedLog)
-			//			if err != nil {
-			//				continue
-			//			}
-		}
-	}
-}
-
-// TODO: Move this to NewAggregator and Start functions
-func (agg *Aggregator) processTasksInit() {
-	// Hear for NewTaskCreatedEvents and create New Task Metadata from that Event
-	client, err := ethclient.Dial(agg.wsRpcUrl)
-	if err != nil {
-		agg.logger.Fatal("error connecting to web socket", "err", err)
-	}
-
-	query := ethereum.FilterQuery{
-		Addresses: []common.Address{},
-		Topics:    [][]common.Hash{{agg.eventHash}},
-	}
-
-	newTaskCreatedLogs := make(chan types.Log)
-	sub, err := client.SubscribeFilterLogs(context.Background(), query, newTaskCreatedLogs)
-	if err != nil {
-		agg.logger.Fatal("error subscribing to newTaskCreated events", "err", err)
-	}
-	defer sub.Unsubscribe()
-
-	for {
-		select {
-		case err := <-sub.Err():
-			agg.logger.Fatal("error subscribing", "err", err)
-		case log := <-newTaskCreatedLogs:
+		case log := <-agg.newTaskCreatedLogs:
 			go func(log types.Log) {
 				metadata, err := agg.taskProcessor.ProcessNewTask(context.Background(), log)
 				if err != nil {
