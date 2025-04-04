@@ -2,8 +2,6 @@ package aggregator
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"math/big"
 	"net/http"
 	"net/rpc"
@@ -147,29 +145,14 @@ func NewAggregator(c AggregatorConfig, taskProcessor TaskProcessor) (*Aggregator
 func (agg *Aggregator) Start(ctx context.Context) error {
 	agg.logger.Info("Starting aggregator.")
 	agg.logger.Info("Starting aggregator rpc server.")
-	go func() {
-		err := agg.startServer(ctx)
-		if err != nil {
-			agg.logger.Error("Failure while ")
-		}
-	}()
-	//	sub := agg.avsSubscriber.SubscribeToNewTasks(agg.newTaskCreatedChan)
+	go agg.startServer(ctx)
 
-	go func() {
-		err := agg.processTasksInit()
-		if err != nil {
-			agg.logger.Error("Failure while ")
-		}
-	}()
+	go agg.processTasksInit()
 
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
-			//		case err := <-sub.Err():
-			//			agg.logger.Error("Error in websocket subscription", "err", err)
-			//			sub.Unsubscribe()
-			//			sub = agg.avsSubscriber.SubscribeToNewTasks(agg.newTaskCreatedChan)
 		case blsAggServiceResp := <-agg.blsAggregationService.GetResponseChannel():
 			agg.logger.Info("Received response from blsAggregationService", "blsAggServiceResp", blsAggServiceResp)
 			err := agg.taskProcessor.ProcessAggregatedResponse(context.Background(), blsAggServiceResp)
@@ -186,11 +169,11 @@ func (agg *Aggregator) Start(ctx context.Context) error {
 }
 
 // TODO: Move this to NewAggregator and Start functions
-func (agg *Aggregator) processTasksInit() error {
+func (agg *Aggregator) processTasksInit() {
 	// Hear for NewTaskCreatedEvents and create New Task Metadata from that Event
 	client, err := ethclient.Dial(agg.wsRpcUrl)
 	if err != nil {
-		return errors.New("error connecting to web socket")
+		agg.logger.Fatal("error connecting to web socket", "err", err)
 	}
 
 	query := ethereum.FilterQuery{
@@ -201,30 +184,29 @@ func (agg *Aggregator) processTasksInit() error {
 	newTaskCreatedLogs := make(chan types.Log)
 	sub, err := client.SubscribeFilterLogs(context.Background(), query, newTaskCreatedLogs)
 	if err != nil {
-		return errors.New("error subscribing to newTaskCreated events")
+		agg.logger.Fatal("error subscribing to newTaskCreated events", "err", err)
 	}
 	defer sub.Unsubscribe()
 
 	for {
 		select {
 		case err := <-sub.Err():
-			return fmt.Errorf("error subscribing: %v", err)
+			agg.logger.Fatal("error subscribing", "err", err)
 		case log := <-newTaskCreatedLogs:
 			go func(log types.Log) {
 				metadata, err := agg.taskProcessor.ProcessNewTask(context.Background(), log)
 				if err != nil {
-					agg.logger.Infof("Error procesando la tarea: %v", err)
-					return
+					agg.logger.Fatal("Error processing the task", "err", err)
 				}
 				if err := agg.blsAggregationService.InitializeNewTask(metadata); err != nil {
-					agg.logger.Infof("Error inicializando tarea: %v", err)
+					agg.logger.Fatal("Error initializing the task", "err", err)
 				}
 			}(log)
 		}
 	}
 }
 
-func (agg *Aggregator) startServer(ctx context.Context) error {
+func (agg *Aggregator) startServer(ctx context.Context) {
 
 	err := rpc.Register(agg)
 	if err != nil {
@@ -235,8 +217,6 @@ func (agg *Aggregator) startServer(ctx context.Context) error {
 	if err != nil {
 		agg.logger.Fatal("ListenAndServe", "err", err)
 	}
-
-	return nil
 }
 
 type NonSignerStakesAndSignature struct {
