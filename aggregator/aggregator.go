@@ -32,7 +32,7 @@ const (
 	// ideally be fetched from the contracts
 	//taskChallengeWindowBlock = 100
 	//blockTimeSeconds         = 12 * time.Second
-	avsName                  = "incredible-squaring"
+	avsName = "incredible-squaring"
 )
 
 type Aggregator struct {
@@ -45,17 +45,17 @@ type Aggregator struct {
 	//tasksMu               sync.RWMutex
 	//avsSubscriber         chainio.AvsSubscriberer
 	//newTaskCreatedChan    chan *cstaskmanager.ContractIncredibleSquaringTaskManagerNewTaskCreated
-    wsRpcUrl string
+	wsRpcUrl      string
 	taskProcessor TaskProcessor
-	eventHash common.Hash
+	eventHash     common.Hash
 }
 
 // NewAggregator creates a new Aggregator with the provided config.
 func NewAggregator(c AggregatorConfig, taskProcessor TaskProcessor) (*Aggregator, error) {
 	avsConfig := avsregistry.Config{
-		RegistryCoordinatorAddress: c.RegistryCoordinatorAddress,
+		RegistryCoordinatorAddress:    c.RegistryCoordinatorAddress,
 		OperatorStateRetrieverAddress: c.OperatorStateRetrieverAddress,
-		ServiceManagerAddress: c.ServiceManagerAddress,
+		ServiceManagerAddress:         c.ServiceManagerAddress,
 	}
 	avsReader, err := avsregistry.NewReaderFromConfig(avsConfig, c.EthHttpClient, c.Logger)
 	if err != nil {
@@ -140,36 +140,47 @@ func NewAggregator(c AggregatorConfig, taskProcessor TaskProcessor) (*Aggregator
 		serverIpPortAddr:      c.serverAddress,
 		avsWriter:             avsWriter,
 		blsAggregationService: blsAggregationService,
-		taskProcessor: taskProcessor,
-
+		taskProcessor:         taskProcessor,
 	}, nil
 }
 
 func (agg *Aggregator) Start(ctx context.Context) error {
 	agg.logger.Info("Starting aggregator.")
 	agg.logger.Info("Starting aggregator rpc server.")
-	go agg.startServer(ctx)
+	go func() {
+		err := agg.startServer(ctx)
+		if err != nil {
+			agg.logger.Error("Failure while ")
+		}
+	}()
+	//	sub := agg.avsSubscriber.SubscribeToNewTasks(agg.newTaskCreatedChan)
 
-//	sub := agg.avsSubscriber.SubscribeToNewTasks(agg.newTaskCreatedChan)
-
-	go agg.processTasksInit()
+	go func() {
+		err := agg.processTasksInit()
+		if err != nil {
+			agg.logger.Error("Failure while ")
+		}
+	}()
 
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
-//		case err := <-sub.Err():
-//			agg.logger.Error("Error in websocket subscription", "err", err)
-//			sub.Unsubscribe()
-//			sub = agg.avsSubscriber.SubscribeToNewTasks(agg.newTaskCreatedChan)
+			//		case err := <-sub.Err():
+			//			agg.logger.Error("Error in websocket subscription", "err", err)
+			//			sub.Unsubscribe()
+			//			sub = agg.avsSubscriber.SubscribeToNewTasks(agg.newTaskCreatedChan)
 		case blsAggServiceResp := <-agg.blsAggregationService.GetResponseChannel():
 			agg.logger.Info("Received response from blsAggregationService", "blsAggServiceResp", blsAggServiceResp)
-			agg.taskProcessor.ProcessAggregatedResponse(context.Background(), blsAggServiceResp)
-//		case newTaskCreatedLog := <-agg.newTaskCreatedChan:
-//			err := agg.processTaskGeneration(newTaskCreatedLog)
-//			if err != nil {
-//				continue
-//			}
+			err := agg.taskProcessor.ProcessAggregatedResponse(context.Background(), blsAggServiceResp)
+			if err != nil {
+				continue
+			}
+			//		case newTaskCreatedLog := <-agg.newTaskCreatedChan:
+			//			err := agg.processTaskGeneration(newTaskCreatedLog)
+			//			if err != nil {
+			//				continue
+			//			}
 		}
 	}
 }
@@ -184,7 +195,7 @@ func (agg *Aggregator) processTasksInit() error {
 
 	query := ethereum.FilterQuery{
 		Addresses: []common.Address{},
-		Topics: [][]common.Hash{{agg.eventHash}},
+		Topics:    [][]common.Hash{{agg.eventHash}},
 	}
 
 	newTaskCreatedLogs := make(chan types.Log)

@@ -10,21 +10,20 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-
 type AggregatorConfig struct {
-    serverAddress string
+	serverAddress string
 
-    httpRpcUrl string
-    wsRpcUrl string
+	httpRpcUrl string
+	wsRpcUrl   string
 
 	RegistryCoordinatorAddress    common.Address
 	OperatorStateRetrieverAddress common.Address
-	ServiceManagerAddress common.Address
+	ServiceManagerAddress         common.Address
 
-	EthHttpClient                             *ethclient.Client
-	TxMgr                 txmgr.TxManager
-	Logger                    logging.Logger
+	EthHttpClient *ethclient.Client
+	TxMgr         txmgr.TxManager
+	Logger        logging.Logger
 
-	EcdsaPrivateKey           *ecdsa.PrivateKey
-	BlsPrivateKey             *bls.PrivateKey
+	EcdsaPrivateKey *ecdsa.PrivateKey
+	BlsPrivateKey   *bls.PrivateKey
 }
