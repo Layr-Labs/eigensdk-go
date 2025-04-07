@@ -174,15 +174,13 @@ func (agg *Aggregator) Start(ctx context.Context) error {
 				continue
 			}
 		case log := <-agg.newTaskCreatedLogs:
-			go func(log types.Log) {
-				metadata, err := agg.taskProcessor.ProcessNewTask(context.Background(), log)
-				if err != nil {
-					agg.logger.Fatal("Error processing the task", "err", err)
-				}
-				if err := agg.blsAggregationService.InitializeNewTask(metadata); err != nil {
-					agg.logger.Fatal("Error initializing the task", "err", err)
-				}
-			}(log)
+			metadata, err := agg.taskProcessor.ProcessNewTask(context.Background(), log)
+			if err != nil {
+				agg.logger.Fatal("Error processing the task", "err", err)
+			}
+			if err := agg.blsAggregationService.InitializeNewTask(metadata); err != nil {
+				agg.logger.Fatal("Error initializing the task", "err", err)
+			}
 		}
 	}
 }
