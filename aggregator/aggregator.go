@@ -73,7 +73,6 @@ func NewAggregator(c AggregatorConfig, taskProcessor TaskProcessor, eventHash co
 		OperatorStateRetrieverAddr: c.OperatorStateRetrieverAddress.String(),
 		AvsName:                    avsName,
 		PromMetricsIpPortAddress:   ":9090",
-
 		DontUseAllocationManager: true,
 	}
 
@@ -150,7 +149,7 @@ func NewAggregator(c AggregatorConfig, taskProcessor TaskProcessor, eventHash co
 
 	return &Aggregator{
 		logger:                c.Logger,
-		serverIpPortAddr:      c.serverAddress,
+		serverIpPortAddr:      c.AggregatorServerIpPortAddr,
 		avsWriter:             avsWriter,
 		blsAggregationService: blsAggregationService,
 		taskProcessor:         taskProcessor,
@@ -186,7 +185,6 @@ func (agg *Aggregator) Start(ctx context.Context) error {
 }
 
 func (agg *Aggregator) startServer(ctx context.Context) {
-
 	err := rpc.Register(agg)
 	if err != nil {
 		agg.logger.Fatal("Format of service TaskManager isn't correct. ", "err", err)
@@ -239,10 +237,21 @@ type TaskResponse struct {
 	NumberSquared      *big.Int
 }
 
-type B256 struct{}
+func (tr TaskResponse) TaskIndex() sdktypes.TaskIndex {
+	return tr.ReferenceTaskIndex
+}
+
+func (tr TaskResponse) Digest() [256]byte {
+	return [256]byte(tr.NumberSquared.Bytes())
+}
 
 type TaskProcessor interface {
 	ProcessNewTask(ctx context.Context, event any) (blsagg.TaskMetadata, error)
-	ProcessTaskResponse(ctx context.Context, event any) (B256, error)
+	ProcessTaskResponse(ctx context.Context, event TPTaskResponse) ([256]byte, error)
 	ProcessAggregatedResponse(ctx context.Context, response blsagg.BlsAggregationServiceResponse) error
+}
+
+type TPTaskResponse interface {
+	TaskIndex() (sdktypes.TaskIndex)
+	Digest() ([256]byte)
 }
