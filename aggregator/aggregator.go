@@ -67,8 +67,8 @@ func NewAggregator(c AggregatorConfig, taskProcessor TaskProcessor, eventHash co
 	}
 
 	chainioConfig := sdkclients.BuildAllConfig{
-		EthHttpUrl:                 c.httpRpcUrl,
-		EthWsUrl:                   c.wsRpcUrl,
+		EthHttpUrl:                 c.EthHttpUrl,
+		EthWsUrl:                   c.EthWsUrl,
 		RegistryCoordinatorAddr:    c.RegistryCoordinatorAddress.String(),
 		OperatorStateRetrieverAddr: c.OperatorStateRetrieverAddress.String(),
 		AvsName:                    avsName,
@@ -132,7 +132,7 @@ func NewAggregator(c AggregatorConfig, taskProcessor TaskProcessor, eventHash co
 	avsRegistryService := avsregistryservice.NewAvsRegistryServiceChainCaller(avsReader, operatorPubkeysService, c.Logger)
 	blsAggregationService := blsagg.NewBlsAggregatorService(avsRegistryService, hashFunction, c.Logger)
 
-	client, err := ethclient.Dial(c.wsRpcUrl)
+	client, err := ethclient.Dial(c.EthWsUrl)
 	if err != nil {
 		c.Logger.Fatal("error connecting to web socket", "err", err)
 	}

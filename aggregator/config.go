@@ -13,8 +13,8 @@ import (
 type AggregatorConfig struct {
 	serverAddress string
 
-	httpRpcUrl string
-	wsRpcUrl   string
+	EthHttpUrl string
+	EthWsUrl   string
 
 	RegistryCoordinatorAddress    common.Address
 	OperatorStateRetrieverAddress common.Address
