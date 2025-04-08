@@ -13,6 +13,8 @@ Each version will have a separate `Breaking Changes` section as well. To describ
 
 ### Added 🎉
 
+* added aggregator common implementation to use with interface by @maximopalopoli in [#617](https://github.com/Layr-Labs/eigensdk-go/pull/617)
+
 ### Breaking Changes 🛠
 
 ### Deprecated ⚠️
