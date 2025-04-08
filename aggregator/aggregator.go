@@ -17,7 +17,6 @@ import (
 
 	sdkclients "github.com/Layr-Labs/eigensdk-go/chainio/clients"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
-	regcoord "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
 	avsregistryservice "github.com/Layr-Labs/eigensdk-go/services/avsregistry"
 	blsagg "github.com/Layr-Labs/eigensdk-go/services/bls_aggregation"
 	oprsinfoserv "github.com/Layr-Labs/eigensdk-go/services/operatorsinfo"
@@ -190,17 +189,6 @@ func (agg *Aggregator) startServer(ctx context.Context) {
 	if err != nil {
 		agg.logger.Fatal("ListenAndServe", "err", err)
 	}
-}
-
-type NonSignerStakesAndSignature struct {
-	NonSignerQuorumBitmapIndices []uint32
-	NonSignerPubkeys             []regcoord.BN254G1Point
-	QuorumApks                   []regcoord.BN254G1Point
-	ApkG2                        regcoord.BN254G2Point
-	Sigma                        regcoord.BN254G1Point
-	QuorumApkIndices             []uint32
-	TotalStakeIndices            []uint32
-	NonSignerStakeIndices        [][]uint32
 }
 
 type SignedTaskResponse struct {
