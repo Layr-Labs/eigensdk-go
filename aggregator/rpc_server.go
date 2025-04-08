@@ -28,7 +28,6 @@ type SignedTaskResponse struct {
 	OperatorId   sdktypes.OperatorId
 }
 
-
 // rpc endpoint which is called by operator
 // reply doesn't need to be checked. If there are no errors, the task response is accepted
 // rpc framework forces a reply type to exist, so we put bool as a placeholder

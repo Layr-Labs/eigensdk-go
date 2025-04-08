@@ -28,7 +28,6 @@ const (
 	avsName = "incredible-squaring"
 )
 
-
 type TaskProcessor interface {
 	ProcessNewTask(ctx context.Context, event any) (blsagg.TaskMetadata, error)
 	ProcessTaskResponse(ctx context.Context, event TaskResponse) ([256]byte, error)
@@ -181,4 +180,3 @@ func (agg *Aggregator) Start(ctx context.Context) error {
 		}
 	}
 }
-
