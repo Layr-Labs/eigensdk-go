@@ -11,8 +11,6 @@ import (
 )
 
 type AggregatorConfig struct {
-	serverAddress string
-
 	EthHttpUrl string
 	EthWsUrl   string
 
