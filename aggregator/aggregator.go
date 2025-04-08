@@ -2,21 +2,19 @@ package aggregator
 
 import (
 	"context"
+	"errors"
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"golang.org/x/crypto/sha3"
 
 	sdkclients "github.com/Layr-Labs/eigensdk-go/chainio/clients"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
 	avsregistryservice "github.com/Layr-Labs/eigensdk-go/services/avsregistry"
 	blsagg "github.com/Layr-Labs/eigensdk-go/services/bls_aggregation"
 	oprsinfoserv "github.com/Layr-Labs/eigensdk-go/services/operatorsinfo"
-	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 )
 
 type TaskProcessor interface {
@@ -79,45 +77,12 @@ func NewAggregator(c AggregatorConfig, taskProcessor TaskProcessor, eventHash co
 		c.Logger,
 	)
 
-	// This is the same hash function used by the operator to hash the task response before signing it.
-	hashFunction := func(taskResponse sdktypes.TaskResponse) (sdktypes.TaskResponseDigest, error) {
-		// The order here has to match the field ordering of cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse
-		taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
-			{
-				Name: "referenceTaskIndex",
-				Type: "uint32",
-			},
-			{
-				Name: "numberSquared",
-				Type: "uint256",
-			},
-		})
-		if err != nil {
-			c.Logger.Error("Error creating taskResponseType")
-			return sdktypes.TaskResponseDigest{}, err
-		}
-		arguments := abi.Arguments{
-			{
-				Type: taskResponseType,
-			},
-		}
-
-		encodeTaskResponseByte, err := arguments.Pack(taskResponse)
-		if err != nil {
-			c.Logger.Error("Error Packing taskResponse", err)
-			return sdktypes.TaskResponseDigest{}, err
-		}
-
-		var taskResponseDigest [32]byte
-		hasher := sha3.NewLegacyKeccak256()
-		hasher.Write(encodeTaskResponseByte)
-		copy(taskResponseDigest[:], hasher.Sum(nil)[:32])
-
-		return taskResponseDigest, nil
+	if c.TaskResponseHashFn == nil {
+		return nil, errors.New("task response hash function not provided in aggregator config")
 	}
 
 	avsRegistryService := avsregistryservice.NewAvsRegistryServiceChainCaller(avsReader, operatorPubkeysService, c.Logger)
-	blsAggregationService := blsagg.NewBlsAggregatorService(avsRegistryService, hashFunction, c.Logger)
+	blsAggregationService := blsagg.NewBlsAggregatorService(avsRegistryService, c.TaskResponseHashFn, c.Logger)
 
 	client, err := ethclient.Dial(c.EthWsUrl)
 	if err != nil {

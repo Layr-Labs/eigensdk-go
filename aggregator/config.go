@@ -6,6 +6,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
+	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
@@ -26,4 +27,6 @@ type AggregatorConfig struct {
 	BlsPrivateKey   *bls.PrivateKey
 
 	AggregatorServerIpPortAddr string
+
+	TaskResponseHashFn sdktypes.TaskResponseHashFunction
 }
