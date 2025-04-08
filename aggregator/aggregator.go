@@ -39,10 +39,6 @@ type Aggregator struct {
 	avsWriter        *avsregistry.ChainWriter
 	// aggregation related fields
 	blsAggregationService blsagg.BlsAggregationService
-	//tasks                 map[types.TaskIndex]cstaskmanager.IIncredibleSquaringTaskManagerTask
-	//tasksMu               sync.RWMutex
-	//avsSubscriber         chainio.AvsSubscriberer
-	//newTaskCreatedChan    chan *cstaskmanager.ContractIncredibleSquaringTaskManagerNewTaskCreated
 	taskProcessor      TaskProcessor
 	newTaskCreatedLogs chan types.Log
 }

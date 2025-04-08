@@ -25,19 +25,3 @@ func NewProcessSignedTaskResponseServer(taskProcessor TaskProcessor, serviceHand
     }
 }
 
-func (serv *ProcessSignedTaskResponseServer) processSignedTaskResponse(
-        signedTaskResponse SignedTaskResponse,
-    ) error {
-    taskIndex := signedTaskResponse.TaskResponse.ReferenceTaskIndex;
-
-    taskResponseDigest, err := serv.taskProcessor.ProcessTaskResponse(context.Background(), signedTaskResponse.TaskResponse)
-	if err != nil {
-		serv.logger.Errorf("Failure processing task response: %v", err)
-		return err
-	}
-    taskSignature := blsagg.NewTaskSignature(taskIndex, taskResponseDigest, &signedTaskResponse.BlsSignature, signedTaskResponse.OperatorId);
-
-    serv.serviceHandle.ProcessNewSignature(context.Background(), taskSignature);
-        serv.logger.Infof("processed signature for index %v", taskIndex);
-	return nil
-}
