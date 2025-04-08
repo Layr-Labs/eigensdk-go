@@ -2,11 +2,7 @@ package aggregator
 
 import (
 	"context"
-	"math/big"
-	"net/http"
-	"net/rpc"
 
-	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -31,6 +27,13 @@ const (
 	//blockTimeSeconds         = 12 * time.Second
 	avsName = "incredible-squaring"
 )
+
+
+type TaskProcessor interface {
+	ProcessNewTask(ctx context.Context, event any) (blsagg.TaskMetadata, error)
+	ProcessTaskResponse(ctx context.Context, event TaskResponse) ([256]byte, error)
+	ProcessAggregatedResponse(ctx context.Context, response blsagg.BlsAggregationServiceResponse) error
+}
 
 type Aggregator struct {
 	logger           logging.Logger
@@ -179,64 +182,3 @@ func (agg *Aggregator) Start(ctx context.Context) error {
 	}
 }
 
-func (agg *Aggregator) startServer(ctx context.Context) {
-	err := rpc.Register(agg)
-	if err != nil {
-		agg.logger.Fatal("Format of service TaskManager isn't correct. ", "err", err)
-	}
-	rpc.HandleHTTP()
-	err = http.ListenAndServe(agg.serverIpPortAddr, nil)
-	if err != nil {
-		agg.logger.Fatal("ListenAndServe", "err", err)
-	}
-}
-
-type SignedTaskResponse struct {
-	TaskResponse TaskResponse
-	BlsSignature bls.Signature
-	OperatorId   sdktypes.OperatorId
-}
-
-// rpc endpoint which is called by operator
-// reply doesn't need to be checked. If there are no errors, the task response is accepted
-// rpc framework forces a reply type to exist, so we put bool as a placeholder
-func (agg *Aggregator) ProcessSignedTaskResponse(signedTaskResponse *SignedTaskResponse, reply *bool) error {
-	agg.logger.Infof("Received signed task response: %#v", signedTaskResponse)
-	taskIndex := signedTaskResponse.TaskResponse.TaskIndex()
-
-	taskSignature := blsagg.NewTaskSignature(
-		taskIndex,
-		signedTaskResponse.TaskResponse,
-		&signedTaskResponse.BlsSignature,
-		signedTaskResponse.OperatorId,
-	)
-
-	err := agg.blsAggregationService.ProcessNewSignature(context.Background(), taskSignature)
-
-	return err
-}
-
-type TaskResponse struct {
-	ReferenceTaskIndex uint32
-	NumberSquared      *big.Int
-}
-
-func (tr TaskResponse) TaskIndex() sdktypes.TaskIndex {
-	return tr.ReferenceTaskIndex
-}
-
-func (tr TaskResponse) Digest() [256]byte {
-	return [256]byte(tr.NumberSquared.Bytes())
-}
-
-type TaskProcessor interface {
-	ProcessNewTask(ctx context.Context, event any) (blsagg.TaskMetadata, error)
-	ProcessTaskResponse(ctx context.Context, event TaskResponse) ([256]byte, error)
-	ProcessAggregatedResponse(ctx context.Context, response blsagg.BlsAggregationServiceResponse) error
-}
-
-// Is this interface used anywhere?
-type TPTaskResponse interface {
-	TaskIndex() sdktypes.TaskIndex
-	Digest() [256]byte
-}
