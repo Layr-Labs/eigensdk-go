@@ -19,15 +19,6 @@ import (
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 )
 
-const (
-	// number of blocks after which a task is considered expired
-	// this hardcoded here because it's also hardcoded in the contracts, but should
-	// ideally be fetched from the contracts
-	//taskChallengeWindowBlock = 100
-	//blockTimeSeconds         = 12 * time.Second
-	avsName = "incredible-squaring"
-)
-
 type TaskProcessor interface {
 	ProcessNewTask(ctx context.Context, event any) (blsagg.TaskMetadata, error)
 	ProcessTaskResponse(ctx context.Context, event TaskResponse) ([256]byte, error)
@@ -68,7 +59,7 @@ func NewAggregator(c AggregatorConfig, taskProcessor TaskProcessor, eventHash co
 		EthWsUrl:                   c.EthWsUrl,
 		RegistryCoordinatorAddr:    c.RegistryCoordinatorAddress.String(),
 		OperatorStateRetrieverAddr: c.OperatorStateRetrieverAddress.String(),
-		AvsName:                    avsName,
+		AvsName:                    "Aggregator",
 		PromMetricsIpPortAddress:   ":9090",
 		DontUseAllocationManager:   true,
 	}
