@@ -25,5 +25,5 @@ type AggregatorConfig struct {
 	EcdsaPrivateKey *ecdsa.PrivateKey
 	BlsPrivateKey   *bls.PrivateKey
 
-	AggregatorServerIpPortAddr                string
+	AggregatorServerIpPortAddr string
 }

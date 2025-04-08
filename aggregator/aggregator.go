@@ -39,8 +39,8 @@ type Aggregator struct {
 	avsWriter        *avsregistry.ChainWriter
 	// aggregation related fields
 	blsAggregationService blsagg.BlsAggregationService
-	taskProcessor      TaskProcessor
-	newTaskCreatedLogs chan types.Log
+	taskProcessor         TaskProcessor
+	newTaskCreatedLogs    chan types.Log
 }
 
 // NewAggregator creates a new Aggregator with the provided config.
@@ -69,7 +69,7 @@ func NewAggregator(c AggregatorConfig, taskProcessor TaskProcessor, eventHash co
 		OperatorStateRetrieverAddr: c.OperatorStateRetrieverAddress.String(),
 		AvsName:                    avsName,
 		PromMetricsIpPortAddress:   ":9090",
-		DontUseAllocationManager: true,
+		DontUseAllocationManager:   true,
 	}
 
 	clients, err := sdkclients.BuildAll(chainioConfig, c.EcdsaPrivateKey, c.Logger)
@@ -249,6 +249,6 @@ type TaskProcessor interface {
 
 // Is this interface used anywhere?
 type TPTaskResponse interface {
-	TaskIndex() (sdktypes.TaskIndex)
-	Digest() ([256]byte)
+	TaskIndex() sdktypes.TaskIndex
+	Digest() [256]byte
 }
