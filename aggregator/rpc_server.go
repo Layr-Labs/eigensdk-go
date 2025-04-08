@@ -2,6 +2,7 @@ package aggregator
 
 import (
 	"context"
+	"encoding/gob"
 	"net/http"
 	"net/rpc"
 
@@ -10,12 +11,13 @@ import (
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 )
 
-func (agg *Aggregator) startServer(ctx context.Context) {
+func (agg *Aggregator) startServer(ctx context.Context, taskResponseType interface{}) {
 	err := rpc.Register(agg)
 	if err != nil {
 		agg.logger.Fatal("Format of service TaskManager isn't correct. ", "err", err)
 	}
 	rpc.HandleHTTP()
+	gob.Register(taskResponseType)
 	err = http.ListenAndServe(agg.serverIpPortAddr, nil)
 	if err != nil {
 		agg.logger.Fatal("ListenAndServe", "err", err)

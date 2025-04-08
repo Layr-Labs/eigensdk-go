@@ -145,10 +145,10 @@ func NewAggregator(c AggregatorConfig, taskProcessor TaskProcessor, eventHash co
 	}, nil
 }
 
-func (agg *Aggregator) Start(ctx context.Context) error {
+func (agg *Aggregator) Start(ctx context.Context, taskResponseType interface{}) error {
 	agg.logger.Info("Starting aggregator.")
 	agg.logger.Info("Starting aggregator rpc server.")
-	go agg.startServer(ctx)
+	go agg.startServer(ctx, taskResponseType)
 
 	for {
 		select {
