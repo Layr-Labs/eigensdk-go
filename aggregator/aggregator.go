@@ -218,7 +218,7 @@ type SignedTaskResponse struct {
 // rpc framework forces a reply type to exist, so we put bool as a placeholder
 func (agg *Aggregator) ProcessSignedTaskResponse(signedTaskResponse *SignedTaskResponse, reply *bool) error {
 	agg.logger.Infof("Received signed task response: %#v", signedTaskResponse)
-	taskIndex := signedTaskResponse.TaskResponse.ReferenceTaskIndex
+	taskIndex := signedTaskResponse.TaskResponse.TaskIndex()
 
 	taskSignature := blsagg.NewTaskSignature(
 		taskIndex,
@@ -247,10 +247,11 @@ func (tr TaskResponse) Digest() [256]byte {
 
 type TaskProcessor interface {
 	ProcessNewTask(ctx context.Context, event any) (blsagg.TaskMetadata, error)
-	ProcessTaskResponse(ctx context.Context, event TPTaskResponse) ([256]byte, error)
+	ProcessTaskResponse(ctx context.Context, event TaskResponse) ([256]byte, error)
 	ProcessAggregatedResponse(ctx context.Context, response blsagg.BlsAggregationServiceResponse) error
 }
 
+// Is this interface used anywhere?
 type TPTaskResponse interface {
 	TaskIndex() (sdktypes.TaskIndex)
 	Digest() ([256]byte)
