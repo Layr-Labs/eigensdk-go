@@ -261,7 +261,7 @@ func (o *Operator) SignTaskResponse(
 ) (*sdkaggregator.SignedTaskResponse, error) {
 	taskResponseHash := taskResponse.Digest()
 
-	blsSignature := o.blsKeypair.SignMessage(taskResponseHash) // Digest returns 256 bytes but keypair uses 32
+	blsSignature := o.blsKeypair.SignMessage(taskResponseHash)
 	signedTaskResponse := &sdkaggregator.SignedTaskResponse{
 		TaskResponse: taskResponse,
 		BlsSignature: *blsSignature,
