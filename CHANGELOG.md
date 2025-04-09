@@ -14,6 +14,7 @@ Each version will have a separate `Breaking Changes` section as well. To describ
 ### Added 🎉
 
 * added aggregator common implementation to use with interface by @maximopalopoli in [#617](https://github.com/Layr-Labs/eigensdk-go/pull/617)
+* added operator common implementation by @maximopalopoli in [#621](https://github.com/Layr-Labs/eigensdk-go/pull/621)
 
 ### Breaking Changes 🛠
 
