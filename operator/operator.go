@@ -23,20 +23,20 @@ const AVS_NAME = "incredible-squaring"
 const SEM_VER = "0.0.1"
 
 type OperatorConfig struct {
-	OperatorAddress                  string
+	OperatorAddress string
 
 	// Avs Reader addresses
 	OperatorStateRetrieverAddress    string
 	IncredibleSquaringServiceManager string
 	AVSRegistryCoordinatorAddress    string
 
-	EthRpcUrl                        string
-	EthWsUrl                         string
+	EthRpcUrl string
+	EthWsUrl  string
 
-	BlsPrivateKeyStorePath           string
-	AggregatorServerIpPortAddress    string
+	BlsPrivateKeyStorePath        string
+	AggregatorServerIpPortAddress string
 
-	TimesFailing                     int
+	TimesFailing int
 }
 
 type OperatorTaskProcessor interface {
@@ -44,20 +44,20 @@ type OperatorTaskProcessor interface {
 }
 
 type Operator struct {
-	logger    logging.Logger
-	operatorId       sdktypes.OperatorId
+	logger              logging.Logger
+	operatorId          sdktypes.OperatorId
 	aggregatorRpcClient AggregatorRpcClienter
-	EthWsUrl                         string
-	blsKeypair       *bls.KeyPair
-	taskProcessor OperatorTaskProcessor
-	newTaskCreatedLogs    chan types.Log
+	EthWsUrl            string
+	blsKeypair          *bls.KeyPair
+	taskProcessor       OperatorTaskProcessor
+	newTaskCreatedLogs  chan types.Log
 }
 
 func NewOperatorFromConfig(c OperatorConfig, eventHash common.Hash, taskProcessor OperatorTaskProcessor, logger logging.Logger) (*Operator, error) {
 	avs_config := avsregistry.Config{
-		RegistryCoordinatorAddress: common.HexToAddress(c.AVSRegistryCoordinatorAddress),
+		RegistryCoordinatorAddress:    common.HexToAddress(c.AVSRegistryCoordinatorAddress),
 		OperatorStateRetrieverAddress: common.HexToAddress(c.OperatorStateRetrieverAddress),
-		ServiceManagerAddress: common.HexToAddress(c.IncredibleSquaringServiceManager),
+		ServiceManagerAddress:         common.HexToAddress(c.IncredibleSquaringServiceManager),
 	}
 
 	ethHttpClient, err := ethclient.Dial(c.EthRpcUrl)
@@ -125,12 +125,12 @@ func NewOperatorFromConfig(c OperatorConfig, eventHash common.Hash, taskProcesso
 	}
 
 	operator := &Operator{
-		logger:                     logger,
-		blsKeypair:                 blsKeyPair,
-		aggregatorRpcClient:        aggregatorRpcClient,
-		operatorId:                         operatorId,
-		newTaskCreatedLogs: 		newTaskCreatedLogs,
-		taskProcessor: taskProcessor,
+		logger:              logger,
+		blsKeypair:          blsKeyPair,
+		aggregatorRpcClient: aggregatorRpcClient,
+		operatorId:          operatorId,
+		newTaskCreatedLogs:  newTaskCreatedLogs,
+		taskProcessor:       taskProcessor,
 	}
 
 	// Operator registration on startup should be deprecated already
