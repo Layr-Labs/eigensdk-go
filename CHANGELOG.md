@@ -13,9 +13,6 @@ Each version will have a separate `Breaking Changes` section as well. To describ
 
 ### Added 🎉
 
-* added aggregator common implementation to use with interface by @maximopalopoli in [#617](https://github.com/Layr-Labs/eigensdk-go/pull/617)
-* added operator common implementation by @maximopalopoli in [#621](https://github.com/Layr-Labs/eigensdk-go/pull/621)
-
 ### Breaking Changes 🛠
 
 ### Deprecated ⚠️
@@ -28,7 +25,6 @@ Each version will have a separate `Breaking Changes` section as well. To describ
 
 * added rewards utilities integration test by @maximopalopoli in [#608](https://github.com/Layr-Labs/eigensdk-go/pull/608)
 * fixed expired timer handling in bls aggregation service in [#616](https://github.com/Layr-Labs/eigensdk-go/pull/616)
-* added example of use for generic operator implementation by @maximopalopoli in [#622](https://github.com/Layr-Labs/eigensdk-go/pull/622)
 
 ## [0.3.0] - 2025-03-19
 
