@@ -5,14 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
-	"time"
 
 	"github.com/Layr-Labs/eigensdk-go/aggregator"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	sdkoperator "github.com/Layr-Labs/eigensdk-go/operator"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum/core/types"
-	"golang.org/x/exp/rand"
 
 	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/operator/bindings"
 )
@@ -33,15 +31,10 @@ func (tr IncredibleSquaringTaskResponse) Digest() [32]byte {
 
 type OperatorTaskProcessor struct{
 	logger        logging.Logger
-
-	
-	// If bigger than zero, submits wrong responses that many times every 100
-	timesFailing int
 }
 
 func NewOperatorTaskProcessor(c sdkoperator.OperatorConfig, logger logging.Logger) OperatorTaskProcessor {
 	return OperatorTaskProcessor{
-		timesFailing: c.TimesFailing,
 		logger: logger,
 	}
 }
@@ -80,15 +73,6 @@ func (otp OperatorTaskProcessor) ProcessNewTaskCreatedLog(
 
 	numberSquared := big.NewInt(0).Exp(newTaskCreatedLog.Task.NumberToBeSquared, big.NewInt(2), nil)
 
-	if otp.timesFailing > 0 {
-		rand.Seed(uint64((time.Now().UnixNano())))
-		num := rand.Intn(100)
-		if num < otp.timesFailing {
-			numberSquared = big.NewInt(908243203843)
-			otp.logger.Info("Operator computed wrong task result")
-		}
-	}
-
 	taskResponse := IncredibleSquaringTaskResponse{
 		ReferenceTaskIndex: newTaskCreatedLog.TaskIndex,
 		NumberSquared:      numberSquared,
@@ -121,7 +105,6 @@ func main(){
 		EthWsUrl: "ws://localhost:8545",
 		BlsPrivateKeyStorePath: "tests/keys/test.bls.key.json",
 		AggregatorServerIpPortAddress: "localhost:8090",
-		TimesFailing: 25,
 	}
 	operatorTaskProcessor := NewOperatorTaskProcessor(operatorConfig, logger)
 	operator, err := sdkoperator.NewOperatorFromConfig(operatorConfig, blockHash, operatorTaskProcessor, logger)

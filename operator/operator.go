@@ -35,8 +35,6 @@ type OperatorConfig struct {
 
 	BlsPrivateKeyStorePath        string
 	AggregatorServerIpPortAddress string
-
-	TimesFailing int
 }
 
 type OperatorTaskProcessor interface {
