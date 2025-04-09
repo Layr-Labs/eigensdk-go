@@ -26,9 +26,9 @@ type OperatorConfig struct {
 	OperatorAddress string
 
 	// Avs Reader addresses
-	OperatorStateRetrieverAddress    string
-	ServiceManagerAddress string
-	AVSRegistryCoordinatorAddress    string
+	OperatorStateRetrieverAddress string
+	ServiceManagerAddress         string
+	AVSRegistryCoordinatorAddress string
 
 	EthRpcUrl string
 	EthWsUrl  string
