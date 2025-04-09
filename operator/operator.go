@@ -14,7 +14,7 @@ import (
 	sdkaggregator "github.com/Layr-Labs/eigensdk-go/aggregator"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
-	sdklogging "github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/logging"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 )
@@ -40,7 +40,7 @@ type OperatorConfig struct {
 }
 
 type OperatorTaskProcessor interface {
-	ProcessNewTaskCreatedLog(newTaskCreated types.Log) (sdkaggregator.TaskResponse)
+	ProcessNewTaskCreatedLog(newTaskCreated any) (sdkaggregator.TaskResponse, error)
 }
 
 type Operator struct {
@@ -53,21 +53,7 @@ type Operator struct {
 	newTaskCreatedLogs    chan types.Log
 }
 
-// TODO(samlaf): config is a mess right now, since the chainio client constructors
-//
-//	take the config in core (which is shared with aggregator and challenger)
-func NewOperatorFromConfig(c OperatorConfig, eventHash common.Hash) (*Operator, error) {
-	var logLevel sdklogging.LogLevel
-	if c.Production {
-		logLevel = sdklogging.Production
-	} else {
-		logLevel = sdklogging.Development
-	}
-	logger, err := sdklogging.NewZapLogger(logLevel)
-	if err != nil {
-		return nil, err
-	}
-
+func NewOperatorFromConfig(c OperatorConfig, eventHash common.Hash, taskProcessor OperatorTaskProcessor, logger logging.Logger) (*Operator, error) {
 	avs_config := avsregistry.Config{
 		RegistryCoordinatorAddress: common.HexToAddress(c.AVSRegistryCoordinatorAddress),
 		OperatorStateRetrieverAddress: common.HexToAddress(c.OperatorStateRetrieverAddress),
@@ -143,8 +129,8 @@ func NewOperatorFromConfig(c OperatorConfig, eventHash common.Hash) (*Operator, 
 		blsKeypair:                 blsKeyPair,
 		aggregatorRpcClient:        aggregatorRpcClient,
 		operatorId:                         operatorId,
-		timesFailing:                       c.TimesFailing,
 		newTaskCreatedLogs: 		newTaskCreatedLogs,
+		taskProcessor: taskProcessor,
 	}
 
 	// Operator registration on startup should be deprecated already
