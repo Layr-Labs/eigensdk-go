@@ -8,8 +8,8 @@ import (
 )
 
 type TaskGenerator struct {
-	logger          logging.Logger
-	logic			TaskGeneratorLogic
+	logger              logging.Logger
+	logic               TaskGeneratorLogic
 	secondsBetweenTasks time.Duration // Maybe this name is confusing, should fine a better way to name it
 }
 
@@ -57,6 +57,6 @@ func (taskGen *TaskGenerator) Start(ctx context.Context) error {
 	}
 }
 
-type TaskGeneratorLogic interface{
-	sendNewTask(taskNumber int64)(error)
+type TaskGeneratorLogic interface {
+	sendNewTask(taskNumber int64) error
 }
