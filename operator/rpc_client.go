@@ -8,7 +8,6 @@ import (
 
 	sdkaggregator "github.com/Layr-Labs/eigensdk-go/aggregator"
 	"github.com/Layr-Labs/eigensdk-go/logging"
-	"github.com/Layr-Labs/eigensdk-go/metrics"
 )
 
 type AggregatorRpcClienter interface {
@@ -16,7 +15,6 @@ type AggregatorRpcClienter interface {
 }
 type AggregatorRpcClient struct {
 	rpcClient            *rpc.Client
-	metrics              metrics.Metrics
 	logger               logging.Logger
 	aggregatorIpPortAddr string
 }
@@ -29,7 +27,6 @@ func NewAggregatorRpcClient(
 	return &AggregatorRpcClient{
 		// set to nil so that we can create an rpc client even if the aggregator is not running
 		rpcClient:            nil,
-//		metrics:              metrics,
 		logger:               logger,
 		aggregatorIpPortAddr: aggregatorIpPortAddr,
 	}, nil
@@ -87,7 +84,6 @@ func (c *AggregatorRpcClient) SendSignedTaskResponseToAggregator(
 			c.logger.Info("Received error from aggregator", "err", err)
 		} else {
 			c.logger.Info("Signed task response header accepted by aggregator.", "reply", reply)
-			//c.metrics.IncNumTasksAcceptedByAggregator()
 			return
 		}
 		c.logger.Info("Retrying in 2 seconds")

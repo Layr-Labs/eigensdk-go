@@ -23,34 +23,20 @@ const AVS_NAME = "incredible-squaring"
 const SEM_VER = "0.0.1"
 
 type OperatorConfig struct {
-	Production                       bool   `yaml:"production"`
-	OperatorAddress                  string `yaml:"operator_address"`
-	OperatorStateRetrieverAddress    string `yaml:"operator_state_retriever_address"`
-	IncredibleSquaringServiceManager string `yaml:"service_manager_address"`
-	InstantSlasher                   string `yaml:"instant_slasher_address"`
-	AVSRegistryCoordinatorAddress    string `yaml:"avs_registry_coordinator_address"`
-	RewardsCoordinatorAddress        string `yaml:"rewards_coordinator_address"`
-	PermissionControllerAddress      string `yaml:"permission_controller_address"`
-	AllocationManagerAddress         string `yaml:"allocation_manager_address"`
-	TokenStrategyAddr                string `yaml:"token_strategy_addr"`
-	EthRpcUrl                        string `yaml:"eth_rpc_url"`
-	EthWsUrl                         string `yaml:"eth_ws_url"`
-	BlsPrivateKeyStorePath           string `yaml:"bls_private_key_store_path"`
-	EcdsaPrivateKeyStorePath         string `yaml:"ecdsa_private_key_store_path"`
-	AggregatorServerIpPortAddress    string `yaml:"aggregator_server_ip_port_address"`
-	RegisterOperatorOnStartup        bool   `yaml:"register_operator_on_startup"`
-	EigenMetricsIpPortAddress        string `yaml:"eigen_metrics_ip_port_address"`
-	EnableMetrics                    bool   `yaml:"enable_metrics"`
-	NodeApiIpPortAddress             string `yaml:"node_api_ip_port_address"`
-	EnableNodeApi                    bool   `yaml:"enable_node_api"`
-	OperatorSetId                    uint32 `yaml:"operator_set_id"`
-	Socket                           string `yaml:"socket"`
-	MaxOperatorCount                 uint32 `yaml:"max_operator_count"`
-	KickBIPsOfOperatorStake          uint16 `yaml:"kick_bips_of_operator_stake"`
-	KickBIPsOfTotalStake             uint16 `yaml:"kick_bips_of_total_stake"`
-	MinimumStake                     int64  `yaml:"minimum_stake"`
-	Multiplier                       int64  `yaml:"multiplier"`
-	TimesFailing                     int    `yaml:"times_failing"`
+	OperatorAddress                  string
+
+	// Avs Reader addresses
+	OperatorStateRetrieverAddress    string
+	IncredibleSquaringServiceManager string
+	AVSRegistryCoordinatorAddress    string
+
+	EthRpcUrl                        string
+	EthWsUrl                         string
+
+	BlsPrivateKeyStorePath           string
+	AggregatorServerIpPortAddress    string
+
+	TimesFailing                     int
 }
 
 type OperatorTaskProcessor interface {
@@ -58,33 +44,13 @@ type OperatorTaskProcessor interface {
 }
 
 type Operator struct {
-//	config    OperatorConfig
-	logger    sdklogging.Logger
+	logger    logging.Logger
 	operatorId       sdktypes.OperatorId
 	aggregatorRpcClient AggregatorRpcClienter
 	EthWsUrl                         string
 	blsKeypair       *bls.KeyPair
 	taskProcessor OperatorTaskProcessor
-
-	//nodeApi          *nodeapi.NodeApi
-	//avsWriter        *avsregistry.ChainWriter
-	//avsReader        *avsregistry.ChainReader
-	//avsSubscriber    *avsregistry.ChainSubscriber
-	//eigenlayerReader *elcontracts.ChainReader
-	//eigenlayerWriter *elcontracts.ChainWriter
-	//operatorAddr     common.Address
-	// receive new tasks in this chan (typically from listening to onchain event)
-	// newTaskCreatedChan chan *cstaskmanager.ContractIncredibleSquaringTaskManagerNewTaskCreated
-	// ip address of aggregator
-	//aggregatorServerIpPortAddr string
-	// needed when opting in to avs (allow this service manager contract to slash operator)
-	//credibleSquaringServiceManagerAddr common.Address
-
-	// If bigger than zero, submits wrong responses that many times every 100
-	timesFailing int
-
 	newTaskCreatedLogs    chan types.Log
-
 }
 
 // TODO(samlaf): config is a mess right now, since the chainio client constructors
@@ -202,14 +168,11 @@ func (o *Operator) Start(ctx context.Context, taskResponseType interface{}) erro
 			return nil
 
 		case log := <-o.newTaskCreatedLogs:
-			// let task_response = self.taskProcessor.process_new_task(data);
-            // let signed_task_response =
-            //     Self::sign_task_response(&self.key_pair, &self.operator_id, task_response)?;
-            // self.client_aggregator
-            //     .send_signed_task_response(signed_task_response)
-            //     .await?;
-
-			taskResponse := o.taskProcessor.ProcessNewTaskCreatedLog(log)
+			taskResponse, err := o.taskProcessor.ProcessNewTaskCreatedLog(log)
+			if err != nil {
+				o.logger.Error("Error checking if operator is registered", "err", err)
+				return err
+			}
 			signedTaskResponse, err := o.SignTaskResponse(taskResponse)
 			if err != nil {
 				continue
@@ -218,43 +181,6 @@ func (o *Operator) Start(ctx context.Context, taskResponseType interface{}) erro
 		}
 	}
 }
-/* 
-// This function should be at incredible squaring lever
-func (o *Operator) ProcessNewTaskCreatedLog(
-	newTaskCreatedLog types.Log,
-) sdkaggregator.TaskResponse {
-	// o.logger.Debug("Received new task", "task", newTaskCreatedLog)
-	// o.logger.Info("Received new task",
-	// 	"numberToBeSquared", newTaskCreatedLog.Task.NumberToBeSquared,
-	// 	"taskIndex", newTaskCreatedLog.TaskIndex,
-	// 	"taskCreatedBlock", newTaskCreatedLog.Task.TaskCreatedBlock,
-	// 	"quorumNumbers", newTaskCreatedLog.Task.QuorumNumbers,
-	// 	"QuorumThresholdPercentage", newTaskCreatedLog.Task.QuorumThresholdPercentage,
-	// )
-
-	// Cast log to new task created event, and then create the Task response
-
-	// cstaskmanager.ContractIncredibleSquaringTaskManagerNewTaskCreated
-
-
-	numberSquared := big.NewInt(0).Exp(newTaskCreatedLog.Task.NumberToBeSquared, big.NewInt(2), nil)
-
-	if o.timesFailing > 0 {
-		rand.Seed(uint64((time.Now().UnixNano())))
-		num := rand.Intn(100)
-		if num < o.timesFailing {
-			numberSquared = big.NewInt(908243203843)
-			o.logger.Info("Operator computed wrong task result")
-		}
-	}
-	taskResponse := &cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse{
-		ReferenceTaskIndex: newTaskCreatedLog.TaskIndex,
-		NumberSquared:      numberSquared,
-	}
-	return taskResponse
-} 
-*/
-
 
 func (o *Operator) SignTaskResponse(
 	taskResponse sdkaggregator.TaskResponse,
