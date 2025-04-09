@@ -27,7 +27,7 @@ type OperatorConfig struct {
 
 	// Avs Reader addresses
 	OperatorStateRetrieverAddress    string
-	IncredibleSquaringServiceManager string
+	ServiceManagerAddress string
 	AVSRegistryCoordinatorAddress    string
 
 	EthRpcUrl string
@@ -57,7 +57,7 @@ func NewOperatorFromConfig(c OperatorConfig, eventHash common.Hash, taskProcesso
 	avs_config := avsregistry.Config{
 		RegistryCoordinatorAddress:    common.HexToAddress(c.AVSRegistryCoordinatorAddress),
 		OperatorStateRetrieverAddress: common.HexToAddress(c.OperatorStateRetrieverAddress),
-		ServiceManagerAddress:         common.HexToAddress(c.IncredibleSquaringServiceManager),
+		ServiceManagerAddress:         common.HexToAddress(c.ServiceManagerAddress),
 	}
 
 	ethHttpClient, err := ethclient.Dial(c.EthRpcUrl)
