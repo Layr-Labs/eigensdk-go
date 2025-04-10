@@ -25,34 +25,33 @@ func (taskGen *TaskGenerator) Start(ctx context.Context) error {
 	time.Sleep(time.Duration(2 * time.Second))
 
 	taskGen.logger.Info("Starting Task Generator.")
-	taskGen.logger.Info("Starting Task Generator rpc server.")
 
 	ticker := time.NewTicker(time.Duration(taskGen.secondsInterval) * time.Second)
 	defer ticker.Stop()
-	taskGen.logger.Info("Task Generator set to send new task every %v seconds...", taskGen.secondsBetweenTasks)
+	taskGen.logger.Info("Task Generator set to send new task every %v seconds...", taskGen.secondsInterval)
 
-	taskNum := int64(0)
+	taskNumber := int64(0)
 
 	// Send a task before looping
-	err := taskGen.logic.SendNewTask(taskNum)
+	err := taskGen.logic.SendNewTask(taskNumber)
 	if err != nil {
-		taskGen.logger.Error("Aggregator failed to send number to square", "err", err)
+		taskGen.logger.Error("Task Generator failed to send new task", "err", err)
 		return err
 	}
-	taskNum++
+	taskNumber++
 
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case <-ticker.C:
-			taskGen.logger.Infof("Task Generator sending new task, number to square: %v", taskNum)
-			err := taskGen.logic.SendNewTask(taskNum)
+			taskGen.logger.Infof("Task Generator sending new task, task number: %v", taskNumber)
+			err := taskGen.logic.SendNewTask(taskNumber)
 			if err != nil {
-				taskGen.logger.Error("Aggregator failed to send number to square", "err", err)
+				taskGen.logger.Error("Task Generator failed to send new task", "err", err)
 				return err
 			}
-			taskNum++
+			taskNumber++
 		}
 	}
 }
