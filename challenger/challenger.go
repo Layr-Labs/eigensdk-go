@@ -27,10 +27,15 @@ type Challenger struct {
 	newTaskCreatedChan chan types.Log
 }
 
-func NewChallenger(c ChallengerConfig, logic ChallengerLogic, newTaskEventHash common.Hash, taskProcessedEventHash common.Hash) (*Challenger, error) {
+func NewChallenger(
+	c ChallengerConfig,
+	logic ChallengerLogic,
+	newTaskEventHash common.Hash,
+	taskProcessedEventHash common.Hash,
+) (*Challenger, error) {
 	client, err := ethclient.Dial(c.EthWsUrl)
 	if err != nil {
-		c.Logger.Fatalf("error connecting to web socket: %v",err)
+		c.Logger.Fatalf("error connecting to web socket: %v", err)
 	}
 
 	query := ethereum.FilterQuery{
@@ -53,10 +58,10 @@ func NewChallenger(c ChallengerConfig, logic ChallengerLogic, newTaskEventHash c
 	}
 
 	return &Challenger{
-		logger:    c.Logger,
-		logic:     logic,
+		logger:             c.Logger,
+		logic:              logic,
 		newTaskCreatedChan: newTaskCreatedLogs,
-		taskResponseChan: taskRespondedLogs,
+		taskResponseChan:   taskRespondedLogs,
 	}, nil
 }
 
