@@ -3,7 +3,6 @@ package taskgeneratorexample
 import (
 	"context"
 	"math/big"
-	"time"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
@@ -46,13 +45,13 @@ func (tgl *TaskGenLogic) SendNewTask(taskNumber int64) error {
 }
 
 func main() {
-	thresholdNumerator := uint8(100)
-	quorumNumbers := []uint8{0}
-
 	logger, err := logging.NewZapLogger(logging.Development)
 	if err != nil {
 		return
 	}
+
+	thresholdNumerator := uint8(100)
+	quorumNumbers := []uint8{0}
 
 	avsConfig := AvsConfig{}
 	logic, err := NewTaskGenLogic(&avsConfig, thresholdNumerator, quorumNumbers, logger)
@@ -60,8 +59,8 @@ func main() {
 		return
 	}
 
-	durationInterval := time.Duration(10) // This means TaskGenerator will send tasks every 10 seconds
-	taskGen, err := taskgenerator.BuildTaskGenerator(logger, logic, durationInterval)
+	secondsInterval := 10 // This means TaskGenerator will send tasks every 10 seconds
+	taskGen, err := taskgenerator.BuildTaskGenerator(logger, logic, secondsInterval)
 	if err != nil {
 		return
 	}
