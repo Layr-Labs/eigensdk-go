@@ -34,7 +34,7 @@ func (taskGen *TaskGenerator) Start(ctx context.Context) error {
 	taskNum := int64(0)
 
 	// Send a task before looping
-	err := taskGen.logic.sendNewTask(taskNum)
+	err := taskGen.logic.SendNewTask(taskNum)
 	if err != nil {
 		taskGen.logger.Error("Aggregator failed to send number to square", "err", err)
 		return err
@@ -47,7 +47,7 @@ func (taskGen *TaskGenerator) Start(ctx context.Context) error {
 			return nil
 		case <-ticker.C:
 			taskGen.logger.Infof("Task Generator sending new task, number to square: %v", taskNum)
-			err := taskGen.logic.sendNewTask(taskNum)
+			err := taskGen.logic.SendNewTask(taskNum)
 			if err != nil {
 				taskGen.logger.Error("Aggregator failed to send number to square", "err", err)
 				return err
@@ -58,5 +58,5 @@ func (taskGen *TaskGenerator) Start(ctx context.Context) error {
 }
 
 type TaskGeneratorLogic interface {
-	sendNewTask(taskNumber int64) error
+	SendNewTask(taskNumber int64) error
 }
