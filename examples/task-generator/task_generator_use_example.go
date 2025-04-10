@@ -3,15 +3,19 @@ package taskgeneratorexample
 import (
 	"context"
 	"math/big"
+	"time"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/task-generator/bindings/taskManager"
 	"github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/signerv2"
 	taskgenerator "github.com/Layr-Labs/eigensdk-go/task-generator"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
@@ -53,7 +57,52 @@ func main() {
 	thresholdNumerator := uint8(100)
 	quorumNumbers := []uint8{0}
 
-	avsConfig := AvsConfig{}
+	// This pk should be related to the address passed to TaskManager as task_generator_addr when initialized
+	taskgeneratorPk := "0x4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356"
+	ecdsaPrivateKey, err := crypto.HexToECDSA(taskgeneratorPk)
+	if err != nil {
+		return
+	}
+
+	ethHttpUrl := "http://localhost:8545"
+	ethHttpClient, err := ethclient.Dial(ethHttpUrl)
+	if err != nil {
+		return
+	}
+
+	rpcCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	chainid, err := ethHttpClient.ChainID(rpcCtx)
+	if err != nil {
+		logger.Error("Cannot get chain id", "err", err)
+		return
+	}
+
+	signerV2, senderAddr, err := signerv2.SignerFromConfig(signerv2.Config{PrivateKey: ecdsaPrivateKey}, chainid)
+	if err != nil {
+		return
+	}
+
+	pkWallet, err := wallet.NewPrivateKeyWallet(ethHttpClient, signerV2, senderAddr, logger)
+	if err != nil {
+		return
+	}
+
+	txMgr := txmgr.NewSimpleTxManager(pkWallet, ethHttpClient, logger, senderAddr)
+
+	// The values from this config are extracted from an incredible squaring config file and also the deployment output files
+	avsConfig := AvsConfig{
+		Logger:                     logger,
+		EthHttpUrl:                 ethHttpUrl,
+		EthWsRpcUrl:                "ws://localhost:8545",
+		OperatorStateRetrieverAddr: common.HexToAddress("0x4c5859f0f772848b2d91f1d83e2fe57935348029"),
+		IncredibleSquaringRegistryCoordinatorAddr: common.HexToAddress("0x7bc06c482dead17c0e297afbc32f6e63d3846650"),
+		IncredibleSquaringServiceManager:          common.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"),
+		IncredibleSquaringTaskManager:             common.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3"),
+		TxMgr:                                     txMgr,
+		EthHttpClient:                             ethHttpClient,
+	}
+
 	logic, err := NewTaskGenLogic(&avsConfig, thresholdNumerator, quorumNumbers)
 	if err != nil {
 		return
