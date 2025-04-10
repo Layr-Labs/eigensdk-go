@@ -75,14 +75,9 @@ func main() {
 	}
 }
 
-// ChallengerLogicImpl
-type ChallengerClient interface {
-	TransactionByHash(ctx context.Context, hash common.Hash) (tx *types.Transaction, isPending bool, err error)
-}
-
 type ChallengerLogicImpl struct {
 	logger logging.Logger
-	ethClient          ChallengerClient
+	ethClient          *ethclient.Client
 	avsWriter          AvsWriter
 	tasks              map[uint32]cstaskmanager.IIncredibleSquaringTaskManagerTask
 	taskResponses      map[uint32]TaskResponseData
