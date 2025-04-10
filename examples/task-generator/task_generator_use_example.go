@@ -16,11 +16,11 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-type TaskGenLogic struct{
-	avsWriter *AvsWriter
+type TaskGenLogic struct {
+	avsWriter          *AvsWriter
 	thresholdNumerator uint8
-	quorumNumbers []uint8
-	logger logging.Logger
+	quorumNumbers      []uint8
+	logger             logging.Logger
 }
 
 func NewTaskGenLogic(c *AvsConfig, thresholdNumerator uint8, quorumNumbers []uint8, logger logging.Logger) (*TaskGenLogic, error) {
@@ -34,9 +34,9 @@ func NewTaskGenLogic(c *AvsConfig, thresholdNumerator uint8, quorumNumbers []uin
 		avsWriter, thresholdNumerator, quorumNumbers, logger}, nil
 }
 
-func (tgl *TaskGenLogic) SendNewTask(taskNumber int64)(error){
+func (tgl *TaskGenLogic) SendNewTask(taskNumber int64) error {
 	err := tgl.avsWriter.SendNewTaskNumberToSquare(context.Background(), big.NewInt(taskNumber),
-	tgl.thresholdNumerator, tgl.quorumNumbers)
+		tgl.thresholdNumerator, tgl.quorumNumbers)
 	if err != nil {
 		tgl.logger.Error("Aggregator failed to send number to square", "err", err)
 		return err
@@ -45,7 +45,7 @@ func (tgl *TaskGenLogic) SendNewTask(taskNumber int64)(error){
 	return nil
 }
 
-func main(){
+func main() {
 	thresholdNumerator := uint8(100)
 	quorumNumbers := []uint8{0}
 
@@ -54,9 +54,7 @@ func main(){
 		return
 	}
 
-	avsConfig := AvsConfig{
-
-	}
+	avsConfig := AvsConfig{}
 	logic, err := NewTaskGenLogic(&avsConfig, thresholdNumerator, quorumNumbers, logger)
 	if err != nil {
 		return
@@ -82,15 +80,15 @@ type AvsWriter struct {
 }
 
 type AvsConfig struct {
-	Logger                    logging.Logger
+	Logger                                    logging.Logger
 	EthWsRpcUrl                               string
-	EthHttpUrl                    	          string
+	EthHttpUrl                                string
 	OperatorStateRetrieverAddr                common.Address
 	IncredibleSquaringRegistryCoordinatorAddr common.Address
 	IncredibleSquaringServiceManager          common.Address
-	IncredibleSquaringTaskManager          common.Address
-	TxMgr                 txmgr.TxManager
-	EthHttpClient *ethclient.Client
+	IncredibleSquaringTaskManager             common.Address
+	TxMgr                                     txmgr.TxManager
+	EthHttpClient                             *ethclient.Client
 }
 
 func BuildAvsWriterFromConfig(c *AvsConfig) (*AvsWriter, error) {
