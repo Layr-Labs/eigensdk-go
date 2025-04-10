@@ -44,10 +44,7 @@ func NewChallenger(c ChallengerConfig, logic ChallengerLogic, newTaskEventHash c
 		c.Logger.Fatalf("error subscribing to newTaskCreated events: %v", err)
 	}
 
-	query = ethereum.FilterQuery{
-		Addresses: []common.Address{},
-		Topics:    [][]common.Hash{{taskProcessedEventHash}},
-	}
+	query.Topics[0][0] = taskProcessedEventHash
 
 	taskRespondedLogs := make(chan types.Log)
 	_, err = client.SubscribeFilterLogs(context.Background(), query, taskRespondedLogs)
