@@ -10,10 +10,6 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-type ChallengerClient interface {
-	TransactionByHash(ctx context.Context, hash common.Hash) (tx *types.Transaction, isPending bool, err error)
-}
-
 type ChallengerLogic interface {
 	ProcessNewTaskCreatedLog(newTaskEvent any) error
 	ProcessTaskResponseLog(processTaskEvent any) error
@@ -56,7 +52,7 @@ func NewChallenger(c ChallengerConfig, logic ChallengerLogic, newTaskEventHash c
 	taskRespondedLogs := make(chan types.Log)
 	_, err = client.SubscribeFilterLogs(context.Background(), query, taskRespondedLogs)
 	if err != nil {
-		c.Logger.Fatalf("error subscribing to newTaskCreated events: %v", err)
+		c.Logger.Fatalf("error subscribing to taskResponded events: %v", err)
 	}
 
 	return &Challenger{
