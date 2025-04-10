@@ -75,6 +75,8 @@ func main() {
 	}
 }
 
+// Challenger Logic
+
 type ChallengerLogicImpl struct {
 	logger        logging.Logger
 	ethClient     *ethclient.Client
@@ -103,37 +105,6 @@ func NewChallengerLogicImpl(c *AvsConfig) (*ChallengerLogicImpl, error) {
 		tasks:         make(map[uint32]cstaskmanager.IIncredibleSquaringTaskManagerTask),
 		taskResponses: make(map[uint32]TaskResponseData),
 	}, nil
-}
-
-func (c *ChallengerLogicImpl) verifyChallenge(taskIndex uint32) error {
-	numberToBeSquared := c.tasks[taskIndex].NumberToBeSquared
-	answerInResponse := c.taskResponses[taskIndex].TaskResponse.NumberSquared
-	trueAnswer := numberToBeSquared.Exp(numberToBeSquared, big.NewInt(2), nil)
-
-	// checking if the answer in the response submitted by aggregator is correct
-	if trueAnswer.Cmp(answerInResponse) != 0 {
-		c.logger.Info("The number squared is not correct", "expectedAnswer", trueAnswer, "gotAnswer", answerInResponse)
-
-		// raise challenge
-		c.logger.Info("Challenger raising challenge.", "taskIndex", taskIndex)
-
-		_, err := c.avsWriter.RaiseChallenge(
-			context.Background(),
-			c.tasks[taskIndex],
-			c.taskResponses[taskIndex].TaskResponse,
-			c.taskResponses[taskIndex].TaskResponseMetadata,
-			c.taskResponses[taskIndex].NonSigningOperatorPubKeys,
-		)
-		if err != nil {
-			c.logger.Error("Challenger failed to raise challenge:", "err", err)
-			return fmt.Errorf("challenger failed to raise challenge: %w", err)
-		}
-
-		return nil
-	} else {
-		c.logger.Info("The number squared is correct")
-		return errors.New("100. Task response is valid")
-	}
 }
 
 func (c *ChallengerLogicImpl) ProcessNewTaskCreatedLog(
@@ -273,6 +244,37 @@ func (c *ChallengerLogicImpl) getNonSigningOperatorPubKeys(
 	}
 
 	return nonSigningOperatorPubKeys
+}
+
+func (c *ChallengerLogicImpl) verifyChallenge(taskIndex uint32) error {
+	numberToBeSquared := c.tasks[taskIndex].NumberToBeSquared
+	answerInResponse := c.taskResponses[taskIndex].TaskResponse.NumberSquared
+	trueAnswer := numberToBeSquared.Exp(numberToBeSquared, big.NewInt(2), nil)
+
+	// checking if the answer in the response submitted by aggregator is correct
+	if trueAnswer.Cmp(answerInResponse) != 0 {
+		c.logger.Info("The number squared is not correct", "expectedAnswer", trueAnswer, "gotAnswer", answerInResponse)
+
+		// raise challenge
+		c.logger.Info("Challenger raising challenge.", "taskIndex", taskIndex)
+
+		_, err := c.avsWriter.RaiseChallenge(
+			context.Background(),
+			c.tasks[taskIndex],
+			c.taskResponses[taskIndex].TaskResponse,
+			c.taskResponses[taskIndex].TaskResponseMetadata,
+			c.taskResponses[taskIndex].NonSigningOperatorPubKeys,
+		)
+		if err != nil {
+			c.logger.Error("Challenger failed to raise challenge:", "err", err)
+			return fmt.Errorf("challenger failed to raise challenge: %w", err)
+		}
+
+		return nil
+	} else {
+		c.logger.Info("The number squared is correct")
+		return errors.New("100. Task response is valid")
+	}
 }
 
 // Avs Writer
