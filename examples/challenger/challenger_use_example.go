@@ -35,8 +35,8 @@ func main() {
 	taskRespondedEventHash := taskManagerAbi.Events["TaskResponded"].ID
 
 	cfg := challenger.ChallengerConfig{
-		EthWsUrl:                      "ws://localhost:8545",
-		Logger: logger,
+		EthWsUrl: "ws://localhost:8545",
+		Logger:   logger,
 	}
 
 	ethHttpUrl := "http://localhost:8545"
@@ -51,10 +51,10 @@ func main() {
 	}
 
 	avsConfig := AvsConfig{
-		Logger: logger,
+		Logger:                        logger,
 		IncredibleSquaringTaskManager: common.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3"),
-		TxMgr: txMgr,
-		EthHttpClient: ethHttpClient,
+		TxMgr:                         txMgr,
+		EthHttpClient:                 ethHttpClient,
 	}
 	challengerLogicImpl, err := NewChallengerLogicImpl(avsConfig)
 	if err != nil {
@@ -76,11 +76,11 @@ func main() {
 }
 
 type ChallengerLogicImpl struct {
-	logger logging.Logger
-	ethClient          *ethclient.Client
-	avsWriter          AvsWriter
-	tasks              map[uint32]cstaskmanager.IIncredibleSquaringTaskManagerTask
-	taskResponses      map[uint32]TaskResponseData
+	logger        logging.Logger
+	ethClient     *ethclient.Client
+	avsWriter     AvsWriter
+	tasks         map[uint32]cstaskmanager.IIncredibleSquaringTaskManagerTask
+	taskResponses map[uint32]TaskResponseData
 }
 
 type TaskResponseData struct {
@@ -91,10 +91,8 @@ type TaskResponseData struct {
 
 func NewChallengerLogicImpl(c AvsConfig) (ChallengerLogicImpl, error) {
 
-
 	return ChallengerLogicImpl{
 		logger: c.Logger,
-
 	}, nil
 }
 
@@ -212,12 +210,12 @@ func (c *ChallengerLogicImpl) getNonSigningOperatorPubKeys(
 			"err", err,
 		)
 	}
-	
+
 	taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
 	if err != nil {
 		c.logger.Error("Error getting Abi", "err", err)
 	}
-	
+
 	calldata := tx.Data()
 	methodSig := calldata[:4]
 	method, err := taskManagerAbi.MethodById(methodSig)
