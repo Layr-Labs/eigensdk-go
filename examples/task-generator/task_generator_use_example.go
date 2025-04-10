@@ -22,7 +22,7 @@ type TaskGenLogic struct {
 	logger             logging.Logger
 }
 
-func NewTaskGenLogic(c *AvsConfig, thresholdNumerator uint8, quorumNumbers []uint8, logger logging.Logger) (*TaskGenLogic, error) {
+func NewTaskGenLogic(c *AvsConfig, thresholdNumerator uint8, quorumNumbers []uint8) (*TaskGenLogic, error) {
 	avsWriter, err := BuildAvsWriterFromConfig(c)
 	if err != nil {
 		c.Logger.Errorf("Cannot create avsWriter", "err", err)
@@ -30,7 +30,7 @@ func NewTaskGenLogic(c *AvsConfig, thresholdNumerator uint8, quorumNumbers []uin
 	}
 
 	return &TaskGenLogic{
-		avsWriter, thresholdNumerator, quorumNumbers, logger}, nil
+		avsWriter, thresholdNumerator, quorumNumbers, c.Logger}, nil
 }
 
 func (tgl *TaskGenLogic) SendNewTask(taskNumber int64) error {
@@ -54,7 +54,7 @@ func main() {
 	quorumNumbers := []uint8{0}
 
 	avsConfig := AvsConfig{}
-	logic, err := NewTaskGenLogic(&avsConfig, thresholdNumerator, quorumNumbers, logger)
+	logic, err := NewTaskGenLogic(&avsConfig, thresholdNumerator, quorumNumbers)
 	if err != nil {
 		return
 	}
