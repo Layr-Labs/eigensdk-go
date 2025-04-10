@@ -56,13 +56,13 @@ func main() {
 		TxMgr:                         txMgr,
 		EthHttpClient:                 ethHttpClient,
 	}
-	challengerLogicImpl, err := NewChallengerLogicImpl(avsConfig)
+	challengerLogicImpl, err := NewChallengerLogicImpl(&avsConfig)
 	if err != nil {
 		logger.Errorf("Failed to create challenger logic from config: %v", err)
 		return
 	}
 
-	challenger, err := challenger.NewChallenger(cfg, &challengerLogicImpl, newTaskEventHash, taskRespondedEventHash)
+	challenger, err := challenger.NewChallenger(cfg, challengerLogicImpl, newTaskEventHash, taskRespondedEventHash)
 	if err != nil {
 		logger.Errorf("Failed to create challenger from config: %v", err)
 		return
@@ -89,10 +89,19 @@ type TaskResponseData struct {
 	NonSigningOperatorPubKeys []cstaskmanager.BN254G1Point
 }
 
-func NewChallengerLogicImpl(c AvsConfig) (ChallengerLogicImpl, error) {
+func NewChallengerLogicImpl(c *AvsConfig) (*ChallengerLogicImpl, error) {
+	avsWriter, err := BuildAvsWriterFromConfig(c)
+	if err != nil {
+		c.Logger.Errorf("Cannot create avsWriter", "err", err)
+		return nil, err
+	}
 
-	return ChallengerLogicImpl{
-		logger: c.Logger,
+	return &ChallengerLogicImpl{
+		logger:        c.Logger,
+		ethClient:     c.EthHttpClient,
+		avsWriter:     *avsWriter,
+		tasks:         make(map[uint32]cstaskmanager.IIncredibleSquaringTaskManagerTask),
+		taskResponses: make(map[uint32]TaskResponseData),
 	}, nil
 }
 
