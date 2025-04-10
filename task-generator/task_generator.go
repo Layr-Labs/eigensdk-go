@@ -8,16 +8,16 @@ import (
 )
 
 type TaskGenerator struct {
-	logger              logging.Logger
-	logic               TaskGeneratorLogic
-	secondsBetweenTasks time.Duration // Maybe this name is confusing, should fine a better way to name it
+	logger          logging.Logger
+	logic           TaskGeneratorLogic
+	secondsInterval int
 }
 
-func BuildTaskGenerator(logger logging.Logger, logic TaskGeneratorLogic, timeBetweenTasks time.Duration) (*TaskGenerator, error) {
+func BuildTaskGenerator(logger logging.Logger, logic TaskGeneratorLogic, secondsInterval int) (*TaskGenerator, error) {
 	return &TaskGenerator{
 		logger,
 		logic,
-		timeBetweenTasks,
+		secondsInterval,
 	}, nil
 }
 
@@ -27,7 +27,7 @@ func (taskGen *TaskGenerator) Start(ctx context.Context) error {
 	taskGen.logger.Info("Starting Task Generator.")
 	taskGen.logger.Info("Starting Task Generator rpc server.")
 
-	ticker := time.NewTicker(taskGen.secondsBetweenTasks * time.Second)
+	ticker := time.NewTicker(time.Duration(taskGen.secondsInterval) * time.Second)
 	defer ticker.Stop()
 	taskGen.logger.Info("Task Generator set to send new task every %v seconds...", taskGen.secondsBetweenTasks)
 
