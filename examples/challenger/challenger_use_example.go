@@ -131,6 +131,8 @@ func (c *ChallengerLogicImpl) ProcessNewTaskCreatedLog(
 	taskIndex := newTaskCreatedLog.TaskIndex
 	c.tasks[taskIndex] = newTaskCreatedLog.Task
 
+	// Note: This verification is strange, and is not in Rust version. If removing it breaks something, 
+	// probably its a bug on challenger implementation 
 	if _, found := c.taskResponses[taskIndex]; found {
 		_ = c.verifyChallenge(taskIndex)
 	}
