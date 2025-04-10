@@ -5,8 +5,6 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/task-generator/bindings/taskManager"
@@ -92,15 +90,10 @@ func main() {
 
 	// The values from this config are extracted from an incredible squaring config file and also the deployment output files
 	avsConfig := AvsConfig{
-		Logger:                     logger,
-		EthHttpUrl:                 ethHttpUrl,
-		EthWsRpcUrl:                "ws://localhost:8545",
-		OperatorStateRetrieverAddr: common.HexToAddress("0x4c5859f0f772848b2d91f1d83e2fe57935348029"),
-		IncredibleSquaringRegistryCoordinatorAddr: common.HexToAddress("0x7bc06c482dead17c0e297afbc32f6e63d3846650"),
-		IncredibleSquaringServiceManager:          common.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"),
-		IncredibleSquaringTaskManager:             common.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3"),
-		TxMgr:                                     txMgr,
-		EthHttpClient:                             ethHttpClient,
+		Logger:                        logger,
+		IncredibleSquaringTaskManager: common.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3"),
+		TxMgr:                         txMgr,
+		EthHttpClient:                 ethHttpClient,
 	}
 
 	logic, err := NewTaskGenLogic(&avsConfig, thresholdNumerator, quorumNumbers)
@@ -121,85 +114,32 @@ func main() {
 }
 
 type AvsWriter struct {
-	avsregistry.ChainWriter
 	logger              logging.Logger
 	TxMgr               txmgr.TxManager
 	taskManagerContract *cstaskmanager.ContractIncredibleSquaringTaskManager
 }
 
 type AvsConfig struct {
-	Logger                                    logging.Logger
-	EthWsRpcUrl                               string
-	EthHttpUrl                                string
-	OperatorStateRetrieverAddr                common.Address
-	IncredibleSquaringRegistryCoordinatorAddr common.Address
-	IncredibleSquaringServiceManager          common.Address
-	IncredibleSquaringTaskManager             common.Address
-	TxMgr                                     txmgr.TxManager
-	EthHttpClient                             *ethclient.Client
+	Logger                        logging.Logger
+	IncredibleSquaringTaskManager common.Address
+	TxMgr                         txmgr.TxManager
+	EthHttpClient                 *ethclient.Client
 }
 
 func BuildAvsWriterFromConfig(c *AvsConfig) (*AvsWriter, error) {
-	ethWsClient, err := ethclient.Dial(c.EthWsRpcUrl)
-	if err != nil {
-		return nil, utils.WrapError("Failed to create Eth WS client", err)
-	}
-
-	return BuildAvsWriter(
-		c.TxMgr,
-		c.IncredibleSquaringServiceManager,
-		c.IncredibleSquaringTaskManager,
-		c.IncredibleSquaringRegistryCoordinatorAddr,
-		c.OperatorStateRetrieverAddr,
-		ethWsClient,
-		c.EthHttpClient,
-		c.Logger,
-	)
-}
-
-func BuildAvsWriter(
-	txMgr txmgr.TxManager,
-	serviceManagerAddr, taskManagerAddr common.Address,
-	registryCoordinatorAddr, operatorStateRetrieverAddr common.Address,
-	wsClient eth.WsBackend,
-	ethHttpClient *ethclient.Client,
-	logger logging.Logger,
-) (*AvsWriter, error) {
-	config := avsregistry.Config{
-		RegistryCoordinatorAddress:    registryCoordinatorAddr,
-		OperatorStateRetrieverAddress: operatorStateRetrieverAddr,
-		DontUseAllocationManager:      false,
-		ServiceManagerAddress:         serviceManagerAddr,
-	}
-
-	_, _, avsRegistryWriter, _, err := avsregistry.BuildClients(config, ethHttpClient, wsClient, txMgr, logger)
-	if err != nil {
-		return nil, err
-	}
-
 	contractTaskManager, err := cstaskmanager.NewContractIncredibleSquaringTaskManager(
-		taskManagerAddr,
-		ethHttpClient,
+		c.IncredibleSquaringTaskManager,
+		c.EthHttpClient,
 	)
 	if err != nil {
 		return nil, utils.WrapError("Failed to fetch IServiceManager contract", err)
 	}
 
-	return NewAvsWriter(*avsRegistryWriter, logger, txMgr, contractTaskManager), nil
-}
-
-func NewAvsWriter(
-	avsRegistryWriter avsregistry.ChainWriter,
-	logger logging.Logger,
-	txMgr txmgr.TxManager,
-	contractTaskManager *cstaskmanager.ContractIncredibleSquaringTaskManager,
-) *AvsWriter {
 	return &AvsWriter{
-		ChainWriter:         avsRegistryWriter,
-		logger:              logger,
-		TxMgr:               txMgr,
+		logger:              c.Logger,
+		TxMgr:               c.TxMgr,
 		taskManagerContract: contractTaskManager,
-	}
+	}, nil
 }
 
 // returns the tx receipt, as well as the task index (which it gets from parsing the tx receipt logs)
@@ -211,8 +151,7 @@ func (w *AvsWriter) SendNewTaskNumberToSquare(
 ) error {
 	txOpts, err := w.TxMgr.GetNoSendTxOpts()
 	if err != nil {
-		w.logger.Errorf("Error getting tx opts")
-		return err
+		return utils.WrapError("Error getting tx opts", err)
 	}
 
 	tx, err := w.taskManagerContract.CreateNewTask(
@@ -222,20 +161,11 @@ func (w *AvsWriter) SendNewTaskNumberToSquare(
 		quorumNumbers,
 	)
 	if err != nil {
-		w.logger.Errorf("Error assembling CreateNewTask tx")
-		return err
+		return utils.WrapError("Error assembling CreateNewTask tx", err)
 	}
-	receipt, err := w.TxMgr.Send(ctx, tx, true)
+	_, err = w.TxMgr.Send(ctx, tx, true)
 	if err != nil {
-		w.logger.Errorf("Error submitting CreateNewTask tx")
-		return err
-	}
-	_, err = w.taskManagerContract.ContractIncredibleSquaringTaskManagerFilterer.ParseNewTaskCreated(
-		*receipt.Logs[0],
-	)
-	if err != nil {
-		w.logger.Error("Aggregator failed to parse new task created event", "err", err)
-		return err
+		return utils.WrapError("Error submitting CreateNewTask tx", err)
 	}
 	return nil
 }
