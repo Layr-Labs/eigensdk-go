@@ -23,6 +23,10 @@ Each version will have a separate `Breaking Changes` section as well. To describ
 
 ### Other Changes
 
+## [1.0.0] - 2025-XX-XX
+
+### Other Changes
+
 * added rewards utilities integration test by @maximopalopoli in [#608](https://github.com/Layr-Labs/eigensdk-go/pull/608)
 * fixed expired timer handling in bls aggregation service in [#616](https://github.com/Layr-Labs/eigensdk-go/pull/616)
 
