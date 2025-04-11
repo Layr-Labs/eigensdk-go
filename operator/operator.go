@@ -35,6 +35,8 @@ type OperatorConfig struct {
 
 	BlsPrivateKeyStorePath        string
 	AggregatorServerIpPortAddress string
+
+	RegisterOnStartup bool
 }
 
 type OperatorTaskProcessor interface {
@@ -131,8 +133,6 @@ func NewOperatorFromConfig(c OperatorConfig, eventHash common.Hash, taskProcesso
 		taskProcessor:       taskProcessor,
 	}
 
-	// Operator registration on startup should be deprecated already
-	operator.operatorId = operatorId
 	logger.Info("Operator info",
 		"operatorId", operatorId,
 		"operatorAddr", c.OperatorAddress,
