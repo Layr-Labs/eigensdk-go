@@ -72,19 +72,19 @@ func RegisterForOperatorSets(
 		BlsKeyPair:      &blsKeyPair,
 		Socket:          socket,
 	}
-	
+
 	_, err = elWriter.RegisterForOperatorSets(
 		context.Background(),
 		registryCoordinatorAddr,
 		registrationRequest,
 	)
-	
+
 	if err != nil {
 		logger.Errorf("Unable to register operator with the operator set")
 		return err
 	}
 	logger.Info("Registered operator with operator set")
-	
+
 	return nil
 }
 
