@@ -18,7 +18,7 @@ import (
 )
 
 type TaskProcessor interface {
-	ProcessNewTask(ctx context.Context, event any) (blsagg.TaskMetadata, error)
+	ProcessNewTask(ctx context.Context, log types.Log) (blsagg.TaskMetadata, error)
 	ProcessTaskResponse(ctx context.Context, event TaskResponse) ([32]byte, error)
 	ProcessAggregatedResponse(ctx context.Context, response blsagg.BlsAggregationServiceResponse) error
 }

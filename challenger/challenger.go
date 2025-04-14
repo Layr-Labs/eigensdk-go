@@ -11,8 +11,8 @@ import (
 )
 
 type ChallengerLogic interface {
-	ProcessNewTaskCreatedLog(newTaskEvent any) error
-	ProcessTaskResponseLog(processTaskEvent any) error
+	ProcessNewTaskCreatedLog(log types.Log) error
+	ProcessTaskResponseLog(log types.Log) error
 }
 
 type ChallengerConfig struct {
