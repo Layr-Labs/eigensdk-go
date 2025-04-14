@@ -40,7 +40,7 @@ type OperatorConfig struct {
 }
 
 type OperatorTaskProcessor interface {
-	ProcessNewTaskCreatedLog(newTaskCreated any) (sdkaggregator.TaskResponse, error)
+	ProcessNewTaskCreatedLog(newTaskCreated types.Log) (sdkaggregator.TaskResponse, error)
 }
 
 type Operator struct {
