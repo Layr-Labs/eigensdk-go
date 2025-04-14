@@ -55,15 +55,6 @@ func (otp OperatorTaskProcessor) ProcessNewTaskCreatedLog(
 		return nil, fmt.Errorf("error unpacking the log: %w", err)
 	}
 
-	otp.logger.Debug("Received new task", "task", newTaskCreatedLog)
-	otp.logger.Info("Received new task",
-		"numberToBeSquared", newTaskCreatedLog.Task.NumberToBeSquared,
-		"taskIndex", newTaskCreatedLog.TaskIndex,
-		"taskCreatedBlock", newTaskCreatedLog.Task.TaskCreatedBlock,
-		"quorumNumbers", newTaskCreatedLog.Task.QuorumNumbers,
-		"QuorumThresholdPercentage", newTaskCreatedLog.Task.QuorumThresholdPercentage,
-	)
-
 	numberSquared := big.NewInt(0).Exp(newTaskCreatedLog.Task.NumberToBeSquared, big.NewInt(2), nil)
 
 	taskResponse := IncredibleSquaringTaskResponse{
