@@ -28,7 +28,7 @@ func (taskGen *TaskGenerator) Start(ctx context.Context) error {
 
 	ticker := time.NewTicker(time.Duration(taskGen.secondsInterval) * time.Second)
 	defer ticker.Stop()
-	taskGen.logger.Info("Task Generator set to send new task every %v seconds...", taskGen.secondsInterval)
+	taskGen.logger.Infof("Task Generator set to send new task every %v seconds...", taskGen.secondsInterval)
 
 	taskNumber := int64(0)
 
