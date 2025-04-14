@@ -15,8 +15,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 
+	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/bindings/taskManager"
 	taskgeneratorexample "github.com/Layr-Labs/eigensdk-go/examples/task-generator"
-	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/task-generator/bindings/taskManager"
 )
 
 func main() {
