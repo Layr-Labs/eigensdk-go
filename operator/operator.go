@@ -54,9 +54,9 @@ type Operator[ResponseType any] struct {
 }
 
 func NewOperatorFromConfig[ResponseType any](
-	c OperatorConfig, 
-	eventHash common.Hash, 
-	taskProcessor OperatorTaskProcessor, 
+	c OperatorConfig,
+	eventHash common.Hash,
+	taskProcessor OperatorTaskProcessor,
 	logger logging.Logger,
 ) (*Operator[ResponseType], error) {
 	avs_config := avsregistry.Config{
