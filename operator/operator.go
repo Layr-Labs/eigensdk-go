@@ -43,17 +43,23 @@ type OperatorTaskProcessor interface {
 	ProcessNewTaskCreatedLog(log types.Log) (sdkaggregator.TaskResponse, error)
 }
 
-type Operator struct {
+type Operator[ResponseType any] struct {
 	logger              logging.Logger
 	operatorId          sdktypes.OperatorId
-	aggregatorRpcClient AggregatorRpcClienter
+	aggregatorRpcClient *AggregatorRpcClient[ResponseType]
 	EthWsUrl            string
 	blsKeypair          *bls.KeyPair
 	taskProcessor       OperatorTaskProcessor
 	newTaskCreatedLogs  chan types.Log
 }
 
-func NewOperatorFromConfig(c OperatorConfig, eventHash common.Hash, taskProcessor OperatorTaskProcessor, logger logging.Logger) (*Operator, error) {
+func NewOperatorFromConfig[ResponseType any](
+	c OperatorConfig, 
+	eventHash common.Hash, 
+	taskProcessor OperatorTaskProcessor, 
+	logger logging.Logger,
+	taskResponseType ResponseType,
+) (*Operator[ResponseType], error) {
 	avs_config := avsregistry.Config{
 		RegistryCoordinatorAddress:    common.HexToAddress(c.AVSRegistryCoordinatorAddress),
 		OperatorStateRetrieverAddress: common.HexToAddress(c.OperatorStateRetrieverAddress),
@@ -92,7 +98,7 @@ func NewOperatorFromConfig(c OperatorConfig, eventHash common.Hash, taskProcesso
 		return nil, err
 	}
 
-	aggregatorRpcClient, err := NewAggregatorRpcClient(c.AggregatorServerIpPortAddress, logger)
+	aggregatorRpcClient, err := NewAggregatorRpcClient(c.AggregatorServerIpPortAddress, logger, taskResponseType)
 	if err != nil {
 		logger.Error("Cannot create AggregatorRpcClient. Is aggregator running?", "err", err)
 		return nil, err
@@ -124,7 +130,7 @@ func NewOperatorFromConfig(c OperatorConfig, eventHash common.Hash, taskProcesso
 		logger.Fatal("error subscribing to newTaskCreated events", "err", err)
 	}
 
-	operator := &Operator{
+	operator := &Operator[ResponseType]{
 		logger:              logger,
 		blsKeypair:          blsKeyPair,
 		aggregatorRpcClient: aggregatorRpcClient,
@@ -143,7 +149,7 @@ func NewOperatorFromConfig(c OperatorConfig, eventHash common.Hash, taskProcesso
 	return operator, nil
 }
 
-func (o *Operator) Start(ctx context.Context, taskResponseType interface{}) error {
+func (o *Operator[ResponseType]) Start(ctx context.Context) error {
 	o.logger.Info("Starting operator.")
 
 	for {
@@ -161,12 +167,12 @@ func (o *Operator) Start(ctx context.Context, taskResponseType interface{}) erro
 			if err != nil {
 				continue
 			}
-			go o.aggregatorRpcClient.SendSignedTaskResponseToAggregator(signedTaskResponse, taskResponseType)
+			go o.aggregatorRpcClient.SendSignedTaskResponseToAggregator(signedTaskResponse)
 		}
 	}
 }
 
-func (o *Operator) SignTaskResponse(
+func (o *Operator[ResponseType]) SignTaskResponse(
 	taskResponse sdkaggregator.TaskResponse,
 ) (*sdkaggregator.SignedTaskResponse, error) {
 	taskResponseHash := taskResponse.Digest()
