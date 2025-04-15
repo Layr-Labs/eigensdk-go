@@ -40,12 +40,12 @@ func StartAnvilContainer(anvilStateFileName string) (testcontainers.Container, e
 	}
 	if anvilStateFileName != "" {
 		fmt.Println("Starting Anvil container with state file: ", anvilStateFileName)
-		req.Cmd = append(req.Cmd, "--load-state", "/root/.anvil/state.json")
+		req.Cmd = append(req.Cmd, "--load-state", "/state.json")
 		_, curFilePath, _, _ := runtime.Caller(0)
 		req.Files = []testcontainers.ContainerFile{
 			{
 				HostFilePath:      filepath.Join(curFilePath, "../../contracts/anvil/", anvilStateFileName),
-				ContainerFilePath: "/root/.anvil/state.json",
+				ContainerFilePath: "/state.json",
 				FileMode:          0644, // Adjust the FileMode according to your requirements
 			},
 		}
@@ -80,12 +80,12 @@ func StartM2AnvilContainer(anvilStateFileName string) (testcontainers.Container,
 	}
 	if anvilStateFileName != "" {
 		fmt.Println("Starting Anvil container with state file: ", anvilStateFileName)
-		req.Cmd = append(req.Cmd, "--load-state", "/root/.anvil/state.json")
+		req.Cmd = append(req.Cmd, "--load-state", "/state.json")
 		_, curFilePath, _, _ := runtime.Caller(0)
 		req.Files = []testcontainers.ContainerFile{
 			{
 				HostFilePath:      filepath.Join(curFilePath, "../../M2-contracts/anvil/", anvilStateFileName),
-				ContainerFilePath: "/root/.anvil/state.json",
+				ContainerFilePath: "/state.json",
 				FileMode:          0644, // Adjust the FileMode according to your requirements
 			},
 		}
