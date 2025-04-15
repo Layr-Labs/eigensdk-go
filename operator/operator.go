@@ -46,7 +46,7 @@ type OperatorTaskProcessor interface {
 type Operator[ResponseType any] struct {
 	logger              logging.Logger
 	operatorId          sdktypes.OperatorId
-	aggregatorRpcClient *AggregatorRpcClient[ResponseType]
+	aggregatorRpcClient AggregatorRpcClienter[ResponseType]
 	EthWsUrl            string
 	blsKeypair          *bls.KeyPair
 	taskProcessor       OperatorTaskProcessor
@@ -58,7 +58,6 @@ func NewOperatorFromConfig[ResponseType any](
 	eventHash common.Hash, 
 	taskProcessor OperatorTaskProcessor, 
 	logger logging.Logger,
-	taskResponseType ResponseType,
 ) (*Operator[ResponseType], error) {
 	avs_config := avsregistry.Config{
 		RegistryCoordinatorAddress:    common.HexToAddress(c.AVSRegistryCoordinatorAddress),
@@ -98,7 +97,7 @@ func NewOperatorFromConfig[ResponseType any](
 		return nil, err
 	}
 
-	aggregatorRpcClient, err := NewAggregatorRpcClient(c.AggregatorServerIpPortAddress, logger, taskResponseType)
+	aggregatorRpcClient, err := NewAggregatorRpcClient[ResponseType](c.AggregatorServerIpPortAddress, logger)
 	if err != nil {
 		logger.Error("Cannot create AggregatorRpcClient. Is aggregator running?", "err", err)
 		return nil, err
@@ -133,7 +132,7 @@ func NewOperatorFromConfig[ResponseType any](
 	operator := &Operator[ResponseType]{
 		logger:              logger,
 		blsKeypair:          blsKeyPair,
-		aggregatorRpcClient: aggregatorRpcClient,
+		aggregatorRpcClient: *aggregatorRpcClient,
 		operatorId:          operatorId,
 		newTaskCreatedLogs:  newTaskCreatedLogs,
 		taskProcessor:       taskProcessor,
