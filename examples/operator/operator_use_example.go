@@ -91,7 +91,7 @@ func main() {
 		AggregatorServerIpPortAddress: "localhost:8090",
 	}
 	operatorTaskProcessor := NewOperatorTaskProcessor(operatorConfig, logger)
-	operator, err := sdkoperator.NewOperatorFromConfig(operatorConfig, blockHash, operatorTaskProcessor, logger, &IncredibleSquaringTaskResponse{})
+	operator, err := sdkoperator.NewOperatorFromConfig[IncredibleSquaringTaskResponse](operatorConfig, blockHash, operatorTaskProcessor, logger)
 	if err != nil {
 		logger.Errorf("Failed to create operator from config: %v", err)
 		return
