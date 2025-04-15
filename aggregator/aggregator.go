@@ -23,10 +23,11 @@ type TaskProcessor interface {
 	ProcessAggregatedResponse(ctx context.Context, response blsagg.BlsAggregationServiceResponse) error
 }
 
-type Aggregator struct {
+type Aggregator[ResponseType any] struct {
 	logger           logging.Logger
 	serverIpPortAddr string
 	avsWriter        *avsregistry.ChainWriter
+
 	// aggregation related fields
 	blsAggregationService blsagg.BlsAggregationService
 	taskProcessor         TaskProcessor
@@ -34,7 +35,7 @@ type Aggregator struct {
 }
 
 // NewAggregator creates a new Aggregator with the provided config.
-func NewAggregator(c AggregatorConfig, taskProcessor TaskProcessor, eventHash common.Hash) (*Aggregator, error) {
+func NewAggregator[ResponseType any](c AggregatorConfig, taskProcessor TaskProcessor, eventHash common.Hash) (*Aggregator[ResponseType], error) {
 	avsConfig := avsregistry.Config{
 		RegistryCoordinatorAddress:    c.RegistryCoordinatorAddress,
 		OperatorStateRetrieverAddress: c.OperatorStateRetrieverAddress,
@@ -100,7 +101,7 @@ func NewAggregator(c AggregatorConfig, taskProcessor TaskProcessor, eventHash co
 		c.Logger.Fatal("error subscribing to newTaskCreated events", "err", err)
 	}
 
-	return &Aggregator{
+	return &Aggregator[ResponseType]{
 		logger:                c.Logger,
 		serverIpPortAddr:      c.AggregatorServerIpPortAddr,
 		avsWriter:             avsWriter,
@@ -110,10 +111,10 @@ func NewAggregator(c AggregatorConfig, taskProcessor TaskProcessor, eventHash co
 	}, nil
 }
 
-func (agg *Aggregator) Start(ctx context.Context, taskResponseType interface{}) error {
+func (agg *Aggregator[ResponseType]) Start(ctx context.Context) error {
 	agg.logger.Info("Starting aggregator.")
 	agg.logger.Info("Starting aggregator rpc server.")
-	go agg.startServer(ctx, taskResponseType)
+	go agg.startServer(ctx)
 
 	for {
 		select {
