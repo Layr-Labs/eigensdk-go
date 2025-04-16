@@ -108,6 +108,8 @@ func NewChallenger[NewTaskCreated NewTaskCreatedEvent, TaskResponded TaskRespond
 		newTaskCreatedChan: newTaskCreatedLogs,
 		taskResponseChan:   taskRespondedLogs,
 		taskManagerAbi: taskManagerAbi,
+		tasks:              make(map[uint32]GenericTask),
+		taskResponses:      make(map[uint32]TaskResponseData),
 	}, nil
 }
 
