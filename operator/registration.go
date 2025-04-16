@@ -2,6 +2,7 @@ package operator
 
 import (
 	"context"
+	"errors"
 
 	allocationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/AllocationManager"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
@@ -126,10 +127,10 @@ type OperatorSet allocationmanager.OperatorSet
 type WatchOperatorActivatedOpts struct {
 	Context context.Context
 	// Operators to watch activation for.
-	// If empty, all operators will be watched.
+	// If empty, function will return an error.
 	Operators []common.Address
 	// Operator sets to trigger on.
-	// If empty, all operator sets will be watched.
+	// If empty, function will return an error.
 	OperatorSets []OperatorSet
 }
 
@@ -144,6 +145,13 @@ type OperatorActivated struct {
 // some immediately after the subscription is created, for operators that are already active.
 // Also returns a subscription that can be used to unsubscribe from the event.
 func WatchOperatorActivated(opts *WatchOperatorActivatedOpts, ethClient bind.ContractBackend, allocationManagerAddr common.Address) (<-chan *OperatorActivated, event.Subscription, error) {
+	// TODO: should we default to "all operators/opsets" if none are provided?
+	if len(opts.OperatorSets) == 0 {
+		return nil, nil, errors.New("no operator sets provided")
+	}
+	if len(opts.Operators) == 0 {
+		return nil, nil, errors.New("no operators provided")
+	}
 	ctx := opts.Context
 
 	allocationManagerContract, err := allocationmanager.NewContractAllocationManager(allocationManagerAddr, ethClient)
