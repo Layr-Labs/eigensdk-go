@@ -48,14 +48,18 @@ func main() {
 		return
 	}
 
+	taskCreator := taskspammer.NewTaskCreatorFromContract(contractTaskManager, txMgr)
+
 	taskSpammerConfig := taskspammer.Config{
-		Logger:           logger,
+		Logger: logger,
+
+		// This means TaskGenerator will send tasks every 10 seconds
 		TimeBetweenTasks: 10 * time.Second,
 
 		QuorumThresholdPercentage: 100,
 		QuorumNumbers:             []uint8{0},
 	}
-	taskGen, err := taskspammer.NewTaskSpammer(contractTaskManager, txMgr, taskSpammerConfig)
+	taskGen, err := taskspammer.NewTaskSpammer(taskCreator, taskSpammerConfig)
 	if err != nil {
 		return
 	}
