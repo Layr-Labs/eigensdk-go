@@ -89,7 +89,7 @@ func TestWatchOperatorActivated(t *testing.T) {
 
 	expectedEvent := operator.OperatorActivated{
 		Operator:    operatorAddress,
-		OperatorSet: operator.OperatorSet{Id: operatorSetId, Avs: avsAddress},
+		OperatorSet: operator.OperatorSet(operatorSet),
 	}
 
 	assertReceives(t, &expectedEvent, operatorActivatedC, 10*time.Second)

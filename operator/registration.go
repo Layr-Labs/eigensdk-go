@@ -137,6 +137,10 @@ type OperatorActivated struct {
 }
 
 // TODO: handle both HTTP polling and WS subscribing
+// Watches for operator activation requests.
+// Returns a channel that will receive notice of operator activations. This includes
+// some immediately after the subscription is created, for operators that are already active.
+// Also returns a subscription that can be used to unsubscribe from the event.
 func WatchOperatorActivated(opts *WatchOperatorActivatedOpts, ethClient bind.ContractBackend, allocationManagerAddr common.Address) (<-chan *OperatorActivated, event.Subscription, error) {
 	ctx := opts.Context
 
@@ -162,12 +166,22 @@ func WatchOperatorActivated(opts *WatchOperatorActivatedOpts, ethClient bind.Con
 	// Inspired by the code from WatchOperatorAddedToOperatorSet
 	ourSub := event.NewSubscription(func(quit <-chan struct{}) error {
 		defer sub.Unsubscribe()
+		callOpts := &bind.CallOpts{Context: ctx}
+		for _, operator := range opts.Operators {
+			for _, operatorSet := range opts.OperatorSets {
+				isMember, err := allocationManagerContract.IsMemberOfOperatorSet(callOpts, operator, allocationmanager.OperatorSet(operatorSet))
+				if err != nil {
+					return utils.WrapError("failed to call IsMemberOfOperatorSet", err)
+				}
+				if isMember {
+					sink <- &OperatorActivated{Operator: operator, OperatorSet: operatorSet}
+				}
+			}
+		}
 		for {
 			select {
 			case operatorActivatedEvent := <-eventsC:
-				var operatorSet OperatorSet
-				operatorSet.Id = operatorActivatedEvent.OperatorSet.Id
-				operatorSet.Avs = operatorActivatedEvent.OperatorSet.Avs
+				operatorSet := OperatorSet(operatorActivatedEvent.OperatorSet)
 
 				if !shouldIncludeOpset[operatorSet] {
 					continue
