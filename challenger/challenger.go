@@ -209,7 +209,7 @@ func (c *Challenger[Input, NewTaskCreated, TaskResponded]) getNonSigningOperator
 		c.logger.Error("Error unpacking calldata", "err", err)
 	}
 
-	// Note: this implies the abi of the Task Manager contract implemented by the AVS should respect this values, or it 
+	// Note: this implies the abi of the Task Manager contract implemented by the AVS should respect this values, or it
 	// wont work. Other solution is to receive this as parameter, but it looks more difficult than only replace this.
 	nonSignerStakesAndSignatureInput := inputs[2].(struct {
 		NonSignerQuorumBitmapIndices []uint32 "json:\"nonSignerQuorumBitmapIndices\""

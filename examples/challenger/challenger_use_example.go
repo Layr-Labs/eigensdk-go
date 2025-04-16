@@ -2,7 +2,6 @@ package challengerexample
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math/big"
 
@@ -62,7 +61,14 @@ func main() {
 		return
 	}
 
-	challenger, err := challenger.NewChallenger(cfg, challengerLogicImpl, newTaskEventHash, taskRespondedEventHash)
+	challenger, err := challenger.NewChallenger[*big.Int, NewTaskCreatedEvent, TaskRespondedEvent](
+		cfg, 
+		challengerLogicImpl, 
+		newTaskEventHash, 
+		taskRespondedEventHash, 
+		taskManagerAbi, 
+		ethHttpClient,
+	)
 	if err != nil {
 		logger.Errorf("Failed to create challenger from config: %v", err)
 		return
@@ -75,15 +81,46 @@ func main() {
 	}
 }
 
+// Required structs
+
+type NewTaskCreatedEvent struct {
+	TaskIndex uint32
+	Task      challenger.GenericInputTask[*big.Int]
+	Raw       types.Log
+}
+
+func (newTaskEvent NewTaskCreatedEvent) InnerTask() challenger.GenericInputTask[*big.Int] {
+	return newTaskEvent.Task
+}
+
+type TaskRespondedEvent struct {
+	TaskResponse              challenger.GenericInputTaskResponse[*big.Int]
+	TaskResponseMetadata      challenger.GenericTaskResponseMetadata
+	NonSigningOperatorPubKeys []challenger.BN254G1Point
+}
+
+func (taskRespEvent TaskRespondedEvent) TaskIndex() uint32 {
+	return taskRespEvent.TaskResponse.ReferenceTaskIndex
+}
+
+func (taskRespEvent TaskRespondedEvent) GetTaskResponse() challenger.GenericInputTaskResponse[*big.Int] {
+	return taskRespEvent.TaskResponse
+}
+
+func (taskRespEvent TaskRespondedEvent) GetTaskResponseMetadata() challenger.GenericTaskResponseMetadata {
+	return taskRespEvent.TaskResponseMetadata
+}
+
+
 // Challenger Logic
 
 type ChallengerLogicImpl struct {
-	logger        logging.Logger
-	ethClient     *ethclient.Client
-	avsWriter     AvsWriter
-	tasks         map[uint32]cstaskmanager.IIncredibleSquaringTaskManagerTask
-	taskResponses map[uint32]TaskResponseData
+	logger    logging.Logger
+	ethClient *ethclient.Client
+	avsWriter *AvsWriter
 }
+
+var _ challenger.ChallengerLogic[*big.Int] = (*ChallengerLogicImpl)(nil)
 
 type TaskResponseData struct {
 	TaskResponse              cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse
@@ -99,146 +136,27 @@ func NewChallengerLogicImpl(c *AvsConfig) (*ChallengerLogicImpl, error) {
 	}
 
 	return &ChallengerLogicImpl{
-		logger:        c.Logger,
-		ethClient:     c.EthHttpClient,
-		avsWriter:     *avsWriter,
-		tasks:         make(map[uint32]cstaskmanager.IIncredibleSquaringTaskManagerTask),
-		taskResponses: make(map[uint32]TaskResponseData),
+		logger:    c.Logger,
+		ethClient: c.EthHttpClient,
+		avsWriter: avsWriter,
 	}, nil
 }
 
-func (c *ChallengerLogicImpl) ProcessNewTaskCreatedLog(
-	log types.Log,
+func (c *ChallengerLogicImpl) VerifyChallenge(
+	taskIndex uint32,
+	task challenger.GenericInputTask[*big.Int],
+	responseData challenger.TaskResponseData[*big.Int],
 ) error {
-	var newTaskCreatedLog cstaskmanager.ContractIncredibleSquaringTaskManagerNewTaskCreated
-
-	taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
-	if err != nil {
-		c.logger.Fatalf("Error obtaining task manager ABI: %v", err)
-	}
-
-	err = taskManagerAbi.UnpackIntoInterface(&newTaskCreatedLog, "NewTaskCreated", log.Data)
-	if err != nil {
-		return fmt.Errorf("error unpacking the log: %w", err)
-	}
-
-	taskIndex := newTaskCreatedLog.TaskIndex
-	c.tasks[taskIndex] = newTaskCreatedLog.Task
-
-	// Note: This verification is strange, and is not in Rust version. If removing it breaks something,
-	// probably its a bug on challenger implementation
-	if _, found := c.taskResponses[taskIndex]; found {
-		_ = c.verifyChallenge(taskIndex)
-	}
-
-	return nil
-}
-
-func (c *ChallengerLogicImpl) ProcessTaskResponseLog(
-	log types.Log,
-) error {
-	var taskRespondedLog cstaskmanager.ContractIncredibleSquaringTaskManagerTaskResponded
-
-	taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
-	if err != nil {
-		c.logger.Fatalf("Error obtaining task manager ABI: %v", err)
-	}
-
-	err = taskManagerAbi.UnpackIntoInterface(&taskRespondedLog, "TaskResponded", log.Data)
-	if err != nil {
-		return fmt.Errorf("error unpacking the log: %w", err)
-	}
-
-	taskIndex := taskRespondedLog.TaskResponse.ReferenceTaskIndex
-
-	// get the inputs necessary for raising a challenge
-	nonSigningOperatorPubKeys := c.getNonSigningOperatorPubKeys(&taskRespondedLog)
-	taskResponseData := TaskResponseData{
-		TaskResponse:              taskRespondedLog.TaskResponse,
-		TaskResponseMetadata:      taskRespondedLog.TaskResponseMetadata,
-		NonSigningOperatorPubKeys: nonSigningOperatorPubKeys,
-	}
-
-	c.taskResponses[taskIndex] = taskResponseData
-
-	if _, found := c.tasks[taskIndex]; found {
-		_ = c.verifyChallenge(taskIndex)
-	}
-
-	return nil
-}
-
-func (c *ChallengerLogicImpl) getNonSigningOperatorPubKeys(
-	vLog *cstaskmanager.ContractIncredibleSquaringTaskManagerTaskResponded,
-) []cstaskmanager.BN254G1Point {
-	// get the nonSignerStakesAndSignature
-	txHash := vLog.Raw.TxHash
-	tx, _, err := c.ethClient.TransactionByHash(context.Background(), txHash)
-	if err != nil {
-		c.logger.Error("Error getting transaction by hash",
-			"txHash", txHash,
-			"err", err,
-		)
-	}
-
-	taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
-	if err != nil {
-		c.logger.Error("Error getting Abi", "err", err)
-	}
-
-	calldata := tx.Data()
-	methodSig := calldata[:4]
-	method, err := taskManagerAbi.MethodById(methodSig)
-	if err != nil {
-		c.logger.Error("Error getting method", "err", err)
-	}
-
-	inputs, err := method.Inputs.Unpack(calldata[4:])
-	if err != nil {
-		c.logger.Error("Error unpacking calldata", "err", err)
-	}
-
-	nonSignerStakesAndSignatureInput := inputs[2].(struct {
-		NonSignerQuorumBitmapIndices []uint32 "json:\"nonSignerQuorumBitmapIndices\""
-		NonSignerPubkeys             []struct {
-			X *big.Int "json:\"X\""
-			Y *big.Int "json:\"Y\""
-		} "json:\"nonSignerPubkeys\""
-		QuorumApks []struct {
-			X *big.Int "json:\"X\""
-			Y *big.Int "json:\"Y\""
-		} "json:\"quorumApks\""
-		ApkG2 struct {
-			X [2]*big.Int "json:\"X\""
-			Y [2]*big.Int "json:\"Y\""
-		} "json:\"apkG2\""
-		Sigma struct {
-			X *big.Int "json:\"X\""
-			Y *big.Int "json:\"Y\""
-		} "json:\"sigma\""
-		QuorumApkIndices      []uint32   "json:\"quorumApkIndices\""
-		TotalStakeIndices     []uint32   "json:\"totalStakeIndices\""
-		NonSignerStakeIndices [][]uint32 "json:\"nonSignerStakeIndices\""
-	})
-
-	// get pubkeys of non-signing operators and submit them to the contract
-	nonSigningOperatorPubKeys := make(
-		[]cstaskmanager.BN254G1Point,
-		len(nonSignerStakesAndSignatureInput.NonSignerPubkeys),
-	)
-	for i, pubkey := range nonSignerStakesAndSignatureInput.NonSignerPubkeys {
-		nonSigningOperatorPubKeys[i] = cstaskmanager.BN254G1Point{
+	nonSignerPubkeys := []cstaskmanager.BN254G1Point{}
+	for i, pubkey := range responseData.NonSigningOperatorPubKeys {
+		nonSignerPubkeys[i] = cstaskmanager.BN254G1Point{
 			X: pubkey.X,
 			Y: pubkey.Y,
 		}
 	}
 
-	return nonSigningOperatorPubKeys
-}
-
-func (c *ChallengerLogicImpl) verifyChallenge(taskIndex uint32) error {
-	numberToBeSquared := c.tasks[taskIndex].NumberToBeSquared
-	answerInResponse := c.taskResponses[taskIndex].TaskResponse.NumberSquared
+	numberToBeSquared := task.InputValue
+	answerInResponse := responseData.TaskResponse.InputValue
 	trueAnswer := numberToBeSquared.Exp(numberToBeSquared, big.NewInt(2), nil)
 
 	// checking if the answer in the response submitted by aggregator is correct
@@ -248,12 +166,30 @@ func (c *ChallengerLogicImpl) verifyChallenge(taskIndex uint32) error {
 		// raise challenge
 		c.logger.Info("Challenger raising challenge.", "taskIndex", taskIndex)
 
+		// This conversions are not optimal, but are necessary to send the challenge to the contract
+		incredibleSquaringTask := cstaskmanager.IIncredibleSquaringTaskManagerTask{
+			NumberToBeSquared:         task.InputValue,
+			TaskCreatedBlock:          task.TaskCreatedBlock,
+			QuorumNumbers:             task.QuorumNumbers,
+			QuorumThresholdPercentage: task.QuorumThresholdPercentage,
+		}
+
+		incredibleSquaringTaskResponse := cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse{
+			ReferenceTaskIndex: responseData.TaskResponse.ReferenceTaskIndex,
+			NumberSquared:      responseData.TaskResponse.InputValue,
+		}
+
+		incredibleSquaringTaskResponseMetadata := cstaskmanager.IIncredibleSquaringTaskManagerTaskResponseMetadata{
+			TaskRespondedBlock: responseData.TaskResponseMetadata.TaskRespondedBlock,
+			HashOfNonSigners:   responseData.TaskResponseMetadata.HashOfNonSigners,
+		}
+
 		_, err := c.avsWriter.RaiseChallenge(
 			context.Background(),
-			c.tasks[taskIndex],
-			c.taskResponses[taskIndex].TaskResponse,
-			c.taskResponses[taskIndex].TaskResponseMetadata,
-			c.taskResponses[taskIndex].NonSigningOperatorPubKeys,
+			incredibleSquaringTask,
+			incredibleSquaringTaskResponse,
+			incredibleSquaringTaskResponseMetadata,
+			nonSignerPubkeys,
 		)
 		if err != nil {
 			c.logger.Error("Challenger failed to raise challenge:", "err", err)
@@ -263,7 +199,7 @@ func (c *ChallengerLogicImpl) verifyChallenge(taskIndex uint32) error {
 		return nil
 	} else {
 		c.logger.Info("The number squared is correct")
-		return errors.New("100. Task response is valid")
+		return nil
 	}
 }
 
