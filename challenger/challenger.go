@@ -13,23 +13,26 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-type ChallengerLogic interface {
-	// ProcessNewTaskCreatedLog(log types.Log) error
-	// ProcessTaskResponseLog(log types.Log) error
+type ChallengerLogic[Input any] interface {
 	GetNonSigningOperatorPubKeys(common.Hash)([]BN254G1Point)
-	VerifyChallenge(uint32, GenericTask, TaskResponseData)(error)
+	VerifyChallenge(uint32, GenericInputTask[Input], TaskResponseData[Input])(error)
 }
 
-type GenericTask interface{
-
+type GenericInputTask[Input any] struct {
+	InputValue         Input
+	TaskCreatedBlock          uint32
+	QuorumNumbers             []byte
+	QuorumThresholdPercentage uint32
 }
 
-type GenericTaskResponse interface{
-
+type GenericInputTaskResponse[Input any] struct {
+	ReferenceTaskIndex uint32
+	InputValue      Input
 }
 
-type GenericTaskResponseMetadata interface{
-
+type GenericTaskResponseMetadata struct {
+	TaskRespondedBlock uint32
+	HashOfNonSigners   [32]byte
 }
 
 type BN254G1Point struct {
@@ -37,19 +40,19 @@ type BN254G1Point struct {
 	Y *big.Int
 }
 
-type TaskResponseData struct {
-	TaskResponse              GenericTaskResponse
+type TaskResponseData[Input any] struct {
+	TaskResponse              GenericInputTaskResponse[Input]
 	TaskResponseMetadata      GenericTaskResponseMetadata
 	NonSigningOperatorPubKeys []BN254G1Point
 }
 
-type NewTaskCreatedEvent interface {
-	InnerTask()(GenericTask)
+type NewTaskCreatedEvent[Input any] interface {
+	InnerTask()(GenericInputTask[Input])
 }
 
-type TaskRespondedEvent interface {
+type TaskRespondedEvent[Input any] interface {
 	TaskIndex()(uint32)
-	GetTaskResponse()(GenericTaskResponse)
+	GetTaskResponse()(GenericInputTaskResponse[Input])
 	GetTaskResponseMetadata()(GenericTaskResponseMetadata)
 }
 
@@ -59,25 +62,25 @@ type ChallengerConfig struct {
 	Logger   logging.Logger
 }
 
-type Challenger[NewTaskCreated NewTaskCreatedEvent, TaskResponded TaskRespondedEvent, Task GenericTask, TaskResponse TaskResponseData] struct {
+type Challenger[Input any, NewTaskCreated NewTaskCreatedEvent[Input], TaskResponded TaskRespondedEvent[Input]] struct {
 	logger             logging.Logger
-	logic              ChallengerLogic
+	logic              ChallengerLogic[Input]
 	taskResponseChan   chan types.Log
 	newTaskCreatedChan chan types.Log
 
 	taskManagerAbi	*abi.ABI
-	tasks         map[uint32]GenericTask
-	taskResponses map[uint32]TaskResponseData
+	tasks         map[uint32]GenericInputTask[Input]
+	taskResponses map[uint32]TaskResponseData[Input]
 
 }
 
-func NewChallenger[NewTaskCreated NewTaskCreatedEvent, TaskResponded TaskRespondedEvent, Task GenericTask, TaskResponse TaskResponseData](
+func NewChallenger[Input any, NewTaskCreated NewTaskCreatedEvent[Input], TaskResponded TaskRespondedEvent[Input]](
 	c ChallengerConfig,
-	logic ChallengerLogic,
+	logic ChallengerLogic[Input],
 	newTaskEventHash common.Hash,
 	taskProcessedEventHash common.Hash,
 	taskManagerAbi *abi.ABI,
-) (*Challenger[NewTaskCreated, TaskResponded, Task, TaskResponse], error) {
+) (*Challenger[Input, NewTaskCreated, TaskResponded], error) {
 	client, err := ethclient.Dial(c.EthWsUrl)
 	if err != nil {
 		c.Logger.Fatalf("error connecting to web socket: %v", err)
@@ -102,18 +105,18 @@ func NewChallenger[NewTaskCreated NewTaskCreatedEvent, TaskResponded TaskRespond
 		c.Logger.Fatalf("error subscribing to taskResponded events: %v", err)
 	}
 
-	return &Challenger[NewTaskCreated, TaskResponded, Task, TaskResponse]{
+	return &Challenger[Input, NewTaskCreated, TaskResponded]{
 		logger:             c.Logger,
 		logic:              logic,
 		newTaskCreatedChan: newTaskCreatedLogs,
 		taskResponseChan:   taskRespondedLogs,
 		taskManagerAbi: taskManagerAbi,
-		tasks:              make(map[uint32]GenericTask),
-		taskResponses:      make(map[uint32]TaskResponseData),
+		tasks:              make(map[uint32]GenericInputTask[Input]),
+		taskResponses:      make(map[uint32]TaskResponseData[Input]),
 	}, nil
 }
 
-func (c *Challenger[NewTaskCreated, TaskResponded, Task, TaskResponse]) Start(ctx context.Context) error {
+func (c *Challenger[Input, NewTaskCreated, TaskResponded]) Start(ctx context.Context) error {
 	c.logger.Info("Starting Challenger.")
 
 	for {
@@ -135,7 +138,7 @@ func (c *Challenger[NewTaskCreated, TaskResponded, Task, TaskResponse]) Start(ct
 
 }
 
-func (c *Challenger[NewTaskCreated, TaskResponded, Task, TaskResponse]) ProcessNewTaskCreatedLog(log types.Log) error {
+func (c *Challenger[Input, NewTaskCreated, TaskResponded]) ProcessNewTaskCreatedLog(log types.Log) error {
 	var newTaskCreatedLog NewTaskCreated
 
 	err := c.taskManagerAbi.UnpackIntoInterface(&newTaskCreatedLog, "NewTaskCreated", log.Data)
@@ -149,7 +152,7 @@ func (c *Challenger[NewTaskCreated, TaskResponded, Task, TaskResponse]) ProcessN
 	return nil
 }
 
-func (c *Challenger[NewTaskCreated, TaskResponded, Task, TaskResponse]) ProcessTaskResponseLog(
+func (c *Challenger[Input, NewTaskCreated, TaskResponded]) ProcessTaskResponseLog(
 	log types.Log,
 ) error {
 	var taskRespondedLog TaskResponded
@@ -163,7 +166,7 @@ func (c *Challenger[NewTaskCreated, TaskResponded, Task, TaskResponse]) ProcessT
 
 	// get the inputs necessary for raising a challenge
 	nonSigningOperatorPubKeys := c.logic.GetNonSigningOperatorPubKeys(log.TxHash)
-	taskResponseData := TaskResponseData{
+	taskResponseData := TaskResponseData[Input]{
 		TaskResponse:              taskRespondedLog.GetTaskResponse(),
 		TaskResponseMetadata:      taskRespondedLog.GetTaskResponseMetadata(),
 		NonSigningOperatorPubKeys: nonSigningOperatorPubKeys,
