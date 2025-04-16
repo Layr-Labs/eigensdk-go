@@ -171,13 +171,44 @@ func (o *Operator[ResponseType]) Start(ctx context.Context) error {
 	}
 }
 
-func (o *Operator[ResponseType]) SignTaskResponse(
-	taskResponse sdkaggregator.TaskResponse,
-) (*sdkaggregator.SignedTaskResponse, error) {
-	taskResponseHash := taskResponse.Digest()
+// Takes a NewTaskCreatedLog struct as input and returns a TaskResponseHeader struct.
+// The TaskResponseHeader struct is the struct that is signed and sent to the contract as a task response.
+func (o *Operator[Input]) processNewTaskCreatedLog(
+	log types.Log,
+) (*challenger.GenericInputTaskResponse[Input], error) {
+	var newTaskCreatedLog challenger.NewTaskCreatedEvent[Input]
+
+	err := o.taskManagerAbi.UnpackIntoInterface(&newTaskCreatedLog, "NewTaskCreated", log.Data)
+	if err != nil {
+		return nil, fmt.Errorf("error unpacking the log: %w", err)
+	}
+
+	newTaskIndex := uint32(new(big.Int).SetBytes(log.Topics[1].Bytes()).Uint64())
+
+	o.logger.Debug("Received new task", "task", newTaskCreatedLog)
+	o.logger.Info("Received new task",
+		"inputValue", newTaskCreatedLog.Task.InputValue,
+		"taskIndex", newTaskIndex,
+		"taskCreatedBlock", newTaskCreatedLog.Task.TaskCreatedBlock,
+		"quorumNumbers", newTaskCreatedLog.Task.QuorumNumbers,
+		"QuorumThresholdPercentage", newTaskCreatedLog.Task.QuorumThresholdPercentage,
+	)
+
+	taskResponse, err := o.taskProcessor.ProcessNewTaskCreatedLog(newTaskCreatedLog.Task, newTaskIndex)
+	if err != nil {
+		return nil, fmt.Errorf("error getting task response: %w", err)
+	}
+
+	return &taskResponse, nil
+}
+
+func (o *Operator[Input]) SignTaskResponse(
+	taskResponse challenger.GenericInputTaskResponse[Input],
+) (*sdkaggregator.SignedTaskResponse[Input], error) {
+	taskResponseHash := o.taskProcessor.DigestResponse(taskResponse)
 
 	blsSignature := o.blsKeypair.SignMessage(taskResponseHash)
-	signedTaskResponse := &sdkaggregator.SignedTaskResponse{
+	signedTaskResponse := &sdkaggregator.SignedTaskResponse[Input]{
 		TaskResponse: taskResponse,
 		BlsSignature: *blsSignature,
 		OperatorId:   o.operatorId,
