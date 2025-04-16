@@ -12,8 +12,10 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/metrics"
 	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/Layr-Labs/eigensdk-go/utils"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/event"
 )
 
 // The idea is to have a util function that just registers an operator for an operator set if the avs needs it
@@ -116,4 +118,77 @@ func SetAllocationDelay(
 	)
 
 	return nil
+}
+
+type OperatorSet allocationmanager.OperatorSet
+
+type WatchOperatorActivatedOpts struct {
+	Context context.Context
+	// Operators to watch activation for
+	Operators []common.Address
+	// Operator sets to trigger on
+	OperatorSets []OperatorSet
+}
+
+type OperatorActivated struct {
+	Operator    common.Address
+	OperatorSet OperatorSet
+}
+
+func WatchOperatorActivated(opts *WatchOperatorActivatedOpts, ethClient *ethclient.Client, allocationManagerAddr common.Address) (<-chan *OperatorActivated, event.Subscription, error) {
+	ctx := opts.Context
+
+	allocationManagerContract, err := allocationmanager.NewContractAllocationManager(allocationManagerAddr, ethClient)
+	if err != nil {
+		return nil, nil, utils.WrapError("failed to create allocation manager contract", err)
+	}
+
+	watchOpts := &bind.WatchOpts{Context: ctx}
+	eventsC := make(chan *allocationmanager.ContractAllocationManagerOperatorAddedToOperatorSet)
+	sub, err := allocationManagerContract.WatchOperatorAddedToOperatorSet(watchOpts, eventsC, opts.Operators)
+	if err != nil {
+		return nil, nil, utils.WrapError("failed to watch operator added event", err)
+	}
+
+	shouldIncludeOpset := make(map[OperatorSet]bool)
+
+	for _, operatorSet := range opts.OperatorSets {
+		shouldIncludeOpset[operatorSet] = true
+	}
+
+	sink := make(chan *OperatorActivated)
+	// Inspired by the code from WatchOperatorAddedToOperatorSet
+	ourSub := event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case operatorActivatedEvent := <-eventsC:
+				var operatorSet OperatorSet
+				operatorSet.Id = operatorActivatedEvent.OperatorSet.Id
+				operatorSet.Avs = operatorActivatedEvent.OperatorSet.Avs
+
+				if !shouldIncludeOpset[operatorSet] {
+					continue
+				}
+
+				event := new(OperatorActivated)
+				event.Operator = operatorActivatedEvent.Operator
+				event.OperatorSet = operatorSet
+
+				select {
+				case sink <- event:
+				// this part was copied from the bindings
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	})
+	return sink, ourSub, nil
 }
