@@ -44,13 +44,13 @@ type TaskResponseData struct {
 }
 
 type NewTaskCreatedEvent interface {
-	Task()(GenericTask)
+	InnerTask()(GenericTask)
 }
 
 type TaskRespondedEvent interface {
 	TaskIndex()(uint32)
-	TaskResponse()(GenericTaskResponse)
-	TaskResponseMetadata()(GenericTaskResponseMetadata)
+	GetTaskResponse()(GenericTaskResponse)
+	GetTaskResponseMetadata()(GenericTaskResponseMetadata)
 }
 
 
@@ -144,7 +144,7 @@ func (c *Challenger[NewTaskCreated, TaskResponded, Task, TaskResponse]) ProcessN
 	}
 
 	newTaskIndex := uint32(new(big.Int).SetBytes(log.Topics[1].Bytes()).Uint64())
-	c.tasks[newTaskIndex] = newTaskCreatedLog.Task()
+	c.tasks[newTaskIndex] = newTaskCreatedLog.InnerTask()
 
 	return nil
 }
@@ -164,8 +164,8 @@ func (c *Challenger[NewTaskCreated, TaskResponded, Task, TaskResponse]) ProcessT
 	// get the inputs necessary for raising a challenge
 	nonSigningOperatorPubKeys := c.logic.GetNonSigningOperatorPubKeys(log.TxHash)
 	taskResponseData := TaskResponseData{
-		TaskResponse:              taskRespondedLog.TaskResponse,
-		TaskResponseMetadata:      taskRespondedLog.TaskResponseMetadata,
+		TaskResponse:              taskRespondedLog.GetTaskResponse(),
+		TaskResponseMetadata:      taskRespondedLog.GetTaskResponseMetadata(),
 		NonSigningOperatorPubKeys: nonSigningOperatorPubKeys,
 	}
 
