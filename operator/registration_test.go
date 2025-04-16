@@ -48,6 +48,7 @@ func TestWatchOperatorActivated(t *testing.T) {
 
 	watchOpts := &operator.WatchOperatorActivatedOpts{
 		Context:      context.Background(),
+		Operators:    []common.Address{operatorAddress},
 		OperatorSets: []operator.OperatorSet{{Id: operatorSetId, Avs: avsAddress}},
 	}
 	operatorActivatedC, sub, err := operator.WatchOperatorActivated(watchOpts, clients.EthWsClient, contractAddrs.AllocationManager)
