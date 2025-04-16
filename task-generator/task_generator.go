@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
-	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
@@ -18,29 +17,28 @@ type TaskManager[Input any] interface {
 }
 
 type TaskGenerator[Input any] struct {
-	logger          logging.Logger
-	txMgr           txmgr.TxManager
-	taskManager     TaskManager[Input]
-	secondsInterval int
+	taskManager TaskManager[Input]
+	txMgr       txmgr.TxManager
+	config      Config
 }
 
-func NewTaskGenerator[Input any](logger logging.Logger, txMgr txmgr.TxManager, taskManager TaskManager[Input], secondsInterval int) (*TaskGenerator[Input], error) {
+func NewTaskGenerator[Input any](taskManager TaskManager[Input], txMgr txmgr.TxManager, config Config) (*TaskGenerator[Input], error) {
+	// TODO: validate config
 	return &TaskGenerator[Input]{
-		logger,
-		txMgr,
 		taskManager,
-		secondsInterval,
+		txMgr,
+		config,
 	}, nil
 }
 
 func (taskGen *TaskGenerator[Input]) Start(ctx context.Context, inputGen iter.Seq[Input]) error {
-	time.Sleep(time.Duration(2 * time.Second))
+	logger := taskGen.config.Logger
 
-	taskGen.logger.Info("Starting Task Generator.")
+	logger.Info("Starting Task Generator.")
 
-	ticker := time.NewTicker(time.Duration(taskGen.secondsInterval) * time.Second)
+	ticker := time.NewTicker(taskGen.config.TimeBetweenTasks)
 	defer ticker.Stop()
-	taskGen.logger.Infof("Task Generator set to send new task every %v seconds...", taskGen.secondsInterval)
+	logger.Infof("Task Generator set to send new task every %v seconds...", taskGen.config.TimeBetweenTasks)
 
 	taskIndex := int64(0)
 
@@ -50,15 +48,15 @@ func (taskGen *TaskGenerator[Input]) Start(ctx context.Context, inputGen iter.Se
 	for {
 		// Submit new task
 		taskIndex++
-		taskGen.logger.Infof("Task Generator sending new task, task index: %v", taskIndex)
+		logger.Infof("Task Generator sending new task, task index: %v", taskIndex)
 		value, ok := nextInput()
 		if !ok {
-			taskGen.logger.Info("Task Generator finished sending tasks")
+			logger.Info("Task Generator finished sending tasks")
 			return nil
 		}
 		err := taskGen.CreateNewTask(ctx, value)
 		if err != nil {
-			taskGen.logger.Error("Task Generator failed to send new task", "err", err)
+			logger.Error("Task Generator failed to send new task", "err", err)
 			return err
 		}
 
@@ -75,10 +73,6 @@ func (taskGen *TaskGenerator[Input]) CreateNewTask(
 	ctx context.Context,
 	input Input,
 ) error {
-	// TODO: make configurable
-	var quorumThresholdPercentage uint8 = 100
-	var quorumNumbers []uint8 = []uint8{0}
-
 	txOpts, err := taskGen.txMgr.GetNoSendTxOpts()
 	if err != nil {
 		return utils.WrapError("Error getting tx opts", err)
@@ -87,8 +81,8 @@ func (taskGen *TaskGenerator[Input]) CreateNewTask(
 	tx, err := taskGen.taskManager.CreateNewTask(
 		txOpts,
 		input,
-		uint32(quorumThresholdPercentage),
-		quorumNumbers,
+		taskGen.config.QuorumThresholdPercentage,
+		taskGen.config.QuorumNumbers,
 	)
 	if err != nil {
 		return utils.WrapError("Error assembling CreateNewTask tx", err)

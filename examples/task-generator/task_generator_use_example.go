@@ -48,8 +48,14 @@ func main() {
 		return
 	}
 
-	secondsInterval := 10 // This means TaskGenerator will send tasks every 10 seconds
-	taskGen, err := taskgenerator.NewTaskGenerator(logger, txMgr, contractTaskManager, secondsInterval)
+	taskGeneratorConfig := taskgenerator.Config{
+		Logger:           logger,
+		TimeBetweenTasks: 10 * time.Second,
+
+		QuorumThresholdPercentage: 100,
+		QuorumNumbers:             []uint8{0},
+	}
+	taskGen, err := taskgenerator.NewTaskGenerator(contractTaskManager, txMgr, taskGeneratorConfig)
 	if err != nil {
 		return
 	}
