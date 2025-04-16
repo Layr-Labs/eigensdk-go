@@ -5,25 +5,32 @@ import (
 	"iter"
 	"time"
 
+	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/utils"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	gethtypes "github.com/ethereum/go-ethereum/core/types"
 )
 
-// Interface for creating new tasks.
-//
-// Interface is generic over the task input type.
-type TaskCreator[Input any] interface {
-	// Creates a new task with the given input.
-	CreateNewTask(ctx context.Context, input Input) error
+// Type is generic over the task input type
+type TaskManager[Input any] interface {
+	CreateNewTask(opts *bind.TransactOpts, input Input, quorumThresholdPercentage uint32, quorumNumbers []byte) (*gethtypes.Transaction, error)
 }
 
 type TaskGenerator[Input any] struct {
 	logger          logging.Logger
-	taskSender      TaskCreator[Input]
+	txMgr           txmgr.TxManager
+	taskManager     TaskManager[Input]
 	secondsInterval int
 }
 
-func NewTaskGenerator[Input any](logger logging.Logger, taskSender TaskCreator[Input], secondsInterval int) (*TaskGenerator[Input], error) {
-	return &TaskGenerator[Input]{logger, taskSender, secondsInterval}, nil
+func NewTaskGenerator[Input any](logger logging.Logger, txMgr txmgr.TxManager, taskManager TaskManager[Input], secondsInterval int) (*TaskGenerator[Input], error) {
+	return &TaskGenerator[Input]{
+		logger,
+		txMgr,
+		taskManager,
+		secondsInterval,
+	}, nil
 }
 
 func (taskGen *TaskGenerator[Input]) Start(ctx context.Context, inputGen iter.Seq[Input]) error {
@@ -49,7 +56,7 @@ func (taskGen *TaskGenerator[Input]) Start(ctx context.Context, inputGen iter.Se
 			taskGen.logger.Info("Task Generator finished sending tasks")
 			return nil
 		}
-		err := taskGen.taskSender.CreateNewTask(ctx, value)
+		err := taskGen.CreateNewTask(ctx, value)
 		if err != nil {
 			taskGen.logger.Error("Task Generator failed to send new task", "err", err)
 			return err
@@ -62,4 +69,36 @@ func (taskGen *TaskGenerator[Input]) Start(ctx context.Context, inputGen iter.Se
 			continue
 		}
 	}
+}
+
+func (taskGen *TaskGenerator[Input]) CreateNewTask(
+	ctx context.Context,
+	input Input,
+) error {
+	// TODO: make configurable
+	var quorumThresholdPercentage uint8 = 100
+	var quorumNumbers []uint8 = []uint8{0}
+
+	txOpts, err := taskGen.txMgr.GetNoSendTxOpts()
+	if err != nil {
+		return utils.WrapError("Error getting tx opts", err)
+	}
+
+	tx, err := taskGen.taskManager.CreateNewTask(
+		txOpts,
+		input,
+		uint32(quorumThresholdPercentage),
+		quorumNumbers,
+	)
+	if err != nil {
+		return utils.WrapError("Error assembling CreateNewTask tx", err)
+	}
+	receipt, err := taskGen.txMgr.Send(ctx, tx, true)
+	if err != nil {
+		return utils.WrapError("Error submitting CreateNewTask tx", err)
+	}
+	if receipt.Status != gethtypes.ReceiptStatusSuccessful {
+		return utils.WrapError("CreateNewTask tx failed", nil)
+	}
+	return nil
 }
