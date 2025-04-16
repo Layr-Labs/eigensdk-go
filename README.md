@@ -19,7 +19,8 @@ We support following modules right now.
 > **_NOTE:_** All modules are in active development and interfaces might change.
 
 * [Logging](./logging)
-* [Signer](./signer)
+* [ECDSA Signer](./signerv2)
+* [BLS Signer](./signer)
 * [ChainIO](./chainio)
 * [Services](./services)
 
