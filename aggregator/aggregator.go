@@ -36,7 +36,7 @@ type TaskProcessor[Input any] interface {
 	ProcessAggregatedResponse(ctx context.Context, response blsagg.BlsAggregationServiceResponse, task challenger.GenericInputTask[Input]) error
 }
 
-type Aggregator[ResponseType any, Input any] struct {
+type Aggregator[Input any] struct {
 	logger           logging.Logger
 	serverIpPortAddr string
 	avsWriter        *avsregistry.ChainWriter
@@ -54,12 +54,12 @@ type Aggregator[ResponseType any, Input any] struct {
 }
 
 // NewAggregator creates a new Aggregator with the provided config.
-func NewAggregator[ResponseType any, Input any](
+func NewAggregator[Input any](
 	c AggregatorConfig, 
 	taskProcessor TaskProcessor[Input], 
 	eventHash common.Hash,
 	taskManagerAbi 	*abi.ABI,
-) (*Aggregator[ResponseType, Input], error) {
+) (*Aggregator[Input], error) {
 	avsConfig := avsregistry.Config{
 		RegistryCoordinatorAddress:    c.RegistryCoordinatorAddress,
 		OperatorStateRetrieverAddress: c.OperatorStateRetrieverAddress,
@@ -125,7 +125,7 @@ func NewAggregator[ResponseType any, Input any](
 		c.Logger.Fatal("error subscribing to newTaskCreated events", "err", err)
 	}
 
-	return &Aggregator[ResponseType, Input]{
+	return &Aggregator[Input]{
 		logger:                c.Logger,
 		serverIpPortAddr:      c.AggregatorServerIpPortAddr,
 		avsWriter:             avsWriter,
@@ -138,7 +138,7 @@ func NewAggregator[ResponseType any, Input any](
 	}, nil
 }
 
-func (agg *Aggregator[ResponseType, Input]) Start(ctx context.Context) error {
+func (agg *Aggregator[Input]) Start(ctx context.Context) error {
 	agg.logger.Info("Starting aggregator.")
 	agg.logger.Info("Starting aggregator rpc server.")
 	go agg.startServer(ctx)
@@ -165,7 +165,7 @@ func (agg *Aggregator[ResponseType, Input]) Start(ctx context.Context) error {
 	}
 }
 
-func (tp *Aggregator[ResponseType, Input]) ProcessNewTask(ctx context.Context, log types.Log) (blsagg.TaskMetadata, error) {
+func (tp *Aggregator[Input]) ProcessNewTask(ctx context.Context, log types.Log) (blsagg.TaskMetadata, error) {
 	var newTaskCreatedLog challenger.NewTaskCreatedEvent[Input]
 
 	err := tp.taskManagerAbi.UnpackIntoInterface(&newTaskCreatedLog, "NewTaskCreated", log.Data)
@@ -208,7 +208,7 @@ func (tp *Aggregator[ResponseType, Input]) ProcessNewTask(ctx context.Context, l
 
 
 
-func (tp *Aggregator[ResponseType, Input]) processAggregatedResponse(
+func (tp *Aggregator[Input]) processAggregatedResponse(
 	ctx context.Context,
 	response blsagg.BlsAggregationServiceResponse,
 ) error {

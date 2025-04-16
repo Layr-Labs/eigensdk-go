@@ -3,9 +3,11 @@ package operator
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"os"
 
 	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -13,6 +15,7 @@ import (
 
 	sdkaggregator "github.com/Layr-Labs/eigensdk-go/aggregator"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
+	"github.com/Layr-Labs/eigensdk-go/challenger"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
@@ -39,26 +42,29 @@ type OperatorConfig struct {
 	RegisterOnStartup bool
 }
 
-type OperatorTaskProcessor interface {
-	ProcessNewTaskCreatedLog(log types.Log) (sdkaggregator.TaskResponse, error)
+type OperatorTaskProcessor[Input any] interface {
+	ProcessNewTaskCreatedLog(task challenger.GenericInputTask[Input], taskIndex uint32) (challenger.GenericInputTaskResponse[Input], error)
+	DigestResponse(response challenger.GenericInputTaskResponse[Input])([32]byte)
 }
 
-type Operator[ResponseType any] struct {
+type Operator[Input any] struct {
 	logger              logging.Logger
 	operatorId          sdktypes.OperatorId
-	aggregatorRpcClient AggregatorRpcClienter[ResponseType]
+	aggregatorRpcClient AggregatorRpcClienter[Input]
 	EthWsUrl            string
 	blsKeypair          *bls.KeyPair
-	taskProcessor       OperatorTaskProcessor
+	taskProcessor       OperatorTaskProcessor[Input]
 	newTaskCreatedLogs  chan types.Log
+	taskManagerAbi *abi.ABI
 }
 
-func NewOperatorFromConfig[ResponseType any](
+func NewOperatorFromConfig[Input any](
 	c OperatorConfig,
 	eventHash common.Hash,
-	taskProcessor OperatorTaskProcessor,
+	taskProcessor OperatorTaskProcessor[Input],
 	logger logging.Logger,
-) (*Operator[ResponseType], error) {
+	taskManagerAbi *abi.ABI,
+) (*Operator[Input], error) {
 	avs_config := avsregistry.Config{
 		RegistryCoordinatorAddress:    common.HexToAddress(c.AVSRegistryCoordinatorAddress),
 		OperatorStateRetrieverAddress: common.HexToAddress(c.OperatorStateRetrieverAddress),
@@ -97,7 +103,7 @@ func NewOperatorFromConfig[ResponseType any](
 		return nil, err
 	}
 
-	aggregatorRpcClient, err := NewAggregatorRpcClient[ResponseType](c.AggregatorServerIpPortAddress, logger)
+	aggregatorRpcClient, err := NewAggregatorRpcClient[Input](c.AggregatorServerIpPortAddress, logger)
 	if err != nil {
 		logger.Error("Cannot create AggregatorRpcClient. Is aggregator running?", "err", err)
 		return nil, err
@@ -129,13 +135,14 @@ func NewOperatorFromConfig[ResponseType any](
 		logger.Fatal("error subscribing to newTaskCreated events", "err", err)
 	}
 
-	operator := &Operator[ResponseType]{
+	operator := &Operator[Input]{
 		logger:              logger,
 		blsKeypair:          blsKeyPair,
 		aggregatorRpcClient: *aggregatorRpcClient,
 		operatorId:          operatorId,
 		newTaskCreatedLogs:  newTaskCreatedLogs,
 		taskProcessor:       taskProcessor,
+		taskManagerAbi: taskManagerAbi,
 	}
 
 	logger.Info("Operator info",
@@ -148,7 +155,7 @@ func NewOperatorFromConfig[ResponseType any](
 	return operator, nil
 }
 
-func (o *Operator[ResponseType]) Start(ctx context.Context) error {
+func (o *Operator[Input]) Start(ctx context.Context) error {
 	o.logger.Info("Starting operator.")
 
 	for {
@@ -157,12 +164,12 @@ func (o *Operator[ResponseType]) Start(ctx context.Context) error {
 			return nil
 
 		case log := <-o.newTaskCreatedLogs:
-			taskResponse, err := o.taskProcessor.ProcessNewTaskCreatedLog(log)
+			taskResponse, err := o.processNewTaskCreatedLog(log)
 			if err != nil {
 				o.logger.Error("Error checking if operator is registered", "err", err)
 				return err
 			}
-			signedTaskResponse, err := o.SignTaskResponse(taskResponse)
+			signedTaskResponse, err := o.SignTaskResponse(*taskResponse)
 			if err != nil {
 				continue
 			}
