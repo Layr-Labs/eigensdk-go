@@ -14,7 +14,6 @@ import (
 )
 
 type ChallengerLogic[Input any] interface {
-	GetNonSigningOperatorPubKeys(common.Hash)([]BN254G1Point)
 	VerifyChallenge(uint32, GenericInputTask[Input], TaskResponseData[Input])(error)
 }
 
@@ -72,6 +71,7 @@ type Challenger[Input any, NewTaskCreated NewTaskCreatedEvent[Input], TaskRespon
 	tasks         map[uint32]GenericInputTask[Input]
 	taskResponses map[uint32]TaskResponseData[Input]
 
+	ethClient     *ethclient.Client
 }
 
 func NewChallenger[Input any, NewTaskCreated NewTaskCreatedEvent[Input], TaskResponded TaskRespondedEvent[Input]](
@@ -80,6 +80,7 @@ func NewChallenger[Input any, NewTaskCreated NewTaskCreatedEvent[Input], TaskRes
 	newTaskEventHash common.Hash,
 	taskProcessedEventHash common.Hash,
 	taskManagerAbi *abi.ABI,
+	ethClient     *ethclient.Client,
 ) (*Challenger[Input, NewTaskCreated, TaskResponded], error) {
 	client, err := ethclient.Dial(c.EthWsUrl)
 	if err != nil {
@@ -113,6 +114,7 @@ func NewChallenger[Input any, NewTaskCreated NewTaskCreatedEvent[Input], TaskRes
 		taskManagerAbi: taskManagerAbi,
 		tasks:              make(map[uint32]GenericInputTask[Input]),
 		taskResponses:      make(map[uint32]TaskResponseData[Input]),
+		ethClient: ethClient,
 	}, nil
 }
 
@@ -165,7 +167,7 @@ func (c *Challenger[Input, NewTaskCreated, TaskResponded]) ProcessTaskResponseLo
 	taskIndex := taskRespondedLog.TaskIndex()
 
 	// get the inputs necessary for raising a challenge
-	nonSigningOperatorPubKeys := c.logic.GetNonSigningOperatorPubKeys(log.TxHash)
+	nonSigningOperatorPubKeys := c.getNonSigningOperatorPubKeys(log.TxHash)
 	taskResponseData := TaskResponseData[Input]{
 		TaskResponse:              taskRespondedLog.GetTaskResponse(),
 		TaskResponseMetadata:      taskRespondedLog.GetTaskResponseMetadata(),
@@ -182,4 +184,66 @@ func (c *Challenger[Input, NewTaskCreated, TaskResponded]) ProcessTaskResponseLo
 	}
 
 	return nil
+}
+
+func (c *Challenger[Input, NewTaskCreated, TaskResponded]) getNonSigningOperatorPubKeys(
+	transactionHash common.Hash,
+) []BN254G1Point {
+	// get the nonSignerStakesAndSignature
+	tx, _, err := c.ethClient.TransactionByHash(context.Background(), transactionHash)
+	if err != nil {
+		c.logger.Error("Error getting transaction by hash",
+			"txHash", transactionHash,
+			"err", err,
+		)
+	}
+
+	calldata := tx.Data()
+	methodSig := calldata[:4]
+	method, err := c.taskManagerAbi.MethodById(methodSig)
+	if err != nil {
+		c.logger.Error("Error getting method", "err", err)
+	}
+
+	inputs, err := method.Inputs.Unpack(calldata[4:])
+	if err != nil {
+		c.logger.Error("Error unpacking calldata", "err", err)
+	}
+
+	nonSignerStakesAndSignatureInput := inputs[2].(struct {
+		NonSignerQuorumBitmapIndices []uint32 "json:\"nonSignerQuorumBitmapIndices\""
+		NonSignerPubkeys             []struct {
+			X *big.Int "json:\"X\""
+			Y *big.Int "json:\"Y\""
+		} "json:\"nonSignerPubkeys\""
+		QuorumApks []struct {
+			X *big.Int "json:\"X\""
+			Y *big.Int "json:\"Y\""
+		} "json:\"quorumApks\""
+		ApkG2 struct {
+			X [2]*big.Int "json:\"X\""
+			Y [2]*big.Int "json:\"Y\""
+		} "json:\"apkG2\""
+		Sigma struct {
+			X *big.Int "json:\"X\""
+			Y *big.Int "json:\"Y\""
+		} "json:\"sigma\""
+		QuorumApkIndices      []uint32   "json:\"quorumApkIndices\""
+		TotalStakeIndices     []uint32   "json:\"totalStakeIndices\""
+		NonSignerStakeIndices [][]uint32 "json:\"nonSignerStakeIndices\""
+	})
+
+	// get pubkeys of non-signing operators and submit them to the contract
+	nonSigningOperatorPubKeys := make(
+		[]BN254G1Point,
+		len(nonSignerStakesAndSignatureInput.NonSignerPubkeys),
+	)
+	for i, pubkey := range nonSignerStakesAndSignatureInput.NonSignerPubkeys {
+		nonSigningOperatorPubKeys[i] = BN254G1Point{
+			X: pubkey.X,
+			Y: pubkey.Y,
+		}
+	}
+
+	return nonSigningOperatorPubKeys
 }
