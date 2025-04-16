@@ -55,10 +55,10 @@ type Aggregator[Input any] struct {
 
 // NewAggregator creates a new Aggregator with the provided config.
 func NewAggregator[Input any](
-	c AggregatorConfig, 
-	taskProcessor TaskProcessor[Input], 
+	c AggregatorConfig,
+	taskProcessor TaskProcessor[Input],
 	eventHash common.Hash,
-	taskManagerAbi 	*abi.ABI,
+	taskManagerAbi *abi.ABI,
 ) (*Aggregator[Input], error) {
 	avsConfig := avsregistry.Config{
 		RegistryCoordinatorAddress:    c.RegistryCoordinatorAddress,
@@ -132,9 +132,9 @@ func NewAggregator[Input any](
 		blsAggregationService: blsAggregationService,
 		taskProcessor:         taskProcessor,
 		newTaskCreatedLogs:    newTaskCreatedLogs,
-		tasks:         make(map[sdktypes.TaskIndex]challenger.GenericInputTask[Input]),
-		taskResponses: make(map[uint32]challenger.TaskResponseData[Input]),
-		taskManagerAbi: taskManagerAbi,
+		tasks:                 make(map[sdktypes.TaskIndex]challenger.GenericInputTask[Input]),
+		taskResponses:         make(map[uint32]challenger.TaskResponseData[Input]),
+		taskManagerAbi:        taskManagerAbi,
 	}, nil
 }
 
@@ -205,8 +205,6 @@ func (tp *Aggregator[Input]) ProcessNewTask(ctx context.Context, log types.Log) 
 
 	return metadata, nil
 }
-
-
 
 func (tp *Aggregator[Input]) processAggregatedResponse(
 	ctx context.Context,

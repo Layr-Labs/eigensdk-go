@@ -44,7 +44,7 @@ type OperatorConfig struct {
 
 type OperatorTaskProcessor[Input any] interface {
 	ProcessNewTaskCreatedLog(task challenger.GenericInputTask[Input], taskIndex uint32) (challenger.GenericInputTaskResponse[Input], error)
-	DigestResponse(response *challenger.GenericInputTaskResponse[Input])([32]byte)
+	DigestResponse(response *challenger.GenericInputTaskResponse[Input]) [32]byte
 }
 
 type Operator[Input any] struct {
@@ -55,7 +55,7 @@ type Operator[Input any] struct {
 	blsKeypair          *bls.KeyPair
 	taskProcessor       OperatorTaskProcessor[Input]
 	newTaskCreatedLogs  chan types.Log
-	taskManagerAbi *abi.ABI
+	taskManagerAbi      *abi.ABI
 }
 
 func NewOperatorFromConfig[Input any](
@@ -142,7 +142,7 @@ func NewOperatorFromConfig[Input any](
 		operatorId:          operatorId,
 		newTaskCreatedLogs:  newTaskCreatedLogs,
 		taskProcessor:       taskProcessor,
-		taskManagerAbi: taskManagerAbi,
+		taskManagerAbi:      taskManagerAbi,
 	}
 
 	logger.Info("Operator info",
