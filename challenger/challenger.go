@@ -14,11 +14,11 @@ import (
 )
 
 type ChallengerLogic[Input any] interface {
-	VerifyChallenge(uint32, GenericInputTask[Input], TaskResponseData[Input])(error)
+	VerifyChallenge(uint32, GenericInputTask[Input], TaskResponseData[Input]) error
 }
 
 type GenericInputTask[Input any] struct {
-	InputValue         Input
+	InputValue                Input
 	TaskCreatedBlock          uint32
 	QuorumNumbers             []byte
 	QuorumThresholdPercentage uint32
@@ -26,7 +26,7 @@ type GenericInputTask[Input any] struct {
 
 type GenericInputTaskResponse[Input any] struct {
 	ReferenceTaskIndex uint32
-	InputValue      Input
+	InputValue         Input
 }
 
 type GenericTaskResponseMetadata struct {
@@ -46,15 +46,14 @@ type TaskResponseData[Input any] struct {
 }
 
 type NewTaskCreatedEvent[Input any] interface {
-	InnerTask()(GenericInputTask[Input])
+	InnerTask() GenericInputTask[Input]
 }
 
 type TaskRespondedEvent[Input any] interface {
-	TaskIndex()(uint32)
-	GetTaskResponse()(GenericInputTaskResponse[Input])
-	GetTaskResponseMetadata()(GenericTaskResponseMetadata)
+	TaskIndex() uint32
+	GetTaskResponse() GenericInputTaskResponse[Input]
+	GetTaskResponseMetadata() GenericTaskResponseMetadata
 }
-
 
 type ChallengerConfig struct {
 	EthWsUrl string
@@ -67,11 +66,11 @@ type Challenger[Input any, NewTaskCreated NewTaskCreatedEvent[Input], TaskRespon
 	taskResponseChan   chan types.Log
 	newTaskCreatedChan chan types.Log
 
-	taskManagerAbi	*abi.ABI
-	tasks         map[uint32]GenericInputTask[Input]
-	taskResponses map[uint32]TaskResponseData[Input]
+	taskManagerAbi *abi.ABI
+	tasks          map[uint32]GenericInputTask[Input]
+	taskResponses  map[uint32]TaskResponseData[Input]
 
-	ethClient     *ethclient.Client
+	ethClient *ethclient.Client
 }
 
 func NewChallenger[Input any, NewTaskCreated NewTaskCreatedEvent[Input], TaskResponded TaskRespondedEvent[Input]](
@@ -80,7 +79,7 @@ func NewChallenger[Input any, NewTaskCreated NewTaskCreatedEvent[Input], TaskRes
 	newTaskEventHash common.Hash,
 	taskProcessedEventHash common.Hash,
 	taskManagerAbi *abi.ABI,
-	ethClient     *ethclient.Client,
+	ethClient *ethclient.Client,
 ) (*Challenger[Input, NewTaskCreated, TaskResponded], error) {
 	client, err := ethclient.Dial(c.EthWsUrl)
 	if err != nil {
@@ -111,10 +110,10 @@ func NewChallenger[Input any, NewTaskCreated NewTaskCreatedEvent[Input], TaskRes
 		logic:              logic,
 		newTaskCreatedChan: newTaskCreatedLogs,
 		taskResponseChan:   taskRespondedLogs,
-		taskManagerAbi: taskManagerAbi,
+		taskManagerAbi:     taskManagerAbi,
 		tasks:              make(map[uint32]GenericInputTask[Input]),
 		taskResponses:      make(map[uint32]TaskResponseData[Input]),
-		ethClient: ethClient,
+		ethClient:          ethClient,
 	}, nil
 }
 
@@ -210,6 +209,8 @@ func (c *Challenger[Input, NewTaskCreated, TaskResponded]) getNonSigningOperator
 		c.logger.Error("Error unpacking calldata", "err", err)
 	}
 
+	// Note: this implies the abi of the Task Manager contract implemented by the AVS should respect this values, or it 
+	// wont work. Other solution is to receive this as parameter, but it looks more difficult than only replace this.
 	nonSignerStakesAndSignatureInput := inputs[2].(struct {
 		NonSignerQuorumBitmapIndices []uint32 "json:\"nonSignerQuorumBitmapIndices\""
 		NonSignerPubkeys             []struct {
