@@ -125,9 +125,11 @@ type OperatorSet allocationmanager.OperatorSet
 
 type WatchOperatorActivatedOpts struct {
 	Context context.Context
-	// Operators to watch activation for
+	// Operators to watch activation for.
+	// If empty, all operators will be watched.
 	Operators []common.Address
-	// Operator sets to trigger on
+	// Operator sets to trigger on.
+	// If empty, all operator sets will be watched.
 	OperatorSets []OperatorSet
 }
 

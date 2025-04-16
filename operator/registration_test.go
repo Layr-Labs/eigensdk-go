@@ -15,6 +15,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/testutils"
 	"github.com/Layr-Labs/eigensdk-go/testutils/testclients"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/event"
 	"github.com/stretchr/testify/require"
 
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
@@ -51,7 +52,13 @@ func TestWatchOperatorActivated(t *testing.T) {
 	}
 	operatorActivatedC, sub, err := operator.WatchOperatorActivated(watchOpts, clients.EthWsClient, contractAddrs.AllocationManager)
 	require.NoError(t, err)
-	defer sub.Unsubscribe()
+	manageSubscription(t, sub)
+
+	// Give some time for the subscription to be set up
+	time.Sleep(200 * time.Millisecond)
+
+	// Check the channel is initially empty
+	require.Empty(t, operatorActivatedC)
 
 	// Register the operator
 	request := elcontracts.RegistrationRequest{
@@ -85,12 +92,18 @@ func TestWatchOperatorActivated(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, true, isRegistered)
 
-	// Wait for the operator to be activated
-
+	// Assert once the operator is active the event is received
 	expectedEvent := operator.OperatorActivated{
 		Operator:    operatorAddress,
 		OperatorSet: operator.OperatorSet(operatorSet),
 	}
+
+	assertReceives(t, &expectedEvent, operatorActivatedC, 10*time.Second)
+
+	// Assert watching for operator activation works when the operator is already registered
+	operatorActivatedC, sub, err = operator.WatchOperatorActivated(watchOpts, clients.EthWsClient, contractAddrs.AllocationManager)
+	require.NoError(t, err)
+	manageSubscription(t, sub)
 
 	assertReceives(t, &expectedEvent, operatorActivatedC, 10*time.Second)
 }
@@ -133,6 +146,24 @@ func assertReceives[T any](t *testing.T, expected T, ch <-chan T, timeout time.D
 	case received := <-ch:
 		require.Equal(t, expected, received)
 	case <-time.After(timeout):
-		t.Fatal("did not receive")
+		t.Fatal("did not receive anything")
 	}
+}
+
+func manageSubscription(t *testing.T, sub event.Subscription) {
+	quit := make(chan struct{})
+	t.Cleanup(func() {
+		quit <- struct{}{}
+		sub.Unsubscribe()
+	})
+	go func() {
+		select {
+		case <-quit:
+			return
+		case err := <-sub.Err():
+			if err != nil {
+				t.Errorf("subscription error: %v", err)
+			}
+		}
+	}()
 }
