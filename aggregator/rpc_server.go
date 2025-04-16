@@ -3,7 +3,6 @@ package aggregator
 import (
 	"context"
 	"encoding/gob"
-	"math/big"
 	"net/http"
 	"net/rpc"
 
@@ -20,7 +19,7 @@ func (agg *Aggregator[Input]) startServer(ctx context.Context) {
 	}
 	rpc.HandleHTTP()
 
-	var taskResponseType challenger.GenericInputTaskResponse[*big.Int]
+	var taskResponseType challenger.GenericInputTaskResponse[Input]
 	gob.Register(&taskResponseType)
 	err = http.ListenAndServe(agg.serverIpPortAddr, nil)
 	if err != nil {
