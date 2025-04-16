@@ -61,12 +61,12 @@ func main() {
 		return
 	}
 
-	challenger, err := challenger.NewChallenger[*big.Int, NewTaskCreatedEvent, TaskRespondedEvent](
-		cfg, 
-		challengerLogicImpl, 
-		newTaskEventHash, 
-		taskRespondedEventHash, 
-		taskManagerAbi, 
+	challenger, err := challenger.NewChallenger(
+		cfg,
+		challengerLogicImpl,
+		newTaskEventHash,
+		taskRespondedEventHash,
+		taskManagerAbi,
 		ethHttpClient,
 	)
 	if err != nil {
@@ -80,37 +80,6 @@ func main() {
 		return
 	}
 }
-
-// Required structs
-
-type NewTaskCreatedEvent struct {
-	TaskIndex uint32
-	Task      challenger.GenericInputTask[*big.Int]
-	Raw       types.Log
-}
-
-func (newTaskEvent NewTaskCreatedEvent) InnerTask() challenger.GenericInputTask[*big.Int] {
-	return newTaskEvent.Task
-}
-
-type TaskRespondedEvent struct {
-	TaskResponse              challenger.GenericInputTaskResponse[*big.Int]
-	TaskResponseMetadata      challenger.GenericTaskResponseMetadata
-	NonSigningOperatorPubKeys []challenger.BN254G1Point
-}
-
-func (taskRespEvent TaskRespondedEvent) TaskIndex() uint32 {
-	return taskRespEvent.TaskResponse.ReferenceTaskIndex
-}
-
-func (taskRespEvent TaskRespondedEvent) GetTaskResponse() challenger.GenericInputTaskResponse[*big.Int] {
-	return taskRespEvent.TaskResponse
-}
-
-func (taskRespEvent TaskRespondedEvent) GetTaskResponseMetadata() challenger.GenericTaskResponseMetadata {
-	return taskRespEvent.TaskResponseMetadata
-}
-
 
 // Challenger Logic
 

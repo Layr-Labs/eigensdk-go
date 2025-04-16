@@ -45,14 +45,32 @@ type TaskResponseData[Input any] struct {
 	NonSigningOperatorPubKeys []BN254G1Point
 }
 
-type NewTaskCreatedEvent[Input any] interface {
-	InnerTask() GenericInputTask[Input]
+type NewTaskCreatedEvent[Input any] struct {
+	TaskIndex uint32
+	Task      GenericInputTask[Input]
+	Raw       types.Log
 }
 
-type TaskRespondedEvent[Input any] interface {
-	TaskIndex() uint32
-	GetTaskResponse() GenericInputTaskResponse[Input]
-	GetTaskResponseMetadata() GenericTaskResponseMetadata
+func (newTaskEvent NewTaskCreatedEvent[Input]) InnerTask() GenericInputTask[Input] {
+	return newTaskEvent.Task
+}
+
+type TaskRespondedEvent[Input any] struct {
+	TaskResponse              GenericInputTaskResponse[Input]
+	TaskResponseMetadata      GenericTaskResponseMetadata
+	NonSigningOperatorPubKeys []BN254G1Point
+}
+
+func (taskRespEvent TaskRespondedEvent[Input]) TaskIndex() uint32 {
+	return taskRespEvent.TaskResponse.ReferenceTaskIndex
+}
+
+func (taskRespEvent TaskRespondedEvent[Input]) GetTaskResponse() GenericInputTaskResponse[Input] {
+	return taskRespEvent.TaskResponse
+}
+
+func (taskRespEvent TaskRespondedEvent[Input]) GetTaskResponseMetadata() GenericTaskResponseMetadata {
+	return taskRespEvent.TaskResponseMetadata
 }
 
 type ChallengerConfig struct {
@@ -60,7 +78,7 @@ type ChallengerConfig struct {
 	Logger   logging.Logger
 }
 
-type Challenger[Input any, NewTaskCreated NewTaskCreatedEvent[Input], TaskResponded TaskRespondedEvent[Input]] struct {
+type Challenger[Input any] struct {
 	logger             logging.Logger
 	logic              ChallengerLogic[Input]
 	taskResponseChan   chan types.Log
@@ -73,14 +91,14 @@ type Challenger[Input any, NewTaskCreated NewTaskCreatedEvent[Input], TaskRespon
 	ethClient *ethclient.Client
 }
 
-func NewChallenger[Input any, NewTaskCreated NewTaskCreatedEvent[Input], TaskResponded TaskRespondedEvent[Input]](
+func NewChallenger[Input any](
 	c ChallengerConfig,
 	logic ChallengerLogic[Input],
 	newTaskEventHash common.Hash,
 	taskProcessedEventHash common.Hash,
 	taskManagerAbi *abi.ABI,
 	ethClient *ethclient.Client,
-) (*Challenger[Input, NewTaskCreated, TaskResponded], error) {
+) (*Challenger[Input], error) {
 	client, err := ethclient.Dial(c.EthWsUrl)
 	if err != nil {
 		c.Logger.Fatalf("error connecting to web socket: %v", err)
@@ -105,7 +123,7 @@ func NewChallenger[Input any, NewTaskCreated NewTaskCreatedEvent[Input], TaskRes
 		c.Logger.Fatalf("error subscribing to taskResponded events: %v", err)
 	}
 
-	return &Challenger[Input, NewTaskCreated, TaskResponded]{
+	return &Challenger[Input]{
 		logger:             c.Logger,
 		logic:              logic,
 		newTaskCreatedChan: newTaskCreatedLogs,
@@ -117,7 +135,7 @@ func NewChallenger[Input any, NewTaskCreated NewTaskCreatedEvent[Input], TaskRes
 	}, nil
 }
 
-func (c *Challenger[Input, NewTaskCreated, TaskResponded]) Start(ctx context.Context) error {
+func (c *Challenger[Input]) Start(ctx context.Context) error {
 	c.logger.Info("Starting Challenger.")
 
 	for {
@@ -139,8 +157,8 @@ func (c *Challenger[Input, NewTaskCreated, TaskResponded]) Start(ctx context.Con
 
 }
 
-func (c *Challenger[Input, NewTaskCreated, TaskResponded]) ProcessNewTaskCreatedLog(log types.Log) error {
-	var newTaskCreatedLog NewTaskCreated
+func (c *Challenger[Input]) ProcessNewTaskCreatedLog(log types.Log) error {
+	var newTaskCreatedLog NewTaskCreatedEvent[Input]
 
 	err := c.taskManagerAbi.UnpackIntoInterface(&newTaskCreatedLog, "NewTaskCreated", log.Data)
 	if err != nil {
@@ -153,10 +171,10 @@ func (c *Challenger[Input, NewTaskCreated, TaskResponded]) ProcessNewTaskCreated
 	return nil
 }
 
-func (c *Challenger[Input, NewTaskCreated, TaskResponded]) ProcessTaskResponseLog(
+func (c *Challenger[Input]) ProcessTaskResponseLog(
 	log types.Log,
 ) error {
-	var taskRespondedLog TaskResponded
+	var taskRespondedLog TaskRespondedEvent[Input]
 
 	err := c.taskManagerAbi.UnpackIntoInterface(&taskRespondedLog, "TaskResponded", log.Data)
 	if err != nil {
@@ -185,7 +203,7 @@ func (c *Challenger[Input, NewTaskCreated, TaskResponded]) ProcessTaskResponseLo
 	return nil
 }
 
-func (c *Challenger[Input, NewTaskCreated, TaskResponded]) getNonSigningOperatorPubKeys(
+func (c *Challenger[Input]) getNonSigningOperatorPubKeys(
 	transactionHash common.Hash,
 ) []BN254G1Point {
 	// get the nonSignerStakesAndSignature
