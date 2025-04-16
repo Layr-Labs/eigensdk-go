@@ -44,7 +44,7 @@ type OperatorConfig struct {
 
 type OperatorTaskProcessor[Input any] interface {
 	ProcessNewTaskCreatedLog(task challenger.GenericInputTask[Input], taskIndex uint32) (challenger.GenericInputTaskResponse[Input], error)
-	DigestResponse(response challenger.GenericInputTaskResponse[Input])([32]byte)
+	DigestResponse(response *challenger.GenericInputTaskResponse[Input])([32]byte)
 }
 
 type Operator[Input any] struct {
@@ -169,7 +169,7 @@ func (o *Operator[Input]) Start(ctx context.Context) error {
 				o.logger.Error("Error checking if operator is registered", "err", err)
 				return err
 			}
-			signedTaskResponse, err := o.SignTaskResponse(*taskResponse)
+			signedTaskResponse, err := o.SignTaskResponse(taskResponse)
 			if err != nil {
 				continue
 			}
@@ -210,13 +210,13 @@ func (o *Operator[Input]) processNewTaskCreatedLog(
 }
 
 func (o *Operator[Input]) SignTaskResponse(
-	taskResponse challenger.GenericInputTaskResponse[Input],
+	taskResponse *challenger.GenericInputTaskResponse[Input],
 ) (*sdkaggregator.SignedTaskResponse[Input], error) {
 	taskResponseHash := o.taskProcessor.DigestResponse(taskResponse)
 
 	blsSignature := o.blsKeypair.SignMessage(taskResponseHash)
 	signedTaskResponse := &sdkaggregator.SignedTaskResponse[Input]{
-		TaskResponse: taskResponse,
+		TaskResponse: *taskResponse,
 		BlsSignature: *blsSignature,
 		OperatorId:   o.operatorId,
 	}

@@ -29,7 +29,7 @@ const (
 	// number of blocks after which a task is considered expired this hardcoded here because it's also
 	//  hardcoded in the contracts, but should ideally be fetched from the contracts
 	taskChallengeWindowBlock = 100
-	blockTimeSeconds         = 12
+	blockTimeSeconds         = 12 * time.Second
 )
 
 type TaskProcessor[Input any] interface {
@@ -190,7 +190,7 @@ func (tp *Aggregator[Input]) ProcessNewTask(ctx context.Context, log types.Log) 
 	// TODO(samlaf): we use seconds for now, but we should ideally pass a blocknumber to the blsAggregationService
 	// and it should monitor the chain and only expire the task aggregation once the chain has reached that block
 	// number.
-	taskTimeToExpiry := taskChallengeWindowBlock * blockTimeSeconds * time.Second
+	taskTimeToExpiry := taskChallengeWindowBlock * blockTimeSeconds
 	var quorumNums sdktypes.QuorumNums
 	for _, quorumNum := range newTask.QuorumNumbers {
 		quorumNums = append(quorumNums, sdktypes.QuorumNum(quorumNum))
