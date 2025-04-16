@@ -120,6 +120,7 @@ func SetAllocationDelay(
 	return nil
 }
 
+// TODO: move to "types" module
 type OperatorSet allocationmanager.OperatorSet
 
 type WatchOperatorActivatedOpts struct {
@@ -135,7 +136,8 @@ type OperatorActivated struct {
 	OperatorSet OperatorSet
 }
 
-func WatchOperatorActivated(opts *WatchOperatorActivatedOpts, ethClient *ethclient.Client, allocationManagerAddr common.Address) (<-chan *OperatorActivated, event.Subscription, error) {
+// TODO: handle both HTTP polling and WS subscribing
+func WatchOperatorActivated(opts *WatchOperatorActivatedOpts, ethClient bind.ContractBackend, allocationManagerAddr common.Address) (<-chan *OperatorActivated, event.Subscription, error) {
 	ctx := opts.Context
 
 	allocationManagerContract, err := allocationmanager.NewContractAllocationManager(allocationManagerAddr, ethClient)
