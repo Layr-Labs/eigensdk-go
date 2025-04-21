@@ -26,7 +26,7 @@ type GenericInputTask[Input any] struct {
 
 type GenericOutputTaskResponse[Output any] struct {
 	ReferenceTaskIndex uint32
-	OutputValue         Output
+	OutputValue        Output
 }
 
 type GenericTaskResponseMetadata struct {
@@ -138,13 +138,13 @@ func (c *Challenger[Input, Output]) Start(ctx context.Context) error {
 		select {
 		case newTaskCreatedLog := <-c.newTaskCreatedChan:
 			c.logger.Info("New task created log received")
-			err := c.ProcessNewTaskCreatedLog(newTaskCreatedLog)
+			err := c.processNewTaskCreatedLog(newTaskCreatedLog)
 			if err != nil {
 				c.logger.Fatalf("Error processing NewTaskCreated log: %v", err)
 			}
 		case taskResponseLog := <-c.taskResponseChan:
 			c.logger.Info("Task response log received")
-			err := c.ProcessTaskResponseLog(taskResponseLog)
+			err := c.processTaskResponseLog(taskResponseLog)
 			if err != nil {
 				c.logger.Fatalf("Error processing TaskResponded log: %v", err)
 			}
@@ -153,7 +153,7 @@ func (c *Challenger[Input, Output]) Start(ctx context.Context) error {
 
 }
 
-func (c *Challenger[Input, Output]) ProcessNewTaskCreatedLog(log types.Log) error {
+func (c *Challenger[Input, Output]) processNewTaskCreatedLog(log types.Log) error {
 	var newTaskCreatedLog NewTaskCreatedEvent[Input]
 
 	err := c.taskManagerAbi.UnpackIntoInterface(&newTaskCreatedLog, "NewTaskCreated", log.Data)
@@ -167,7 +167,7 @@ func (c *Challenger[Input, Output]) ProcessNewTaskCreatedLog(log types.Log) erro
 	return nil
 }
 
-func (c *Challenger[Input, Output]) ProcessTaskResponseLog(
+func (c *Challenger[Input, Output]) processTaskResponseLog(
 	log types.Log,
 ) error {
 	var taskRespondedLog TaskRespondedEvent[Output]
