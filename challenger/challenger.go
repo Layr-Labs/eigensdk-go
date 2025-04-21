@@ -76,7 +76,7 @@ type ChallengerConfig struct {
 
 type Challenger[Input any] struct {
 	logger             logging.Logger
-	logic              ChallengerLogic[Input]
+	challengeVerifier  ChallengerLogic[Input]
 	taskResponseChan   chan types.Log
 	newTaskCreatedChan chan types.Log
 
@@ -89,7 +89,7 @@ type Challenger[Input any] struct {
 
 func NewChallenger[Input any](
 	c ChallengerConfig,
-	logic ChallengerLogic[Input],
+	challengeVerifier ChallengerLogic[Input],
 	newTaskEventHash common.Hash,
 	taskProcessedEventHash common.Hash,
 	taskManagerAbi *abi.ABI,
@@ -121,7 +121,7 @@ func NewChallenger[Input any](
 
 	return &Challenger[Input]{
 		logger:             c.Logger,
-		logic:              logic,
+		challengeVerifier:  challengeVerifier,
 		newTaskCreatedChan: newTaskCreatedLogs,
 		taskResponseChan:   taskRespondedLogs,
 		taskManagerAbi:     taskManagerAbi,
@@ -190,7 +190,7 @@ func (c *Challenger[Input]) ProcessTaskResponseLog(
 	c.taskResponses[taskIndex] = taskResponseData
 
 	if task, found := c.tasks[taskIndex]; found {
-		err = c.logic.VerifyChallenge(taskIndex, task, taskResponseData)
+		err = c.challengeVerifier.VerifyChallenge(taskIndex, task, taskResponseData)
 		if err != nil {
 			return fmt.Errorf("error verifying the challenge: %w", err)
 		}
