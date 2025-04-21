@@ -31,7 +31,7 @@ type TaskResponseData struct {
 	NonSigningOperatorPubKeys []cstaskmanager.BN254G1Point
 }
 
-func main(){
+func main() {
 	logger, err := logging.NewZapLogger(logging.Production) // Change here if want to change logging level
 	if err != nil {
 		println("Failure creating logger")
@@ -67,7 +67,7 @@ func main(){
 		EcdsaPrivateKey:               ecdsaPrivateKey,
 		AggregatorServerIpPortAddr:    "localhost:8090",
 	}
-	
+
 	taskProcessor, err := NewTaskProcessor(&cfg)
 	if err != nil {
 		logger.Fatalf(err.Error())
@@ -126,7 +126,7 @@ func main(){
 	}
 
 	return
-	
+
 }
 
 type IncredibleTaskProcessor struct {
@@ -143,7 +143,7 @@ func NewTaskProcessor(c *aggregator.AggregatorConfig) (*IncredibleTaskProcessor,
 	avsConfig := AvsConfig{
 		Logger: c.Logger,
 		//IncredibleSquaringTaskManager: taskMana,
-		TxMgr: c.TxMgr,
+		TxMgr:         c.TxMgr,
 		EthHttpClient: c.EthHttpClient,
 	}
 	avsWriter, err := BuildAvsWriterFromConfig(&avsConfig)
