@@ -51,10 +51,6 @@ type NewTaskCreatedEvent[Input any] struct {
 	Raw       types.Log
 }
 
-func (newTaskEvent NewTaskCreatedEvent[Input]) InnerTask() GenericInputTask[Input] {
-	return newTaskEvent.Task
-}
-
 type TaskRespondedEvent[Input any] struct {
 	TaskResponse              GenericInputTaskResponse[Input]
 	TaskResponseMetadata      GenericTaskResponseMetadata
@@ -166,7 +162,7 @@ func (c *Challenger[Input]) ProcessNewTaskCreatedLog(log types.Log) error {
 	}
 
 	newTaskIndex := uint32(new(big.Int).SetBytes(log.Topics[1].Bytes()).Uint64())
-	c.tasks[newTaskIndex] = newTaskCreatedLog.InnerTask()
+	c.tasks[newTaskIndex] = newTaskCreatedLog.Task
 
 	return nil
 }
