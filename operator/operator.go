@@ -22,9 +22,6 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
-const AVS_NAME = "incredible-squaring"
-const SEM_VER = "0.0.1"
-
 type OperatorConfig struct {
 	OperatorAddress string
 
