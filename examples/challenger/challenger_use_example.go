@@ -89,7 +89,7 @@ type ChallengeVerifierImpl struct {
 	avsWriter *AvsWriter
 }
 
-var _ challenger.ChallengeVerifier[*big.Int] = (*ChallengeVerifierImpl)(nil)
+var _ challenger.ChallengeVerifier[*big.Int, *big.Int] = (*ChallengeVerifierImpl)(nil)
 
 type TaskResponseData struct {
 	TaskResponse              cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse
@@ -125,7 +125,7 @@ func (c *ChallengeVerifierImpl) VerifyChallenge(
 	}
 
 	numberToBeSquared := task.InputValue
-	answerInResponse := responseData.TaskResponse.InputValue
+	answerInResponse := responseData.TaskResponse.OutputValue
 	trueAnswer := numberToBeSquared.Exp(numberToBeSquared, big.NewInt(2), nil)
 
 	// checking if the answer in the response submitted by aggregator is correct
@@ -145,7 +145,7 @@ func (c *ChallengeVerifierImpl) VerifyChallenge(
 
 		incredibleSquaringTaskResponse := cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse{
 			ReferenceTaskIndex: responseData.TaskResponse.ReferenceTaskIndex,
-			NumberSquared:      responseData.TaskResponse.InputValue,
+			NumberSquared:      responseData.TaskResponse.OutputValue,
 		}
 
 		incredibleSquaringTaskResponseMetadata := cstaskmanager.IIncredibleSquaringTaskManagerTaskResponseMetadata{
