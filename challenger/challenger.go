@@ -13,7 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-type ChallengerLogic[Input any] interface {
+type ChallengeVerifier[Input any] interface {
 	VerifyChallenge(uint32, GenericInputTask[Input], TaskResponseData[Input]) error
 }
 
@@ -76,7 +76,7 @@ type ChallengerConfig struct {
 
 type Challenger[Input any] struct {
 	logger             logging.Logger
-	challengeVerifier  ChallengerLogic[Input]
+	challengeVerifier  ChallengeVerifier[Input]
 	taskResponseChan   chan types.Log
 	newTaskCreatedChan chan types.Log
 
@@ -89,7 +89,7 @@ type Challenger[Input any] struct {
 
 func NewChallenger[Input any](
 	c ChallengerConfig,
-	challengeVerifier ChallengerLogic[Input],
+	challengeVerifier ChallengeVerifier[Input],
 	newTaskEventHash common.Hash,
 	taskProcessedEventHash common.Hash,
 	taskManagerAbi *abi.ABI,
