@@ -39,7 +39,6 @@ type TaskProcessor[Input any] interface {
 type Aggregator[ResponseType any, Input any, Output any] struct {
 	logger           logging.Logger
 	serverIpPortAddr string
-	avsWriter        *avsregistry.ChainWriter
 
 	// aggregation related fields
 	blsAggregationService blsagg.BlsAggregationService
@@ -68,12 +67,6 @@ func NewAggregator[ResponseType any, Input any, Output any](
 	avsReader, err := avsregistry.NewReaderFromConfig(avsConfig, c.EthHttpClient, c.Logger)
 	if err != nil {
 		c.Logger.Error("Cannot create avsReader", "err", err)
-		return nil, err
-	}
-
-	avsWriter, err := avsregistry.NewWriterFromConfig(avsConfig, c.EthHttpClient, c.TxMgr, c.Logger)
-	if err != nil {
-		c.Logger.Errorf("Cannot create avsWriter", "err", err)
 		return nil, err
 	}
 
@@ -128,7 +121,6 @@ func NewAggregator[ResponseType any, Input any, Output any](
 	return &Aggregator[ResponseType, Input, Output]{
 		logger:                c.Logger,
 		serverIpPortAddr:      c.AggregatorServerIpPortAddr,
-		avsWriter:             avsWriter,
 		blsAggregationService: blsAggregationService,
 		taskProcessor:         taskProcessor,
 		newTaskCreatedLogs:    newTaskCreatedLogs,
