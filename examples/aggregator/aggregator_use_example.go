@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"math/big"
 	"sync"
+	"time"
 
 	"github.com/Layr-Labs/eigensdk-go/aggregator"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
+	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
 	"github.com/Layr-Labs/eigensdk-go/types"
@@ -18,11 +20,19 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"golang.org/x/crypto/sha3"
 
-	sdkaggregator "github.com/Layr-Labs/eigensdk-go/aggregator"
 	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/bindings/taskManager"
 	taskgeneratorexample "github.com/Layr-Labs/eigensdk-go/examples/task-generator"
 	blsagg "github.com/Layr-Labs/eigensdk-go/services/bls_aggregation"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
+)
+
+const (
+	// number of blocks after which a task is considered expired
+	// this hardcoded here because it's also hardcoded in the contracts, but should
+	// ideally be fetched from the contracts
+	taskChallengeWindowBlock = 100
+	blockTimeSeconds         = 12
+	avsName                  = "incredible-squaring"
 )
 
 type TaskResponseData struct {
@@ -124,9 +134,6 @@ func main() {
 	if err != nil {
 		logger.Fatalf(err.Error())
 	}
-
-	return
-
 }
 
 type IncredibleTaskProcessor struct {
@@ -137,7 +144,7 @@ type IncredibleTaskProcessor struct {
 	taskResponses map[uint32]TaskResponseData
 }
 
-var _ sdkaggregator.TaskProcessor = (*IncredibleTaskProcessor)(nil)
+var _ aggregator.TaskProcessor = (*IncredibleTaskProcessor)(nil)
 
 func NewTaskProcessor(c *aggregator.AggregatorConfig) (*IncredibleTaskProcessor, error) {
 	avsConfig := AvsConfig{
@@ -190,7 +197,7 @@ func (tp *IncredibleTaskProcessor) ProcessNewTask(ctx context.Context, log getht
 	// TODO(samlaf): we use seconds for now, but we should ideally pass a blocknumber to the blsAggregationService
 	// and it should monitor the chain and only expire the task aggregation once the chain has reached that block
 	// number.
-	taskTimeToExpiry := taskChallengeWindowBlock * blockTimeSeconds
+	taskTimeToExpiry := taskChallengeWindowBlock * blockTimeSeconds * time.Second
 	var quorumNums types.QuorumNums
 	for _, quorumNum := range newTask.QuorumNumbers {
 		quorumNums = append(quorumNums, types.QuorumNum(quorumNum))
@@ -222,17 +229,17 @@ func (tp *IncredibleTaskProcessor) ProcessAggregatedResponse(
 	}
 	nonSignerPubkeys := []cstaskmanager.BN254G1Point{}
 	for _, nonSignerPubkey := range response.NonSignersPubkeysG1 {
-		nonSignerPubkeys = append(nonSignerPubkeys, core.ConvertToBN254G1Point(nonSignerPubkey))
+		nonSignerPubkeys = append(nonSignerPubkeys, ConvertToBN254G1Point(nonSignerPubkey))
 	}
 	quorumApks := []cstaskmanager.BN254G1Point{}
 	for _, quorumApk := range response.QuorumApksG1 {
-		quorumApks = append(quorumApks, core.ConvertToBN254G1Point(quorumApk))
+		quorumApks = append(quorumApks, ConvertToBN254G1Point(quorumApk))
 	}
 	nonSignerStakesAndSignature := cstaskmanager.IBLSSignatureCheckerTypesNonSignerStakesAndSignature{
 		NonSignerPubkeys:             nonSignerPubkeys,
 		QuorumApks:                   quorumApks,
-		ApkG2:                        core.ConvertToBN254G2Point(response.SignersApkG2),
-		Sigma:                        core.ConvertToBN254G1Point(response.SignersAggSigG1.G1Point),
+		ApkG2:                        ConvertToBN254G2Point(response.SignersApkG2),
+		Sigma:                        ConvertToBN254G1Point(response.SignersAggSigG1.G1Point),
 		NonSignerQuorumBitmapIndices: response.NonSignerQuorumBitmapIndices,
 		QuorumApkIndices:             response.QuorumApkIndices,
 		TotalStakeIndices:            response.TotalStakeIndices,
@@ -275,7 +282,7 @@ func (tr IncredibleSquaringTaskResponse) TaskIndex() types.TaskIndex {
 
 func (tr IncredibleSquaringTaskResponse) Digest() [32]byte {
 	tmresponse := cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse(tr)
-	taskResponseHash, err := core.GetTaskResponseDigest(&tmresponse)
+	taskResponseHash, err := GetTaskResponseDigest(&tmresponse)
 	if err != nil {
 		return [32]byte{}
 	}
@@ -334,4 +341,72 @@ func (w *AvsWriter) SendAggregatedResponse(
 	}
 	w.logger.Info("tx hash :respond to task")
 	return receipt, nil
+}
+
+// Incredible Squaring Utils
+// this hardcodes abi.encode() for cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse
+// unclear why abigen doesn't provide this out of the box...
+func AbiEncodeTaskResponse(h *cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse) ([]byte, error) {
+
+	// The order here has to match the field ordering of cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse
+	taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
+		{
+			Name: "referenceTaskIndex",
+			Type: "uint32",
+		},
+		{
+			Name: "numberSquared",
+			Type: "uint256",
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	arguments := abi.Arguments{
+		{
+			Type: taskResponseType,
+		},
+	}
+
+	bytes, err := arguments.Pack(h)
+	if err != nil {
+		return nil, err
+	}
+
+	return bytes, nil
+}
+
+// GetTaskResponseDigest returns the hash of the TaskResponse, which is what operators sign over
+func GetTaskResponseDigest(h *cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse) ([32]byte, error) {
+
+	encodeTaskResponseByte, err := AbiEncodeTaskResponse(h)
+	if err != nil {
+		return [32]byte{}, err
+	}
+
+	var taskResponseDigest [32]byte
+	hasher := sha3.NewLegacyKeccak256()
+	hasher.Write(encodeTaskResponseByte)
+	copy(taskResponseDigest[:], hasher.Sum(nil)[:32])
+
+	return taskResponseDigest, nil
+}
+
+// BN254.sol is a library, so bindings for G1 Points and G2 Points are only generated
+// in every contract that imports that library. Thus the output here will need to be
+// type casted if G1Point is needed to interface with another contract (eg: BLSPublicKeyCompendium.sol)
+func ConvertToBN254G1Point(input *bls.G1Point) cstaskmanager.BN254G1Point {
+	output := cstaskmanager.BN254G1Point{
+		X: input.X.BigInt(big.NewInt(0)),
+		Y: input.Y.BigInt(big.NewInt(0)),
+	}
+	return output
+}
+
+func ConvertToBN254G2Point(input *bls.G2Point) cstaskmanager.BN254G2Point {
+	output := cstaskmanager.BN254G2Point{
+		X: [2]*big.Int{input.X.A1.BigInt(big.NewInt(0)), input.X.A0.BigInt(big.NewInt(0))},
+		Y: [2]*big.Int{input.Y.A1.BigInt(big.NewInt(0)), input.Y.A0.BigInt(big.NewInt(0))},
+	}
+	return output
 }
