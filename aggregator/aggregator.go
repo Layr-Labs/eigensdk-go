@@ -154,7 +154,7 @@ func (agg *Aggregator[ResponseType, Input, Output]) Start(ctx context.Context) e
 				continue
 			}
 		case log := <-agg.newTaskCreatedLogs:
-			metadata, err := agg.ProcessNewTask(context.Background(), log)
+			metadata, err := agg.processNewTask(context.Background(), log)
 			if err != nil {
 				agg.logger.Fatal("Error processing the task", "err", err)
 			}
@@ -165,7 +165,7 @@ func (agg *Aggregator[ResponseType, Input, Output]) Start(ctx context.Context) e
 	}
 }
 
-func (agg *Aggregator[ResponseType, Input, Output]) ProcessNewTask(ctx context.Context, log types.Log) (blsagg.TaskMetadata, error) {
+func (agg *Aggregator[ResponseType, Input, Output]) processNewTask(ctx context.Context, log types.Log) (blsagg.TaskMetadata, error) {
 	var newTaskCreatedLog challenger.NewTaskCreatedEvent[Input]
 
 	err := agg.taskManagerAbi.UnpackIntoInterface(&newTaskCreatedLog, "NewTaskCreated", log.Data)
