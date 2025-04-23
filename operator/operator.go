@@ -53,7 +53,7 @@ type Operator[Input any] struct {
 	newTaskCreatedLogs  chan types.Log
 	taskManagerAbi      *abi.ABI
 
-	calculationFn		ResultCalculationFunction[Input]
+	calculationFn ResultCalculationFunction[Input]
 }
 
 type ResultCalculationFunction[Input any] func(task challenger.GenericInputTask[Input]) (challenger.GenericInputTaskResponse[Input], error)
@@ -64,6 +64,7 @@ func NewOperatorFromConfig[Input any](
 	taskProcessor OperatorTaskProcessor[Input],
 	logger logging.Logger,
 	taskManagerAbi *abi.ABI,
+	calculationFn ResultCalculationFunction[Input],
 ) (*Operator[Input], error) {
 	avs_config := avsregistry.Config{
 		RegistryCoordinatorAddress:    common.HexToAddress(c.AVSRegistryCoordinatorAddress),
@@ -202,7 +203,6 @@ func (o *Operator[Input]) processNewTaskCreatedLog(
 	)
 
 	// numberSquared := big.NewInt(0).Exp(task.InputValue, big.NewInt(2), nil)
-
 
 	taskResponse, err := o.calculationFn(newTaskCreatedLog.Task)
 	if err != nil {
