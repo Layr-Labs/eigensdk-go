@@ -40,7 +40,6 @@ type OperatorConfig struct {
 }
 
 type OperatorTaskProcessor[Input any] interface {
-	ProcessNewTaskCreatedLog(task challenger.GenericInputTask[Input], taskIndex uint32) (challenger.GenericInputTaskResponse[Input], error)
 	DigestResponse(response *challenger.GenericInputTaskResponse[Input]) [32]byte
 }
 
@@ -53,7 +52,11 @@ type Operator[Input any] struct {
 	taskProcessor       OperatorTaskProcessor[Input]
 	newTaskCreatedLogs  chan types.Log
 	taskManagerAbi      *abi.ABI
+
+	calculationFn		ResultCalculationFunction[Input]
 }
+
+type ResultCalculationFunction[Input any] func(task challenger.GenericInputTask[Input]) (challenger.GenericInputTaskResponse[Input], error)
 
 func NewOperatorFromConfig[Input any](
 	c OperatorConfig,
@@ -198,9 +201,12 @@ func (o *Operator[Input]) processNewTaskCreatedLog(
 		"QuorumThresholdPercentage", newTaskCreatedLog.Task.QuorumThresholdPercentage,
 	)
 
-	taskResponse, err := o.taskProcessor.ProcessNewTaskCreatedLog(newTaskCreatedLog.Task, newTaskIndex)
+	// numberSquared := big.NewInt(0).Exp(task.InputValue, big.NewInt(2), nil)
+
+
+	taskResponse, err := o.calculationFn(newTaskCreatedLog.Task)
 	if err != nil {
-		return nil, fmt.Errorf("error getting task response: %w", err)
+		return nil, fmt.Errorf("error calculating task response: %w", err)
 	}
 
 	return &taskResponse, nil
