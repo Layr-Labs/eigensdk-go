@@ -56,7 +56,7 @@ type Operator[Input any] struct {
 	calculationFn ResultCalculationFunction[Input]
 }
 
-type ResultCalculationFunction[Input any] func(task challenger.GenericInputTask[Input]) (challenger.GenericInputTaskResponse[Input], error)
+type ResultCalculationFunction[Input any] func(task challenger.GenericInputTask[Input], taskIndex uint32) (challenger.GenericInputTaskResponse[Input], error)
 
 func NewOperatorFromConfig[Input any](
 	c OperatorConfig,
@@ -202,9 +202,7 @@ func (o *Operator[Input]) processNewTaskCreatedLog(
 		"QuorumThresholdPercentage", newTaskCreatedLog.Task.QuorumThresholdPercentage,
 	)
 
-	// numberSquared := big.NewInt(0).Exp(task.InputValue, big.NewInt(2), nil)
-
-	taskResponse, err := o.calculationFn(newTaskCreatedLog.Task)
+	taskResponse, err := o.calculationFn(newTaskCreatedLog.Task, newTaskIndex)
 	if err != nil {
 		return nil, fmt.Errorf("error calculating task response: %w", err)
 	}
