@@ -144,6 +144,7 @@ func NewOperatorFromConfig[Input any](
 		newTaskCreatedLogs:  newTaskCreatedLogs,
 		taskProcessor:       taskProcessor,
 		taskManagerAbi:      taskManagerAbi,
+		calculationFn:       calculationFn,
 	}
 
 	logger.Info("Operator info",
