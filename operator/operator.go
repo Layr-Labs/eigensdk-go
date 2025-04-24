@@ -44,19 +44,18 @@ type OperatorTaskProcessor[Input any] interface {
 }
 
 type Operator[Input any] struct {
-	logger              logging.Logger
-	operatorId          sdktypes.OperatorId
-	aggregatorRpcClient AggregatorRpcClienter[Input]
-	EthWsUrl            string
-	blsKeypair          *bls.KeyPair
-	taskProcessor       OperatorTaskProcessor[Input]
-	newTaskCreatedLogs  chan types.Log
-	taskManagerAbi      *abi.ABI
-
-	calculationFn ResultCalculationFunction[Input]
+	logger                logging.Logger
+	operatorId            sdktypes.OperatorId
+	aggregatorRpcClient   AggregatorRpcClienter[Input]
+	EthWsUrl              string
+	blsKeypair            *bls.KeyPair
+	taskProcessor         OperatorTaskProcessor[Input]
+	newTaskCreatedLogs    chan types.Log
+	taskManagerAbi        *abi.ABI
+	responseCalculationFn ResponseCalculationFunction[Input]
 }
 
-type ResultCalculationFunction[Input any] func(task challenger.GenericInputTask[Input], taskIndex uint32) (challenger.GenericInputTaskResponse[Input], error)
+type ResponseCalculationFunction[Input any] func(task challenger.GenericInputTask[Input], taskIndex uint32) (challenger.GenericInputTaskResponse[Input], error)
 
 func NewOperatorFromConfig[Input any](
 	c OperatorConfig,
@@ -64,7 +63,7 @@ func NewOperatorFromConfig[Input any](
 	taskProcessor OperatorTaskProcessor[Input],
 	logger logging.Logger,
 	taskManagerAbi *abi.ABI,
-	calculationFn ResultCalculationFunction[Input],
+	responseCalculationFn ResponseCalculationFunction[Input],
 ) (*Operator[Input], error) {
 	avs_config := avsregistry.Config{
 		RegistryCoordinatorAddress:    common.HexToAddress(c.AVSRegistryCoordinatorAddress),
@@ -137,14 +136,14 @@ func NewOperatorFromConfig[Input any](
 	}
 
 	operator := &Operator[Input]{
-		logger:              logger,
-		blsKeypair:          blsKeyPair,
-		aggregatorRpcClient: *aggregatorRpcClient,
-		operatorId:          operatorId,
-		newTaskCreatedLogs:  newTaskCreatedLogs,
-		taskProcessor:       taskProcessor,
-		taskManagerAbi:      taskManagerAbi,
-		calculationFn:       calculationFn,
+		logger:                logger,
+		blsKeypair:            blsKeyPair,
+		aggregatorRpcClient:   *aggregatorRpcClient,
+		operatorId:            operatorId,
+		newTaskCreatedLogs:    newTaskCreatedLogs,
+		taskProcessor:         taskProcessor,
+		taskManagerAbi:        taskManagerAbi,
+		responseCalculationFn: responseCalculationFn,
 	}
 
 	logger.Info("Operator info",
@@ -203,7 +202,7 @@ func (o *Operator[Input]) processNewTaskCreatedLog(
 		"QuorumThresholdPercentage", newTaskCreatedLog.Task.QuorumThresholdPercentage,
 	)
 
-	taskResponse, err := o.calculationFn(newTaskCreatedLog.Task, newTaskIndex)
+	taskResponse, err := o.responseCalculationFn(newTaskCreatedLog.Task, newTaskIndex)
 	if err != nil {
 		return nil, fmt.Errorf("error calculating task response: %w", err)
 	}

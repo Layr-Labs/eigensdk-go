@@ -128,8 +128,21 @@ func main() {
 		BlsPrivateKeyStorePath:        "tests/keys/test.bls.key.json",
 		AggregatorServerIpPortAddress: "localhost:8090",
 	}
+
+	// This function calculates the task response from a Task, in this case with the number to square
+	responseCalcFunction := func(task challenger.GenericInputTask[*big.Int], taskIndex uint32) (challenger.GenericInputTaskResponse[*big.Int], error) {
+		numberSquared := big.NewInt(0).Exp(task.InputValue, big.NewInt(2), nil)
+
+		taskResponse := challenger.GenericInputTaskResponse[*big.Int]{
+			ReferenceTaskIndex: taskIndex,
+			InputValue:         numberSquared,
+		}
+
+		return taskResponse, nil
+	}
+
 	operatorTaskProcessor := NewOperatorTaskProcessor(operatorConfig, logger)
-	operator, err := sdkoperator.NewOperatorFromConfig(operatorConfig, blockHash, operatorTaskProcessor, logger, taskManagerAbi)
+	operator, err := sdkoperator.NewOperatorFromConfig(operatorConfig, blockHash, operatorTaskProcessor, logger, taskManagerAbi, responseCalcFunction)
 	if err != nil {
 		logger.Errorf("Failed to create operator from config: %v", err)
 		return
