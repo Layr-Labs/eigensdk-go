@@ -46,7 +46,6 @@ type Aggregator[Input any, Output any] struct {
 
 	tasks         map[sdktypes.TaskIndex]challenger.GenericInputTask[Input]
 	tasksMu       sync.RWMutex
-	taskResponses map[uint32]challenger.TaskResponseData[Output]
 
 	taskManagerAbi *abi.ABI
 }
@@ -112,7 +111,6 @@ func NewAggregator[Input any, Output any](
 		taskProcessor:         taskProcessor,
 		newTaskCreatedLogs:    newTaskCreatedLogs,
 		tasks:                 make(map[sdktypes.TaskIndex]challenger.GenericInputTask[Input]),
-		taskResponses:         make(map[uint32]challenger.TaskResponseData[Output]),
 		taskManagerAbi:        c.TaskManagerAbi,
 	}, nil
 }
