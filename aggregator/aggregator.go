@@ -19,7 +19,6 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	sdkclients "github.com/Layr-Labs/eigensdk-go/chainio/clients"
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
 	avsregistryservice "github.com/Layr-Labs/eigensdk-go/services/avsregistry"
 	blsagg "github.com/Layr-Labs/eigensdk-go/services/bls_aggregation"
 	oprsinfoserv "github.com/Layr-Labs/eigensdk-go/services/operatorsinfo"
@@ -57,17 +56,6 @@ func NewAggregator[Input any, Output any](
 	c AggregatorConfig,
 	taskProcessor TaskProcessor[Input],
 ) (*Aggregator[Input, Output], error) {
-	avsConfig := avsregistry.Config{
-		RegistryCoordinatorAddress:    c.RegistryCoordinatorAddress,
-		OperatorStateRetrieverAddress: c.OperatorStateRetrieverAddress,
-		ServiceManagerAddress:         c.ServiceManagerAddress,
-	}
-	avsReader, err := avsregistry.NewReaderFromConfig(avsConfig, c.EthHttpClient, c.Logger)
-	if err != nil {
-		c.Logger.Error("Cannot create avsReader", "err", err)
-		return nil, err
-	}
-
 	chainioConfig := sdkclients.BuildAllConfig{
 		EthHttpUrl:                 c.EthHttpUrl,
 		EthWsUrl:                   c.EthWsUrl,
@@ -97,7 +85,7 @@ func NewAggregator[Input any, Output any](
 		return nil, errors.New("task response hash function not provided in aggregator config")
 	}
 
-	avsRegistryService := avsregistryservice.NewAvsRegistryServiceChainCaller(avsReader, operatorPubkeysService, c.Logger)
+	avsRegistryService := avsregistryservice.NewAvsRegistryServiceChainCaller(clients.AvsRegistryChainReader, operatorPubkeysService, c.Logger)
 	blsAggregationService := blsagg.NewBlsAggregatorService(avsRegistryService, c.TaskResponseHashFn, c.Logger)
 
 	client, err := ethclient.Dial(c.EthWsUrl)
