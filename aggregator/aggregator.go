@@ -56,8 +56,6 @@ type Aggregator[Input any, Output any] struct {
 func NewAggregator[Input any, Output any](
 	c AggregatorConfig,
 	taskProcessor TaskProcessor[Input],
-	eventHash common.Hash,
-	taskManagerAbi *abi.ABI,
 ) (*Aggregator[Input, Output], error) {
 	avsConfig := avsregistry.Config{
 		RegistryCoordinatorAddress:    c.RegistryCoordinatorAddress,
@@ -107,9 +105,10 @@ func NewAggregator[Input any, Output any](
 		c.Logger.Fatal("error connecting to web socket", "err", err)
 	}
 
+	newTaskCreatedEventHash := c.TaskManagerAbi.Events["NewTaskCreated"].ID
 	query := ethereum.FilterQuery{
 		Addresses: []common.Address{},
-		Topics:    [][]common.Hash{{eventHash}},
+		Topics:    [][]common.Hash{{newTaskCreatedEventHash}},
 	}
 
 	newTaskCreatedLogs := make(chan types.Log)
