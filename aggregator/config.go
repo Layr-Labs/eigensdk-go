@@ -12,6 +12,7 @@ import (
 type AggregatorConfig struct {
 	EthHttpUrl string
 	EthWsUrl   string
+	AggregatorServerIpPortAddr string
 
 	RegistryCoordinatorAddress    common.Address
 	OperatorStateRetrieverAddress common.Address
@@ -19,10 +20,7 @@ type AggregatorConfig struct {
 
 	EthHttpClient *ethclient.Client
 	Logger        logging.Logger
-
 	EcdsaPrivateKey *ecdsa.PrivateKey
-
-	AggregatorServerIpPortAddr string
 
 	TaskResponseHashFn sdktypes.TaskResponseHashFunction
 }
