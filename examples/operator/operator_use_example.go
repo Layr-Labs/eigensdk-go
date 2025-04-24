@@ -37,7 +37,7 @@ func (otp OperatorTaskProcessor) ProcessNewTaskCreatedLog(
 
 	taskResponse := challenger.GenericOutputTaskResponse[*big.Int]{
 		ReferenceTaskIndex: taskIndex,
-		OutputValue:         numberSquared,
+		OutputValue:        numberSquared,
 	}
 
 	return taskResponse, nil
