@@ -55,7 +55,7 @@ func main() {
 		TxMgr:                         txMgr,
 		EthHttpClient:                 ethHttpClient,
 	}
-	challengerLogicImpl, err := NewChallengerLogicImpl(&avsConfig)
+	challengeVerifierImpl, err := NewChallengeVerifierImpl(&avsConfig)
 	if err != nil {
 		logger.Errorf("Failed to create challenger logic from config: %v", err)
 		return
@@ -63,7 +63,7 @@ func main() {
 
 	challenger, err := challenger.NewChallenger(
 		cfg,
-		challengerLogicImpl,
+		challengeVerifierImpl,
 		newTaskEventHash,
 		taskRespondedEventHash,
 		taskManagerAbi,
@@ -83,13 +83,13 @@ func main() {
 
 // Challenger Logic
 
-type ChallengerLogicImpl struct {
+type ChallengeVerifierImpl struct {
 	logger    logging.Logger
 	ethClient *ethclient.Client
 	avsWriter *AvsWriter
 }
 
-var _ challenger.ChallengerLogic[*big.Int] = (*ChallengerLogicImpl)(nil)
+var _ challenger.ChallengeVerifier[*big.Int, *big.Int] = (*ChallengeVerifierImpl)(nil)
 
 type TaskResponseData struct {
 	TaskResponse              cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse
@@ -97,21 +97,21 @@ type TaskResponseData struct {
 	NonSigningOperatorPubKeys []cstaskmanager.BN254G1Point
 }
 
-func NewChallengerLogicImpl(c *AvsConfig) (*ChallengerLogicImpl, error) {
+func NewChallengeVerifierImpl(c *AvsConfig) (*ChallengeVerifierImpl, error) {
 	avsWriter, err := BuildAvsWriterFromConfig(c)
 	if err != nil {
 		c.Logger.Errorf("Cannot create avsWriter", "err", err)
 		return nil, err
 	}
 
-	return &ChallengerLogicImpl{
+	return &ChallengeVerifierImpl{
 		logger:    c.Logger,
 		ethClient: c.EthHttpClient,
 		avsWriter: avsWriter,
 	}, nil
 }
 
-func (c *ChallengerLogicImpl) VerifyChallenge(
+func (c *ChallengeVerifierImpl) VerifyChallenge(
 	taskIndex uint32,
 	task challenger.GenericInputTask[*big.Int],
 	responseData challenger.TaskResponseData[*big.Int],
@@ -125,7 +125,7 @@ func (c *ChallengerLogicImpl) VerifyChallenge(
 	}
 
 	numberToBeSquared := task.InputValue
-	answerInResponse := responseData.TaskResponse.InputValue
+	answerInResponse := responseData.TaskResponse.OutputValue
 	trueAnswer := numberToBeSquared.Exp(numberToBeSquared, big.NewInt(2), nil)
 
 	// checking if the answer in the response submitted by aggregator is correct
@@ -145,7 +145,7 @@ func (c *ChallengerLogicImpl) VerifyChallenge(
 
 		incredibleSquaringTaskResponse := cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse{
 			ReferenceTaskIndex: responseData.TaskResponse.ReferenceTaskIndex,
-			NumberSquared:      responseData.TaskResponse.InputValue,
+			NumberSquared:      responseData.TaskResponse.OutputValue,
 		}
 
 		incredibleSquaringTaskResponseMetadata := cstaskmanager.IIncredibleSquaringTaskManagerTaskResponseMetadata{
