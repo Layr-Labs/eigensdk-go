@@ -126,7 +126,7 @@ func NewAggregator[Input any, Output any](
 		newTaskCreatedLogs:    newTaskCreatedLogs,
 		tasks:                 make(map[sdktypes.TaskIndex]challenger.GenericInputTask[Input]),
 		taskResponses:         make(map[uint32]challenger.TaskResponseData[Output]),
-		taskManagerAbi:        taskManagerAbi,
+		taskManagerAbi:        c.TaskManagerAbi,
 	}, nil
 }
 

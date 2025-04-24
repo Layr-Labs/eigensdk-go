@@ -5,6 +5,7 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
@@ -23,4 +24,6 @@ type AggregatorConfig struct {
 	EcdsaPrivateKey *ecdsa.PrivateKey
 
 	TaskResponseHashFn sdktypes.TaskResponseHashFunction
+
+	TaskManagerAbi *abi.ABI
 }
