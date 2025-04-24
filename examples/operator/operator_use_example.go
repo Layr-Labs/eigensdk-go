@@ -26,27 +26,10 @@ func NewOperatorTaskProcessor(c sdkoperator.OperatorConfig, logger logging.Logge
 	}
 }
 
-// Takes a NewTaskCreatedLog struct as input and returns a TaskResponseHeader struct.
-// The TaskResponseHeader struct is the struct that is signed and sent to the contract as a task response.
-func (otp OperatorTaskProcessor) ProcessNewTaskCreatedLog(
-	task challenger.GenericInputTask[*big.Int],
-	taskIndex uint32,
-) (challenger.GenericInputTaskResponse[*big.Int], error) {
-
-	numberSquared := big.NewInt(0).Exp(task.InputValue, big.NewInt(2), nil)
-
-	taskResponse := challenger.GenericInputTaskResponse[*big.Int]{
-		ReferenceTaskIndex: taskIndex,
-		InputValue:         numberSquared,
-	}
-
-	return taskResponse, nil
-}
-
-func (otp OperatorTaskProcessor) DigestResponse(response *challenger.GenericInputTaskResponse[*big.Int]) [32]byte {
+func (otp OperatorTaskProcessor) DigestResponse(response *challenger.GenericOutputTaskResponse[*big.Int]) [32]byte {
 	incredibleSquaringTaskResponse := cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse{
 		ReferenceTaskIndex: response.ReferenceTaskIndex,
-		NumberSquared:      response.InputValue,
+		NumberSquared:      response.OutputValue,
 	}
 	taskResponseHash, err := getTaskResponseDigest(&incredibleSquaringTaskResponse)
 	if err != nil {
@@ -130,12 +113,12 @@ func main() {
 	}
 
 	// This function calculates the task response from a Task, in this case with the number to square
-	responseCalcFunction := func(task challenger.GenericInputTask[*big.Int], taskIndex uint32) (challenger.GenericInputTaskResponse[*big.Int], error) {
+	responseCalcFunction := func(task challenger.GenericInputTask[*big.Int], taskIndex uint32) (challenger.GenericOutputTaskResponse[*big.Int], error) {
 		numberSquared := big.NewInt(0).Exp(task.InputValue, big.NewInt(2), nil)
 
-		taskResponse := challenger.GenericInputTaskResponse[*big.Int]{
+		taskResponse := challenger.GenericOutputTaskResponse[*big.Int]{
 			ReferenceTaskIndex: taskIndex,
-			InputValue:         numberSquared,
+			OutputValue:        numberSquared,
 		}
 
 		return taskResponse, nil

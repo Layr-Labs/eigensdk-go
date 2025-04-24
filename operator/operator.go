@@ -39,32 +39,32 @@ type OperatorConfig struct {
 	RegisterOnStartup bool
 }
 
-type OperatorTaskProcessor[Input any] interface {
-	DigestResponse(response *challenger.GenericInputTaskResponse[Input]) [32]byte
+type OperatorTaskProcessor[Output any] interface {
+	DigestResponse(response *challenger.GenericOutputTaskResponse[Output]) [32]byte
 }
 
-type Operator[Input any] struct {
+type Operator[Input any, Output any] struct {
 	logger                logging.Logger
 	operatorId            sdktypes.OperatorId
-	aggregatorRpcClient   AggregatorRpcClienter[Input]
+	aggregatorRpcClient   AggregatorRpcClienter[Output]
 	EthWsUrl              string
 	blsKeypair            *bls.KeyPair
-	taskProcessor         OperatorTaskProcessor[Input]
+	taskProcessor         OperatorTaskProcessor[Output]
 	newTaskCreatedLogs    chan types.Log
 	taskManagerAbi        *abi.ABI
-	responseCalculationFn ResponseCalculationFunction[Input]
+	responseCalculationFn ResponseCalculationFunction[Input, Output]
 }
 
-type ResponseCalculationFunction[Input any] func(task challenger.GenericInputTask[Input], taskIndex uint32) (challenger.GenericInputTaskResponse[Input], error)
+type ResponseCalculationFunction[Input any, Output any] func(task challenger.GenericInputTask[Input], taskIndex uint32) (challenger.GenericOutputTaskResponse[Output], error)
 
-func NewOperatorFromConfig[Input any](
+func NewOperatorFromConfig[Input any, Output any](
 	c OperatorConfig,
 	eventHash common.Hash,
-	taskProcessor OperatorTaskProcessor[Input],
+	taskProcessor OperatorTaskProcessor[Output],
 	logger logging.Logger,
 	taskManagerAbi *abi.ABI,
-	responseCalculationFn ResponseCalculationFunction[Input],
-) (*Operator[Input], error) {
+	responseCalculationFn ResponseCalculationFunction[Input, Output],
+) (*Operator[Input, Output], error) {
 	avs_config := avsregistry.Config{
 		RegistryCoordinatorAddress:    common.HexToAddress(c.AVSRegistryCoordinatorAddress),
 		OperatorStateRetrieverAddress: common.HexToAddress(c.OperatorStateRetrieverAddress),
@@ -103,7 +103,7 @@ func NewOperatorFromConfig[Input any](
 		return nil, err
 	}
 
-	aggregatorRpcClient, err := NewAggregatorRpcClient[Input](c.AggregatorServerIpPortAddress, logger)
+	aggregatorRpcClient, err := NewAggregatorRpcClient[Output](c.AggregatorServerIpPortAddress, logger)
 	if err != nil {
 		logger.Error("Cannot create AggregatorRpcClient. Is aggregator running?", "err", err)
 		return nil, err
@@ -135,7 +135,7 @@ func NewOperatorFromConfig[Input any](
 		logger.Fatal("error subscribing to newTaskCreated events", "err", err)
 	}
 
-	operator := &Operator[Input]{
+	operator := &Operator[Input, Output]{
 		logger:                logger,
 		blsKeypair:            blsKeyPair,
 		aggregatorRpcClient:   *aggregatorRpcClient,
@@ -156,7 +156,7 @@ func NewOperatorFromConfig[Input any](
 	return operator, nil
 }
 
-func (o *Operator[Input]) Start(ctx context.Context) error {
+func (o *Operator[Input, Output]) Start(ctx context.Context) error {
 	o.logger.Info("Starting operator.")
 
 	for {
@@ -181,9 +181,9 @@ func (o *Operator[Input]) Start(ctx context.Context) error {
 
 // Takes a NewTaskCreatedLog struct as input and returns a TaskResponseHeader struct.
 // The TaskResponseHeader struct is the struct that is signed and sent to the contract as a task response.
-func (o *Operator[Input]) processNewTaskCreatedLog(
+func (o *Operator[Input, Output]) processNewTaskCreatedLog(
 	log types.Log,
-) (*challenger.GenericInputTaskResponse[Input], error) {
+) (*challenger.GenericOutputTaskResponse[Output], error) {
 	var newTaskCreatedLog challenger.NewTaskCreatedEvent[Input]
 
 	err := o.taskManagerAbi.UnpackIntoInterface(&newTaskCreatedLog, "NewTaskCreated", log.Data)
@@ -210,13 +210,13 @@ func (o *Operator[Input]) processNewTaskCreatedLog(
 	return &taskResponse, nil
 }
 
-func (o *Operator[Input]) SignTaskResponse(
-	taskResponse *challenger.GenericInputTaskResponse[Input],
-) (*sdkaggregator.SignedTaskResponse[Input], error) {
+func (o *Operator[Input, Output]) SignTaskResponse(
+	taskResponse *challenger.GenericOutputTaskResponse[Output],
+) (*sdkaggregator.SignedTaskResponse[Output], error) {
 	taskResponseHash := o.taskProcessor.DigestResponse(taskResponse)
 
 	blsSignature := o.blsKeypair.SignMessage(taskResponseHash)
-	signedTaskResponse := &sdkaggregator.SignedTaskResponse[Input]{
+	signedTaskResponse := &sdkaggregator.SignedTaskResponse[Output]{
 		TaskResponse: *taskResponse,
 		BlsSignature: *blsSignature,
 		OperatorId:   o.operatorId,

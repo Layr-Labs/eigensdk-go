@@ -12,22 +12,22 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/logging"
 )
 
-type AggregatorRpcClienter[Input any] interface {
-	SendSignedTaskResponseToAggregator(signedTaskResponse *sdkaggregator.SignedTaskResponse[Input])
+type AggregatorRpcClienter[Output any] interface {
+	SendSignedTaskResponseToAggregator(signedTaskResponse *sdkaggregator.SignedTaskResponse[Output])
 }
 
-type AggregatorRpcClient[Input any] struct {
+type AggregatorRpcClient[Output any] struct {
 	rpcClient            *rpc.Client
 	logger               logging.Logger
 	aggregatorIpPortAddr string
 }
 
-func NewAggregatorRpcClient[Input any](
+func NewAggregatorRpcClient[Output any](
 	aggregatorIpPortAddr string,
 	logger logging.Logger,
 	// metrics metrics.Metrics,
-) (*AggregatorRpcClient[Input], error) {
-	return &AggregatorRpcClient[Input]{
+) (*AggregatorRpcClient[Output], error) {
+	return &AggregatorRpcClient[Output]{
 		// set to nil so that we can create an rpc client even if the aggregator is not running
 		rpcClient:            nil,
 		logger:               logger,
@@ -35,14 +35,14 @@ func NewAggregatorRpcClient[Input any](
 	}, nil
 }
 
-func (c *AggregatorRpcClient[Input]) dialAggregatorRpcClient() error {
+func (c *AggregatorRpcClient[Output]) dialAggregatorRpcClient() error {
 	client, err := rpc.DialHTTP("tcp", c.aggregatorIpPortAddr)
 	if err != nil {
 		return err
 	}
 	c.rpcClient = client
 
-	var taskResponseType challenger.GenericInputTaskResponse[Input]
+	var taskResponseType challenger.GenericOutputTaskResponse[Output]
 	gob.Register(&taskResponseType)
 
 	return nil
@@ -53,8 +53,8 @@ func (c *AggregatorRpcClient[Input]) dialAggregatorRpcClient() error {
 // this is because sending the signed task response to the aggregator is time sensitive,
 // so there is no point in retrying if it fails for a few times.
 // Currently hardcoded to retry sending the signed task response 5 times, waiting 2 seconds in between each attempt.
-func (c AggregatorRpcClient[Input]) SendSignedTaskResponseToAggregator(
-	signedTaskResponse *sdkaggregator.SignedTaskResponse[Input],
+func (c AggregatorRpcClient[Output]) SendSignedTaskResponseToAggregator(
+	signedTaskResponse *sdkaggregator.SignedTaskResponse[Output],
 ) {
 	if c.rpcClient == nil {
 		c.logger.Info("rpc client is nil. Dialing aggregator rpc client")
