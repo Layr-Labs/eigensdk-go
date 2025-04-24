@@ -52,7 +52,7 @@ func main() {
 		return taskResponse, nil
 	}
 
-	abiEncondingFn := func(taskResponse challenger.GenericOutputTaskResponse[*big.Int]) ([]byte, error)  {
+	abiEncondingFn := func(taskResponse challenger.GenericOutputTaskResponse[*big.Int]) ([]byte, error) {
 		// The order here has to match the field ordering of cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse
 		taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
 			{
@@ -75,14 +75,14 @@ func main() {
 
 		incredibleTaskResponse := cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse{
 			ReferenceTaskIndex: taskResponse.ReferenceTaskIndex,
-			NumberSquared: taskResponse.OutputValue,
+			NumberSquared:      taskResponse.OutputValue,
 		}
 
 		bytes, err := arguments.Pack(incredibleTaskResponse)
 		if err != nil {
 			return nil, err
 		}
-	
+
 		return bytes, nil
 	}
 
