@@ -11,16 +11,16 @@ import (
 )
 
 type AggregatorConfig struct {
-	EthHttpUrl string
-	EthWsUrl   string
+	EthHttpUrl                 string
+	EthWsUrl                   string
 	AggregatorServerIpPortAddr string
 
 	RegistryCoordinatorAddress    common.Address
 	OperatorStateRetrieverAddress common.Address
 	ServiceManagerAddress         common.Address
 
-	EthHttpClient *ethclient.Client
-	Logger        logging.Logger
+	EthHttpClient   *ethclient.Client
+	Logger          logging.Logger
 	EcdsaPrivateKey *ecdsa.PrivateKey
 
 	TaskResponseHashFn sdktypes.TaskResponseHashFunction

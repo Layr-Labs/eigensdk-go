@@ -44,8 +44,8 @@ type Aggregator[Input any, Output any] struct {
 	taskProcessor         TaskProcessor[Input]
 	newTaskCreatedLogs    chan types.Log
 
-	tasks         map[sdktypes.TaskIndex]challenger.GenericInputTask[Input]
-	tasksMu       sync.RWMutex
+	tasks   map[sdktypes.TaskIndex]challenger.GenericInputTask[Input]
+	tasksMu sync.RWMutex
 
 	taskManagerAbi *abi.ABI
 }
