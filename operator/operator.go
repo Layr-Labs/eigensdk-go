@@ -57,7 +57,6 @@ type AbiEncodeFunction[Output any] func(task sdktypes.GenericOutputTaskResponse[
 
 func NewOperatorFromConfig[Input any, Output any](
 	c OperatorConfig,
-	eventHash common.Hash,
 	logger logging.Logger,
 	taskManagerAbi *abi.ABI,
 	responseCalculationFn ResponseCalculationFunction[Input, Output],
@@ -122,6 +121,7 @@ func NewOperatorFromConfig[Input any, Output any](
 		logger.Fatal("error connecting to web socket", "err", err)
 	}
 
+	eventHash := taskManagerAbi.Events["NewTaskCreated"].ID
 	query := ethereum.FilterQuery{
 		Addresses: []common.Address{},
 		Topics:    [][]common.Hash{{eventHash}},
