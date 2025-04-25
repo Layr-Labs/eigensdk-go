@@ -9,6 +9,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/challenger"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
+	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -30,18 +31,17 @@ func main() {
 		logger.Fatalf(err.Error())
 	}
 
-	newTaskEventHash := taskManagerAbi.Events["NewTaskCreated"].ID
-	taskRespondedEventHash := taskManagerAbi.Events["TaskResponded"].ID
-
-	cfg := challenger.ChallengerConfig{
-		EthWsUrl: "ws://localhost:8545",
-		Logger:   logger,
-	}
-
 	ethHttpUrl := "http://localhost:8545"
 	ethHttpClient, err := ethclient.Dial(ethHttpUrl)
 	if err != nil {
 		return
+	}
+
+	cfg := challenger.ChallengerConfig{
+		EthWsUrl:       "ws://localhost:8545",
+		Logger:         logger,
+		TaskManagerAbi: taskManagerAbi,
+		EthClient:      ethHttpClient,
 	}
 
 	txMgr, err := taskgeneratorexample.GetTxManager(logger, ethHttpClient, testutils.ANVIL_FIRST_PRIVATE_KEY)
@@ -64,10 +64,6 @@ func main() {
 	challenger, err := challenger.NewChallenger(
 		cfg,
 		challengeVerifierImpl,
-		newTaskEventHash,
-		taskRespondedEventHash,
-		taskManagerAbi,
-		ethHttpClient,
 	)
 	if err != nil {
 		logger.Errorf("Failed to create challenger from config: %v", err)
@@ -113,8 +109,8 @@ func NewChallengeVerifierImpl(c *AvsConfig) (*ChallengeVerifierImpl, error) {
 
 func (c *ChallengeVerifierImpl) VerifyChallenge(
 	taskIndex uint32,
-	task challenger.GenericInputTask[*big.Int],
-	responseData challenger.TaskResponseData[*big.Int],
+	task sdktypes.GenericInputTask[*big.Int],
+	responseData sdktypes.TaskResponseData[*big.Int],
 ) error {
 	nonSignerPubkeys := []cstaskmanager.BN254G1Point{}
 	for i, pubkey := range responseData.NonSigningOperatorPubKeys {
