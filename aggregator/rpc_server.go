@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/rpc"
 
-	"github.com/Layr-Labs/eigensdk-go/challenger"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	blsagg "github.com/Layr-Labs/eigensdk-go/services/bls_aggregation"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
@@ -19,7 +18,7 @@ func (agg *Aggregator[Input, Output]) startServer(ctx context.Context) {
 	}
 	rpc.HandleHTTP()
 
-	var taskResponseType challenger.GenericOutputTaskResponse[Output]
+	var taskResponseType sdktypes.GenericOutputTaskResponse[Output]
 	gob.Register(&taskResponseType)
 	err = http.ListenAndServe(agg.serverIpPortAddr, nil)
 	if err != nil {
@@ -28,7 +27,7 @@ func (agg *Aggregator[Input, Output]) startServer(ctx context.Context) {
 }
 
 type SignedTaskResponse[Output any] struct {
-	TaskResponse challenger.GenericOutputTaskResponse[Output]
+	TaskResponse sdktypes.GenericOutputTaskResponse[Output]
 	BlsSignature bls.Signature
 	OperatorId   sdktypes.OperatorId
 }

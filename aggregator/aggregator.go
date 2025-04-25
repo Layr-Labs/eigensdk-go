@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Layr-Labs/eigensdk-go/challenger"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/Layr-Labs/eigensdk-go/utils"
@@ -32,7 +31,7 @@ const (
 )
 
 type TaskProcessor[Input any] interface {
-	ProcessAggregatedResponse(ctx context.Context, response blsagg.BlsAggregationServiceResponse, task challenger.GenericInputTask[Input]) error
+	ProcessAggregatedResponse(ctx context.Context, response blsagg.BlsAggregationServiceResponse, task sdktypes.GenericInputTask[Input]) error
 }
 
 type Aggregator[Input any, Output any] struct {
@@ -44,7 +43,7 @@ type Aggregator[Input any, Output any] struct {
 	taskProcessor         TaskProcessor[Input]
 	newTaskCreatedLogs    chan types.Log
 
-	tasks   map[sdktypes.TaskIndex]challenger.GenericInputTask[Input]
+	tasks   map[sdktypes.TaskIndex]sdktypes.GenericInputTask[Input]
 	tasksMu sync.RWMutex
 
 	taskManagerAbi *abi.ABI
@@ -110,7 +109,7 @@ func NewAggregator[Input any, Output any](
 		blsAggregationService: blsAggregationService,
 		taskProcessor:         taskProcessor,
 		newTaskCreatedLogs:    newTaskCreatedLogs,
-		tasks:                 make(map[sdktypes.TaskIndex]challenger.GenericInputTask[Input]),
+		tasks:                 make(map[sdktypes.TaskIndex]sdktypes.GenericInputTask[Input]),
 		taskManagerAbi:        c.TaskManagerAbi,
 	}, nil
 }
@@ -143,7 +142,7 @@ func (agg *Aggregator[Input, Output]) Start(ctx context.Context) error {
 }
 
 func (agg *Aggregator[Input, Output]) processNewTask(ctx context.Context, log types.Log) (blsagg.TaskMetadata, error) {
-	var newTaskCreatedLog challenger.NewTaskCreatedEvent[Input]
+	var newTaskCreatedLog sdktypes.NewTaskCreatedEvent[Input]
 
 	err := agg.taskManagerAbi.UnpackIntoInterface(&newTaskCreatedLog, "NewTaskCreated", log.Data)
 	if err != nil {
