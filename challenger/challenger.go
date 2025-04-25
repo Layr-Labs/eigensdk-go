@@ -33,7 +33,6 @@ type Challenger[Input any, Output any] struct {
 
 	taskManagerAbi *abi.ABI
 	tasks          map[uint32]sdktypes.GenericInputTask[Input]
-	taskResponses  map[uint32]sdktypes.TaskResponseData[Output]
 
 	ethClient *ethclient.Client
 }
@@ -75,7 +74,6 @@ func NewChallenger[Input any, Output any](
 		taskResponseChan:   taskRespondedLogs,
 		taskManagerAbi:     c.TaskManagerAbi,
 		tasks:              make(map[uint32]sdktypes.GenericInputTask[Input]),
-		taskResponses:      make(map[uint32]sdktypes.TaskResponseData[Output]),
 		ethClient:          c.EthClient,
 	}, nil
 }
@@ -135,8 +133,6 @@ func (c *Challenger[Input, Output]) processTaskResponseLog(
 		TaskResponseMetadata:      taskRespondedLog.GetTaskResponseMetadata(),
 		NonSigningOperatorPubKeys: nonSigningOperatorPubKeys,
 	}
-
-	c.taskResponses[taskIndex] = taskResponseData
 
 	if task, found := c.tasks[taskIndex]; found {
 		err = c.challengeVerifier.VerifyChallenge(taskIndex, task, taskResponseData)
