@@ -18,13 +18,6 @@ type ChallengeVerifier[Input any, Output any] interface {
 	VerifyChallenge(uint32, sdktypes.GenericInputTask[Input], sdktypes.TaskResponseData[Output]) error
 }
 
-type ChallengerConfig struct {
-	EthWsUrl       string
-	Logger         logging.Logger
-	TaskManagerAbi *abi.ABI
-	EthClient      *ethclient.Client
-}
-
 type Challenger[Input any, Output any] struct {
 	logger             logging.Logger
 	challengeVerifier  ChallengeVerifier[Input, Output]
