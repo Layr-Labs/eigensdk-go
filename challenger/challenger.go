@@ -117,13 +117,13 @@ func (c *Challenger[Input, Output]) processTaskResponseLog(
 		return fmt.Errorf("error unpacking the log: %w", err)
 	}
 
-	taskIndex := taskRespondedLog.TaskIndex()
+	taskIndex := taskRespondedLog.TaskResponse.ReferenceTaskIndex
 
 	// get the inputs necessary for raising a challenge
 	nonSigningOperatorPubKeys := c.getNonSigningOperatorPubKeys(log.TxHash)
 	taskResponseData := sdktypes.TaskResponseData[Output]{
-		TaskResponse:              taskRespondedLog.GetTaskResponse(),
-		TaskResponseMetadata:      taskRespondedLog.GetTaskResponseMetadata(),
+		TaskResponse:              taskRespondedLog.TaskResponse,
+		TaskResponseMetadata:      taskRespondedLog.TaskResponseMetadata,
 		NonSigningOperatorPubKeys: nonSigningOperatorPubKeys,
 	}
 
