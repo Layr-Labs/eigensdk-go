@@ -70,8 +70,10 @@ func (taskRespEvent TaskRespondedEvent[Output]) GetTaskResponseMetadata() Generi
 }
 
 type ChallengerConfig struct {
-	EthWsUrl string
-	Logger   logging.Logger
+	EthWsUrl       string
+	Logger         logging.Logger
+	TaskManagerAbi *abi.ABI
+	EthClient      *ethclient.Client
 }
 
 type Challenger[Input any, Output any] struct {
@@ -90,16 +92,13 @@ type Challenger[Input any, Output any] struct {
 func NewChallenger[Input any, Output any](
 	c ChallengerConfig,
 	challengeVerifier ChallengeVerifier[Input, Output],
-	newTaskEventHash common.Hash,
-	taskProcessedEventHash common.Hash,
-	taskManagerAbi *abi.ABI,
-	ethClient *ethclient.Client,
 ) (*Challenger[Input, Output], error) {
 	client, err := ethclient.Dial(c.EthWsUrl)
 	if err != nil {
 		c.Logger.Fatalf("error connecting to web socket: %v", err)
 	}
 
+	newTaskEventHash := c.TaskManagerAbi.Events["NewTaskCreated"].ID
 	query := ethereum.FilterQuery{
 		Addresses: []common.Address{},
 		Topics:    [][]common.Hash{{newTaskEventHash}},
@@ -111,7 +110,8 @@ func NewChallenger[Input any, Output any](
 		c.Logger.Fatalf("error subscribing to newTaskCreated events: %v", err)
 	}
 
-	query.Topics[0][0] = taskProcessedEventHash
+	taskRespondedEventHash := c.TaskManagerAbi.Events["TaskResponded"].ID
+	query.Topics[0][0] = taskRespondedEventHash
 
 	taskRespondedLogs := make(chan types.Log)
 	_, err = client.SubscribeFilterLogs(context.Background(), query, taskRespondedLogs)
@@ -124,10 +124,10 @@ func NewChallenger[Input any, Output any](
 		challengeVerifier:  challengeVerifier,
 		newTaskCreatedChan: newTaskCreatedLogs,
 		taskResponseChan:   taskRespondedLogs,
-		taskManagerAbi:     taskManagerAbi,
+		taskManagerAbi:     c.TaskManagerAbi,
 		tasks:              make(map[uint32]GenericInputTask[Input]),
 		taskResponses:      make(map[uint32]TaskResponseData[Output]),
-		ethClient:          ethClient,
+		ethClient:          c.EthClient,
 	}, nil
 }
 
