@@ -149,7 +149,7 @@ func (o *Operator[Input, Output]) Start(ctx context.Context) error {
 				o.logger.Error("Error processing new task created log", "err", err)
 				return err
 			}
-			signedTaskResponse, err := o.SignTaskResponse(taskResponse)
+			signedTaskResponse, err := o.signTaskResponse(taskResponse)
 			if err != nil {
 				continue
 			}
@@ -189,7 +189,7 @@ func (o *Operator[Input, Output]) processNewTaskCreatedLog(
 	return &taskResponse, nil
 }
 
-func (o *Operator[Input, Output]) SignTaskResponse(
+func (o *Operator[Input, Output]) signTaskResponse(
 	taskResponse *sdktypes.GenericOutputTaskResponse[Output],
 ) (*sdkaggregator.SignedTaskResponse[Output], error) {
 	encodeTaskResponseByte, err := o.AbiEncodingFn(*taskResponse)
