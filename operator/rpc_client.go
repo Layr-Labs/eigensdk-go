@@ -1,13 +1,11 @@
 package operator
 
 import (
-	"encoding/gob"
 	"fmt"
 	"net/rpc"
 	"time"
 
 	sdkaggregator "github.com/Layr-Labs/eigensdk-go/aggregator"
-	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
 )
@@ -41,9 +39,6 @@ func (c *AggregatorRpcClient[Output]) dialAggregatorRpcClient() error {
 		return err
 	}
 	c.rpcClient = client
-
-	var taskResponseType sdktypes.GenericOutputTaskResponse[Output]
-	gob.Register(&taskResponseType)
 
 	return nil
 }
