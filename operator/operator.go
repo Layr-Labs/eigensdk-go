@@ -166,7 +166,7 @@ func (o *Operator[Input, Output]) Start(ctx context.Context) error {
 		case log := <-o.newTaskCreatedLogs:
 			taskResponse, err := o.processNewTaskCreatedLog(log)
 			if err != nil {
-				o.logger.Error("Error checking if operator is registered", "err", err)
+				o.logger.Error("Error processing new task created log", "err", err)
 				return err
 			}
 			signedTaskResponse, err := o.SignTaskResponse(taskResponse)
