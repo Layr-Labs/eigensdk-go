@@ -37,6 +37,9 @@ type OperatorConfig struct {
 	AggregatorServerIpPortAddress string
 
 	RegisterOnStartup bool
+
+	Logger         logging.Logger
+	TaskManagerAbi *abi.ABI
 }
 
 type Operator[Input any, Output any] struct {
@@ -57,8 +60,6 @@ type AbiEncodeFunction[Output any] func(task sdktypes.GenericOutputTaskResponse[
 
 func NewOperatorFromConfig[Input any, Output any](
 	c OperatorConfig,
-	logger logging.Logger,
-	taskManagerAbi *abi.ABI,
 	responseCalculationFn ResponseCalculationFunction[Input, Output],
 	abiEncodingFn AbiEncodeFunction[Output],
 ) (*Operator[Input, Output], error) {
@@ -73,16 +74,16 @@ func NewOperatorFromConfig[Input any, Output any](
 		return nil, utils.WrapError("Failed to create Eth Http client", err)
 	}
 
-	avsReader, err := avsregistry.NewReaderFromConfig(avs_config, ethHttpClient, logger)
+	avsReader, err := avsregistry.NewReaderFromConfig(avs_config, ethHttpClient, c.Logger)
 	if err != nil {
-		logger.Error("Cannot create AvsReader", "err", err)
+		c.Logger.Error("Cannot create AvsReader", "err", err)
 		return nil, err
 	}
 
 	// Check if operator was registered, return error if not
 	operatorIsRegistered, err := avsReader.IsOperatorRegistered(&bind.CallOpts{}, common.HexToAddress(c.OperatorAddress))
 	if err != nil {
-		logger.Error("Error checking if operator is registered", "err", err)
+		c.Logger.Error("Error checking if operator is registered", "err", err)
 		return nil, err
 	}
 	if !operatorIsRegistered {
@@ -96,32 +97,32 @@ func NewOperatorFromConfig[Input any, Output any](
 
 	operatorId, err := avsReader.GetOperatorId(&bind.CallOpts{}, common.HexToAddress(c.OperatorAddress))
 	if err != nil {
-		logger.Error("Cannot get operator id", "err", err)
+		c.Logger.Error("Cannot get operator id", "err", err)
 		return nil, err
 	}
 
-	aggregatorRpcClient, err := NewAggregatorRpcClient[Output](c.AggregatorServerIpPortAddress, logger)
+	aggregatorRpcClient, err := NewAggregatorRpcClient[Output](c.AggregatorServerIpPortAddress, c.Logger)
 	if err != nil {
-		logger.Error("Cannot create AggregatorRpcClient. Is aggregator running?", "err", err)
+		c.Logger.Error("Cannot create AggregatorRpcClient. Is aggregator running?", "err", err)
 		return nil, err
 	}
 
 	blsKeyPassword, ok := os.LookupEnv("OPERATOR_BLS_KEY_PASSWORD")
 	if !ok {
-		logger.Warnf("OPERATOR_BLS_KEY_PASSWORD env var not set. using empty string")
+		c.Logger.Warnf("OPERATOR_BLS_KEY_PASSWORD env var not set. using empty string")
 	}
 	blsKeyPair, err := bls.ReadPrivateKeyFromFile(c.BlsPrivateKeyStorePath, blsKeyPassword)
 	if err != nil {
-		logger.Errorf("Cannot parse bls private key", "err", err)
+		c.Logger.Errorf("Cannot parse bls private key", "err", err)
 		return nil, err
 	}
 
 	wsClient, err := ethclient.Dial(c.EthWsUrl)
 	if err != nil {
-		logger.Fatal("error connecting to web socket", "err", err)
+		c.Logger.Fatal("error connecting to web socket", "err", err)
 	}
 
-	eventHash := taskManagerAbi.Events["NewTaskCreated"].ID
+	eventHash := c.TaskManagerAbi.Events["NewTaskCreated"].ID
 	query := ethereum.FilterQuery{
 		Addresses: []common.Address{},
 		Topics:    [][]common.Hash{{eventHash}},
@@ -130,21 +131,21 @@ func NewOperatorFromConfig[Input any, Output any](
 	newTaskCreatedLogs := make(chan types.Log)
 	_, err = wsClient.SubscribeFilterLogs(context.Background(), query, newTaskCreatedLogs)
 	if err != nil {
-		logger.Fatal("error subscribing to newTaskCreated events", "err", err)
+		c.Logger.Fatal("error subscribing to newTaskCreated events", "err", err)
 	}
 
 	operator := &Operator[Input, Output]{
-		logger:                logger,
+		logger:                c.Logger,
 		blsKeypair:            blsKeyPair,
 		aggregatorRpcClient:   *aggregatorRpcClient,
 		operatorId:            operatorId,
 		newTaskCreatedLogs:    newTaskCreatedLogs,
-		taskManagerAbi:        taskManagerAbi,
+		taskManagerAbi:        c.TaskManagerAbi,
 		responseCalculationFn: responseCalculationFn,
 		AbiEncodingFn:         abiEncodingFn,
 	}
 
-	logger.Info("Operator info",
+	c.Logger.Info("Operator info",
 		"operatorId", operatorId,
 		"operatorAddr", c.OperatorAddress,
 		"operatorG1Pubkey", operator.blsKeypair.GetPubKeyG1(),
