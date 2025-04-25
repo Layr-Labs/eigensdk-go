@@ -22,26 +22,6 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
-type OperatorConfig struct {
-	OperatorAddress string
-
-	// Avs Reader addresses
-	OperatorStateRetrieverAddress string
-	ServiceManagerAddress         string
-	AVSRegistryCoordinatorAddress string
-
-	EthRpcUrl string
-	EthWsUrl  string
-
-	BlsPrivateKeyStorePath        string
-	AggregatorServerIpPortAddress string
-
-	RegisterOnStartup bool
-
-	Logger         logging.Logger
-	TaskManagerAbi *abi.ABI
-}
-
 type Operator[Input any, Output any] struct {
 	logger                logging.Logger
 	operatorId            sdktypes.OperatorId
