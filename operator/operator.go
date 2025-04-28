@@ -151,6 +151,7 @@ func (o *Operator[Input, Output]) Start(ctx context.Context) error {
 			}
 			signedTaskResponse, err := o.signTaskResponse(taskResponse)
 			if err != nil {
+				o.logger.Info("Error signing task response", "err", err)
 				continue
 			}
 			go o.aggregatorRpcClient.SendSignedTaskResponseToAggregator(signedTaskResponse)
