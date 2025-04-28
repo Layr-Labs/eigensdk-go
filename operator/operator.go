@@ -16,7 +16,6 @@ import (
 
 	sdkaggregator "github.com/Layr-Labs/eigensdk-go/aggregator"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
-	"github.com/Layr-Labs/eigensdk-go/challenger"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
@@ -52,9 +51,9 @@ type Operator[Input any, Output any] struct {
 	AbiEncodingFn         AbiEncodeFunction[Output]
 }
 
-type ResponseCalculationFunction[Input any, Output any] func(task challenger.GenericInputTask[Input], taskIndex uint32) (challenger.GenericOutputTaskResponse[Output], error)
+type ResponseCalculationFunction[Input any, Output any] func(task sdktypes.GenericInputTask[Input], taskIndex uint32) (sdktypes.GenericOutputTaskResponse[Output], error)
 
-type AbiEncodeFunction[Output any] func(task challenger.GenericOutputTaskResponse[Output]) ([]byte, error)
+type AbiEncodeFunction[Output any] func(task sdktypes.GenericOutputTaskResponse[Output]) ([]byte, error)
 
 func NewOperatorFromConfig[Input any, Output any](
 	c OperatorConfig,
@@ -182,8 +181,8 @@ func (o *Operator[Input, Output]) Start(ctx context.Context) error {
 // The TaskResponseHeader struct is the struct that is signed and sent to the contract as a task response.
 func (o *Operator[Input, Output]) processNewTaskCreatedLog(
 	log types.Log,
-) (*challenger.GenericOutputTaskResponse[Output], error) {
-	var newTaskCreatedLog challenger.NewTaskCreatedEvent[Input]
+) (*sdktypes.GenericOutputTaskResponse[Output], error) {
+	var newTaskCreatedLog sdktypes.NewTaskCreatedEvent[Input]
 
 	err := o.taskManagerAbi.UnpackIntoInterface(&newTaskCreatedLog, "NewTaskCreated", log.Data)
 	if err != nil {
@@ -210,7 +209,7 @@ func (o *Operator[Input, Output]) processNewTaskCreatedLog(
 }
 
 func (o *Operator[Input, Output]) SignTaskResponse(
-	taskResponse *challenger.GenericOutputTaskResponse[Output],
+	taskResponse *sdktypes.GenericOutputTaskResponse[Output],
 ) (*sdkaggregator.SignedTaskResponse[Output], error) {
 	encodeTaskResponseByte, err := o.AbiEncodingFn(*taskResponse)
 	if err != nil {

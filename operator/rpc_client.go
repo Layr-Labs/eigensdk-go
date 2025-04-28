@@ -7,7 +7,7 @@ import (
 	"time"
 
 	sdkaggregator "github.com/Layr-Labs/eigensdk-go/aggregator"
-	"github.com/Layr-Labs/eigensdk-go/challenger"
+	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
 )
@@ -41,7 +41,7 @@ func (c *AggregatorRpcClient[Output]) dialAggregatorRpcClient() error {
 	}
 	c.rpcClient = client
 
-	var taskResponseType challenger.GenericOutputTaskResponse[Output]
+	var taskResponseType sdktypes.GenericOutputTaskResponse[Output]
 	gob.Register(&taskResponseType)
 
 	return nil

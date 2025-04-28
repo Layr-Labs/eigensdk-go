@@ -4,9 +4,9 @@ import (
 	"context"
 	"math/big"
 
-	"github.com/Layr-Labs/eigensdk-go/challenger"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	sdkoperator "github.com/Layr-Labs/eigensdk-go/operator"
+	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 
 	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/bindings/taskManager"
@@ -41,10 +41,10 @@ func main() {
 	}
 
 	// This function calculates the task response from a Task, in this case with the number to square
-	responseCalcFunction := func(task challenger.GenericInputTask[*big.Int], taskIndex uint32) (challenger.GenericOutputTaskResponse[*big.Int], error) {
+	responseCalcFunction := func(task sdktypes.GenericInputTask[*big.Int], taskIndex uint32) (sdktypes.GenericOutputTaskResponse[*big.Int], error) {
 		numberSquared := big.NewInt(0).Exp(task.InputValue, big.NewInt(2), nil)
 
-		taskResponse := challenger.GenericOutputTaskResponse[*big.Int]{
+		taskResponse := sdktypes.GenericOutputTaskResponse[*big.Int]{
 			ReferenceTaskIndex: taskIndex,
 			OutputValue:        numberSquared,
 		}
@@ -52,7 +52,7 @@ func main() {
 		return taskResponse, nil
 	}
 
-	abiEncondingFn := func(taskResponse challenger.GenericOutputTaskResponse[*big.Int]) ([]byte, error) {
+	abiEncondingFn := func(taskResponse sdktypes.GenericOutputTaskResponse[*big.Int]) ([]byte, error) {
 		// The order here has to match the field ordering of cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse
 		taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
 			{
