@@ -31,7 +31,6 @@ type Operator[Input any, Output any] struct {
 	newTaskCreatedLogs    chan types.Log
 	taskManagerAbi        *abi.ABI
 	responseCalculationFn ResponseCalculationFunction[Input, Output]
-	AbiEncodingFn         AbiEncodeFunction[Output]
 }
 
 type ResponseCalculationFunction[Input any, Output any] func(task sdktypes.GenericInputTask[Input], taskIndex uint32) (sdktypes.GenericOutputTaskResponse[Output], error)
@@ -41,7 +40,6 @@ type AbiEncodeFunction[Output any] func(task sdktypes.GenericOutputTaskResponse[
 func NewOperatorFromConfig[Input any, Output any](
 	c OperatorConfig,
 	responseCalculationFn ResponseCalculationFunction[Input, Output],
-	abiEncodingFn AbiEncodeFunction[Output],
 ) (*Operator[Input, Output], error) {
 	avs_config := avsregistry.Config{
 		RegistryCoordinatorAddress:    common.HexToAddress(c.AVSRegistryCoordinatorAddress),
@@ -122,7 +120,6 @@ func NewOperatorFromConfig[Input any, Output any](
 		newTaskCreatedLogs:    newTaskCreatedLogs,
 		taskManagerAbi:        c.TaskManagerAbi,
 		responseCalculationFn: responseCalculationFn,
-		AbiEncodingFn:         abiEncodingFn,
 	}
 
 	c.Logger.Info("Operator info",
