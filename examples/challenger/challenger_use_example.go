@@ -16,7 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/bindings/taskManager"
-	taskgeneratorexample "github.com/Layr-Labs/eigensdk-go/examples/task-generator"
+	taskspammerexample "github.com/Layr-Labs/eigensdk-go/examples/task-spammer"
 )
 
 func main() {
@@ -44,7 +44,7 @@ func main() {
 		EthClient:      ethHttpClient,
 	}
 
-	txMgr, err := taskgeneratorexample.GetTxManager(logger, ethHttpClient, testutils.ANVIL_FIRST_PRIVATE_KEY)
+	txMgr, err := taskspammerexample.GetTxManager(logger, ethHttpClient, testutils.ANVIL_FIRST_PRIVATE_KEY)
 	if err != nil {
 		return
 	}
