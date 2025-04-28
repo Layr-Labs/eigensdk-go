@@ -29,14 +29,14 @@ const (
 	// number of blocks after which a task is considered expired this hardcoded here because it's also
 	//  hardcoded in the contracts, but should ideally be fetched from the contracts
 	taskChallengeWindowBlock = 100
-	blockTimeSeconds         = 12
+	blockTimeSeconds         = 12 * time.Second
 )
 
 type TaskProcessor[Input any] interface {
 	ProcessAggregatedResponse(ctx context.Context, response blsagg.BlsAggregationServiceResponse, task challenger.GenericInputTask[Input]) error
 }
 
-type Aggregator[ResponseType any, Input any, Output any] struct {
+type Aggregator[Input any, Output any] struct {
 	logger           logging.Logger
 	serverIpPortAddr string
 
@@ -53,12 +53,12 @@ type Aggregator[ResponseType any, Input any, Output any] struct {
 }
 
 // NewAggregator creates a new Aggregator with the provided config.
-func NewAggregator[ResponseType any, Input any, Output any](
+func NewAggregator[Input any, Output any](
 	c AggregatorConfig,
 	taskProcessor TaskProcessor[Input],
 	eventHash common.Hash,
 	taskManagerAbi *abi.ABI,
-) (*Aggregator[ResponseType, Input, Output], error) {
+) (*Aggregator[Input, Output], error) {
 	avsConfig := avsregistry.Config{
 		RegistryCoordinatorAddress:    c.RegistryCoordinatorAddress,
 		OperatorStateRetrieverAddress: c.OperatorStateRetrieverAddress,
@@ -118,7 +118,7 @@ func NewAggregator[ResponseType any, Input any, Output any](
 		c.Logger.Fatal("error subscribing to newTaskCreated events", "err", err)
 	}
 
-	return &Aggregator[ResponseType, Input, Output]{
+	return &Aggregator[Input, Output]{
 		logger:                c.Logger,
 		serverIpPortAddr:      c.AggregatorServerIpPortAddr,
 		blsAggregationService: blsAggregationService,
@@ -130,7 +130,7 @@ func NewAggregator[ResponseType any, Input any, Output any](
 	}, nil
 }
 
-func (agg *Aggregator[ResponseType, Input, Output]) Start(ctx context.Context) error {
+func (agg *Aggregator[Input, Output]) Start(ctx context.Context) error {
 	agg.logger.Info("Starting aggregator.")
 	agg.logger.Info("Starting aggregator rpc server.")
 	go agg.startServer(ctx)
@@ -157,7 +157,7 @@ func (agg *Aggregator[ResponseType, Input, Output]) Start(ctx context.Context) e
 	}
 }
 
-func (agg *Aggregator[ResponseType, Input, Output]) processNewTask(ctx context.Context, log types.Log) (blsagg.TaskMetadata, error) {
+func (agg *Aggregator[Input, Output]) processNewTask(ctx context.Context, log types.Log) (blsagg.TaskMetadata, error) {
 	var newTaskCreatedLog challenger.NewTaskCreatedEvent[Input]
 
 	err := agg.taskManagerAbi.UnpackIntoInterface(&newTaskCreatedLog, "NewTaskCreated", log.Data)
@@ -182,7 +182,7 @@ func (agg *Aggregator[ResponseType, Input, Output]) processNewTask(ctx context.C
 	// TODO(samlaf): we use seconds for now, but we should ideally pass a blocknumber to the blsAggregationService
 	// and it should monitor the chain and only expire the task aggregation once the chain has reached that block
 	// number.
-	taskTimeToExpiry := taskChallengeWindowBlock * blockTimeSeconds * time.Second
+	taskTimeToExpiry := taskChallengeWindowBlock * blockTimeSeconds
 	var quorumNums sdktypes.QuorumNums
 	for _, quorumNum := range newTask.QuorumNumbers {
 		quorumNums = append(quorumNums, sdktypes.QuorumNum(quorumNum))
@@ -198,7 +198,7 @@ func (agg *Aggregator[ResponseType, Input, Output]) processNewTask(ctx context.C
 	return metadata, nil
 }
 
-func (agg *Aggregator[ResponseType, Input, Output]) processAggregatedResponse(
+func (agg *Aggregator[Input, Output]) processAggregatedResponse(
 	ctx context.Context,
 	response blsagg.BlsAggregationServiceResponse,
 ) error {
