@@ -9,7 +9,6 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
-	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -20,6 +19,7 @@ import (
 	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/bindings/taskManager"
 	taskgeneratorexample "github.com/Layr-Labs/eigensdk-go/examples/task-generator"
 	blsagg "github.com/Layr-Labs/eigensdk-go/services/bls_aggregation"
+	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
 )
 
@@ -68,7 +68,7 @@ func main() {
 		EthWsUrl:                      "ws://localhost:8545",
 		EcdsaPrivateKey:               ecdsaPrivateKey,
 		AggregatorServerIpPortAddr:    "localhost:8090",
-		TaskManagerAbi: taskManagerAbi,
+		TaskManagerAbi:                taskManagerAbi,
 	}
 
 	taskProcessor, err := NewTaskProcessor(&cfg, txMgr)
