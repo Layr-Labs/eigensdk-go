@@ -6,11 +6,10 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/aggregator"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
-	"github.com/Layr-Labs/eigensdk-go/challenger"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
-	"github.com/Layr-Labs/eigensdk-go/types"
+	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
@@ -54,6 +53,11 @@ func main() {
 		return
 	}
 
+	taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
+	if err != nil {
+		logger.Fatalf(err.Error())
+	}
+
 	cfg := aggregator.AggregatorConfig{
 		RegistryCoordinatorAddress:    common.HexToAddress("0x7bc06c482dead17c0e297afbc32f6e63d3846650"),
 		OperatorStateRetrieverAddress: common.HexToAddress("0x4c5859f0f772848b2d91f1d83e2fe57935348029"),
@@ -64,6 +68,7 @@ func main() {
 		EthWsUrl:                      "ws://localhost:8545",
 		EcdsaPrivateKey:               ecdsaPrivateKey,
 		AggregatorServerIpPortAddr:    "localhost:8090",
+		TaskManagerAbi: taskManagerAbi,
 	}
 
 	taskProcessor, err := NewTaskProcessor(&cfg, txMgr)
@@ -71,13 +76,8 @@ func main() {
 		logger.Fatalf(err.Error())
 	}
 
-	taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
-	if err != nil {
-		logger.Fatalf(err.Error())
-	}
-
 	// This is the same hash function used by the operator to hash the task response before signing it.
-	hashFunction := func(taskResponse types.TaskResponse) (types.TaskResponseDigest, error) {
+	hashFunction := func(taskResponse sdktypes.TaskResponse) (sdktypes.TaskResponseDigest, error) {
 		// The order here has to match the field ordering of cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse
 		taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
 			{
@@ -90,7 +90,7 @@ func main() {
 			},
 		})
 		if err != nil {
-			return types.TaskResponseDigest{}, utils.WrapError("Error creating taskResponseType", err)
+			return sdktypes.TaskResponseDigest{}, utils.WrapError("Error creating taskResponseType", err)
 		}
 		arguments := abi.Arguments{
 			{
@@ -100,7 +100,7 @@ func main() {
 
 		encodeTaskResponseByte, err := arguments.Pack(taskResponse)
 		if err != nil {
-			return types.TaskResponseDigest{}, utils.WrapError("Error Packing taskResponse", err)
+			return sdktypes.TaskResponseDigest{}, utils.WrapError("Error Packing taskResponse", err)
 		}
 
 		var taskResponseDigest [32]byte
@@ -112,8 +112,7 @@ func main() {
 	}
 	cfg.TaskResponseHashFn = hashFunction
 
-	blockHash := taskManagerAbi.Events["NewTaskCreated"].ID
-	agg, err := aggregator.NewAggregator[*big.Int, *big.Int](cfg, taskProcessor, blockHash, taskManagerAbi)
+	agg, err := aggregator.NewAggregator[*big.Int, *big.Int](cfg, taskProcessor)
 	if err != nil {
 		logger.Fatalf(err.Error())
 	}
@@ -154,7 +153,7 @@ func NewTaskProcessor(c *aggregator.AggregatorConfig, txMgr txmgr.TxManager) (*I
 func (tp *IncredibleTaskProcessor) ProcessAggregatedResponse(
 	ctx context.Context,
 	response blsagg.BlsAggregationServiceResponse,
-	task challenger.GenericInputTask[*big.Int],
+	task sdktypes.GenericInputTask[*big.Int],
 ) error {
 	if response.Err != nil {
 		return utils.WrapError("BlsAggregationServiceResponse contains an error", response.Err)
@@ -180,7 +179,7 @@ func (tp *IncredibleTaskProcessor) ProcessAggregatedResponse(
 
 	tp.logger.Info("Threshold reached. Sending aggregated response onchain.", "taskIndex", response.TaskIndex)
 
-	taskResponseAgg, ok := response.TaskResponse.(challenger.GenericOutputTaskResponse[*big.Int])
+	taskResponseAgg, ok := response.TaskResponse.(sdktypes.GenericOutputTaskResponse[*big.Int])
 	if !ok {
 		tp.logger.Error("task Response could not be converted to sdk aggregator's Task Response type")
 	}
@@ -214,7 +213,7 @@ type IncredibleSquaringTaskResponse struct {
 	NumberSquared      *big.Int
 }
 
-func (tr IncredibleSquaringTaskResponse) TaskIndex() types.TaskIndex {
+func (tr IncredibleSquaringTaskResponse) TaskIndex() sdktypes.TaskIndex {
 	return tr.ReferenceTaskIndex
 }
 
