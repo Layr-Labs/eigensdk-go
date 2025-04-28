@@ -3,9 +3,11 @@ package operator
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"os"
 
 	"github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -13,14 +15,12 @@ import (
 
 	sdkaggregator "github.com/Layr-Labs/eigensdk-go/aggregator"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
+	"github.com/Layr-Labs/eigensdk-go/challenger"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 )
-
-const AVS_NAME = "incredible-squaring"
-const SEM_VER = "0.0.1"
 
 type OperatorConfig struct {
 	OperatorAddress string
@@ -39,26 +39,29 @@ type OperatorConfig struct {
 	RegisterOnStartup bool
 }
 
-type OperatorTaskProcessor interface {
-	ProcessNewTaskCreatedLog(log types.Log) (sdkaggregator.TaskResponse, error)
+type OperatorTaskProcessor[Input any, Output any] interface {
+	ProcessNewTaskCreatedLog(task challenger.GenericInputTask[Input], taskIndex uint32) (challenger.GenericOutputTaskResponse[Output], error)
+	DigestResponse(response *challenger.GenericOutputTaskResponse[Output]) [32]byte
 }
 
-type Operator[ResponseType any] struct {
+type Operator[Input any, Output any] struct {
 	logger              logging.Logger
 	operatorId          sdktypes.OperatorId
-	aggregatorRpcClient AggregatorRpcClienter[ResponseType]
+	aggregatorRpcClient AggregatorRpcClienter[Output]
 	EthWsUrl            string
 	blsKeypair          *bls.KeyPair
-	taskProcessor       OperatorTaskProcessor
+	taskProcessor       OperatorTaskProcessor[Input, Output]
 	newTaskCreatedLogs  chan types.Log
+	taskManagerAbi      *abi.ABI
 }
 
-func NewOperatorFromConfig[ResponseType any](
+func NewOperatorFromConfig[Input any, Output any](
 	c OperatorConfig,
 	eventHash common.Hash,
-	taskProcessor OperatorTaskProcessor,
+	taskProcessor OperatorTaskProcessor[Input, Output],
 	logger logging.Logger,
-) (*Operator[ResponseType], error) {
+	taskManagerAbi *abi.ABI,
+) (*Operator[Input, Output], error) {
 	avs_config := avsregistry.Config{
 		RegistryCoordinatorAddress:    common.HexToAddress(c.AVSRegistryCoordinatorAddress),
 		OperatorStateRetrieverAddress: common.HexToAddress(c.OperatorStateRetrieverAddress),
@@ -97,7 +100,7 @@ func NewOperatorFromConfig[ResponseType any](
 		return nil, err
 	}
 
-	aggregatorRpcClient, err := NewAggregatorRpcClient[ResponseType](c.AggregatorServerIpPortAddress, logger)
+	aggregatorRpcClient, err := NewAggregatorRpcClient[Output](c.AggregatorServerIpPortAddress, logger)
 	if err != nil {
 		logger.Error("Cannot create AggregatorRpcClient. Is aggregator running?", "err", err)
 		return nil, err
@@ -129,13 +132,14 @@ func NewOperatorFromConfig[ResponseType any](
 		logger.Fatal("error subscribing to newTaskCreated events", "err", err)
 	}
 
-	operator := &Operator[ResponseType]{
+	operator := &Operator[Input, Output]{
 		logger:              logger,
 		blsKeypair:          blsKeyPair,
 		aggregatorRpcClient: *aggregatorRpcClient,
 		operatorId:          operatorId,
 		newTaskCreatedLogs:  newTaskCreatedLogs,
 		taskProcessor:       taskProcessor,
+		taskManagerAbi:      taskManagerAbi,
 	}
 
 	logger.Info("Operator info",
@@ -148,7 +152,7 @@ func NewOperatorFromConfig[ResponseType any](
 	return operator, nil
 }
 
-func (o *Operator[ResponseType]) Start(ctx context.Context) error {
+func (o *Operator[Input, Output]) Start(ctx context.Context) error {
 	o.logger.Info("Starting operator.")
 
 	for {
@@ -157,7 +161,7 @@ func (o *Operator[ResponseType]) Start(ctx context.Context) error {
 			return nil
 
 		case log := <-o.newTaskCreatedLogs:
-			taskResponse, err := o.taskProcessor.ProcessNewTaskCreatedLog(log)
+			taskResponse, err := o.processNewTaskCreatedLog(log)
 			if err != nil {
 				o.logger.Error("Error checking if operator is registered", "err", err)
 				return err
@@ -171,14 +175,45 @@ func (o *Operator[ResponseType]) Start(ctx context.Context) error {
 	}
 }
 
-func (o *Operator[ResponseType]) SignTaskResponse(
-	taskResponse sdkaggregator.TaskResponse,
-) (*sdkaggregator.SignedTaskResponse, error) {
-	taskResponseHash := taskResponse.Digest()
+// Takes a NewTaskCreatedLog struct as input and returns a TaskResponseHeader struct.
+// The TaskResponseHeader struct is the struct that is signed and sent to the contract as a task response.
+func (o *Operator[Input, Output]) processNewTaskCreatedLog(
+	log types.Log,
+) (*challenger.GenericOutputTaskResponse[Output], error) {
+	var newTaskCreatedLog challenger.NewTaskCreatedEvent[Input]
+
+	err := o.taskManagerAbi.UnpackIntoInterface(&newTaskCreatedLog, "NewTaskCreated", log.Data)
+	if err != nil {
+		return nil, fmt.Errorf("error unpacking the log: %w", err)
+	}
+
+	newTaskIndex := uint32(new(big.Int).SetBytes(log.Topics[1].Bytes()).Uint64())
+
+	o.logger.Debug("Received new task", "task", newTaskCreatedLog)
+	o.logger.Info("Received new task",
+		"inputValue", newTaskCreatedLog.Task.InputValue,
+		"taskIndex", newTaskIndex,
+		"taskCreatedBlock", newTaskCreatedLog.Task.TaskCreatedBlock,
+		"quorumNumbers", newTaskCreatedLog.Task.QuorumNumbers,
+		"QuorumThresholdPercentage", newTaskCreatedLog.Task.QuorumThresholdPercentage,
+	)
+
+	taskResponse, err := o.taskProcessor.ProcessNewTaskCreatedLog(newTaskCreatedLog.Task, newTaskIndex)
+	if err != nil {
+		return nil, fmt.Errorf("error getting task response: %w", err)
+	}
+
+	return &taskResponse, nil
+}
+
+func (o *Operator[Input, Output]) SignTaskResponse(
+	taskResponse *challenger.GenericOutputTaskResponse[Output],
+) (*sdkaggregator.SignedTaskResponse[Output], error) {
+	taskResponseHash := o.taskProcessor.DigestResponse(taskResponse)
 
 	blsSignature := o.blsKeypair.SignMessage(taskResponseHash)
-	signedTaskResponse := &sdkaggregator.SignedTaskResponse{
-		TaskResponse: taskResponse,
+	signedTaskResponse := &sdkaggregator.SignedTaskResponse[Output]{
+		TaskResponse: *taskResponse,
 		BlsSignature: *blsSignature,
 		OperatorId:   o.operatorId,
 	}
