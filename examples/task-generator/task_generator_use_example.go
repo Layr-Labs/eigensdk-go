@@ -7,7 +7,7 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
-	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/task-generator/bindings/taskManager"
+	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/bindings/taskManager"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/signerv2"
 	taskgenerator "github.com/Layr-Labs/eigensdk-go/task-generator"

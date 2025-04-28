@@ -11,7 +11,7 @@ import (
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum/core/types"
 
-	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/operator/bindings"
+	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/bindings/taskManager"
 )
 
 // The idea of this example is to show how to create a custom operator using the SDK generic implementation
@@ -91,13 +91,13 @@ func main() {
 		AggregatorServerIpPortAddress: "localhost:8090",
 	}
 	operatorTaskProcessor := NewOperatorTaskProcessor(operatorConfig, logger)
-	operator, err := sdkoperator.NewOperatorFromConfig(operatorConfig, blockHash, operatorTaskProcessor, logger)
+	operator, err := sdkoperator.NewOperatorFromConfig[IncredibleSquaringTaskResponse](operatorConfig, blockHash, operatorTaskProcessor, logger)
 	if err != nil {
 		logger.Errorf("Failed to create operator from config: %v", err)
 		return
 	}
 
-	err = operator.Start(context.Background(), &IncredibleSquaringTaskResponse{})
+	err = operator.Start(context.Background())
 	if err != nil {
 		logger.Errorf("Error while running operator: %v", err)
 		return

@@ -15,8 +15,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 
+	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/bindings/taskManager"
 	taskgeneratorexample "github.com/Layr-Labs/eigensdk-go/examples/task-generator"
-	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/task-generator/bindings/taskManager"
 )
 
 func main() {
@@ -108,15 +108,9 @@ func NewChallengerLogicImpl(c *AvsConfig) (*ChallengerLogicImpl, error) {
 }
 
 func (c *ChallengerLogicImpl) ProcessNewTaskCreatedLog(
-	newTaskCreatedEvent any,
+	log types.Log,
 ) error {
 	var newTaskCreatedLog cstaskmanager.ContractIncredibleSquaringTaskManagerNewTaskCreated
-
-	log, ok := newTaskCreatedEvent.(types.Log)
-	if !ok {
-		c.logger.Errorf("Event was not a types.Log. Event: %v", newTaskCreatedEvent)
-		return errors.New("invalid type event, expected types.Log")
-	}
 
 	taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
 	if err != nil {
@@ -141,15 +135,9 @@ func (c *ChallengerLogicImpl) ProcessNewTaskCreatedLog(
 }
 
 func (c *ChallengerLogicImpl) ProcessTaskResponseLog(
-	taskResponseEvent any,
+	log types.Log,
 ) error {
 	var taskRespondedLog cstaskmanager.ContractIncredibleSquaringTaskManagerTaskResponded
-
-	log, ok := taskResponseEvent.(types.Log)
-	if !ok {
-		c.logger.Errorf("Event was not a types.Log. Event: %v", taskResponseEvent)
-		return errors.New("invalid type event, expected types.Log")
-	}
 
 	taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
 	if err != nil {

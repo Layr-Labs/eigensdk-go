@@ -11,13 +11,15 @@ import (
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 )
 
-func (agg *Aggregator) startServer(ctx context.Context, taskResponseType interface{}) {
-	err := rpc.Register(agg)
+func (agg *Aggregator[ResponseType]) startServer(ctx context.Context) {
+	err := rpc.RegisterName("Aggregator", agg)
 	if err != nil {
 		agg.logger.Fatal("Format of service TaskManager isn't correct. ", "err", err)
 	}
 	rpc.HandleHTTP()
-	gob.Register(taskResponseType)
+
+	var taskResponseType ResponseType
+	gob.Register(&taskResponseType)
 	err = http.ListenAndServe(agg.serverIpPortAddr, nil)
 	if err != nil {
 		agg.logger.Fatal("ListenAndServe", "err", err)
@@ -33,7 +35,7 @@ type SignedTaskResponse struct {
 // rpc endpoint which is called by operator
 // reply doesn't need to be checked. If there are no errors, the task response is accepted
 // rpc framework forces a reply type to exist, so we put bool as a placeholder
-func (agg *Aggregator) ProcessSignedTaskResponse(signedTaskResponse *SignedTaskResponse, reply *bool) error {
+func (agg *Aggregator[ResponseType]) ProcessSignedTaskResponse(signedTaskResponse *SignedTaskResponse, reply *bool) error {
 	agg.logger.Infof("Received signed task response: %#v", signedTaskResponse)
 	taskIndex := signedTaskResponse.TaskResponse.TaskIndex()
 
