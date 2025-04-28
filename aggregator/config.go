@@ -3,8 +3,6 @@ package aggregator
 import (
 	"crypto/ecdsa"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
-	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum/common"
@@ -20,11 +18,9 @@ type AggregatorConfig struct {
 	ServiceManagerAddress         common.Address
 
 	EthHttpClient *ethclient.Client
-	TxMgr         txmgr.TxManager
 	Logger        logging.Logger
 
 	EcdsaPrivateKey *ecdsa.PrivateKey
-	BlsPrivateKey   *bls.PrivateKey
 
 	AggregatorServerIpPortAddr string
 
