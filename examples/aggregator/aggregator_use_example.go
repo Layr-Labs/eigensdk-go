@@ -54,6 +54,11 @@ func main() {
 		return
 	}
 
+	taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
+	if err != nil {
+		logger.Fatalf(err.Error())
+	}
+
 	cfg := aggregator.AggregatorConfig{
 		RegistryCoordinatorAddress:    common.HexToAddress("0x7bc06c482dead17c0e297afbc32f6e63d3846650"),
 		OperatorStateRetrieverAddress: common.HexToAddress("0x4c5859f0f772848b2d91f1d83e2fe57935348029"),
@@ -64,14 +69,10 @@ func main() {
 		EthWsUrl:                      "ws://localhost:8545",
 		EcdsaPrivateKey:               ecdsaPrivateKey,
 		AggregatorServerIpPortAddr:    "localhost:8090",
+		TaskManagerAbi:                taskManagerAbi,
 	}
 
 	taskProcessor, err := NewTaskProcessor(&cfg, txMgr)
-	if err != nil {
-		logger.Fatalf(err.Error())
-	}
-
-	taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
 	if err != nil {
 		logger.Fatalf(err.Error())
 	}
@@ -112,8 +113,7 @@ func main() {
 	}
 	cfg.TaskResponseHashFn = hashFunction
 
-	blockHash := taskManagerAbi.Events["NewTaskCreated"].ID
-	agg, err := aggregator.NewAggregator[*big.Int, *big.Int](cfg, taskProcessor, blockHash, taskManagerAbi)
+	agg, err := aggregator.NewAggregator[*big.Int, *big.Int](cfg, taskProcessor)
 	if err != nil {
 		logger.Fatalf(err.Error())
 	}

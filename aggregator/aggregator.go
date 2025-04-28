@@ -19,7 +19,6 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	sdkclients "github.com/Layr-Labs/eigensdk-go/chainio/clients"
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
 	avsregistryservice "github.com/Layr-Labs/eigensdk-go/services/avsregistry"
 	blsagg "github.com/Layr-Labs/eigensdk-go/services/bls_aggregation"
 	oprsinfoserv "github.com/Layr-Labs/eigensdk-go/services/operatorsinfo"
@@ -45,9 +44,8 @@ type Aggregator[Input any, Output any] struct {
 	taskProcessor         TaskProcessor[Input]
 	newTaskCreatedLogs    chan types.Log
 
-	tasks         map[sdktypes.TaskIndex]challenger.GenericInputTask[Input]
-	tasksMu       sync.RWMutex
-	taskResponses map[uint32]challenger.TaskResponseData[Output]
+	tasks   map[sdktypes.TaskIndex]challenger.GenericInputTask[Input]
+	tasksMu sync.RWMutex
 
 	taskManagerAbi *abi.ABI
 }
@@ -56,20 +54,7 @@ type Aggregator[Input any, Output any] struct {
 func NewAggregator[Input any, Output any](
 	c AggregatorConfig,
 	taskProcessor TaskProcessor[Input],
-	eventHash common.Hash,
-	taskManagerAbi *abi.ABI,
 ) (*Aggregator[Input, Output], error) {
-	avsConfig := avsregistry.Config{
-		RegistryCoordinatorAddress:    c.RegistryCoordinatorAddress,
-		OperatorStateRetrieverAddress: c.OperatorStateRetrieverAddress,
-		ServiceManagerAddress:         c.ServiceManagerAddress,
-	}
-	avsReader, err := avsregistry.NewReaderFromConfig(avsConfig, c.EthHttpClient, c.Logger)
-	if err != nil {
-		c.Logger.Error("Cannot create avsReader", "err", err)
-		return nil, err
-	}
-
 	chainioConfig := sdkclients.BuildAllConfig{
 		EthHttpUrl:                 c.EthHttpUrl,
 		EthWsUrl:                   c.EthWsUrl,
@@ -99,7 +84,7 @@ func NewAggregator[Input any, Output any](
 		return nil, errors.New("task response hash function not provided in aggregator config")
 	}
 
-	avsRegistryService := avsregistryservice.NewAvsRegistryServiceChainCaller(avsReader, operatorPubkeysService, c.Logger)
+	avsRegistryService := avsregistryservice.NewAvsRegistryServiceChainCaller(clients.AvsRegistryChainReader, operatorPubkeysService, c.Logger)
 	blsAggregationService := blsagg.NewBlsAggregatorService(avsRegistryService, c.TaskResponseHashFn, c.Logger)
 
 	client, err := ethclient.Dial(c.EthWsUrl)
@@ -107,9 +92,10 @@ func NewAggregator[Input any, Output any](
 		c.Logger.Fatal("error connecting to web socket", "err", err)
 	}
 
+	newTaskCreatedEventHash := c.TaskManagerAbi.Events["NewTaskCreated"].ID
 	query := ethereum.FilterQuery{
 		Addresses: []common.Address{},
-		Topics:    [][]common.Hash{{eventHash}},
+		Topics:    [][]common.Hash{{newTaskCreatedEventHash}},
 	}
 
 	newTaskCreatedLogs := make(chan types.Log)
@@ -125,8 +111,7 @@ func NewAggregator[Input any, Output any](
 		taskProcessor:         taskProcessor,
 		newTaskCreatedLogs:    newTaskCreatedLogs,
 		tasks:                 make(map[sdktypes.TaskIndex]challenger.GenericInputTask[Input]),
-		taskResponses:         make(map[uint32]challenger.TaskResponseData[Output]),
-		taskManagerAbi:        taskManagerAbi,
+		taskManagerAbi:        c.TaskManagerAbi,
 	}, nil
 }
 
