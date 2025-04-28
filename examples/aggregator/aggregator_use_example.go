@@ -17,7 +17,7 @@ import (
 	"golang.org/x/crypto/sha3"
 
 	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/bindings/taskManager"
-	taskgeneratorexample "github.com/Layr-Labs/eigensdk-go/examples/task-generator"
+	taskspammerexample "github.com/Layr-Labs/eigensdk-go/examples/task-spammer"
 	blsagg "github.com/Layr-Labs/eigensdk-go/services/bls_aggregation"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
@@ -42,7 +42,7 @@ func main() {
 		return
 	}
 
-	txMgr, err := taskgeneratorexample.GetTxManager(logger, ethHttpClient, testutils.ANVIL_FIRST_PRIVATE_KEY)
+	txMgr, err := taskspammerexample.GetTxManager(logger, ethHttpClient, testutils.ANVIL_FIRST_PRIVATE_KEY)
 	if err != nil {
 		return
 	}

@@ -1,4 +1,4 @@
-package taskgenerator
+package taskspammer
 
 import (
 	"context"
@@ -16,29 +16,29 @@ type TaskManager[Input any] interface {
 	CreateNewTask(opts *bind.TransactOpts, input Input, quorumThresholdPercentage uint32, quorumNumbers []byte) (*gethtypes.Transaction, error)
 }
 
-type TaskGenerator[Input any] struct {
+type TaskSpammer[Input any] struct {
 	taskManager TaskManager[Input]
 	txMgr       txmgr.TxManager
 	config      Config
 }
 
-func NewTaskGenerator[Input any](taskManager TaskManager[Input], txMgr txmgr.TxManager, config Config) (*TaskGenerator[Input], error) {
+func NewTaskSpammer[Input any](taskManager TaskManager[Input], txMgr txmgr.TxManager, config Config) (*TaskSpammer[Input], error) {
 	// TODO: validate config
-	return &TaskGenerator[Input]{
+	return &TaskSpammer[Input]{
 		taskManager,
 		txMgr,
 		config,
 	}, nil
 }
 
-func (taskGen *TaskGenerator[Input]) Start(ctx context.Context, inputGen iter.Seq[Input]) error {
+func (taskGen *TaskSpammer[Input]) Start(ctx context.Context, inputGen iter.Seq[Input]) error {
 	logger := taskGen.config.Logger
 
-	logger.Info("Starting Task Generator.")
+	logger.Info("Starting Task Spammer.")
 
 	ticker := time.NewTicker(taskGen.config.TimeBetweenTasks)
 	defer ticker.Stop()
-	logger.Infof("Task Generator set to send new task every %v seconds...", taskGen.config.TimeBetweenTasks)
+	logger.Infof("Task Spammer set to send new task every %v seconds...", taskGen.config.TimeBetweenTasks)
 
 	taskIndex := int64(0)
 
@@ -48,15 +48,15 @@ func (taskGen *TaskGenerator[Input]) Start(ctx context.Context, inputGen iter.Se
 	for {
 		// Submit new task
 		taskIndex++
-		logger.Infof("Task Generator sending new task, task index: %v", taskIndex)
+		logger.Infof("Task Spammer sending new task, task index: %v", taskIndex)
 		value, ok := nextInput()
 		if !ok {
-			logger.Info("Task Generator finished sending tasks")
+			logger.Info("Task Spammer finished sending tasks")
 			return nil
 		}
 		err := taskGen.CreateNewTask(ctx, value)
 		if err != nil {
-			logger.Error("Task Generator failed to send new task", "err", err)
+			logger.Error("Task Spammer failed to send new task", "err", err)
 			return err
 		}
 
@@ -69,7 +69,7 @@ func (taskGen *TaskGenerator[Input]) Start(ctx context.Context, inputGen iter.Se
 	}
 }
 
-func (taskGen *TaskGenerator[Input]) CreateNewTask(
+func (taskGen *TaskSpammer[Input]) CreateNewTask(
 	ctx context.Context,
 	input Input,
 ) error {

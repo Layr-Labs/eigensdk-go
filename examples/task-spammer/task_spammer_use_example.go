@@ -1,4 +1,4 @@
-package taskgeneratorexample
+package taskspammerexample
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/bindings/taskManager"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/signerv2"
-	taskgenerator "github.com/Layr-Labs/eigensdk-go/task-generator"
+	taskspammer "github.com/Layr-Labs/eigensdk-go/task-spammer"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -23,8 +23,8 @@ func main() {
 		return
 	}
 
-	// This pk should be related to the address passed to TaskManager as task_generator_addr when initialized
-	taskgeneratorPk := "0x4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356"
+	// This pk should be related to the address passed to TaskManager as task_spammer_addr when initialized
+	taskSpammerPk := "0x4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356"
 
 	ethHttpUrl := "http://localhost:8545"
 	ethHttpClient, err := ethclient.Dial(ethHttpUrl)
@@ -32,7 +32,7 @@ func main() {
 		return
 	}
 
-	txMgr, err := GetTxManager(logger, ethHttpClient, taskgeneratorPk)
+	txMgr, err := GetTxManager(logger, ethHttpClient, taskSpammerPk)
 	if err != nil {
 		return
 	}
@@ -48,14 +48,14 @@ func main() {
 		return
 	}
 
-	taskGeneratorConfig := taskgenerator.Config{
+	taskSpammerConfig := taskspammer.Config{
 		Logger:           logger,
 		TimeBetweenTasks: 10 * time.Second,
 
 		QuorumThresholdPercentage: 100,
 		QuorumNumbers:             []uint8{0},
 	}
-	taskGen, err := taskgenerator.NewTaskGenerator(contractTaskManager, txMgr, taskGeneratorConfig)
+	taskGen, err := taskspammer.NewTaskSpammer(contractTaskManager, txMgr, taskSpammerConfig)
 	if err != nil {
 		return
 	}
@@ -69,8 +69,8 @@ func main() {
 }
 
 // TODO: this should be in the SDK
-func GetTxManager(logger logging.Logger, ethHttpClient *ethclient.Client, taskgeneratorPk string) (*txmgr.SimpleTxManager, error) {
-	ecdsaPrivateKey, err := crypto.HexToECDSA(taskgeneratorPk)
+func GetTxManager(logger logging.Logger, ethHttpClient *ethclient.Client, taskSpammerPk string) (*txmgr.SimpleTxManager, error) {
+	ecdsaPrivateKey, err := crypto.HexToECDSA(taskSpammerPk)
 	if err != nil {
 		return nil, err
 	}

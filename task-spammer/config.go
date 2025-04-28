@@ -1,4 +1,4 @@
-package taskgenerator
+package taskspammer
 
 import (
 	"time"
@@ -6,9 +6,9 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/logging"
 )
 
-// Task generator configuration struct.
+// Task spammer configuration struct.
 //
-// Contains optional parameters for the task generator.
+// Contains optional parameters for the task spammer.
 // TODO: have default values
 type Config struct {
 	Logger           logging.Logger
