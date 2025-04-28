@@ -2,6 +2,7 @@ package taskgeneratorexample
 
 import (
 	"context"
+	"iter"
 	"math/big"
 	"time"
 
@@ -11,50 +12,16 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/signerv2"
 	taskgenerator "github.com/Layr-Labs/eigensdk-go/task-generator"
-	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
-
-// Task generator logic code
-type TaskGenLogic struct {
-	avsWriter          *AvsWriter
-	thresholdNumerator uint8
-	quorumNumbers      []uint8
-	logger             logging.Logger
-}
-
-func NewTaskGenLogic(c *AvsConfig, thresholdNumerator uint8, quorumNumbers []uint8) (*TaskGenLogic, error) {
-	avsWriter, err := BuildAvsWriterFromConfig(c)
-	if err != nil {
-		c.Logger.Errorf("Cannot create avsWriter", "err", err)
-		return nil, err
-	}
-
-	return &TaskGenLogic{
-		avsWriter, thresholdNumerator, quorumNumbers, c.Logger}, nil
-}
-
-func (tgl *TaskGenLogic) SendNewTask(taskNumber int64) error {
-	err := tgl.avsWriter.SendNewTaskNumberToSquare(context.Background(), big.NewInt(taskNumber),
-		tgl.thresholdNumerator, tgl.quorumNumbers)
-	if err != nil {
-		tgl.logger.Error("TaskGenerator failed to send number to square", "err", err)
-		return err
-	}
-
-	return nil
-}
 
 func main() {
 	logger, err := logging.NewZapLogger(logging.Development)
 	if err != nil {
 		return
 	}
-
-	thresholdNumerator := uint8(100)
-	quorumNumbers := []uint8{0}
 
 	// This pk should be related to the address passed to TaskManager as task_generator_addr when initialized
 	taskgeneratorPk := "0x4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356"
@@ -70,31 +37,38 @@ func main() {
 		return
 	}
 
-	// The values from this config are extracted from an incredible squaring config file and also the deployment output files
-	avsConfig := AvsConfig{
-		Logger:                        logger,
-		IncredibleSquaringTaskManager: common.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3"),
-		TxMgr:                         txMgr,
-		EthHttpClient:                 ethHttpClient,
-	}
+	// This value is extracted from the deployment output files
+	taskManagerAddress := common.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3")
 
-	logic, err := NewTaskGenLogic(&avsConfig, thresholdNumerator, quorumNumbers)
+	contractTaskManager, err := cstaskmanager.NewContractIncredibleSquaringTaskManager(
+		taskManagerAddress,
+		ethHttpClient,
+	)
 	if err != nil {
 		return
 	}
 
-	secondsInterval := 10 // This means TaskGenerator will send tasks every 10 seconds
-	taskGen, err := taskgenerator.BuildTaskGenerator(logger, logic, secondsInterval)
+	taskGeneratorConfig := taskgenerator.Config{
+		Logger:           logger,
+		TimeBetweenTasks: 10 * time.Second,
+
+		QuorumThresholdPercentage: 100,
+		QuorumNumbers:             []uint8{0},
+	}
+	taskGen, err := taskgenerator.NewTaskGenerator(contractTaskManager, txMgr, taskGeneratorConfig)
 	if err != nil {
 		return
 	}
 
-	err = taskGen.Start(context.Background())
+	seq := NewNumberToSquareSequence()
+
+	err = taskGen.Start(context.Background(), seq)
 	if err != nil {
 		return
 	}
 }
 
+// TODO: this should be in the SDK
 func GetTxManager(logger logging.Logger, ethHttpClient *ethclient.Client, taskgeneratorPk string) (*txmgr.SimpleTxManager, error) {
 	ecdsaPrivateKey, err := crypto.HexToECDSA(taskgeneratorPk)
 	if err != nil {
@@ -123,59 +97,17 @@ func GetTxManager(logger logging.Logger, ethHttpClient *ethclient.Client, taskge
 	return txMgr, nil
 }
 
-// Avs Writer code
-type AvsWriter struct {
-	logger              logging.Logger
-	TxMgr               txmgr.TxManager
-	taskManagerContract *cstaskmanager.ContractIncredibleSquaringTaskManager
-}
-
-type AvsConfig struct {
-	Logger                        logging.Logger
-	IncredibleSquaringTaskManager common.Address
-	TxMgr                         txmgr.TxManager
-	EthHttpClient                 *ethclient.Client
-}
-
-func BuildAvsWriterFromConfig(c *AvsConfig) (*AvsWriter, error) {
-	contractTaskManager, err := cstaskmanager.NewContractIncredibleSquaringTaskManager(
-		c.IncredibleSquaringTaskManager,
-		c.EthHttpClient,
-	)
-	if err != nil {
-		return nil, utils.WrapError("Failed to fetch IServiceManager contract", err)
+// Returns an iterator for the sequence 1, 2, 3, ...
+func NewNumberToSquareSequence() iter.Seq[*big.Int] {
+	acc := big.NewInt(1)
+	delta := big.NewInt(1)
+	return func(yield func(*big.Int) bool) {
+		for {
+			if !yield(acc) {
+				break
+			}
+			acc.Add(acc, delta)
+		}
 	}
 
-	return &AvsWriter{
-		logger:              c.Logger,
-		TxMgr:               c.TxMgr,
-		taskManagerContract: contractTaskManager,
-	}, nil
-}
-
-func (w *AvsWriter) SendNewTaskNumberToSquare(
-	ctx context.Context,
-	numToSquare *big.Int,
-	quorumThresholdPercentage uint8,
-	quorumNumbers []uint8,
-) error {
-	txOpts, err := w.TxMgr.GetNoSendTxOpts()
-	if err != nil {
-		return utils.WrapError("Error getting tx opts", err)
-	}
-
-	tx, err := w.taskManagerContract.CreateNewTask(
-		txOpts,
-		numToSquare,
-		uint32(quorumThresholdPercentage),
-		quorumNumbers,
-	)
-	if err != nil {
-		return utils.WrapError("Error assembling CreateNewTask tx", err)
-	}
-	_, err = w.TxMgr.Send(ctx, tx, true)
-	if err != nil {
-		return utils.WrapError("Error submitting CreateNewTask tx", err)
-	}
-	return nil
 }
