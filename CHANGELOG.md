@@ -21,6 +21,8 @@ Each version will have a separate `Breaking Changes` section as well. To describ
 
 ### Documentation 📚
 
+* Fixed broken link in documentation and updated "Modules" section in [#641](https://github.com/Layr-Labs/eigensdk-go/pull/641)
+
 ### Other Changes
 
 * added rewards utilities integration test by @maximopalopoli in [#608](https://github.com/Layr-Labs/eigensdk-go/pull/608)
