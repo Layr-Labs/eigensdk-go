@@ -189,10 +189,46 @@ func (o *Operator[Input, Output]) processNewTaskCreatedLog(
 	return &taskResponse, nil
 }
 
+func outputValueType[T any](value T) string {
+    switch any(value).(type) {
+    case string:
+		return "string"
+    case int:
+		return "uint32"
+    case *big.Int:
+		return "uint256"
+	// TODO: Add more cases
+    default:
+		return ""
+    }
+}
+
 func (o *Operator[Input, Output]) signTaskResponse(
 	taskResponse *sdktypes.GenericOutputTaskResponse[Output],
 ) (*sdkaggregator.SignedTaskResponse[Output], error) {
-	encodeTaskResponseByte, err := o.AbiEncodingFn(*taskResponse)
+	// Calculate the abi output type depending on generic Output type
+	abiOutputType := outputValueType(taskResponse.OutputValue)
+
+	taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
+		{
+			Name: "referenceTaskIndex",
+			Type: "uint32",
+		},
+		{
+			Name: "OutputValue",
+			Type: abiOutputType,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	arguments := abi.Arguments{
+		{
+			Type: taskResponseType,
+		},
+	}
+
+	encodeTaskResponseByte, err := arguments.Pack(taskResponse)
 	if err != nil {
 		return nil, fmt.Errorf("error encoding task response: %w", err)
 	}
