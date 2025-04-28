@@ -8,100 +8,11 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	sdkoperator "github.com/Layr-Labs/eigensdk-go/operator"
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"golang.org/x/crypto/sha3"
 
 	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/bindings/taskManager"
 )
 
 // The idea of this example is to show how to create a custom operator using the SDK generic implementation
-type OperatorTaskProcessor struct {
-	logger logging.Logger
-}
-
-var _ sdkoperator.OperatorTaskProcessor[*big.Int, *big.Int] = (*OperatorTaskProcessor)(nil)
-
-func NewOperatorTaskProcessor(c sdkoperator.OperatorConfig, logger logging.Logger) OperatorTaskProcessor {
-	return OperatorTaskProcessor{
-		logger: logger,
-	}
-}
-
-// Takes a NewTaskCreatedLog struct as input and returns a TaskResponseHeader struct.
-// The TaskResponseHeader struct is the struct that is signed and sent to the contract as a task response.
-func (otp OperatorTaskProcessor) ProcessNewTaskCreatedLog(
-	task challenger.GenericInputTask[*big.Int],
-	taskIndex uint32,
-) (challenger.GenericOutputTaskResponse[*big.Int], error) {
-
-	numberSquared := big.NewInt(0).Exp(task.InputValue, big.NewInt(2), nil)
-
-	taskResponse := challenger.GenericOutputTaskResponse[*big.Int]{
-		ReferenceTaskIndex: taskIndex,
-		OutputValue:        numberSquared,
-	}
-
-	return taskResponse, nil
-}
-
-func (otp OperatorTaskProcessor) DigestResponse(response *challenger.GenericOutputTaskResponse[*big.Int]) [32]byte {
-	incredibleSquaringTaskResponse := cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse{
-		ReferenceTaskIndex: response.ReferenceTaskIndex,
-		NumberSquared:      response.OutputValue,
-	}
-	taskResponseHash, err := getTaskResponseDigest(&incredibleSquaringTaskResponse)
-	if err != nil {
-		return [32]byte{}
-	}
-	return taskResponseHash
-}
-
-func getTaskResponseDigest(h *cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse) ([32]byte, error) {
-
-	encodeTaskResponseByte, err := AbiEncodeTaskResponse(h)
-	if err != nil {
-		return [32]byte{}, err
-	}
-
-	var taskResponseDigest [32]byte
-	hasher := sha3.NewLegacyKeccak256()
-	hasher.Write(encodeTaskResponseByte)
-	copy(taskResponseDigest[:], hasher.Sum(nil)[:32])
-
-	return taskResponseDigest, nil
-}
-
-// this hardcodes abi.encode() for cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse
-// unclear why abigen doesn't provide this out of the box...
-func AbiEncodeTaskResponse(h *cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse) ([]byte, error) {
-
-	// The order here has to match the field ordering of cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse
-	taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
-		{
-			Name: "referenceTaskIndex",
-			Type: "uint32",
-		},
-		{
-			Name: "numberSquared",
-			Type: "uint256",
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-	arguments := abi.Arguments{
-		{
-			Type: taskResponseType,
-		},
-	}
-
-	bytes, err := arguments.Pack(h)
-	if err != nil {
-		return nil, err
-	}
-
-	return bytes, nil
-}
-
 func main() {
 	logger, err := logging.NewZapLogger(logging.Production) // Change here if want to change logging level
 	if err != nil {
@@ -128,8 +39,54 @@ func main() {
 		BlsPrivateKeyStorePath:        "tests/keys/test.bls.key.json",
 		AggregatorServerIpPortAddress: "localhost:8090",
 	}
-	operatorTaskProcessor := NewOperatorTaskProcessor(operatorConfig, logger)
-	operator, err := sdkoperator.NewOperatorFromConfig(operatorConfig, blockHash, operatorTaskProcessor, logger, taskManagerAbi)
+
+	// This function calculates the task response from a Task, in this case with the number to square
+	responseCalcFunction := func(task challenger.GenericInputTask[*big.Int], taskIndex uint32) (challenger.GenericOutputTaskResponse[*big.Int], error) {
+		numberSquared := big.NewInt(0).Exp(task.InputValue, big.NewInt(2), nil)
+
+		taskResponse := challenger.GenericOutputTaskResponse[*big.Int]{
+			ReferenceTaskIndex: taskIndex,
+			OutputValue:        numberSquared,
+		}
+
+		return taskResponse, nil
+	}
+
+	abiEncondingFn := func(taskResponse challenger.GenericOutputTaskResponse[*big.Int]) ([]byte, error) {
+		// The order here has to match the field ordering of cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse
+		taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
+			{
+				Name: "referenceTaskIndex",
+				Type: "uint32",
+			},
+			{
+				Name: "numberSquared",
+				Type: "uint256",
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+		arguments := abi.Arguments{
+			{
+				Type: taskResponseType,
+			},
+		}
+
+		incredibleTaskResponse := cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse{
+			ReferenceTaskIndex: taskResponse.ReferenceTaskIndex,
+			NumberSquared:      taskResponse.OutputValue,
+		}
+
+		bytes, err := arguments.Pack(incredibleTaskResponse)
+		if err != nil {
+			return nil, err
+		}
+
+		return bytes, nil
+	}
+
+	operator, err := sdkoperator.NewOperatorFromConfig(operatorConfig, blockHash, logger, taskManagerAbi, responseCalcFunction, abiEncondingFn)
 	if err != nil {
 		logger.Errorf("Failed to create operator from config: %v", err)
 		return
