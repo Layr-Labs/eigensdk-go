@@ -2,7 +2,6 @@ package aggregator
 
 import (
 	"context"
-	"encoding/gob"
 	"net/http"
 	"net/rpc"
 
@@ -18,8 +17,6 @@ func (agg *Aggregator[Input, Output]) startServer(ctx context.Context) {
 	}
 	rpc.HandleHTTP()
 
-	var taskResponseType sdktypes.GenericOutputTaskResponse[Output]
-	gob.Register(&taskResponseType)
 	err = http.ListenAndServe(agg.serverIpPortAddr, nil)
 	if err != nil {
 		agg.logger.Fatal("ListenAndServe", "err", err)

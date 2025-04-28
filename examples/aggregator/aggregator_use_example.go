@@ -208,6 +208,24 @@ func (tp *IncredibleTaskProcessor) ProcessAggregatedResponse(
 	return nil
 }
 
+type IncredibleSquaringTaskResponse struct {
+	ReferenceTaskIndex uint32
+	NumberSquared      *big.Int
+}
+
+func (tr IncredibleSquaringTaskResponse) TaskIndex() sdktypes.TaskIndex {
+	return tr.ReferenceTaskIndex
+}
+
+func (tr IncredibleSquaringTaskResponse) Digest() [32]byte {
+	tmresponse := cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse(tr)
+	taskResponseHash, err := GetTaskResponseDigest(&tmresponse)
+	if err != nil {
+		return [32]byte{}
+	}
+	return taskResponseHash
+}
+
 // Avs Writer
 type AvsConfig struct {
 	Logger                        logging.Logger
