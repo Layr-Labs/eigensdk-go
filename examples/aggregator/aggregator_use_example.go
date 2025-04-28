@@ -2,13 +2,11 @@ package aggregator_example
 
 import (
 	"context"
-	"fmt"
 	"math/big"
-	"sync"
-	"time"
 
 	"github.com/Layr-Labs/eigensdk-go/aggregator"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
+	"github.com/Layr-Labs/eigensdk-go/challenger"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
@@ -24,15 +22,6 @@ import (
 	taskgeneratorexample "github.com/Layr-Labs/eigensdk-go/examples/task-generator"
 	blsagg "github.com/Layr-Labs/eigensdk-go/services/bls_aggregation"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
-)
-
-const (
-	// number of blocks after which a task is considered expired
-	// this hardcoded here because it's also hardcoded in the contracts, but should
-	// ideally be fetched from the contracts
-	taskChallengeWindowBlock = 100
-	blockTimeSeconds         = 12
-	avsName                  = "incredible-squaring"
 )
 
 type TaskResponseData struct {
@@ -70,7 +59,6 @@ func main() {
 		OperatorStateRetrieverAddress: common.HexToAddress("0x4c5859f0f772848b2d91f1d83e2fe57935348029"),
 		ServiceManagerAddress:         common.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"),
 		EthHttpClient:                 ethHttpClient,
-		TxMgr:                         txMgr,
 		Logger:                        logger,
 		EthHttpUrl:                    ethHttpUrl,
 		EthWsUrl:                      "ws://localhost:8545",
@@ -78,7 +66,7 @@ func main() {
 		AggregatorServerIpPortAddr:    "localhost:8090",
 	}
 
-	taskProcessor, err := NewTaskProcessor(&cfg)
+	taskProcessor, err := NewTaskProcessor(&cfg, txMgr)
 	if err != nil {
 		logger.Fatalf(err.Error())
 	}
@@ -125,7 +113,7 @@ func main() {
 	cfg.TaskResponseHashFn = hashFunction
 
 	blockHash := taskManagerAbi.Events["NewTaskCreated"].ID
-	agg, err := aggregator.NewAggregator[IncredibleSquaringTaskResponse](cfg, taskProcessor, blockHash)
+	agg, err := aggregator.NewAggregator[*big.Int, *big.Int](cfg, taskProcessor, blockHash, taskManagerAbi)
 	if err != nil {
 		logger.Fatalf(err.Error())
 	}
@@ -137,20 +125,17 @@ func main() {
 }
 
 type IncredibleTaskProcessor struct {
-	logger        logging.Logger
-	avsWriter     AvsWriter
-	tasks         map[types.TaskIndex]cstaskmanager.IIncredibleSquaringTaskManagerTask
-	tasksMu       sync.RWMutex
-	taskResponses map[uint32]TaskResponseData
+	logger    logging.Logger
+	avsWriter AvsWriter
 }
 
-var _ aggregator.TaskProcessor = (*IncredibleTaskProcessor)(nil)
+var _ aggregator.TaskProcessor[*big.Int] = (*IncredibleTaskProcessor)(nil)
 
-func NewTaskProcessor(c *aggregator.AggregatorConfig) (*IncredibleTaskProcessor, error) {
+func NewTaskProcessor(c *aggregator.AggregatorConfig, txMgr txmgr.TxManager) (*IncredibleTaskProcessor, error) {
 	avsConfig := AvsConfig{
 		Logger: c.Logger,
 		//IncredibleSquaringTaskManager: taskMana,
-		TxMgr:         c.TxMgr,
+		TxMgr:         txMgr,
 		EthHttpClient: c.EthHttpClient,
 	}
 	avsWriter, err := BuildAvsWriterFromConfig(&avsConfig)
@@ -160,69 +145,16 @@ func NewTaskProcessor(c *aggregator.AggregatorConfig) (*IncredibleTaskProcessor,
 	}
 
 	return &IncredibleTaskProcessor{
-		logger:        c.Logger,
-		avsWriter:     *avsWriter,
-		tasks:         make(map[types.TaskIndex]cstaskmanager.IIncredibleSquaringTaskManagerTask),
-		taskResponses: make(map[uint32]TaskResponseData),
+		logger:    c.Logger,
+		avsWriter: *avsWriter,
 	}, nil
 }
 
-func (tp *IncredibleTaskProcessor) ProcessNewTask(ctx context.Context, log gethtypes.Log) (blsagg.TaskMetadata, error) {
-	var newTaskCreatedLog cstaskmanager.ContractIncredibleSquaringTaskManagerNewTaskCreated
-
-	taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
-	if err != nil {
-		tp.logger.Fatalf("Error obtaining task manager ABI: %v", err)
-	}
-
-	err = taskManagerAbi.UnpackIntoInterface(&newTaskCreatedLog, "NewTaskCreated", log.Data)
-	if err != nil {
-		return blsagg.TaskMetadata{}, fmt.Errorf("error unpacking the log: %w", err)
-	}
-
-	// This is done this way because the taskIndex value in this event is indexed, so we take it from the log
-	newTaskIndex := uint32(new(big.Int).SetBytes(log.Topics[1].Bytes()).Uint64())
-
-	tp.logger.Infof("Aggregator received new task: %v: ", newTaskCreatedLog)
-
-	newTask := newTaskCreatedLog.Task
-	tp.tasksMu.Lock()
-	tp.tasks[newTaskIndex] = newTask
-	tp.tasksMu.Unlock()
-
-	quorumThresholdPercentages := make(types.QuorumThresholdPercentages, len(newTask.QuorumNumbers))
-	for i := range newTask.QuorumNumbers {
-		quorumThresholdPercentages[i] = types.QuorumThresholdPercentage(newTask.QuorumThresholdPercentage)
-	}
-	// TODO(samlaf): we use seconds for now, but we should ideally pass a blocknumber to the blsAggregationService
-	// and it should monitor the chain and only expire the task aggregation once the chain has reached that block
-	// number.
-	taskTimeToExpiry := taskChallengeWindowBlock * blockTimeSeconds * time.Second
-	var quorumNums types.QuorumNums
-	for _, quorumNum := range newTask.QuorumNumbers {
-		quorumNums = append(quorumNums, types.QuorumNum(quorumNum))
-	}
-	metadata := blsagg.NewTaskMetadata(
-		newTaskIndex,
-		newTask.TaskCreatedBlock,
-		quorumNums,
-		quorumThresholdPercentages,
-		taskTimeToExpiry,
-	)
-
-	return metadata, nil
-}
-
-func (tp *IncredibleTaskProcessor) ProcessTaskResponse(
-	ctx context.Context,
-	event aggregator.TaskResponse,
-) ([32]byte, error) {
-	return event.Digest(), nil
-}
-
+// This method sends the aggregated response to the on-chain Task Manager contract
 func (tp *IncredibleTaskProcessor) ProcessAggregatedResponse(
 	ctx context.Context,
 	response blsagg.BlsAggregationServiceResponse,
+	task challenger.GenericInputTask[*big.Int],
 ) error {
 	if response.Err != nil {
 		return utils.WrapError("BlsAggregationServiceResponse contains an error", response.Err)
@@ -248,20 +180,26 @@ func (tp *IncredibleTaskProcessor) ProcessAggregatedResponse(
 
 	tp.logger.Info("Threshold reached. Sending aggregated response onchain.", "taskIndex", response.TaskIndex)
 
-	tp.tasksMu.RLock()
-	task := tp.tasks[response.TaskIndex]
-	tp.tasksMu.RUnlock()
-
-	taskResponseAgg, ok := response.TaskResponse.(*IncredibleSquaringTaskResponse)
+	taskResponseAgg, ok := response.TaskResponse.(challenger.GenericOutputTaskResponse[*big.Int])
 	if !ok {
 		tp.logger.Error("task Response could not be converted to sdk aggregator's Task Response type")
 	}
 
-	taskResponse := cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse(*taskResponseAgg)
+	taskResponse := cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse{
+		ReferenceTaskIndex: taskResponseAgg.ReferenceTaskIndex,
+		NumberSquared:      taskResponseAgg.OutputValue,
+	}
+
+	incredibleSquaringTask := cstaskmanager.IIncredibleSquaringTaskManagerTask{
+		NumberToBeSquared:         task.InputValue,
+		TaskCreatedBlock:          task.TaskCreatedBlock,
+		QuorumNumbers:             task.QuorumNumbers,
+		QuorumThresholdPercentage: task.QuorumThresholdPercentage,
+	}
 
 	_, err := tp.avsWriter.SendAggregatedResponse(
 		context.Background(),
-		task,
+		incredibleSquaringTask,
 		taskResponse,
 		nonSignerStakesAndSignature,
 	)
