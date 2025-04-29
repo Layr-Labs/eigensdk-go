@@ -76,42 +76,6 @@ func main() {
 		logger.Fatalf(err.Error())
 	}
 
-	// This is the same hash function used by the operator to hash the task response before signing it.
-	hashFunction := func(taskResponse sdktypes.TaskResponse) (sdktypes.TaskResponseDigest, error) {
-		// The order here has to match the field ordering of cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse
-		taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
-			{
-				Name: "referenceTaskIndex",
-				Type: "uint32",
-			},
-			{
-				Name: "numberSquared",
-				Type: "uint256",
-			},
-		})
-		if err != nil {
-			return sdktypes.TaskResponseDigest{}, utils.WrapError("Error creating taskResponseType", err)
-		}
-		arguments := abi.Arguments{
-			{
-				Type: taskResponseType,
-			},
-		}
-
-		encodeTaskResponseByte, err := arguments.Pack(taskResponse)
-		if err != nil {
-			return sdktypes.TaskResponseDigest{}, utils.WrapError("Error Packing taskResponse", err)
-		}
-
-		var taskResponseDigest [32]byte
-		hasher := sha3.NewLegacyKeccak256()
-		hasher.Write(encodeTaskResponseByte)
-		copy(taskResponseDigest[:], hasher.Sum(nil)[:32])
-
-		return taskResponseDigest, nil
-	}
-	cfg.TaskResponseHashFn = hashFunction
-
 	agg, err := aggregator.NewAggregator[*big.Int, *big.Int](cfg, taskProcessor)
 	if err != nil {
 		logger.Fatalf(err.Error())
