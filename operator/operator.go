@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"reflect"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -195,9 +196,22 @@ func outputValueType[T any](value T) string {
 		return "uint32"
 	case *big.Int:
 		return "uint256"
-		// TODO: Add more cases
+	case common.Address:
+		return "address"
+	case []byte:
+		return "bytes"
+	case sdktypes.Bytes32: // Check if this is the same as using [32]byte
+		return "bytes"
 	default:
-		return ""
+		t := reflect.TypeOf(value)
+		switch t.Kind() {
+		case reflect.Slice:
+			return "tuple[]"
+		case reflect.Struct:
+			return "tuple"
+		default:
+			return "unknown"
+		}
 	}
 }
 
