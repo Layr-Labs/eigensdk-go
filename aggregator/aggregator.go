@@ -79,41 +79,45 @@ func NewAggregator[Input any, Output any](
 		c.Logger,
 	)
 
-	taskResponseHashFn := func(taskResponse sdktypes.TaskResponse) (sdktypes.TaskResponseDigest, error) {
-		taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
-			{
-				Name: "referenceTaskIndex",
-				Type: "uint32",
-			},
-			{
-				Name: "OutputValue", // Left because abi does not support purely anonymous or underscored fields
-				Type: c.TaskManagerAbi.Events["TaskResponded"].Inputs[0].Type.TupleElems[1].String(),
-			},
-		})
-		if err != nil {
-			return sdktypes.Bytes32{}, fmt.Errorf("error creating abi task response type: %w", err)
-		}
-		arguments := abi.Arguments{
-			{
-				Type: taskResponseType,
-			},
-		}
+	if c.TaskResponseHashFn == nil {
+		c.Logger.Info("task response hash function not provided in aggregator config, using the default one")
 
-		encodeTaskResponseByte, err := arguments.Pack(taskResponse)
-		if err != nil {
-			return sdktypes.Bytes32{}, fmt.Errorf("error encoding task response: %w", err)
+		c.TaskResponseHashFn = func(taskResponse sdktypes.TaskResponse) (sdktypes.TaskResponseDigest, error) {
+			taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
+				{
+					Name: "referenceTaskIndex",
+					Type: "uint32",
+				},
+				{
+					Name: "OutputValue", // Left because abi does not support purely anonymous or underscored fields
+					Type: c.TaskManagerAbi.Events["TaskResponded"].Inputs[0].Type.TupleElems[1].String(),
+				},
+			})
+			if err != nil {
+				return sdktypes.Bytes32{}, fmt.Errorf("error creating abi task response type: %w", err)
+			}
+			arguments := abi.Arguments{
+				{
+					Type: taskResponseType,
+				},
+			}
+
+			encodeTaskResponseByte, err := arguments.Pack(taskResponse)
+			if err != nil {
+				return sdktypes.Bytes32{}, fmt.Errorf("error encoding task response: %w", err)
+			}
+
+			var taskResponseDigest [32]byte
+			hasher := sha3.NewLegacyKeccak256()
+			hasher.Write(encodeTaskResponseByte)
+			copy(taskResponseDigest[:], hasher.Sum(nil)[:32])
+
+			return taskResponseDigest, nil
 		}
-
-		var taskResponseDigest [32]byte
-		hasher := sha3.NewLegacyKeccak256()
-		hasher.Write(encodeTaskResponseByte)
-		copy(taskResponseDigest[:], hasher.Sum(nil)[:32])
-
-		return taskResponseDigest, nil
 	}
 
 	avsRegistryService := avsregistryservice.NewAvsRegistryServiceChainCaller(clients.AvsRegistryChainReader, operatorPubkeysService, c.Logger)
-	blsAggregationService := blsagg.NewBlsAggregatorService(avsRegistryService, taskResponseHashFn, c.Logger)
+	blsAggregationService := blsagg.NewBlsAggregatorService(avsRegistryService, c.TaskResponseHashFn, c.Logger)
 
 	client, err := ethclient.Dial(c.EthWsUrl)
 	if err != nil {
