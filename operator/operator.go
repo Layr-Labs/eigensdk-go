@@ -38,7 +38,6 @@ type ResponseCalculationFunction[Input any, Output any] func(task sdktypes.Gener
 
 type TaskResponseHashFunction[Output any] func(taskResponse sdktypes.GenericOutputTaskResponse[Output]) ([32]byte, error)
 
-
 func extractTypeFromAbi(taskManagerAbi *abi.ABI) (abi.Type, error) {
 	taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
 		{
