@@ -194,7 +194,7 @@ func (o *Operator[Input, Output]) signTaskResponse(
 			Type: "uint32",
 		},
 		{
-			Name: "OutputValue",
+			Name: "OutputValue", // Left because abi does not support purely anonymous or underscored fields
 			Type: o.taskManagerAbi.Events["TaskResponded"].Inputs[0].Type.TupleElems[1].String(),
 		},
 	})
