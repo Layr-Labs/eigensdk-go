@@ -185,42 +185,9 @@ func (o *Operator[Input, Output]) processNewTaskCreatedLog(
 	return &taskResponse, nil
 }
 
-// func outputValueType[T any](value T) string {
-// 	switch any(value).(type) {
-// 	case string:
-// 		return "string"
-// 	case int:
-// 		return "uint32"
-// 	case *big.Int:
-// 		return "uint256"
-// 	case common.Address:
-// 		return "address"
-// 	case []byte:
-// 		return "bytes"
-// 	case sdktypes.Bytes32: // Check if this is the same as using [32]byte
-// 		return "bytes"
-// 	default:
-// 		t := reflect.TypeOf(value)
-// 		switch t.Kind() {
-// 		case reflect.Slice:
-// 			return "tuple[]"
-// 		case reflect.Struct:
-// 			return "tuple"
-// 		default:
-// 			return "unknown"
-// 		}
-// 	}
-// }
-
 func (o *Operator[Input, Output]) signTaskResponse(
 	taskResponse *sdktypes.GenericOutputTaskResponse[Output],
 ) (*sdkaggregator.SignedTaskResponse[Output], error) {
-	// Calculate the abi output type depending on generic Output type
-	// taskResponseType, err := abiTypeFromOutputValue(taskResponse.OutputValue)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
 	taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
 		{
 			Name: "referenceTaskIndex",
