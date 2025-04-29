@@ -7,7 +7,6 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	sdkoperator "github.com/Layr-Labs/eigensdk-go/operator"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 
 	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/bindings/taskManager"
 )
@@ -37,40 +36,6 @@ func main() {
 		return taskResponse, nil
 	}
 
-	abiEncodingFn := func(taskResponse sdktypes.GenericOutputTaskResponse[*big.Int]) ([]byte, error) {
-		// The order here has to match the field ordering of cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse
-		taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
-			{
-				Name: "referenceTaskIndex",
-				Type: "uint32",
-			},
-			{
-				Name: "numberSquared",
-				Type: "uint256",
-			},
-		})
-		if err != nil {
-			return nil, err
-		}
-		arguments := abi.Arguments{
-			{
-				Type: taskResponseType,
-			},
-		}
-
-		incredibleTaskResponse := cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse{
-			ReferenceTaskIndex: taskResponse.ReferenceTaskIndex,
-			NumberSquared:      taskResponse.OutputValue,
-		}
-
-		bytes, err := arguments.Pack(incredibleTaskResponse)
-		if err != nil {
-			return nil, err
-		}
-
-		return bytes, nil
-	}
-
 	// The values from this config are extracted from an incredible squaring config file:
 	// https://github.com/Layr-Labs/incredible-squaring-avs/blob/dev/config-files/operator.anvil.yaml
 	operatorConfig := sdkoperator.OperatorConfig{
@@ -86,7 +51,7 @@ func main() {
 		TaskManagerAbi:                taskManagerAbi,
 	}
 
-	operator, err := sdkoperator.NewOperatorFromConfig(operatorConfig, responseCalcFunction, abiEncodingFn)
+	operator, err := sdkoperator.NewOperatorFromConfig(operatorConfig, responseCalcFunction)
 	if err != nil {
 		logger.Errorf("Failed to create operator from config: %v", err)
 		return

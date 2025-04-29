@@ -31,17 +31,13 @@ type Operator[Input any, Output any] struct {
 	newTaskCreatedLogs    chan types.Log
 	taskManagerAbi        *abi.ABI
 	responseCalculationFn ResponseCalculationFunction[Input, Output]
-	AbiEncodingFn         AbiEncodeFunction[Output]
 }
 
 type ResponseCalculationFunction[Input any, Output any] func(task sdktypes.GenericInputTask[Input], taskIndex uint32) (sdktypes.GenericOutputTaskResponse[Output], error)
 
-type AbiEncodeFunction[Output any] func(task sdktypes.GenericOutputTaskResponse[Output]) ([]byte, error)
-
 func NewOperatorFromConfig[Input any, Output any](
 	c OperatorConfig,
 	responseCalculationFn ResponseCalculationFunction[Input, Output],
-	abiEncodingFn AbiEncodeFunction[Output],
 ) (*Operator[Input, Output], error) {
 	avs_config := avsregistry.Config{
 		RegistryCoordinatorAddress:    common.HexToAddress(c.AVSRegistryCoordinatorAddress),
@@ -122,7 +118,6 @@ func NewOperatorFromConfig[Input any, Output any](
 		newTaskCreatedLogs:    newTaskCreatedLogs,
 		taskManagerAbi:        c.TaskManagerAbi,
 		responseCalculationFn: responseCalculationFn,
-		AbiEncodingFn:         abiEncodingFn,
 	}
 
 	c.Logger.Info("Operator info",
@@ -151,6 +146,7 @@ func (o *Operator[Input, Output]) Start(ctx context.Context) error {
 			}
 			signedTaskResponse, err := o.signTaskResponse(taskResponse)
 			if err != nil {
+				o.logger.Info("Error signing task response", "err", err)
 				continue
 			}
 			go o.aggregatorRpcClient.SendSignedTaskResponseToAggregator(signedTaskResponse)
@@ -192,7 +188,26 @@ func (o *Operator[Input, Output]) processNewTaskCreatedLog(
 func (o *Operator[Input, Output]) signTaskResponse(
 	taskResponse *sdktypes.GenericOutputTaskResponse[Output],
 ) (*sdkaggregator.SignedTaskResponse[Output], error) {
-	encodeTaskResponseByte, err := o.AbiEncodingFn(*taskResponse)
+	taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
+		{
+			Name: "referenceTaskIndex",
+			Type: "uint32",
+		},
+		{
+			Name: "OutputValue", // Left because abi does not support purely anonymous or underscored fields
+			Type: o.taskManagerAbi.Events["TaskResponded"].Inputs[0].Type.TupleElems[1].String(),
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error creating abi task response type: %w", err)
+	}
+	arguments := abi.Arguments{
+		{
+			Type: taskResponseType,
+		},
+	}
+
+	encodeTaskResponseByte, err := arguments.Pack(taskResponse)
 	if err != nil {
 		return nil, fmt.Errorf("error encoding task response: %w", err)
 	}
