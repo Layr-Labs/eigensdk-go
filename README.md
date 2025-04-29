@@ -15,12 +15,14 @@ go get github.com/Layr-Labs/eigensdk-go
 ```
 
 ## Modules
-We support following modules right now. 
-> **_NOTE:_** All modules are in active development and interfaces might change. 
-* [Logging](./logging/README.md)
-* [Signer](./signer/README.md)
-* [ChainIO](./chainio/README.md)
-* [Services](./services/README.md)
+We support following modules right now.
+> **_NOTE:_** All modules are in active development and interfaces might change.
+
+* [Logging](./logging)
+* [ECDSA Signer](./signerv2)
+* [BLS Signer](./signer)
+* [ChainIO](./chainio)
+* [Services](./services)
 
 ## Development
 Clone the repo

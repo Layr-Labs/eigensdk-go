@@ -23,7 +23,6 @@ type AggregatorRpcClient[Output any] struct {
 func NewAggregatorRpcClient[Output any](
 	aggregatorIpPortAddr string,
 	logger logging.Logger,
-	// metrics metrics.Metrics,
 ) (*AggregatorRpcClient[Output], error) {
 	return &AggregatorRpcClient[Output]{
 		// set to nil so that we can create an rpc client even if the aggregator is not running
