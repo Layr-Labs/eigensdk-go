@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/big"
 	"os"
-	"reflect"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -35,8 +34,6 @@ type Operator[Input any, Output any] struct {
 }
 
 type ResponseCalculationFunction[Input any, Output any] func(task sdktypes.GenericInputTask[Input], taskIndex uint32) (sdktypes.GenericOutputTaskResponse[Output], error)
-
-type AbiEncodeFunction[Output any] func(task sdktypes.GenericOutputTaskResponse[Output]) ([]byte, error)
 
 func NewOperatorFromConfig[Input any, Output any](
 	c OperatorConfig,
@@ -188,38 +185,41 @@ func (o *Operator[Input, Output]) processNewTaskCreatedLog(
 	return &taskResponse, nil
 }
 
-func outputValueType[T any](value T) string {
-	switch any(value).(type) {
-	case string:
-		return "string"
-	case int:
-		return "uint32"
-	case *big.Int:
-		return "uint256"
-	case common.Address:
-		return "address"
-	case []byte:
-		return "bytes"
-	case sdktypes.Bytes32: // Check if this is the same as using [32]byte
-		return "bytes"
-	default:
-		t := reflect.TypeOf(value)
-		switch t.Kind() {
-		case reflect.Slice:
-			return "tuple[]"
-		case reflect.Struct:
-			return "tuple"
-		default:
-			return "unknown"
-		}
-	}
-}
+// func outputValueType[T any](value T) string {
+// 	switch any(value).(type) {
+// 	case string:
+// 		return "string"
+// 	case int:
+// 		return "uint32"
+// 	case *big.Int:
+// 		return "uint256"
+// 	case common.Address:
+// 		return "address"
+// 	case []byte:
+// 		return "bytes"
+// 	case sdktypes.Bytes32: // Check if this is the same as using [32]byte
+// 		return "bytes"
+// 	default:
+// 		t := reflect.TypeOf(value)
+// 		switch t.Kind() {
+// 		case reflect.Slice:
+// 			return "tuple[]"
+// 		case reflect.Struct:
+// 			return "tuple"
+// 		default:
+// 			return "unknown"
+// 		}
+// 	}
+// }
 
 func (o *Operator[Input, Output]) signTaskResponse(
 	taskResponse *sdktypes.GenericOutputTaskResponse[Output],
 ) (*sdkaggregator.SignedTaskResponse[Output], error) {
 	// Calculate the abi output type depending on generic Output type
-	abiOutputType := outputValueType(taskResponse.OutputValue)
+	// taskResponseType, err := abiTypeFromOutputValue(taskResponse.OutputValue)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
 		{
@@ -228,11 +228,11 @@ func (o *Operator[Input, Output]) signTaskResponse(
 		},
 		{
 			Name: "OutputValue",
-			Type: abiOutputType,
+			Type: o.taskManagerAbi.Events["TaskResponded"].Inputs[0].Type.TupleElems[1].String(),
 		},
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating abi task response type: %w", err)
 	}
 	arguments := abi.Arguments{
 		{
