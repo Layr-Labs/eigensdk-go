@@ -188,17 +188,17 @@ func (o *Operator[Input, Output]) processNewTaskCreatedLog(
 }
 
 func outputValueType[T any](value T) string {
-    switch any(value).(type) {
-    case string:
+	switch any(value).(type) {
+	case string:
 		return "string"
-    case int:
+	case int:
 		return "uint32"
-    case *big.Int:
+	case *big.Int:
 		return "uint256"
-	// TODO: Add more cases
-    default:
+		// TODO: Add more cases
+	default:
 		return ""
-    }
+	}
 }
 
 func (o *Operator[Input, Output]) signTaskResponse(
