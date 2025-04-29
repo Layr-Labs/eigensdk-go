@@ -4,10 +4,9 @@ import (
 	"context"
 	"fmt"
 	"math/big"
-	"sync"
-	"time"
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
+	taskprocessor "github.com/Layr-Labs/eigensdk-go/task-processor"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum"
@@ -23,12 +22,7 @@ import (
 	oprsinfoserv "github.com/Layr-Labs/eigensdk-go/services/operatorsinfo"
 )
 
-const (
-	// number of blocks after which a task is considered expired this hardcoded here because it's also
-	//  hardcoded in the contracts, but should ideally be fetched from the contracts
-	taskChallengeWindowBlock = 100
-	blockTimeSeconds         = 12 * time.Second
-)
+
 
 type TaskProcessor[Input any] interface {
 	ProcessAggregatedResponse(ctx context.Context, response blsagg.BlsAggregationServiceResponse, task sdktypes.GenericInputTask[Input]) error
@@ -43,10 +37,9 @@ type Aggregator[Input any, Output any] struct {
 	taskProcessor         TaskProcessor[Input]
 	newTaskCreatedLogs    chan types.Log
 
-	tasks   map[sdktypes.TaskIndex]sdktypes.GenericInputTask[Input]
-	tasksMu sync.RWMutex
-
 	taskManagerAbi *abi.ABI
+
+	indexingTaskProcessor	taskprocessor.IndexingTaskProcessor[Input, Output]
 }
 
 func extractTypeFromAbi(taskManagerAbi *abi.ABI) (abi.Type, error) {
@@ -157,7 +150,6 @@ func NewAggregator[Input any, Output any](
 		blsAggregationService: blsAggregationService,
 		taskProcessor:         taskProcessor,
 		newTaskCreatedLogs:    newTaskCreatedLogs,
-		tasks:                 make(map[sdktypes.TaskIndex]sdktypes.GenericInputTask[Input]),
 		taskManagerAbi:        c.TaskManagerAbi,
 	}, nil
 }
@@ -203,29 +195,11 @@ func (agg *Aggregator[Input, Output]) processNewTask(ctx context.Context, log ty
 	agg.logger.Infof("Aggregator received new task: %v: ", newTaskCreatedLog)
 
 	newTask := newTaskCreatedLog.Task
-	agg.tasksMu.Lock()
-	agg.tasks[newTaskIndex] = newTask
-	agg.tasksMu.Unlock()
 
-	quorumThresholdPercentages := make(sdktypes.QuorumThresholdPercentages, len(newTask.QuorumNumbers))
-	for i := range newTask.QuorumNumbers {
-		quorumThresholdPercentages[i] = sdktypes.QuorumThresholdPercentage(newTask.QuorumThresholdPercentage)
+	metadata, err := agg.indexingTaskProcessor.ProcessNewTask(newTaskIndex, newTask)
+	if err != nil {
+		return blsagg.TaskMetadata{}, err
 	}
-	// TODO(samlaf): we use seconds for now, but we should ideally pass a blocknumber to the blsAggregationService
-	// and it should monitor the chain and only expire the task aggregation once the chain has reached that block
-	// number.
-	taskTimeToExpiry := taskChallengeWindowBlock * blockTimeSeconds
-	var quorumNums sdktypes.QuorumNums
-	for _, quorumNum := range newTask.QuorumNumbers {
-		quorumNums = append(quorumNums, sdktypes.QuorumNum(quorumNum))
-	}
-	metadata := blsagg.NewTaskMetadata(
-		newTaskIndex,
-		newTask.TaskCreatedBlock,
-		quorumNums,
-		quorumThresholdPercentages,
-		taskTimeToExpiry,
-	)
 
 	return metadata, nil
 }
@@ -238,11 +212,7 @@ func (agg *Aggregator[Input, Output]) processAggregatedResponse(
 		return utils.WrapError("BlsAggregationServiceResponse contains an error", response.Err)
 	}
 
-	agg.tasksMu.RLock()
-	task := agg.tasks[response.TaskIndex]
-	agg.tasksMu.RUnlock()
-
-	err := agg.taskProcessor.ProcessAggregatedResponse(ctx, response, task)
+	err := agg.indexingTaskProcessor.ProcessAggregatedResponse(response)
 	if err != nil {
 		return utils.WrapError("Aggregator failed to respond to task", err)
 	}
