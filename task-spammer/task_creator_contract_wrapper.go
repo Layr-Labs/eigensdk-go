@@ -5,7 +5,9 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/utils"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
 )
 
@@ -16,6 +18,20 @@ type TaskManagerTaskContract[Input any] interface {
 type taskCreatorContractWrapper[Input any] struct {
 	contract TaskManagerTaskContract[Input]
 	txMgr    txmgr.TxManager
+}
+
+type taskManagerAbiContract[Input any] struct {
+	contract *bind.BoundContract
+}
+
+func (tm taskManagerAbiContract[Input]) CreateNewTask(opts *bind.TransactOpts, input Input, quorumThresholdPercentage uint32, quorumNumbers []byte) (*gethtypes.Transaction, error) {
+	return tm.contract.Transact(opts, "createNewTask", input, quorumThresholdPercentage, quorumNumbers)
+}
+
+func NewTaskCreatorFromAbi[Input any](address common.Address, abi abi.ABI, txMgr txmgr.TxManager) TaskCreator[Input] {
+	boundContract := bind.NewBoundContract(address, abi, nil, nil, nil)
+	contract := taskManagerAbiContract[Input]{boundContract}
+	return &taskCreatorContractWrapper[Input]{contract, txMgr}
 }
 
 func NewTaskCreatorFromContract[Input any](contract TaskManagerTaskContract[Input], txMgr txmgr.TxManager) TaskCreator[Input] {
