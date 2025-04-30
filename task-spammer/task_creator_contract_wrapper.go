@@ -28,12 +28,16 @@ func (tm taskManagerAbiContract[Input]) CreateNewTask(opts *bind.TransactOpts, i
 	return tm.contract.Transact(opts, "createNewTask", input, quorumThresholdPercentage, quorumNumbers)
 }
 
-func NewTaskCreatorFromAbi[Input any](address common.Address, abi abi.ABI, txMgr txmgr.TxManager) TaskCreator[Input] {
-	boundContract := bind.NewBoundContract(address, abi, nil, nil, nil)
+// Creates a TaskCreator from an address and ABI.
+// Returns an error in case the ABI is not compatible.
+func NewTaskCreatorFromAbi[Input any](address common.Address, abi abi.ABI, txMgr txmgr.TxManager, httpClient bind.ContractBackend) (TaskCreator[Input], error) {
+	boundContract := bind.NewBoundContract(address, abi, httpClient, httpClient, httpClient)
+	// TODO: check if the ABI is compatible
 	contract := taskManagerAbiContract[Input]{boundContract}
-	return &taskCreatorContractWrapper[Input]{contract, txMgr}
+	return NewTaskCreatorFromContract(contract, txMgr), nil
 }
 
+// Creates a TaskCreator from a contract implementing the given interface.
 func NewTaskCreatorFromContract[Input any](contract TaskManagerTaskContract[Input], txMgr txmgr.TxManager) TaskCreator[Input] {
 	return &taskCreatorContractWrapper[Input]{contract, txMgr}
 }

@@ -40,15 +40,15 @@ func main() {
 	// This value is extracted from the deployment output files
 	taskManagerAddress := common.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3")
 
-	contractTaskManager, err := cstaskmanager.NewContractIncredibleSquaringTaskManager(
-		taskManagerAddress,
-		ethHttpClient,
-	)
+	abi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
 	if err != nil {
 		return
 	}
 
-	taskCreator := taskspammer.NewTaskCreatorFromContract(contractTaskManager, txMgr)
+	taskCreator, err := taskspammer.NewTaskCreatorFromAbi[*big.Int](taskManagerAddress, *abi, txMgr, ethHttpClient)
+	if err != nil {
+		return
+	}
 
 	taskSpammerConfig := taskspammer.Config{
 		Logger: logger,
