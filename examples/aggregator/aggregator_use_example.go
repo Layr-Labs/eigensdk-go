@@ -12,7 +12,6 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/testutils"
 	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -64,15 +63,7 @@ func main() {
 		TaskManagerAbi:                taskManagerAbi,
 	}
 
-	contractServiceManager, err := csservicemanager.NewContractIncredibleSquaringServiceManager(cfg.ServiceManagerAddress, ethHttpClient)
-	if err != nil {
-		logger.Fatalf(err.Error())
-	}
-
-	taskManagerAddr, err := contractServiceManager.IncredibleSquaringTaskManager(&bind.CallOpts{})
-	if err != nil {
-		logger.Fatalf(err.Error())
-	}
+	taskManagerAddr := common.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3")
 
 	contractTaskManager, err := cstaskmanager.NewContractIncredibleSquaringTaskManager(taskManagerAddr, ethHttpClient)
 	if err != nil {
