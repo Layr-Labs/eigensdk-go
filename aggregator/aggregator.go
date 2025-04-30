@@ -102,8 +102,8 @@ func NewAggregator[Input any, Output any](
 		logger:                c.Logger,
 		serverIpPortAddr:      c.AggregatorServerIpPortAddr,
 		blsAggregationService: blsAggregationService,
-		newTaskCreatedLogs: newTaskCreatedLogs,
-		taskManagerAbi:     c.TaskManagerAbi,
+		newTaskCreatedLogs:    newTaskCreatedLogs,
+		taskManagerAbi:        c.TaskManagerAbi,
 		indexingTaskProcessor: indexingTaskProcessor,
 	}, nil
 }

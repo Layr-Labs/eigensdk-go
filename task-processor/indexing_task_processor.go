@@ -1,7 +1,6 @@
 package taskprocessor
 
 import (
-	"fmt"
 	"math/big"
 	"sync"
 	"time"
@@ -12,18 +11,16 @@ import (
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"golang.org/x/crypto/sha3"
 )
 
 type IndexingTaskProcessor[Input any, Output any] struct {
 	tasks   map[sdktypes.TaskIndex]sdktypes.GenericInputTask[Input]
 	tasksMu sync.RWMutex
 
-	taskResponses   map[sdktypes.TaskIndex]sdktypes.GenericOutputTaskResponse[Output]
-//	taskResponsesMu sync.RWMutex
+	taskResponses map[sdktypes.TaskIndex]sdktypes.GenericOutputTaskResponse[Output]
+	//	taskResponsesMu sync.RWMutex
 
-	taskResponseHashFn  sdktypes.TaskResponseHashFunction
-	taskManagerAbi      *abi.ABI
+	taskManagerAbi *abi.ABI
 
 	taskResponder TaskResponder[Input, Output]
 
@@ -32,6 +29,7 @@ type IndexingTaskProcessor[Input any, Output any] struct {
 
 type TaskResponder[Input any, Output any] interface {
 	RespondToTask(task sdktypes.GenericInputTask[Input], taskResponse sdktypes.GenericOutputTaskResponse[Output], nonSignersStakesAndSig sdktypes.NonSignerStakesAndSignature) error
+	PackTaskResponse(taskResponse sdktypes.GenericOutputTaskResponse[Output]) (sdktypes.TaskResponseDigest, error)
 }
 
 const (
@@ -41,71 +39,17 @@ const (
 	blockTimeSeconds         = 12 * time.Second
 )
 
-func extractTypeFromAbi(taskManagerAbi *abi.ABI) (abi.Type, error) {
-	taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
-		{
-			Name: "referenceTaskIndex",
-			Type: "uint32",
-		},
-		{
-			Name: "OutputValue", // Left because abi does not support purely anonymous or underscored fields
-			Type: taskManagerAbi.Events["TaskResponded"].Inputs[0].Type.TupleElems[1].String(),
-		},
-	})
-	if err != nil {
-		return abi.Type{}, fmt.Errorf("error creating abi task response type: %w", err)
-	}
-
-	return taskResponseType, nil
-}
-
-func getDefaultHashFunction(taskResponseType abi.Type) sdktypes.TaskResponseHashFunction {
-	return func(taskResponse sdktypes.TaskResponse) (sdktypes.TaskResponseDigest, error) {
-		arguments := abi.Arguments{
-			{
-				Type: taskResponseType,
-			},
-		}
-
-		encodeTaskResponseByte, err := arguments.Pack(taskResponse)
-		if err != nil {
-			return sdktypes.Bytes32{}, fmt.Errorf("error encoding task response: %w", err)
-		}
-
-		var taskResponseDigest [32]byte
-		hasher := sha3.NewLegacyKeccak256()
-		hasher.Write(encodeTaskResponseByte)
-		copy(taskResponseDigest[:], hasher.Sum(nil)[:32])
-
-		return taskResponseDigest, nil
-	}
-}
-
 func NewIndexingTaskProcessor[Input any, Output any](
-	hashFn sdktypes.TaskResponseHashFunction, 
-	taskManagerAbi *abi.ABI, 
+	taskManagerAbi *abi.ABI,
 	logger logging.Logger,
 	taskResponder TaskResponder[Input, Output],
-	) (*IndexingTaskProcessor[Input, Output], error) {
-	if hashFn == nil {
-		logger.Info("task response hash function not provided in aggregator config, using the default one")
-
-		taskResponseType, err := extractTypeFromAbi(taskManagerAbi)
-		if err != nil {
-			logger.Error("Failed to get task response type in default abi.", "err", err)
-			return nil, err
-		}
-
-		hashFn = getDefaultHashFunction(taskResponseType)
-	}
-	
+) (*IndexingTaskProcessor[Input, Output], error) {
 	return &IndexingTaskProcessor[Input, Output]{
 		tasks:          make(map[sdktypes.TaskIndex]sdktypes.GenericInputTask[Input]),
 		taskResponses:  make(map[sdktypes.TaskIndex]sdktypes.GenericOutputTaskResponse[Output]),
 		taskManagerAbi: taskManagerAbi,
-		taskResponseHashFn: hashFn,
-		taskResponder: taskResponder,
-		logger: logger,
+		taskResponder:  taskResponder,
+		logger:         logger,
 	}, nil
 }
 
@@ -144,7 +88,7 @@ func (itp *IndexingTaskProcessor[Input, Output]) ProcessNewTask(
 }
 
 func (itp *IndexingTaskProcessor[Input, Output]) ProcessTaskResponse(taskResponse sdktypes.GenericOutputTaskResponse[Output]) ([32]byte, error) {
-	return itp.taskResponseHashFn(taskResponse)
+	return itp.taskResponder.PackTaskResponse(taskResponse)
 }
 
 func (itp *IndexingTaskProcessor[Input, Output]) ProcessAggregatedResponse(response blsagg.BlsAggregationServiceResponse) error {

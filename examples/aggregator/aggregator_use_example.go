@@ -2,15 +2,17 @@ package aggregator_example
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 
 	"github.com/Layr-Labs/eigensdk-go/aggregator"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
-	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
+	taskprocessor "github.com/Layr-Labs/eigensdk-go/task-processor"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
-	"github.com/Layr-Labs/eigensdk-go/utils"
+	"github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -18,16 +20,7 @@ import (
 
 	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/bindings/taskManager"
 	taskspammerexample "github.com/Layr-Labs/eigensdk-go/examples/task-spammer"
-	blsagg "github.com/Layr-Labs/eigensdk-go/services/bls_aggregation"
-	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
-	gethtypes "github.com/ethereum/go-ethereum/core/types"
 )
-
-type TaskResponseData struct {
-	TaskResponse              cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse
-	TaskResponseMetadata      cstaskmanager.IIncredibleSquaringTaskManagerTaskResponseMetadata
-	NonSigningOperatorPubKeys []cstaskmanager.BN254G1Point
-}
 
 func main() {
 	logger, err := logging.NewZapLogger(logging.Production) // Change here if want to change logging level
@@ -71,12 +64,29 @@ func main() {
 		TaskManagerAbi:                taskManagerAbi,
 	}
 
-	taskProcessor, err := NewTaskProcessor(&cfg, txMgr)
+	contractServiceManager, err := csservicemanager.NewContractIncredibleSquaringServiceManager(cfg.ServiceManagerAddress, ethHttpClient)
 	if err != nil {
 		logger.Fatalf(err.Error())
 	}
 
-	agg, err := aggregator.NewAggregator[*big.Int, *big.Int](cfg, taskProcessor)
+	taskManagerAddr, err := contractServiceManager.IncredibleSquaringTaskManager(&bind.CallOpts{})
+	if err != nil {
+		logger.Fatalf(err.Error())
+	}
+
+	contractTaskManager, err := cstaskmanager.NewContractIncredibleSquaringTaskManager(taskManagerAddr, ethHttpClient)
+	if err != nil {
+		logger.Fatalf(err.Error())
+	}
+
+	taskResponder := NewTaskResponder(taskManagerAbi, contractTaskManager, txMgr)
+
+	taskProcessor, err := taskprocessor.NewIndexingTaskProcessor(taskManagerAbi, logger, taskResponder)
+	if err != nil {
+		logger.Fatalf(err.Error())
+	}
+
+	agg, err := aggregator.NewAggregator(cfg, taskProcessor)
 	if err != nil {
 		logger.Fatalf(err.Error())
 	}
@@ -87,227 +97,98 @@ func main() {
 	}
 }
 
-type IncredibleTaskProcessor struct {
-	logger    logging.Logger
-	avsWriter AvsWriter
+type TaskResponder struct {
+	taskManagerAbi *abi.ABI
+
+	taskManagerContract *cstaskmanager.ContractIncredibleSquaringTaskManager
+	txMgr               txmgr.TxManager
 }
 
-var _ aggregator.TaskProcessor[*big.Int] = (*IncredibleTaskProcessor)(nil)
-
-func NewTaskProcessor(c *aggregator.AggregatorConfig, txMgr txmgr.TxManager) (*IncredibleTaskProcessor, error) {
-	avsConfig := AvsConfig{
-		Logger: c.Logger,
-		//IncredibleSquaringTaskManager: taskMana,
-		TxMgr:         txMgr,
-		EthHttpClient: c.EthHttpClient,
+func NewTaskResponder(taskManagerAbi *abi.ABI, taskManagerContract *cstaskmanager.ContractIncredibleSquaringTaskManager, txMgr txmgr.TxManager) TaskResponder {
+	return TaskResponder{
+		taskManagerAbi:      taskManagerAbi,
+		taskManagerContract: taskManagerContract,
+		txMgr:               txMgr,
 	}
-	avsWriter, err := BuildAvsWriterFromConfig(&avsConfig)
-	if err != nil {
-		c.Logger.Errorf("Cannot create avsWriter", "err", err)
-		return nil, err
-	}
-
-	return &IncredibleTaskProcessor{
-		logger:    c.Logger,
-		avsWriter: *avsWriter,
-	}, nil
 }
 
-// This method sends the aggregated response to the on-chain Task Manager contract
-func (tp *IncredibleTaskProcessor) ProcessAggregatedResponse(
-	ctx context.Context,
-	response blsagg.BlsAggregationServiceResponse,
-	task sdktypes.GenericInputTask[*big.Int],
-) error {
-	if response.Err != nil {
-		return utils.WrapError("BlsAggregationServiceResponse contains an error", response.Err)
-	}
-	nonSignerPubkeys := []cstaskmanager.BN254G1Point{}
-	for _, nonSignerPubkey := range response.NonSignersPubkeysG1 {
-		nonSignerPubkeys = append(nonSignerPubkeys, ConvertToBN254G1Point(nonSignerPubkey))
-	}
-	quorumApks := []cstaskmanager.BN254G1Point{}
-	for _, quorumApk := range response.QuorumApksG1 {
-		quorumApks = append(quorumApks, ConvertToBN254G1Point(quorumApk))
-	}
-	nonSignerStakesAndSignature := cstaskmanager.IBLSSignatureCheckerTypesNonSignerStakesAndSignature{
-		NonSignerPubkeys:             nonSignerPubkeys,
-		QuorumApks:                   quorumApks,
-		ApkG2:                        ConvertToBN254G2Point(response.SignersApkG2),
-		Sigma:                        ConvertToBN254G1Point(response.SignersAggSigG1.G1Point),
-		NonSignerQuorumBitmapIndices: response.NonSignerQuorumBitmapIndices,
-		QuorumApkIndices:             response.QuorumApkIndices,
-		TotalStakeIndices:            response.TotalStakeIndices,
-		NonSignerStakeIndices:        response.NonSignerStakeIndices,
-	}
+func (tr TaskResponder) RespondToTask(task types.GenericInputTask[*big.Int], taskResponse types.GenericOutputTaskResponse[*big.Int], nonSignersStakesAndSig types.NonSignerStakesAndSignature) error {
 
-	tp.logger.Info("Threshold reached. Sending aggregated response onchain.", "taskIndex", response.TaskIndex)
-
-	taskResponseAgg, ok := response.TaskResponse.(sdktypes.GenericOutputTaskResponse[*big.Int])
-	if !ok {
-		tp.logger.Error("task Response could not be converted to sdk aggregator's Task Response type")
-	}
-
-	taskResponse := cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse{
-		ReferenceTaskIndex: taskResponseAgg.ReferenceTaskIndex,
-		NumberSquared:      taskResponseAgg.OutputValue,
-	}
-
-	incredibleSquaringTask := cstaskmanager.IIncredibleSquaringTaskManagerTask{
+	incredibleTask := cstaskmanager.IIncredibleSquaringTaskManagerTask{
 		NumberToBeSquared:         task.InputValue,
 		TaskCreatedBlock:          task.TaskCreatedBlock,
 		QuorumNumbers:             task.QuorumNumbers,
 		QuorumThresholdPercentage: task.QuorumThresholdPercentage,
 	}
 
-	_, err := tp.avsWriter.SendAggregatedResponse(
-		context.Background(),
-		incredibleSquaringTask,
-		taskResponse,
-		nonSignerStakesAndSignature,
-	)
+	incredibleTaskResponse := cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse{}
+
+	incredibleNonSignersStakesAndSig := cstaskmanager.IBLSSignatureCheckerTypesNonSignerStakesAndSignature{}
+
+	txOpts, err := tr.txMgr.GetNoSendTxOpts()
 	if err != nil {
-		return utils.WrapError("Aggregator failed to respond to task", err)
+		return err
 	}
+
+	tx, err := tr.taskManagerContract.RespondToTask(txOpts, incredibleTask, incredibleTaskResponse, incredibleNonSignersStakesAndSig)
+	if err != nil {
+		return err
+	}
+
+	_, err = tr.txMgr.Send(context.Background(), tx, true)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-type IncredibleSquaringTaskResponse struct {
-	ReferenceTaskIndex uint32
-	NumberSquared      *big.Int
-}
-
-func (tr IncredibleSquaringTaskResponse) TaskIndex() sdktypes.TaskIndex {
-	return tr.ReferenceTaskIndex
-}
-
-func (tr IncredibleSquaringTaskResponse) Digest() [32]byte {
-	tmresponse := cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse(tr)
-	taskResponseHash, err := GetTaskResponseDigest(&tmresponse)
+func (tr TaskResponder) PackTaskResponse(taskResponse types.GenericOutputTaskResponse[*big.Int]) (types.Bytes32, error) {
+	abiType, err := extractTypeFromAbi(tr.taskManagerAbi)
 	if err != nil {
-		return [32]byte{}
+		return [32]byte{}, err
 	}
-	return taskResponseHash
+	hashFn := getDefaultHashFunction(abiType)
+
+	return hashFn(taskResponse)
 }
 
-// Avs Writer
-type AvsConfig struct {
-	Logger                        logging.Logger
-	IncredibleSquaringTaskManager common.Address
-	TxMgr                         txmgr.TxManager
-	EthHttpClient                 *ethclient.Client
-}
-
-type AvsWriter struct {
-	logger              logging.Logger
-	TxMgr               txmgr.TxManager
-	taskManagerContract *cstaskmanager.ContractIncredibleSquaringTaskManager
-}
-
-func BuildAvsWriterFromConfig(c *AvsConfig) (*AvsWriter, error) {
-	contractTaskManager, err := cstaskmanager.NewContractIncredibleSquaringTaskManager(
-		c.IncredibleSquaringTaskManager,
-		c.EthHttpClient,
-	)
-	if err != nil {
-		return nil, utils.WrapError("Failed to fetch task manager contract", err)
-	}
-
-	return &AvsWriter{
-		logger:              c.Logger,
-		TxMgr:               c.TxMgr,
-		taskManagerContract: contractTaskManager,
-	}, nil
-}
-
-func (w *AvsWriter) SendAggregatedResponse(
-	ctx context.Context, task cstaskmanager.IIncredibleSquaringTaskManagerTask,
-	taskResponse cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse,
-	nonSignerStakesAndSignature cstaskmanager.IBLSSignatureCheckerTypesNonSignerStakesAndSignature,
-) (*gethtypes.Receipt, error) {
-	txOpts, err := w.TxMgr.GetNoSendTxOpts()
-	if err != nil {
-		w.logger.Errorf("Error getting tx opts")
-		return nil, err
-	}
-	tx, err := w.taskManagerContract.RespondToTask(txOpts, task, taskResponse, nonSignerStakesAndSignature)
-	if err != nil {
-		w.logger.Error("Error submitting SubmitTaskResponse tx while calling respondToTask", "err", err)
-		return nil, err
-	}
-	receipt, err := w.TxMgr.Send(ctx, tx, true)
-	if err != nil {
-		w.logger.Errorf("Error submitting respondToTask tx")
-		return nil, err
-	}
-	w.logger.Info("tx hash :respond to task")
-	return receipt, nil
-}
-
-// Incredible Squaring Utils
-// this hardcodes abi.encode() for cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse
-// unclear why abigen doesn't provide this out of the box...
-func AbiEncodeTaskResponse(h *cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse) ([]byte, error) {
-
-	// The order here has to match the field ordering of cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse
+func extractTypeFromAbi(taskManagerAbi *abi.ABI) (abi.Type, error) {
 	taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
 		{
 			Name: "referenceTaskIndex",
 			Type: "uint32",
 		},
 		{
-			Name: "numberSquared",
-			Type: "uint256",
+			Name: "OutputValue", // Left because abi does not support purely anonymous or underscored fields
+			Type: taskManagerAbi.Events["TaskResponded"].Inputs[0].Type.TupleElems[1].String(),
 		},
 	})
 	if err != nil {
-		return nil, err
-	}
-	arguments := abi.Arguments{
-		{
-			Type: taskResponseType,
-		},
+		return abi.Type{}, fmt.Errorf("error creating abi task response type: %w", err)
 	}
 
-	bytes, err := arguments.Pack(h)
-	if err != nil {
-		return nil, err
-	}
-
-	return bytes, nil
+	return taskResponseType, nil
 }
 
-// GetTaskResponseDigest returns the hash of the TaskResponse, which is what operators sign over
-func GetTaskResponseDigest(h *cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse) ([32]byte, error) {
+func getDefaultHashFunction(taskResponseType abi.Type) types.TaskResponseHashFunction {
+	return func(taskResponse types.TaskResponse) (types.TaskResponseDigest, error) {
+		arguments := abi.Arguments{
+			{
+				Type: taskResponseType,
+			},
+		}
 
-	encodeTaskResponseByte, err := AbiEncodeTaskResponse(h)
-	if err != nil {
-		return [32]byte{}, err
+		encodeTaskResponseByte, err := arguments.Pack(taskResponse)
+		if err != nil {
+			return types.Bytes32{}, fmt.Errorf("error encoding task response: %w", err)
+		}
+
+		var taskResponseDigest [32]byte
+		hasher := sha3.NewLegacyKeccak256()
+		hasher.Write(encodeTaskResponseByte)
+		copy(taskResponseDigest[:], hasher.Sum(nil)[:32])
+
+		return taskResponseDigest, nil
 	}
-
-	var taskResponseDigest [32]byte
-	hasher := sha3.NewLegacyKeccak256()
-	hasher.Write(encodeTaskResponseByte)
-	copy(taskResponseDigest[:], hasher.Sum(nil)[:32])
-
-	return taskResponseDigest, nil
-}
-
-// BN254.sol is a library, so bindings for G1 Points and G2 Points are only generated
-// in every contract that imports that library. Thus the output here will need to be
-// type casted if G1Point is needed to interface with another contract (eg: BLSPublicKeyCompendium.sol)
-func ConvertToBN254G1Point(input *bls.G1Point) cstaskmanager.BN254G1Point {
-	output := cstaskmanager.BN254G1Point{
-		X: input.X.BigInt(big.NewInt(0)),
-		Y: input.Y.BigInt(big.NewInt(0)),
-	}
-	return output
-}
-
-func ConvertToBN254G2Point(input *bls.G2Point) cstaskmanager.BN254G2Point {
-	output := cstaskmanager.BN254G2Point{
-		X: [2]*big.Int{input.X.A1.BigInt(big.NewInt(0)), input.X.A0.BigInt(big.NewInt(0))},
-		Y: [2]*big.Int{input.Y.A1.BigInt(big.NewInt(0)), input.Y.A0.BigInt(big.NewInt(0))},
-	}
-	return output
 }
