@@ -2,6 +2,8 @@ package taskprocessor
 
 import (
 	"context"
+	"fmt"
+	"reflect"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
@@ -10,57 +12,106 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"golang.org/x/crypto/sha3"
 )
 
 var _ TaskResponder[any, any] = (*taskResponderContractWrapper[any, any])(nil)
 
 type taskResponderContractWrapper[Input any, Output any] struct {
-	contract taskManagerAbiContract[Input, Output]
-	txMgr    txmgr.TxManager
+	taskManagerAbi *abi.ABI
+	contract       taskManagerAbiContract[Input, Output]
+	txMgr          txmgr.TxManager
+}
+
+func (tr taskResponderContractWrapper[Input, Output]) PackTaskResponse(taskResponse sdktypes.GenericOutputTaskResponse[Output]) (sdktypes.Bytes32, error) {
+	abiType, err := extractTypeFromAbi(tr.taskManagerAbi)
+	if err != nil {
+		return [32]byte{}, err
+	}
+	hashFn := getDefaultHashFunction(abiType)
+
+	return hashFn(taskResponse)
+}
+
+func extractTypeFromAbi(taskManagerAbi *abi.ABI) (abi.Type, error) {
+	taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
+		{
+			Name: "referenceTaskIndex",
+			Type: "uint32",
+		},
+		{
+			Name: "OutputValue", // Left because abi does not support purely anonymous or underscored fields
+			Type: taskManagerAbi.Events["TaskResponded"].Inputs[0].Type.TupleElems[1].String(),
+		},
+	})
+	if err != nil {
+		return abi.Type{}, fmt.Errorf("error creating abi task response type: %w", err)
+	}
+
+	return taskResponseType, nil
+}
+
+func getDefaultHashFunction(taskResponseType abi.Type) sdktypes.TaskResponseHashFunction {
+	return func(taskResponse sdktypes.TaskResponse) (sdktypes.TaskResponseDigest, error) {
+		arguments := abi.Arguments{
+			{
+				Type: taskResponseType,
+			},
+		}
+
+		encodeTaskResponseByte, err := arguments.Pack(taskResponse)
+		if err != nil {
+			return sdktypes.Bytes32{}, fmt.Errorf("error encoding task response: %w", err)
+		}
+
+		var taskResponseDigest [32]byte
+		hasher := sha3.NewLegacyKeccak256()
+		hasher.Write(encodeTaskResponseByte)
+		copy(taskResponseDigest[:], hasher.Sum(nil)[:32])
+
+		return taskResponseDigest, nil
+	}
 }
 
 type taskManagerAbiContract[Input any, Output any] struct {
 	contract *bind.BoundContract
 }
 
-func (tm taskManagerAbiContract[Input, Output]) RespondToTask(opts *bind.TransactOpts, task sdktypes.GenericInputTask[Input], taskResponse sdktypes.GenericOutputTaskResponse[Output], nonSignerStakesAndSignature sdktypes.NonSignerStakesAndSignature) (*types.Transaction, error) {
+func (tm taskManagerAbiContract[Input, Output]) RespondToTask(opts *bind.TransactOpts, task any, taskResponse any, nonSignerStakesAndSignature any) (*types.Transaction, error) {
 	return tm.contract.Transact(opts, "respondToTask", task, taskResponse, nonSignerStakesAndSignature)
 }
 
 // Creates a TaskResponder from an address and ABI.
 // Returns an error in case the ABI is not compatible.
-func NewTaskResponderFromAbi[Input any, Output any](address common.Address, abi abi.ABI, txMgr txmgr.TxManager, httpClient bind.ContractBackend) (TaskResponder[Input, Output], error) {
-	boundContract := bind.NewBoundContract(address, abi, httpClient, httpClient, httpClient)
+func NewTaskResponderFromAbi[Input any, Output any](address common.Address, abi *abi.ABI, txMgr txmgr.TxManager, httpClient bind.ContractBackend) (TaskResponder[Input, Output], error) {
+	boundContract := bind.NewBoundContract(address, *abi, httpClient, httpClient, httpClient)
 	// TODO: check if the ABI is compatible
 	contract := taskManagerAbiContract[Input, Output]{boundContract}
-	return NewTaskResponderFromContract(contract, txMgr), nil
+	return NewTaskResponderFromContract(abi, contract, txMgr), nil
 }
 
 // Creates a TaskResponder from a contract implementing the given interface.
-func NewTaskResponderFromContract[Input any, Output any](contract taskManagerAbiContract[Input, Output], txMgr txmgr.TxManager) TaskResponder[Input, Output] {
-	return &taskResponderContractWrapper[Input, Output]{contract, txMgr}
+func NewTaskResponderFromContract[Input any, Output any](taskManagerAbi *abi.ABI, contract taskManagerAbiContract[Input, Output], txMgr txmgr.TxManager) TaskResponder[Input, Output] {
+	return &taskResponderContractWrapper[Input, Output]{taskManagerAbi, contract, txMgr}
 }
 
 func (senderWrapper *taskResponderContractWrapper[Input, Output]) RespondToTask(
-	task sdktypes.GenericInputTask[Input], 
-	taskResponse sdktypes.GenericOutputTaskResponse[Output], 
+	task sdktypes.GenericInputTask[Input],
+	taskResponse sdktypes.GenericOutputTaskResponse[Output],
 	nonSignersStakesAndSig sdktypes.NonSignerStakesAndSignature,
 ) error {
-	println("Respond to task del senderWrapper 0")
 	txOpts, err := senderWrapper.txMgr.GetNoSendTxOpts()
 	if err != nil {
 		return utils.WrapError("Error getting tx opts", err)
 	}
 
-	println("Respond to task del senderWrapper 1")
+	newTaskStruct := copyStructAndChangeFieldName(task, "InputValue", "NumberToBeSquared")
+	newTaskResponseStruct := copyStructAndChangeFieldName(taskResponse, "OutputValue", "NumberSquared")
 
-	tx, err := senderWrapper.contract.RespondToTask(txOpts, task, taskResponse, nonSignersStakesAndSig)
+	tx, err := senderWrapper.contract.RespondToTask(txOpts, newTaskStruct, newTaskResponseStruct, nonSignersStakesAndSig)
 	if err != nil {
-		println("Respond to task del senderWrapper 1.5, err es ", err.Error())
 		return utils.WrapError("Error assembling CreateNewTask tx", err)
 	}
-
-	println("Respond to task del senderWrapper 2")
 
 	receipt, err := senderWrapper.txMgr.Send(context.Background(), tx, true)
 	if err != nil {
@@ -70,8 +121,29 @@ func (senderWrapper *taskResponderContractWrapper[Input, Output]) RespondToTask(
 		return utils.WrapError("CreateNewTask tx failed", nil)
 	}
 
-	println("Respond to task del senderWrapper 3")
-	
 	return nil
 }
 
+func copyStructAndChangeFieldName(originalStruct any, previousName string, newName string) any {
+	val := reflect.ValueOf(originalStruct)
+	typ := reflect.TypeOf(originalStruct)
+
+	var newFields []reflect.StructField
+	for i := 0; i < typ.NumField(); i++ {
+		field := typ.Field(i)
+		if field.Name == previousName {
+			field.Name = newName
+		}
+		newFields = append(newFields, field)
+	}
+
+	newStructType := reflect.StructOf(newFields)
+	newStruct := reflect.New(newStructType).Elem()
+
+	for i := 0; i < newStruct.NumField(); i++ {
+		originalField2 := val.Field(i)
+		newStruct.Field(i).Set(originalField2)
+	}
+
+	return newStruct.Interface()
+}
