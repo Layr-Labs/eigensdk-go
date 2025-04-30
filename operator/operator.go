@@ -78,7 +78,9 @@ func getDefaultHashFunction[Output any](taskResponseType abi.Type) TaskResponseH
 }
 
 func NewOperatorFromConfig[Input any, Output any](
-	c OperatorConfig[Input, Output],
+	c OperatorConfig,
+	ResponseCalculationFn ResponseCalculationFunction[Input, Output],
+	TaskResponseHashFn    TaskResponseHashFunction[Output],
 ) (*Operator[Input, Output], error) {
 	avs_config := avsregistry.Config{
 		RegistryCoordinatorAddress:    common.HexToAddress(c.AVSRegistryCoordinatorAddress),
@@ -151,14 +153,14 @@ func NewOperatorFromConfig[Input any, Output any](
 		c.Logger.Fatal("error subscribing to newTaskCreated events", "err", err)
 	}
 
-	if c.TaskResponseHashFn == nil {
+	if TaskResponseHashFn == nil {
 		taskResponseType, err := extractTypeFromAbi(c.TaskManagerAbi)
 		if err != nil {
 			c.Logger.Error("Failed to get task response type in default abi.", "err", err)
 			return nil, err
 		}
 
-		c.TaskResponseHashFn = getDefaultHashFunction[Output](taskResponseType)
+		TaskResponseHashFn = getDefaultHashFunction[Output](taskResponseType)
 	}
 
 	operator := &Operator[Input, Output]{
@@ -168,8 +170,8 @@ func NewOperatorFromConfig[Input any, Output any](
 		operatorId:            operatorId,
 		newTaskCreatedLogs:    newTaskCreatedLogs,
 		taskManagerAbi:        c.TaskManagerAbi,
-		responseCalculationFn: c.ResponseCalculationFn,
-		taskResponseHashFn:    c.TaskResponseHashFn,
+		responseCalculationFn: ResponseCalculationFn,
+		taskResponseHashFn:    TaskResponseHashFn,
 	}
 
 	c.Logger.Info("Operator info",

@@ -5,7 +5,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
-type OperatorConfig[Input any, Output any] struct {
+type OperatorConfig struct {
 	OperatorAddress string
 
 	// Avs Reader addresses
@@ -23,7 +23,4 @@ type OperatorConfig[Input any, Output any] struct {
 
 	Logger         logging.Logger
 	TaskManagerAbi *abi.ABI
-
-	ResponseCalculationFn ResponseCalculationFunction[Input, Output]
-	TaskResponseHashFn    TaskResponseHashFunction[Output]
 }
