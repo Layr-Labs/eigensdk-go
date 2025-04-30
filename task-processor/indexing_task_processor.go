@@ -10,16 +10,21 @@ import (
 	blsagg "github.com/Layr-Labs/eigensdk-go/services/bls_aggregation"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/Layr-Labs/eigensdk-go/utils"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"golang.org/x/crypto/sha3"
 )
 
-type IndexingTaskProcessor[Input any, Output any] struct{
+type IndexingTaskProcessor[Input any, Output any] struct {
 	tasks   map[sdktypes.TaskIndex]sdktypes.GenericInputTask[Input]
 	tasksMu sync.RWMutex
 
 	taskResponses   map[sdktypes.TaskIndex]sdktypes.GenericOutputTaskResponse[Output]
-	taskResponsesMu sync.RWMutex
-	
-	taskManagerContract TaskManagerContract[Input, Output]
+//	taskResponsesMu sync.RWMutex
+
+	taskResponseHashFn  sdktypes.TaskResponseHashFunction
+	taskManagerAbi      *abi.ABI
+
+	taskResponder TaskResponder[Input, Output]
 
 	logger logging.Logger
 }
@@ -31,33 +36,76 @@ const (
 	blockTimeSeconds         = 12 * time.Second
 )
 
-func ConvertToBN254G1Point(input *bls.G1Point) sdktypes.BN254G1Point {
-	output := sdktypes.BN254G1Point{
-		X: input.X.BigInt(big.NewInt(0)),
-		Y: input.Y.BigInt(big.NewInt(0)),
+func extractTypeFromAbi(taskManagerAbi *abi.ABI) (abi.Type, error) {
+	taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
+		{
+			Name: "referenceTaskIndex",
+			Type: "uint32",
+		},
+		{
+			Name: "OutputValue", // Left because abi does not support purely anonymous or underscored fields
+			Type: taskManagerAbi.Events["TaskResponded"].Inputs[0].Type.TupleElems[1].String(),
+		},
+	})
+	if err != nil {
+		return abi.Type{}, fmt.Errorf("error creating abi task response type: %w", err)
 	}
-	return output
+
+	return taskResponseType, nil
 }
 
-func ConvertToBN254G2Point(input *bls.G2Point) sdktypes.BN254G2Point {
-	output := sdktypes.BN254G2Point{
-		X: [2]*big.Int{input.X.A1.BigInt(big.NewInt(0)), input.X.A0.BigInt(big.NewInt(0))},
-		Y: [2]*big.Int{input.Y.A1.BigInt(big.NewInt(0)), input.Y.A0.BigInt(big.NewInt(0))},
+func getDefaultHashFunction(taskResponseType abi.Type) sdktypes.TaskResponseHashFunction {
+	return func(taskResponse sdktypes.TaskResponse) (sdktypes.TaskResponseDigest, error) {
+		arguments := abi.Arguments{
+			{
+				Type: taskResponseType,
+			},
+		}
+
+		encodeTaskResponseByte, err := arguments.Pack(taskResponse)
+		if err != nil {
+			return sdktypes.Bytes32{}, fmt.Errorf("error encoding task response: %w", err)
+		}
+
+		var taskResponseDigest [32]byte
+		hasher := sha3.NewLegacyKeccak256()
+		hasher.Write(encodeTaskResponseByte)
+		copy(taskResponseDigest[:], hasher.Sum(nil)[:32])
+
+		return taskResponseDigest, nil
 	}
-	return output
 }
 
+func NewIndexingTaskProcessor[Input any, Output any](
+	hashFn sdktypes.TaskResponseHashFunction, 
+	taskManagerAbi *abi.ABI, 
+	logger logging.Logger,
+	taskResponder TaskResponder[Input, Output],
+	) (*IndexingTaskProcessor[Input, Output], error) {
+	if hashFn == nil {
+		logger.Info("task response hash function not provided in aggregator config, using the default one")
 
-func NewIndexingTaskProcessor[Input any, Output any](taskManagerContract TaskManagerContract[Input, Output]) (IndexingTaskProcessor[Input, Output], error) {
-	return IndexingTaskProcessor[Input, Output]{
-		tasks:	make(map[sdktypes.TaskIndex]sdktypes.GenericInputTask[Input]),
-		taskResponses:	make(map[sdktypes.TaskIndex]sdktypes.GenericOutputTaskResponse[Output]),
-		taskManagerContract: taskManagerContract,
+		taskResponseType, err := extractTypeFromAbi(taskManagerAbi)
+		if err != nil {
+			logger.Error("Failed to get task response type in default abi.", "err", err)
+			return nil, err
+		}
+
+		hashFn = getDefaultHashFunction(taskResponseType)
+	}
+	
+	return &IndexingTaskProcessor[Input, Output]{
+		tasks:          make(map[sdktypes.TaskIndex]sdktypes.GenericInputTask[Input]),
+		taskResponses:  make(map[sdktypes.TaskIndex]sdktypes.GenericOutputTaskResponse[Output]),
+		taskManagerAbi: taskManagerAbi,
+		taskResponseHashFn: hashFn,
+		taskResponder: taskResponder,
+		logger: logger,
 	}, nil
 }
 
 func (itp *IndexingTaskProcessor[Input, Output]) ProcessNewTask(
-	taskIndex sdktypes.TaskIndex, 
+	taskIndex sdktypes.TaskIndex,
 	task sdktypes.GenericInputTask[Input],
 ) (blsagg.TaskMetadata, error) {
 	itp.logger.Infof("Indexing task processor received new task: %v: ", task)
@@ -91,8 +139,7 @@ func (itp *IndexingTaskProcessor[Input, Output]) ProcessNewTask(
 }
 
 func (itp *IndexingTaskProcessor[Input, Output]) ProcessTaskResponse(taskResponse sdktypes.GenericOutputTaskResponse[Output]) ([32]byte, error) {
-
-	return [32]byte{}, nil
+	return itp.taskResponseHashFn(taskResponse)
 }
 
 func (itp *IndexingTaskProcessor[Input, Output]) ProcessAggregatedResponse(response blsagg.BlsAggregationServiceResponse) error {
@@ -129,10 +176,27 @@ func (itp *IndexingTaskProcessor[Input, Output]) ProcessAggregatedResponse(respo
 		itp.logger.Error("task Response could not be converted to sdk aggregator's Task Response type")
 	}
 
-	err := itp.taskManagerContract.RespondToTask(task, taskResponseAgg, nonSignerStakesAndSignature)
+	err := itp.taskResponder.RespondToTask(task, taskResponseAgg, nonSignerStakesAndSignature)
 	if err != nil {
 		return utils.WrapError("Aggregator failed to respond to task", err)
 	}
 
 	return nil
+}
+
+// Utils
+func ConvertToBN254G1Point(input *bls.G1Point) sdktypes.BN254G1Point {
+	output := sdktypes.BN254G1Point{
+		X: input.X.BigInt(big.NewInt(0)),
+		Y: input.Y.BigInt(big.NewInt(0)),
+	}
+	return output
+}
+
+func ConvertToBN254G2Point(input *bls.G2Point) sdktypes.BN254G2Point {
+	output := sdktypes.BN254G2Point{
+		X: [2]*big.Int{input.X.A1.BigInt(big.NewInt(0)), input.X.A0.BigInt(big.NewInt(0))},
+		Y: [2]*big.Int{input.Y.A1.BigInt(big.NewInt(0)), input.Y.A0.BigInt(big.NewInt(0))},
+	}
+	return output
 }
