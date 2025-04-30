@@ -31,13 +31,56 @@ type Operator[Input any, Output any] struct {
 	newTaskCreatedLogs    chan types.Log
 	taskManagerAbi        *abi.ABI
 	responseCalculationFn ResponseCalculationFunction[Input, Output]
+	taskResponseHashFn    TaskResponseHashFunction[Output]
 }
 
 type ResponseCalculationFunction[Input any, Output any] func(task sdktypes.GenericInputTask[Input], taskIndex uint32) (sdktypes.GenericOutputTaskResponse[Output], error)
 
+type TaskResponseHashFunction[Output any] func(taskResponse sdktypes.GenericOutputTaskResponse[Output]) ([32]byte, error)
+
+func extractTypeFromAbi(taskManagerAbi *abi.ABI) (abi.Type, error) {
+	taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
+		{
+			Name: "referenceTaskIndex",
+			Type: "uint32",
+		},
+		{
+			Name: "OutputValue", // Left because abi does not support purely anonymous or underscored fields
+			Type: taskManagerAbi.Events["TaskResponded"].Inputs[0].Type.TupleElems[1].String(),
+		},
+	})
+	if err != nil {
+		return abi.Type{}, fmt.Errorf("error creating abi task response type: %w", err)
+	}
+
+	return taskResponseType, nil
+}
+
+func getDefaultHashFunction[Output any](taskResponseType abi.Type) TaskResponseHashFunction[Output] {
+	return func(taskResponse sdktypes.GenericOutputTaskResponse[Output]) ([32]byte, error) {
+		arguments := abi.Arguments{
+			{
+				Type: taskResponseType,
+			},
+		}
+
+		encodeTaskResponseByte, err := arguments.Pack(taskResponse)
+		if err != nil {
+			return [32]byte{}, fmt.Errorf("error encoding task response: %w", err)
+		}
+
+		var taskResponseDigest [32]byte
+		hasher := sha3.NewLegacyKeccak256()
+		hasher.Write(encodeTaskResponseByte)
+		copy(taskResponseDigest[:], hasher.Sum(nil)[:32])
+		return taskResponseDigest, nil
+	}
+}
+
 func NewOperatorFromConfig[Input any, Output any](
 	c OperatorConfig,
-	responseCalculationFn ResponseCalculationFunction[Input, Output],
+	ResponseCalculationFn ResponseCalculationFunction[Input, Output],
+	TaskResponseHashFn TaskResponseHashFunction[Output],
 ) (*Operator[Input, Output], error) {
 	avs_config := avsregistry.Config{
 		RegistryCoordinatorAddress:    common.HexToAddress(c.AVSRegistryCoordinatorAddress),
@@ -110,6 +153,16 @@ func NewOperatorFromConfig[Input any, Output any](
 		c.Logger.Fatal("error subscribing to newTaskCreated events", "err", err)
 	}
 
+	if TaskResponseHashFn == nil {
+		taskResponseType, err := extractTypeFromAbi(c.TaskManagerAbi)
+		if err != nil {
+			c.Logger.Error("Failed to get task response type in default abi.", "err", err)
+			return nil, err
+		}
+
+		TaskResponseHashFn = getDefaultHashFunction[Output](taskResponseType)
+	}
+
 	operator := &Operator[Input, Output]{
 		logger:                c.Logger,
 		blsKeypair:            blsKeyPair,
@@ -117,7 +170,8 @@ func NewOperatorFromConfig[Input any, Output any](
 		operatorId:            operatorId,
 		newTaskCreatedLogs:    newTaskCreatedLogs,
 		taskManagerAbi:        c.TaskManagerAbi,
-		responseCalculationFn: responseCalculationFn,
+		responseCalculationFn: ResponseCalculationFn,
+		taskResponseHashFn:    TaskResponseHashFn,
 	}
 
 	c.Logger.Info("Operator info",
@@ -188,34 +242,11 @@ func (o *Operator[Input, Output]) processNewTaskCreatedLog(
 func (o *Operator[Input, Output]) signTaskResponse(
 	taskResponse *sdktypes.GenericOutputTaskResponse[Output],
 ) (*sdkaggregator.SignedTaskResponse[Output], error) {
-	taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
-		{
-			Name: "referenceTaskIndex",
-			Type: "uint32",
-		},
-		{
-			Name: "OutputValue", // Left because abi does not support purely anonymous or underscored fields
-			Type: o.taskManagerAbi.Events["TaskResponded"].Inputs[0].Type.TupleElems[1].String(),
-		},
-	})
+	taskResponseDigest, err := o.taskResponseHashFn(*taskResponse)
 	if err != nil {
-		return nil, fmt.Errorf("error creating abi task response type: %w", err)
+		o.logger.Errorf("Failed to get task response digest: %w", err)
+		return nil, err
 	}
-	arguments := abi.Arguments{
-		{
-			Type: taskResponseType,
-		},
-	}
-
-	encodeTaskResponseByte, err := arguments.Pack(taskResponse)
-	if err != nil {
-		return nil, fmt.Errorf("error encoding task response: %w", err)
-	}
-
-	var taskResponseDigest [32]byte
-	hasher := sha3.NewLegacyKeccak256()
-	hasher.Write(encodeTaskResponseByte)
-	copy(taskResponseDigest[:], hasher.Sum(nil)[:32])
 
 	blsSignature := o.blsKeypair.SignMessage(taskResponseDigest)
 	signedTaskResponse := &sdkaggregator.SignedTaskResponse[Output]{

@@ -2,7 +2,6 @@ package aggregator
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math/big"
 	"sync"
@@ -16,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"golang.org/x/crypto/sha3"
 
 	sdkclients "github.com/Layr-Labs/eigensdk-go/chainio/clients"
 	avsregistryservice "github.com/Layr-Labs/eigensdk-go/services/avsregistry"
@@ -49,6 +49,46 @@ type Aggregator[Input any, Output any] struct {
 	taskManagerAbi *abi.ABI
 }
 
+func extractTypeFromAbi(taskManagerAbi *abi.ABI) (abi.Type, error) {
+	taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
+		{
+			Name: "referenceTaskIndex",
+			Type: "uint32",
+		},
+		{
+			Name: "OutputValue", // Left because abi does not support purely anonymous or underscored fields
+			Type: taskManagerAbi.Events["TaskResponded"].Inputs[0].Type.TupleElems[1].String(),
+		},
+	})
+	if err != nil {
+		return abi.Type{}, fmt.Errorf("error creating abi task response type: %w", err)
+	}
+
+	return taskResponseType, nil
+}
+
+func getDefaultHashFunction(taskResponseType abi.Type) sdktypes.TaskResponseHashFunction {
+	return func(taskResponse sdktypes.TaskResponse) (sdktypes.TaskResponseDigest, error) {
+		arguments := abi.Arguments{
+			{
+				Type: taskResponseType,
+			},
+		}
+
+		encodeTaskResponseByte, err := arguments.Pack(taskResponse)
+		if err != nil {
+			return sdktypes.Bytes32{}, fmt.Errorf("error encoding task response: %w", err)
+		}
+
+		var taskResponseDigest [32]byte
+		hasher := sha3.NewLegacyKeccak256()
+		hasher.Write(encodeTaskResponseByte)
+		copy(taskResponseDigest[:], hasher.Sum(nil)[:32])
+
+		return taskResponseDigest, nil
+	}
+}
+
 // NewAggregator creates a new Aggregator with the provided config.
 func NewAggregator[Input any, Output any](
 	c AggregatorConfig,
@@ -66,7 +106,7 @@ func NewAggregator[Input any, Output any](
 
 	clients, err := sdkclients.BuildAll(chainioConfig, c.EcdsaPrivateKey, c.Logger)
 	if err != nil {
-		c.Logger.Errorf("Cannot create sdk clients", "err", err)
+		c.Logger.Errorf("Cannot create sdk clients. Err: %w", err)
 		return nil, err
 	}
 
@@ -80,7 +120,15 @@ func NewAggregator[Input any, Output any](
 	)
 
 	if c.TaskResponseHashFn == nil {
-		return nil, errors.New("task response hash function not provided in aggregator config")
+		c.Logger.Info("task response hash function not provided in aggregator config, using the default one")
+
+		taskResponseType, err := extractTypeFromAbi(c.TaskManagerAbi)
+		if err != nil {
+			c.Logger.Error("Failed to get task response type in default abi.", "err", err)
+			return nil, err
+		}
+
+		c.TaskResponseHashFn = getDefaultHashFunction(taskResponseType)
 	}
 
 	avsRegistryService := avsregistryservice.NewAvsRegistryServiceChainCaller(clients.AvsRegistryChainReader, operatorPubkeysService, c.Logger)

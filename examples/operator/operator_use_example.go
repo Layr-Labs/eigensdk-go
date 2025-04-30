@@ -51,7 +51,7 @@ func main() {
 		TaskManagerAbi:                taskManagerAbi,
 	}
 
-	operator, err := sdkoperator.NewOperatorFromConfig(operatorConfig, responseCalcFunction)
+	operator, err := sdkoperator.NewOperatorFromConfig(operatorConfig, responseCalcFunction, nil)
 	if err != nil {
 		logger.Errorf("Failed to create operator from config: %v", err)
 		return
