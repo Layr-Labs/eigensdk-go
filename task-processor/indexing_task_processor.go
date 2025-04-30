@@ -1,6 +1,7 @@
 package taskprocessor
 
 import (
+	"fmt"
 	"math/big"
 	"sync"
 	"time"
@@ -27,6 +28,10 @@ type IndexingTaskProcessor[Input any, Output any] struct {
 	taskResponder TaskResponder[Input, Output]
 
 	logger logging.Logger
+}
+
+type TaskResponder[Input any, Output any] interface {
+	RespondToTask(task sdktypes.GenericInputTask[Input], taskResponse sdktypes.GenericOutputTaskResponse[Output], nonSignersStakesAndSig sdktypes.NonSignerStakesAndSignature) error
 }
 
 const (
