@@ -72,6 +72,20 @@ func main() {
 	}
 }
 
+// Returns an iterator for the sequence 1, 2, 3, ...
+func NewNumberToSquareSequence() iter.Seq[*big.Int] {
+	acc := big.NewInt(1)
+	delta := big.NewInt(1)
+	return func(yield func(*big.Int) bool) {
+		for {
+			if !yield(acc) {
+				break
+			}
+			acc.Add(acc, delta)
+		}
+	}
+}
+
 // TODO: this should be in the SDK
 func GetTxManager(logger logging.Logger, ethHttpClient *ethclient.Client, taskSpammerPk string) (*txmgr.SimpleTxManager, error) {
 	ecdsaPrivateKey, err := crypto.HexToECDSA(taskSpammerPk)
@@ -99,19 +113,4 @@ func GetTxManager(logger logging.Logger, ethHttpClient *ethclient.Client, taskSp
 
 	txMgr := txmgr.NewSimpleTxManager(pkWallet, ethHttpClient, logger, senderAddr)
 	return txMgr, nil
-}
-
-// Returns an iterator for the sequence 1, 2, 3, ...
-func NewNumberToSquareSequence() iter.Seq[*big.Int] {
-	acc := big.NewInt(1)
-	delta := big.NewInt(1)
-	return func(yield func(*big.Int) bool) {
-		for {
-			if !yield(acc) {
-				break
-			}
-			acc.Add(acc, delta)
-		}
-	}
-
 }
