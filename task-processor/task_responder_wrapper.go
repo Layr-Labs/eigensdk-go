@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
@@ -105,8 +106,11 @@ func (senderWrapper *taskResponderContractWrapper[Input, Output]) RespondToTask(
 		return utils.WrapError("Error getting tx opts", err)
 	}
 
-	newTaskStruct := copyStructAndChangeFieldName(task, "InputValue", "NumberToBeSquared")
-	newTaskResponseStruct := copyStructAndChangeFieldName(taskResponse, "OutputValue", "NumberSquared")
+	inputFieldName := capitalizeFieldName(senderWrapper.taskManagerAbi.Methods["respondToTask"].Inputs[0].Type.TupleRawNames[0])
+	outputFieldName := capitalizeFieldName(senderWrapper.taskManagerAbi.Methods["respondToTask"].Inputs[1].Type.TupleRawNames[1])
+
+	newTaskStruct := copyStructAndChangeFieldName(task, "InputValue", inputFieldName)
+	newTaskResponseStruct := copyStructAndChangeFieldName(taskResponse, "OutputValue", outputFieldName)
 
 	tx, err := senderWrapper.contract.RespondToTask(txOpts, newTaskStruct, newTaskResponseStruct, nonSignersStakesAndSig)
 	if err != nil {
@@ -122,6 +126,10 @@ func (senderWrapper *taskResponderContractWrapper[Input, Output]) RespondToTask(
 	}
 
 	return nil
+}
+
+func capitalizeFieldName(name string) string {
+	return strings.ToUpper(name[:1]) + name[1:]
 }
 
 func copyStructAndChangeFieldName(originalStruct any, previousName string, newName string) any {
