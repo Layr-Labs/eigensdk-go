@@ -40,22 +40,26 @@ func main() {
 	// This value is extracted from the deployment output files
 	taskManagerAddress := common.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3")
 
-	contractTaskManager, err := cstaskmanager.NewContractIncredibleSquaringTaskManager(
-		taskManagerAddress,
-		ethHttpClient,
-	)
+	abi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
+	if err != nil {
+		return
+	}
+
+	taskCreator, err := taskspammer.NewTaskCreatorFromAbi[*big.Int](taskManagerAddress, *abi, txMgr, ethHttpClient)
 	if err != nil {
 		return
 	}
 
 	taskSpammerConfig := taskspammer.Config{
-		Logger:           logger,
+		Logger: logger,
+
+		// This means TaskGenerator will send tasks every 10 seconds
 		TimeBetweenTasks: 10 * time.Second,
 
 		QuorumThresholdPercentage: 100,
 		QuorumNumbers:             []uint8{0},
 	}
-	taskGen, err := taskspammer.NewTaskSpammer(contractTaskManager, txMgr, taskSpammerConfig)
+	taskGen, err := taskspammer.NewTaskSpammer(taskCreator, taskSpammerConfig)
 	if err != nil {
 		return
 	}
@@ -65,6 +69,20 @@ func main() {
 	err = taskGen.Start(context.Background(), seq)
 	if err != nil {
 		return
+	}
+}
+
+// Returns an iterator for the sequence 1, 2, 3, ...
+func NewNumberToSquareSequence() iter.Seq[*big.Int] {
+	acc := big.NewInt(1)
+	delta := big.NewInt(1)
+	return func(yield func(*big.Int) bool) {
+		for {
+			if !yield(acc) {
+				break
+			}
+			acc.Add(acc, delta)
+		}
 	}
 }
 
@@ -95,19 +113,4 @@ func GetTxManager(logger logging.Logger, ethHttpClient *ethclient.Client, taskSp
 
 	txMgr := txmgr.NewSimpleTxManager(pkWallet, ethHttpClient, logger, senderAddr)
 	return txMgr, nil
-}
-
-// Returns an iterator for the sequence 1, 2, 3, ...
-func NewNumberToSquareSequence() iter.Seq[*big.Int] {
-	acc := big.NewInt(1)
-	delta := big.NewInt(1)
-	return func(yield func(*big.Int) bool) {
-		for {
-			if !yield(acc) {
-				break
-			}
-			acc.Add(acc, delta)
-		}
-	}
-
 }
