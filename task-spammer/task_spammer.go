@@ -11,6 +11,7 @@ import (
 // Interface is generic over the task input type.
 type TaskCreator[Input any] interface {
 	// Creates a new task with the given input.
+	// Implementations usually send a transaction to a smart contract.
 	CreateNewTask(ctx context.Context, input Input) error
 }
 
