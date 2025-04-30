@@ -15,10 +15,14 @@ type TaskManagerTaskContract[Input any] interface {
 	CreateNewTask(opts *bind.TransactOpts, input Input, quorumThresholdPercentage uint32, quorumNumbers []byte) (*gethtypes.Transaction, error)
 }
 
+var _ TaskCreator[any] = (*taskCreatorContractWrapper[any])(nil)
+
 type taskCreatorContractWrapper[Input any] struct {
 	contract TaskManagerTaskContract[Input]
 	txMgr    txmgr.TxManager
 }
+
+var _ TaskManagerTaskContract[any] = (*taskManagerAbiContract[any])(nil)
 
 type taskManagerAbiContract[Input any] struct {
 	contract *bind.BoundContract
