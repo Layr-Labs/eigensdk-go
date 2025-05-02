@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"slices"
 	"strings"
 	"syscall"
 
@@ -92,7 +93,7 @@ func (api *NodeApi) UpdateServiceStatus(serviceId string, serviceStatus ServiceS
 func (api *NodeApi) DeregisterService(serviceId string) error {
 	for i, service := range api.nodeServices {
 		if service.Id == serviceId {
-			api.nodeServices = append(api.nodeServices[:i], api.nodeServices[i+1:]...)
+			api.nodeServices = slices.Delete(api.nodeServices, i, i+1)
 			return nil
 		}
 	}
