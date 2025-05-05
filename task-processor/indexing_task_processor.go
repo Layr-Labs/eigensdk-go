@@ -16,9 +16,6 @@ type IndexingTaskProcessor[Input any, Output any] struct {
 	tasks   map[sdktypes.TaskIndex]sdktypes.GenericInputTask[Input]
 	tasksMu sync.RWMutex
 
-	taskResponses map[sdktypes.TaskIndex]sdktypes.GenericOutputTaskResponse[Output]
-	//	taskResponsesMu sync.RWMutex
-
 	taskResponder TaskResponder[Input, Output]
 
 	logger logging.Logger
@@ -42,7 +39,6 @@ func NewIndexingTaskProcessor[Input any, Output any](
 ) (*IndexingTaskProcessor[Input, Output], error) {
 	return &IndexingTaskProcessor[Input, Output]{
 		tasks:         make(map[sdktypes.TaskIndex]sdktypes.GenericInputTask[Input]),
-		taskResponses: make(map[sdktypes.TaskIndex]sdktypes.GenericOutputTaskResponse[Output]),
 		taskResponder: taskResponder,
 		logger:        logger,
 	}, nil
