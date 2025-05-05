@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"math/big"
 
 	"github.com/Layr-Labs/eigensdk-go/aggregator"
@@ -46,5 +47,14 @@ func main() {
 	if err != nil {
 		logger.Errorf("Failed to create Task Processor: %w", err)
 	}
-	aggregator.NewAggregator(aggConfig, taskProcessor)
+
+	aggregator, err := aggregator.NewAggregator(aggConfig, taskProcessor)
+	if err != nil {
+		logger.Errorf("Failed to create aggregator: %w", err)
+	}
+
+	err = aggregator.Start(context.Background())
+	if err != nil {
+		logger.Errorf("Failure while running aggregator: %w", err)
+	}
 }
