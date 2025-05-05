@@ -8,7 +8,7 @@ import (
 	sdkoperator "github.com/Layr-Labs/eigensdk-go/operator"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 
-	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/bindings/taskManager"
+	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/bindings/taskManager"
 )
 
 // The idea of this example is to show how to create a custom operator using the SDK generic implementation
