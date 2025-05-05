@@ -10,17 +10,11 @@ import (
 	blsagg "github.com/Layr-Labs/eigensdk-go/services/bls_aggregation"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/Layr-Labs/eigensdk-go/utils"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
 type IndexingTaskProcessor[Input any, Output any] struct {
 	tasks   map[sdktypes.TaskIndex]sdktypes.GenericInputTask[Input]
 	tasksMu sync.RWMutex
-
-	taskResponses map[sdktypes.TaskIndex]sdktypes.GenericOutputTaskResponse[Output]
-	//	taskResponsesMu sync.RWMutex
-
-	taskManagerAbi *abi.ABI
 
 	taskResponder TaskResponder[Input, Output]
 
@@ -40,16 +34,13 @@ const (
 )
 
 func NewIndexingTaskProcessor[Input any, Output any](
-	taskManagerAbi *abi.ABI,
 	logger logging.Logger,
 	taskResponder TaskResponder[Input, Output],
 ) (*IndexingTaskProcessor[Input, Output], error) {
 	return &IndexingTaskProcessor[Input, Output]{
-		tasks:          make(map[sdktypes.TaskIndex]sdktypes.GenericInputTask[Input]),
-		taskResponses:  make(map[sdktypes.TaskIndex]sdktypes.GenericOutputTaskResponse[Output]),
-		taskManagerAbi: taskManagerAbi,
-		taskResponder:  taskResponder,
-		logger:         logger,
+		tasks:         make(map[sdktypes.TaskIndex]sdktypes.GenericInputTask[Input]),
+		taskResponder: taskResponder,
+		logger:        logger,
 	}, nil
 }
 
