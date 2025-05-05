@@ -13,6 +13,15 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
+type DotProductInput struct {
+	X []*big.Int
+	Y []*big.Int
+}
+
+type DotProductOutput struct {
+	Result *big.Int
+}
+
 func main() {
 	logger, err := logging.NewZapLogger(logging.Development)
 	if err != nil {
@@ -38,7 +47,7 @@ func main() {
 	// txMgr, err := txmgr.NewSimpleTxManager()
 
 	taskManagerAddr := gethcommon.HexToAddress("0x")
-	taskResponder, err := taskprocessor.NewTaskResponderFromAbi[[]*big.Int, []*big.Int](taskManagerAddr, &taskManagerAbi, &txmgr.SimpleTxManager{}, ethClient)
+	taskResponder, err := taskprocessor.NewTaskResponderFromAbi[DotProductInput, DotProductOutput](taskManagerAddr, &taskManagerAbi, &txmgr.SimpleTxManager{}, ethClient)
 	if err != nil {
 		logger.Errorf("Failed to create Task Responder: %w", err)
 	}

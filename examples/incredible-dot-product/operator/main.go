@@ -10,12 +10,12 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
-type DotProductInput struct{
-	X []*big.Int 
+type DotProductInput struct {
+	X []*big.Int
 	Y []*big.Int
 }
 
-type DotProductOutput struct{
+type DotProductOutput struct {
 	Result *big.Int
 }
 
@@ -37,7 +37,7 @@ func main() {
 	// This function calculates the task response from a Task, in this case with the number to square
 	responseCalcFunction := func(task types.GenericInputTask[DotProductInput], taskIndex uint32) (types.GenericOutputTaskResponse[DotProductOutput], error) {
 		totalSum := big.NewInt(0)
-		for i := range task.InputValue.X  {
+		for i := range task.InputValue.X {
 			currentSum := big.NewInt(0).Mul(task.InputValue.X[i], task.InputValue.Y[i])
 			totalSum.Add(totalSum, currentSum)
 		}
