@@ -29,7 +29,7 @@ type IndexingTaskProcessor[Input any, Output any] struct {
 
 type TaskResponder[Input any, Output any] interface {
 	RespondToTask(task sdktypes.GenericInputTask[Input], taskResponse sdktypes.GenericOutputTaskResponse[Output], nonSignersStakesAndSig sdktypes.NonSignerStakesAndSignature) error
-	PackTaskResponse(taskResponse sdktypes.GenericOutputTaskResponse[Output]) (sdktypes.TaskResponseDigest, error)
+	ProcessTaskResponse(taskResponse sdktypes.GenericOutputTaskResponse[Output]) (sdktypes.TaskResponseDigest, error)
 }
 
 const (
@@ -88,7 +88,7 @@ func (itp *IndexingTaskProcessor[Input, Output]) ProcessNewTask(
 }
 
 func (itp *IndexingTaskProcessor[Input, Output]) ProcessTaskResponse(taskResponse sdktypes.GenericOutputTaskResponse[Output]) ([32]byte, error) {
-	return itp.taskResponder.PackTaskResponse(taskResponse)
+	return itp.taskResponder.ProcessTaskResponse(taskResponse)
 }
 
 func (itp *IndexingTaskProcessor[Input, Output]) ProcessAggregatedResponse(response blsagg.BlsAggregationServiceResponse) error {

@@ -24,7 +24,7 @@ type taskResponderContractWrapper[Input any, Output any] struct {
 	txMgr          txmgr.TxManager
 }
 
-func (tr taskResponderContractWrapper[Input, Output]) PackTaskResponse(taskResponse sdktypes.GenericOutputTaskResponse[Output]) (sdktypes.Bytes32, error) {
+func (tr taskResponderContractWrapper[Input, Output]) ProcessTaskResponse(taskResponse sdktypes.GenericOutputTaskResponse[Output]) (sdktypes.Bytes32, error) {
 	abiType, err := extractTypeFromAbi(tr.taskManagerAbi)
 	if err != nil {
 		return [32]byte{}, err
