@@ -80,7 +80,7 @@ func getDefaultHashFunction[Output any](taskResponseType abi.Type) TaskResponseH
 func NewOperatorFromConfig[Input any, Output any](
 	c OperatorConfig,
 	ResponseCalculationFn ResponseCalculationFunction[Input, Output],
-	TaskResponseHashFn    TaskResponseHashFunction[Output],
+	TaskResponseHashFn TaskResponseHashFunction[Output],
 ) (*Operator[Input, Output], error) {
 	avs_config := avsregistry.Config{
 		RegistryCoordinatorAddress:    common.HexToAddress(c.AVSRegistryCoordinatorAddress),
