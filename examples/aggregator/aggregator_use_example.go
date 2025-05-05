@@ -2,20 +2,15 @@ package aggregator_example
 
 import (
 	"context"
-	"fmt"
 	"math/big"
 
 	"github.com/Layr-Labs/eigensdk-go/aggregator"
-	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	taskprocessor "github.com/Layr-Labs/eigensdk-go/task-processor"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
-	"github.com/Layr-Labs/eigensdk-go/types"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"golang.org/x/crypto/sha3"
 
 	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/bindings/taskManager"
 	taskspammerexample "github.com/Layr-Labs/eigensdk-go/examples/task-spammer"
@@ -65,12 +60,15 @@ func main() {
 
 	taskManagerAddr := common.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3")
 
-	contractTaskManager, err := cstaskmanager.NewContractIncredibleSquaringTaskManager(taskManagerAddr, ethHttpClient)
+	taskResponder, err := taskprocessor.NewTaskResponderFromAbi[*big.Int, *big.Int](
+		taskManagerAddr,
+		taskManagerAbi,
+		txMgr,
+		ethHttpClient,
+	)
 	if err != nil {
 		logger.Fatalf(err.Error())
 	}
-
-	taskResponder := NewTaskResponder(taskManagerAbi, contractTaskManager, txMgr)
 
 	taskProcessor, err := taskprocessor.NewIndexingTaskProcessor(taskManagerAbi, logger, taskResponder)
 	if err != nil {
@@ -85,101 +83,5 @@ func main() {
 	err = agg.Start(context.Background())
 	if err != nil {
 		logger.Fatalf(err.Error())
-	}
-}
-
-type TaskResponder struct {
-	taskManagerAbi *abi.ABI
-
-	taskManagerContract *cstaskmanager.ContractIncredibleSquaringTaskManager
-	txMgr               txmgr.TxManager
-}
-
-func NewTaskResponder(taskManagerAbi *abi.ABI, taskManagerContract *cstaskmanager.ContractIncredibleSquaringTaskManager, txMgr txmgr.TxManager) TaskResponder {
-	return TaskResponder{
-		taskManagerAbi:      taskManagerAbi,
-		taskManagerContract: taskManagerContract,
-		txMgr:               txMgr,
-	}
-}
-
-func (tr TaskResponder) RespondToTask(task types.GenericInputTask[*big.Int], taskResponse types.GenericOutputTaskResponse[*big.Int], nonSignersStakesAndSig types.NonSignerStakesAndSignature) error {
-
-	incredibleTask := cstaskmanager.IIncredibleSquaringTaskManagerTask{
-		NumberToBeSquared:         task.InputValue,
-		TaskCreatedBlock:          task.TaskCreatedBlock,
-		QuorumNumbers:             task.QuorumNumbers,
-		QuorumThresholdPercentage: task.QuorumThresholdPercentage,
-	}
-
-	incredibleTaskResponse := cstaskmanager.IIncredibleSquaringTaskManagerTaskResponse{}
-
-	incredibleNonSignersStakesAndSig := cstaskmanager.IBLSSignatureCheckerTypesNonSignerStakesAndSignature{}
-
-	txOpts, err := tr.txMgr.GetNoSendTxOpts()
-	if err != nil {
-		return err
-	}
-
-	tx, err := tr.taskManagerContract.RespondToTask(txOpts, incredibleTask, incredibleTaskResponse, incredibleNonSignersStakesAndSig)
-	if err != nil {
-		return err
-	}
-
-	_, err = tr.txMgr.Send(context.Background(), tx, true)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (tr TaskResponder) PackTaskResponse(taskResponse types.GenericOutputTaskResponse[*big.Int]) (types.Bytes32, error) {
-	abiType, err := extractTypeFromAbi(tr.taskManagerAbi)
-	if err != nil {
-		return [32]byte{}, err
-	}
-	hashFn := getDefaultHashFunction(abiType)
-
-	return hashFn(taskResponse)
-}
-
-func extractTypeFromAbi(taskManagerAbi *abi.ABI) (abi.Type, error) {
-	taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
-		{
-			Name: "referenceTaskIndex",
-			Type: "uint32",
-		},
-		{
-			Name: "OutputValue", // Left because abi does not support purely anonymous or underscored fields
-			Type: taskManagerAbi.Events["TaskResponded"].Inputs[0].Type.TupleElems[1].String(),
-		},
-	})
-	if err != nil {
-		return abi.Type{}, fmt.Errorf("error creating abi task response type: %w", err)
-	}
-
-	return taskResponseType, nil
-}
-
-func getDefaultHashFunction(taskResponseType abi.Type) types.TaskResponseHashFunction {
-	return func(taskResponse types.TaskResponse) (types.TaskResponseDigest, error) {
-		arguments := abi.Arguments{
-			{
-				Type: taskResponseType,
-			},
-		}
-
-		encodeTaskResponseByte, err := arguments.Pack(taskResponse)
-		if err != nil {
-			return types.Bytes32{}, fmt.Errorf("error encoding task response: %w", err)
-		}
-
-		var taskResponseDigest [32]byte
-		hasher := sha3.NewLegacyKeccak256()
-		hasher.Write(encodeTaskResponseByte)
-		copy(taskResponseDigest[:], hasher.Sum(nil)[:32])
-
-		return taskResponseDigest, nil
 	}
 }
