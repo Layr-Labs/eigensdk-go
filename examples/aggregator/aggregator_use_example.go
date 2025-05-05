@@ -70,7 +70,7 @@ func main() {
 		logger.Fatalf(err.Error())
 	}
 
-	taskProcessor, err := taskprocessor.NewIndexingTaskProcessor(taskManagerAbi, logger, taskResponder)
+	taskProcessor, err := taskprocessor.NewIndexingTaskProcessor(logger, taskResponder)
 	if err != nil {
 		logger.Fatalf(err.Error())
 	}
