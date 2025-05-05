@@ -12,9 +12,9 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-func main(){
+func main() {
 	logger, err := logging.NewZapLogger(logging.Development)
-	if err != nil{
+	if err != nil {
 		panic(err)
 	}
 
@@ -27,17 +27,17 @@ func main(){
 	}
 
 	aggConfig := aggregator.AggregatorConfig{
-		Logger: logger,
-		TaskManagerAbi: &taskManagerAbi,
+		Logger:             logger,
+		TaskManagerAbi:     &taskManagerAbi,
 		TaskResponseHashFn: nil,
-		EthHttpUrl: ethHttpUrl,
-		EthHttpClient: ethClient,
+		EthHttpUrl:         ethHttpUrl,
+		EthHttpClient:      ethClient,
 	}
 
 	// txMgr, err := txmgr.NewSimpleTxManager()
 
 	taskManagerAddr := gethcommon.HexToAddress("0x")
-	taskResponder, err := taskprocessor.NewTaskResponderFromAbi[*big.Int, *big.Int](taskManagerAddr, &taskManagerAbi, &txmgr.SimpleTxManager{}, ethClient)
+	taskResponder, err := taskprocessor.NewTaskResponderFromAbi[[]*big.Int, []*big.Int](taskManagerAddr, &taskManagerAbi, &txmgr.SimpleTxManager{}, ethClient)
 	if err != nil {
 		logger.Errorf("Failed to create Task Responder: %w", err)
 	}
