@@ -2,68 +2,16 @@ package examples
 
 import (
 	"context"
-	"fmt"
 	"math/big"
 
-	"github.com/Layr-Labs/eigensdk-go/aggregator"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	sdkoperator "github.com/Layr-Labs/eigensdk-go/operator"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
-	"github.com/ethereum/go-ethereum/core/types"
 
-	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/operator/bindings"
+	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/bindings/taskManager"
 )
 
 // The idea of this example is to show how to create a custom operator using the SDK generic implementation
-type IncredibleSquaringTaskResponse struct {
-	ReferenceTaskIndex uint32
-	NumberSquared      *big.Int
-}
-
-func (tr IncredibleSquaringTaskResponse) TaskIndex() sdktypes.TaskIndex {
-	return tr.ReferenceTaskIndex
-}
-
-func (tr IncredibleSquaringTaskResponse) Digest() [32]byte {
-	return [32]byte(tr.NumberSquared.Bytes())
-}
-
-type OperatorTaskProcessor struct {
-	logger logging.Logger
-}
-
-func NewOperatorTaskProcessor(c sdkoperator.OperatorConfig, logger logging.Logger) OperatorTaskProcessor {
-	return OperatorTaskProcessor{
-		logger: logger,
-	}
-}
-
-// Takes a NewTaskCreatedLog struct as input and returns a TaskResponseHeader struct.
-// The TaskResponseHeader struct is the struct that is signed and sent to the contract as a task response.
-func (otp OperatorTaskProcessor) ProcessNewTaskCreatedLog(
-	log types.Log,
-) (aggregator.TaskResponse, error) {
-	var newTaskCreatedLog cstaskmanager.ContractIncredibleSquaringTaskManagerNewTaskCreated
-
-	taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
-	if err != nil {
-		otp.logger.Fatalf("Error obtaining task manager ABI: %v", err)
-	}
-
-	err = taskManagerAbi.UnpackIntoInterface(&newTaskCreatedLog, "NewTaskCreated", log.Data)
-	if err != nil {
-		return nil, fmt.Errorf("error unpacking the log: %w", err)
-	}
-
-	numberSquared := big.NewInt(0).Exp(newTaskCreatedLog.Task.NumberToBeSquared, big.NewInt(2), nil)
-
-	taskResponse := IncredibleSquaringTaskResponse{
-		ReferenceTaskIndex: newTaskCreatedLog.TaskIndex,
-		NumberSquared:      numberSquared,
-	}
-	return taskResponse, nil
-}
-
 func main() {
 	logger, err := logging.NewZapLogger(logging.Production) // Change here if want to change logging level
 	if err != nil {
@@ -76,7 +24,17 @@ func main() {
 		logger.Fatalf(err.Error())
 	}
 
-	blockHash := taskManagerAbi.Events["NewTaskCreated"].ID
+	// This function calculates the task response from a Task, in this case with the number to square
+	responseCalcFunction := func(task sdktypes.GenericInputTask[*big.Int], taskIndex uint32) (sdktypes.GenericOutputTaskResponse[*big.Int], error) {
+		numberSquared := big.NewInt(0).Exp(task.InputValue, big.NewInt(2), nil)
+
+		taskResponse := sdktypes.GenericOutputTaskResponse[*big.Int]{
+			ReferenceTaskIndex: taskIndex,
+			OutputValue:        numberSquared,
+		}
+
+		return taskResponse, nil
+	}
 
 	// The values from this config are extracted from an incredible squaring config file:
 	// https://github.com/Layr-Labs/incredible-squaring-avs/blob/dev/config-files/operator.anvil.yaml
@@ -89,15 +47,17 @@ func main() {
 		EthWsUrl:                      "ws://localhost:8545",
 		BlsPrivateKeyStorePath:        "tests/keys/test.bls.key.json",
 		AggregatorServerIpPortAddress: "localhost:8090",
+		Logger:                        logger,
+		TaskManagerAbi:                taskManagerAbi,
 	}
-	operatorTaskProcessor := NewOperatorTaskProcessor(operatorConfig, logger)
-	operator, err := sdkoperator.NewOperatorFromConfig(operatorConfig, blockHash, operatorTaskProcessor, logger)
+
+	operator, err := sdkoperator.NewOperatorFromConfig(operatorConfig, responseCalcFunction, nil)
 	if err != nil {
 		logger.Errorf("Failed to create operator from config: %v", err)
 		return
 	}
 
-	err = operator.Start(context.Background(), &IncredibleSquaringTaskResponse{})
+	err = operator.Start(context.Background())
 	if err != nil {
 		logger.Errorf("Error while running operator: %v", err)
 		return
