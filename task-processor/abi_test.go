@@ -13,6 +13,37 @@ import (
 	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/bindings/taskManager"
 )
 
+// Testing structs
+
+type U32Point struct {
+	X uint32
+	Y uint32
+}
+
+type DoubleBigIntVector struct {
+	First  []*big.Int
+	Second []*big.Int
+}
+
+type DoubleStringVector struct {
+	First  []string
+	Second []string
+}
+
+type Arg0 struct {
+	Data []byte
+}
+
+type Arg1 struct {
+	Arg0 Arg0
+	Data []byte
+}
+
+type Arg2 struct {
+	Arg1 Arg1
+	Data []byte
+}
+
 func TestIncredibleSquaringAbi(t *testing.T) {
 	taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
 	require.NoError(t, err)
@@ -46,11 +77,6 @@ func TestIncredibleSquaringAbi(t *testing.T) {
 	packedBytes, err := taskManagerAbi.Pack("respondToTask", taskReflectStruct, taskResponseReflectStruct, nonSigStruct)
 	require.NoError(t, err)
 	require.NotZero(t, packedBytes)
-}
-
-type U32Point struct {
-	X uint32
-	Y uint32
 }
 
 func TestSimpleStructValueAbi(t *testing.T) {
@@ -87,16 +113,6 @@ func TestSimpleStructValueAbi(t *testing.T) {
 	packedBytes, err := parsedAbi.Pack("respondToTask", taskReflectStruct, taskResponseReflectStruct, nonSigStruct)
 	require.NoError(t, err)
 	require.NotZero(t, packedBytes)
-}
-
-type DoubleBigIntVector struct {
-	First  []*big.Int
-	Second []*big.Int
-}
-
-type DoubleStringVector struct {
-	First  []string
-	Second []string
 }
 
 func TestStructureOfVectorsAbi(t *testing.T) {
@@ -169,20 +185,6 @@ func TestAddressAndBoolValuesAbi(t *testing.T) {
 	packedBytes, err := parsedAbi.Pack("respondToTask", taskReflectStruct, taskResponseReflectStruct, nonSigStruct)
 	require.NoError(t, err)
 	require.NotZero(t, packedBytes)
-}
-
-type Arg0 struct {
-	Data []byte
-}
-
-type Arg1 struct {
-	Arg0 Arg0
-	Data []byte
-}
-
-type Arg2 struct {
-	Arg1 Arg1
-	Data []byte
 }
 
 func TestNestedStructsAbi(t *testing.T) {
