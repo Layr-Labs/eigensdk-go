@@ -21,10 +21,6 @@ import (
 	oprsinfoserv "github.com/Layr-Labs/eigensdk-go/services/operatorsinfo"
 )
 
-type TaskProcessor[Input any] interface {
-	ProcessAggregatedResponse(ctx context.Context, response blsagg.BlsAggregationServiceResponse, task sdktypes.GenericInputTask[Input]) error
-}
-
 type Aggregator[Input any, Output any] struct {
 	logger           logging.Logger
 	serverIpPortAddr string
@@ -36,13 +32,13 @@ type Aggregator[Input any, Output any] struct {
 
 	taskManagerAbi *abi.ABI
 
-	indexingTaskProcessor *taskprocessor.IndexingTaskProcessor[Input, Output]
+	indexingTaskProcessor taskprocessor.TaskProcessor[Input, Output]
 }
 
 // NewAggregator creates a new Aggregator with the provided config.
 func NewAggregator[Input any, Output any](
 	c AggregatorConfig,
-	indexingTaskProcessor *taskprocessor.IndexingTaskProcessor[Input, Output],
+	indexingTaskProcessor taskprocessor.TaskProcessor[Input, Output],
 ) (*Aggregator[Input, Output], error) {
 	chainioConfig := sdkclients.BuildAllConfig{
 		EthHttpUrl:                 c.EthHttpUrl,
