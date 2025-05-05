@@ -10,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 
-	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/bindings/taskManager"
+	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/bindings/taskManager"
 )
 
 // Testing structs
