@@ -10,6 +10,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
@@ -101,12 +102,13 @@ func (cv ChallengeVerifier) VerifyChallenge(taskIndex uint32, task sdktypes.Gene
 		}
 
 		receipt, err := cv.txMgr.Send(context.Background(), tx, true)
+		if receipt.Status != types.ReceiptStatusSuccessful {
+			cv.logger.Error("receipt status was not success sending raise challenge tx")
+			err = errors.New("receipt status was not success")
+		}
 		if err != nil {
 			cv.logger.Errorf("Failed to send raise and resolve challenge tx: %w", err)
 			return err
-		}
-		if receipt.Status != uint64(1) {
-			return errors.New("failed to send raise and resolve challenge tx: receipt status was not success")
 		}
 
 	}
