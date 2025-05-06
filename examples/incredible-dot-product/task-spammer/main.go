@@ -81,7 +81,7 @@ func main() {
 		logger.Errorf("Failed to create Task Spammer: %w", err)
 	}
 
-	seq := NewLinearSequence()
+	seq := LinearRangeSequence()
 
 	err = taskSpammer.Start(context.Background(), seq)
 	if err != nil {
@@ -91,16 +91,23 @@ func main() {
 
 // Returns an iterator for the sequence 1, 2, 3, ...
 // Inspired on the one from examples/incredible-squaring/task-spammer/task_spammer_use_example.go
-func NewLinearSequence() iter.Seq[DotProductInput] {
-	acc := big.NewInt(1)
-	delta := big.NewInt(1)
+// Returns [1, 2, ..., n]
+func LinearRangeSequence() iter.Seq[DotProductInput] {
+	n := big.NewInt(1)
 	return func(yield func(DotProductInput) bool) {
 		for {
-			newInput := DotProductInput{X: []*big.Int{acc}, Y: []*big.Int{acc}}
-			if !yield(newInput) {
+			length := int(n.Int64())
+			x := make([]*big.Int, length)
+			y := make([]*big.Int, length)
+			for i := 0; i < length; i++ {
+				v := big.NewInt(int64(i + 1))
+				x[i] = v
+				y[i] = v
+			}
+			if !yield(DotProductInput{X: x, Y: y}) {
 				break
 			}
-			acc.Add(acc, delta)
+			n.Add(n, big.NewInt(1))
 		}
 	}
 }
