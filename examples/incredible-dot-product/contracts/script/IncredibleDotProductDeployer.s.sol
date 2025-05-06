@@ -103,7 +103,7 @@ contract IncredibleDotProductDeployer is Script {
         vm.startBroadcast(deployer);
         IncredibleDotProductDeploymentLib.IncredibleDotProductSetupConfig memory idpConfig =
         IncredibleDotProductDeploymentLib.readIncredibleDotProductConfigJson(
-            "incredible_dot_product_config"
+            "config/avs/incredible_dot_product_config"
         );
         configData = CoreDeploymentLib.readDeploymentJson("script/deployments/core/", block.chainid);
 
