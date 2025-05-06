@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"math/rand/v2"
 	"os"
+	"time"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -169,12 +170,18 @@ func NewOperatorFromConfig[Input any, Output any](
 		if failPercentage > 100 {
 			return nil, fmt.Errorf("failing percentage must be between 0 and 100")
 		}
-		c.Logger.Warn("FailingPercentage option was set. This operator will randomly fail tasks.")
 		computeOutput := responseCalculationFn
-		// TODO: allow users to set the seed
-		rng := rand.New(rand.NewChaCha8([32]byte{}))
 
-		// TODO: allow users to specify the failed values
+		failSeed := c.TestingOpts.FailingSeed
+		if failSeed == 0 {
+			// If the seed is not set, we use the current time as the seed
+			failSeed = uint64(time.Now().UnixNano())
+		}
+		rng := rand.New(rand.NewPCG(42, failSeed))
+
+		c.Logger.Warn("FailingPercentage option was set. This operator will randomly fail tasks.")
+		c.Logger.Info("Using seed:", failSeed)
+
 		responseCalculationFn = func(taskIndex uint32, input Input) (Output, error) {
 			randomNumber := rng.UintN(100)
 			if randomNumber < failPercentage {
