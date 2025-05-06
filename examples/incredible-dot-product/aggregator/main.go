@@ -52,7 +52,7 @@ func main() {
 		logger.Errorf("Failed to create Task Responder: %w", err)
 	}
 
-	taskProcessor, err := taskprocessor.NewIndexingTaskProcessor(&taskManagerAbi, logger, taskResponder)
+	taskProcessor, err := taskprocessor.NewIndexingTaskProcessor(logger, taskResponder)
 	if err != nil {
 		logger.Errorf("Failed to create Task Processor: %w", err)
 	}
