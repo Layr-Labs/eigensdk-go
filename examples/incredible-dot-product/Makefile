@@ -15,3 +15,6 @@ deploy-avs: ## Deploy avs
 	./tests/anvil/deploy-avs.sh
 
 deploy-all: deploy-eigenlayer deploy-avs
+
+bindings: ## generates contract bindings
+	cd contracts && ./generate-go-bindings.sh
