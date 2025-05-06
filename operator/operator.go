@@ -164,8 +164,8 @@ func NewOperatorFromConfig[Input any, Output any](
 		taskResponseHashFn = getDefaultHashFunction[Output](taskResponseType)
 	}
 
-	if c.Testing.FailingPercentage != 0 {
-		failPercentage := c.Testing.FailingPercentage
+	if c.TestingOpts.FailingPercentage != 0 {
+		failPercentage := c.TestingOpts.FailingPercentage
 		if failPercentage > 100 {
 			return nil, fmt.Errorf("failing percentage must be between 0 and 100")
 		}

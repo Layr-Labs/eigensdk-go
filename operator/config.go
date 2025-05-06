@@ -26,7 +26,7 @@ type OperatorConfig struct {
 
 	// Testing options for the operator.
 	// These shouldn't be used in production.
-	Testing struct {
+	TestingOpts struct {
 		// Percentage chance of randomly failing a task
 		// This is used for testing purposes and defaults to not failing any tasks
 		FailingPercentage uint
