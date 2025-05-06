@@ -20,7 +20,13 @@ deploy-eigenlayer: ## Deploy eigenlayer
 deploy-avs: ## Deploy avs
 	./tests/anvil/deploy-avs.sh
 
-deploy-all: deploy-eigenlayer deploy-avs
+uam-permissions:
+	./tests/anvil/uam-permissions.sh
+
+create-quorum:
+	./tests/anvil/create-quorum.sh
+
+deploy-all: deploy-eigenlayer deploy-avs uam-permissions create-quorum
 
 bindings: ## generates contract bindings
 	cd contracts && ./generate-go-bindings.sh
