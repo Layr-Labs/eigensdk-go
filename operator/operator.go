@@ -164,10 +164,12 @@ func NewOperatorFromConfig[Input any, Output any](
 		taskResponseHashFn = getDefaultHashFunction[Output](taskResponseType)
 	}
 
-	if c.FailingPercentage != 0 {
-		if c.FailingPercentage > 100 {
+	if c.Testing.FailingPercentage != 0 {
+		failPercentage := c.Testing.FailingPercentage
+		if failPercentage > 100 {
 			return nil, fmt.Errorf("failing percentage must be between 0 and 100")
 		}
+		c.Logger.Warn("FailingPercentage option was set. This operator will randomly fail tasks.")
 		computeOutput := responseCalculationFn
 		// TODO: allow users to set the seed
 		rng := rand.New(rand.NewChaCha8([32]byte{}))
@@ -175,7 +177,7 @@ func NewOperatorFromConfig[Input any, Output any](
 		// TODO: allow users to specify the failed values
 		responseCalculationFn = func(taskIndex uint32, input Input) (Output, error) {
 			randomNumber := rng.UintN(100)
-			if randomNumber < c.FailingPercentage {
+			if randomNumber < failPercentage {
 				var emptyOutput Output
 				return emptyOutput, nil
 			}
