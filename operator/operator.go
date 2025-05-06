@@ -34,7 +34,7 @@ type Operator[Input any, Output any] struct {
 	taskResponseHashFn    TaskResponseHashFunction[Output]
 }
 
-type ResponseCalculationFunction[Input any, Output any] func(task sdktypes.GenericInputTask[Input], taskIndex uint32) (sdktypes.GenericOutputTaskResponse[Output], error)
+type ResponseCalculationFunction[Input any, Output any] func(taskIndex uint32, input Input) (Output, error)
 
 type TaskResponseHashFunction[Output any] func(taskResponse sdktypes.GenericOutputTaskResponse[Output]) ([32]byte, error)
 
@@ -231,12 +231,15 @@ func (o *Operator[Input, Output]) processNewTaskCreatedLog(
 		"QuorumThresholdPercentage", newTaskCreatedLog.Task.QuorumThresholdPercentage,
 	)
 
-	taskResponse, err := o.responseCalculationFn(newTaskCreatedLog.Task, newTaskIndex)
+	output, err := o.responseCalculationFn(newTaskIndex, newTaskCreatedLog.Task.InputValue)
 	if err != nil {
 		return nil, fmt.Errorf("error calculating task response: %w", err)
 	}
-
-	return &taskResponse, nil
+	taskResponse := &sdktypes.GenericOutputTaskResponse[Output]{
+		ReferenceTaskIndex: newTaskIndex,
+		OutputValue:        output,
+	}
+	return taskResponse, nil
 }
 
 func (o *Operator[Input, Output]) signTaskResponse(

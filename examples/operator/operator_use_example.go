@@ -6,7 +6,6 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	sdkoperator "github.com/Layr-Labs/eigensdk-go/operator"
-	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 
 	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/bindings/taskManager"
 )
@@ -25,15 +24,10 @@ func main() {
 	}
 
 	// This function calculates the task response from a Task, in this case with the number to square
-	responseCalcFunction := func(task sdktypes.GenericInputTask[*big.Int], taskIndex uint32) (sdktypes.GenericOutputTaskResponse[*big.Int], error) {
-		numberSquared := big.NewInt(0).Exp(task.InputValue, big.NewInt(2), nil)
+	responseCalcFunction := func(taskIndex uint32, numberToSquare *big.Int) (*big.Int, error) {
+		numberSquared := big.NewInt(0).Exp(numberToSquare, big.NewInt(2), nil)
 
-		taskResponse := sdktypes.GenericOutputTaskResponse[*big.Int]{
-			ReferenceTaskIndex: taskIndex,
-			OutputValue:        numberSquared,
-		}
-
-		return taskResponse, nil
+		return numberSquared, nil
 	}
 
 	// The values from this config are extracted from an incredible squaring config file:
