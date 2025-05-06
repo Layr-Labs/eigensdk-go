@@ -8,9 +8,10 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	taskprocessor "github.com/Layr-Labs/eigensdk-go/task-processor"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+
+	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
 )
 
 type DotProductInput struct {
@@ -28,7 +29,10 @@ func main() {
 		panic(err)
 	}
 
-	taskManagerAbi := abi.ABI{}
+	taskManagerAbi, err := taskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
+	if err != nil {
+		logger.Errorf("Failed to get task manager abi: %w", err)
+	}
 
 	ethHttpUrl := "127.0.0.1:8545"
 	ethClient, err := ethclient.Dial(ethHttpUrl)
@@ -38,7 +42,7 @@ func main() {
 
 	aggConfig := aggregator.AggregatorConfig{
 		Logger:             logger,
-		TaskManagerAbi:     &taskManagerAbi,
+		TaskManagerAbi:     taskManagerAbi,
 		TaskResponseHashFn: nil,
 		EthHttpUrl:         ethHttpUrl,
 		EthHttpClient:      ethClient,
@@ -47,7 +51,7 @@ func main() {
 	// txMgr, err := txmgr.NewSimpleTxManager()
 
 	taskManagerAddr := gethcommon.HexToAddress("0x")
-	taskResponder, err := taskprocessor.NewTaskResponderFromAbi[DotProductInput, DotProductOutput](taskManagerAddr, &taskManagerAbi, &txmgr.SimpleTxManager{}, ethClient)
+	taskResponder, err := taskprocessor.NewTaskResponderFromAbi[DotProductInput, DotProductOutput](taskManagerAddr, taskManagerAbi, &txmgr.SimpleTxManager{}, ethClient)
 	if err != nil {
 		logger.Errorf("Failed to create Task Responder: %w", err)
 	}

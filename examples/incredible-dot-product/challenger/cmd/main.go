@@ -6,9 +6,10 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/challenger"
 	examplechallenger "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/challenger"
 	"github.com/Layr-Labs/eigensdk-go/logging"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+
+	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
 )
 
 func main() {
@@ -17,7 +18,10 @@ func main() {
 		panic(err)
 	}
 
-	taskManagerAbi := abi.ABI{}
+	taskManagerAbi, err := taskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
+	if err != nil {
+		logger.Errorf("Failed to get task manager abi: %w", err)
+	}
 
 	ethHttpUrl := "127.0.0.1:8545"
 	ethClient, err := ethclient.Dial(ethHttpUrl)
@@ -34,7 +38,7 @@ func main() {
 
 	challengerConfig := challenger.ChallengerConfig{
 		Logger:         logger,
-		TaskManagerAbi: &taskManagerAbi,
+		TaskManagerAbi: taskManagerAbi,
 		EthClient:      ethClient,
 		// EthWsUrl: "ws:8080",
 	}

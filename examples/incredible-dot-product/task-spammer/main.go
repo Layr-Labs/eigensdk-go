@@ -9,9 +9,10 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	taskspammer "github.com/Layr-Labs/eigensdk-go/task-spammer"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+
+	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
 )
 
 type DotProductInput struct {
@@ -25,7 +26,10 @@ func main() {
 		panic(err)
 	}
 
-	taskManagerAbi := abi.ABI{}
+	taskManagerAbi, err := taskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
+	if err != nil {
+		logger.Errorf("Failed to get task manager abi: %w", err)
+	}
 
 	ethHttpUrl := "127.0.0.1:8545"
 	ethClient, err := ethclient.Dial(ethHttpUrl)
@@ -35,7 +39,7 @@ func main() {
 
 	taskManagerAddr := common.HexToAddress("0x")
 
-	taskCreator, err := taskspammer.NewTaskCreatorFromAbi[DotProductInput](taskManagerAddr, taskManagerAbi, &txmgr.SimpleTxManager{}, ethClient)
+	taskCreator, err := taskspammer.NewTaskCreatorFromAbi[DotProductInput](taskManagerAddr, *taskManagerAbi, &txmgr.SimpleTxManager{}, ethClient)
 	if err != nil {
 		logger.Errorf("Failed to create Task Creator: %w", err)
 	}

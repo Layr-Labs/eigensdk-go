@@ -7,7 +7,8 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/operator"
 	"github.com/Layr-Labs/eigensdk-go/types"
-	"github.com/ethereum/go-ethereum/accounts/abi"
+
+	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
 )
 
 type DotProductInput struct {
@@ -25,11 +26,14 @@ func main() {
 		panic(err)
 	}
 
-	taskManagerAbi := abi.ABI{}
+	taskManagerAbi, err := taskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
+	if err != nil {
+		logger.Errorf("Failed to get task manager abi: %w", err)
+	}
 
 	operatorConfig := operator.OperatorConfig{
 		Logger:         logger,
-		TaskManagerAbi: &taskManagerAbi,
+		TaskManagerAbi: taskManagerAbi,
 
 		RegisterOnStartup: true,
 	}
