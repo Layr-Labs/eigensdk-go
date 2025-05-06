@@ -35,7 +35,17 @@ func main() {
 		Logger:         logger,
 		TaskManagerAbi: taskManagerAbi,
 
-		RegisterOnStartup: true,
+		OperatorAddress: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+
+		AVSRegistryCoordinatorAddress: "0x7bc06c482dead17c0e297afbc32f6e63d3846650",
+		OperatorStateRetrieverAddress: "0x4c5859f0f772848b2d91f1d83e2fe57935348029",
+		ServiceManagerAddress:         "0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154",
+
+		EthWsUrl:                      "ws://localhost:8545",
+		EthRpcUrl:                     "http://localhost:8545",
+		AggregatorServerIpPortAddress: "localhost:8090",
+
+		BlsPrivateKeyStorePath: "keys/test.bls.key.json",
 	}
 
 	// This function calculates the task response from a Task, in this case with the number to square
