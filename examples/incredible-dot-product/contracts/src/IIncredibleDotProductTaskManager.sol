@@ -48,8 +48,8 @@ interface IIncredibleDotProductTaskManager {
     }
 
     struct DotProductInput {
-        uint256[] x_axis;
-        uint256[] y_axis;
+        uint256[] X;
+        uint256[] Y;
     }
 
     // FUNCTIONS

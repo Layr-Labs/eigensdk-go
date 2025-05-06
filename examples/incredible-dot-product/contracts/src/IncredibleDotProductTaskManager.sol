@@ -202,8 +202,8 @@ contract IncredibleDotProductTaskManager is
 
         // // logic for checking whether challenge is valid or not
         uint256 totalSum = 0;
-        for (uint256 index = 0; index < pointsToMultiply.x_axis.length; index++) {
-            totalSum = totalSum + (pointsToMultiply.x_axis[index] * pointsToMultiply.y_axis[index]);
+        for (uint256 index = 0; index < pointsToMultiply.X.length; index++) {
+            totalSum = totalSum + (pointsToMultiply.X[index] * pointsToMultiply.Y[index]);
         }
 
         bool isResponseCorrect = (totalSum == taskResponse.result);

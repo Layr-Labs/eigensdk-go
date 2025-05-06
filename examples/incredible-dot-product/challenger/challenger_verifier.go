@@ -74,7 +74,7 @@ func (cv ChallengeVerifier) VerifyChallenge(taskIndex uint32, task sdktypes.Gene
 		}
 
 		incredibleTask := taskmanager.IIncredibleDotProductTaskManagerTask{
-			PointsToMultiply:          taskmanager.IIncredibleDotProductTaskManagerDotProductInput{XAxis: task.InputValue.X, YAxis: task.InputValue.Y},
+			PointsToMultiply:          taskmanager.IIncredibleDotProductTaskManagerDotProductInput{X: task.InputValue.X, Y: task.InputValue.Y},
 			TaskCreatedBlock:          task.TaskCreatedBlock,
 			QuorumNumbers:             task.QuorumNumbers,
 			QuorumThresholdPercentage: task.QuorumThresholdPercentage,
