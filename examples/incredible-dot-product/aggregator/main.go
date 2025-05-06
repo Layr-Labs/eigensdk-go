@@ -22,10 +22,6 @@ type DotProductInput struct {
 	Y []*big.Int
 }
 
-type DotProductOutput struct {
-	Result *big.Int
-}
-
 func main() {
 	logger, err := logging.NewZapLogger(logging.Production)
 	if err != nil {
@@ -84,7 +80,7 @@ func main() {
 	}
 
 	taskManagerAddr := gethcommon.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3")
-	taskResponder, err := taskprocessor.NewTaskResponderFromAbi[DotProductInput, DotProductOutput](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
+	taskResponder, err := taskprocessor.NewTaskResponderFromAbi[DotProductInput, *big.Int](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
 	if err != nil {
 		logger.Errorf("Failed to create Task Responder: %w", err)
 	}

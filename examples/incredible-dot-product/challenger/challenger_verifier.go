@@ -20,10 +20,6 @@ type DotProductInput struct {
 	Y []*big.Int
 }
 
-type DotProductOutput struct {
-	Result *big.Int
-}
-
 type ChallengeVerifier struct {
 	logger              logging.Logger
 	taskManagerContract *taskmanager.ContractIncredibleDotProductTaskManager
@@ -49,9 +45,9 @@ func NewChallengeVerifier(
 	}, nil
 }
 
-var _ challenger.ChallengeVerifier[DotProductInput, DotProductOutput] = (*ChallengeVerifier)(nil)
+var _ challenger.ChallengeVerifier[DotProductInput, *big.Int] = (*ChallengeVerifier)(nil)
 
-func (cv ChallengeVerifier) VerifyChallenge(taskIndex uint32, task sdktypes.GenericInputTask[DotProductInput], taskResponse sdktypes.TaskResponseData[DotProductOutput]) error {
+func (cv ChallengeVerifier) VerifyChallenge(taskIndex uint32, task sdktypes.GenericInputTask[DotProductInput], taskResponse sdktypes.TaskResponseData[*big.Int]) error {
 	// Calculate response
 	totalSum := big.NewInt(0)
 	for i := range task.InputValue.X {
@@ -60,7 +56,7 @@ func (cv ChallengeVerifier) VerifyChallenge(taskIndex uint32, task sdktypes.Gene
 	}
 
 	// Compare submitted response with calculated here
-	receivedResponse := taskResponse.TaskResponse.OutputValue.Result
+	receivedResponse := taskResponse.TaskResponse.OutputValue
 	shouldRaiseChallenge := totalSum == receivedResponse
 
 	if shouldRaiseChallenge {
@@ -82,7 +78,7 @@ func (cv ChallengeVerifier) VerifyChallenge(taskIndex uint32, task sdktypes.Gene
 
 		incredibleTaskResponse := taskmanager.IIncredibleDotProductTaskManagerTaskResponse{
 			ReferenceTaskIndex: taskResponse.TaskResponse.ReferenceTaskIndex,
-			Result:             taskResponse.TaskResponse.OutputValue.Result,
+			Result:             taskResponse.TaskResponse.OutputValue,
 		}
 
 		incredibleTaskResponseMetadata := taskmanager.IIncredibleDotProductTaskManagerTaskResponseMetadata{
