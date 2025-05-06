@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"math/rand/v2"
 	"os"
 
 	"github.com/ethereum/go-ethereum"
@@ -79,8 +80,8 @@ func getDefaultHashFunction[Output any](taskResponseType abi.Type) TaskResponseH
 
 func NewOperatorFromConfig[Input any, Output any](
 	c OperatorConfig,
-	ResponseCalculationFn ResponseCalculationFunction[Input, Output],
-	TaskResponseHashFn TaskResponseHashFunction[Output],
+	responseCalculationFn ResponseCalculationFunction[Input, Output],
+	taskResponseHashFn TaskResponseHashFunction[Output],
 ) (*Operator[Input, Output], error) {
 	avs_config := avsregistry.Config{
 		RegistryCoordinatorAddress:    common.HexToAddress(c.AVSRegistryCoordinatorAddress),
@@ -153,14 +154,33 @@ func NewOperatorFromConfig[Input any, Output any](
 		c.Logger.Fatal("error subscribing to newTaskCreated events", "err", err)
 	}
 
-	if TaskResponseHashFn == nil {
+	if taskResponseHashFn == nil {
 		taskResponseType, err := extractTypeFromAbi(c.TaskManagerAbi)
 		if err != nil {
 			c.Logger.Error("Failed to get task response type in default abi.", "err", err)
 			return nil, err
 		}
 
-		TaskResponseHashFn = getDefaultHashFunction[Output](taskResponseType)
+		taskResponseHashFn = getDefaultHashFunction[Output](taskResponseType)
+	}
+
+	if c.FailingPercentage != 0 {
+		if c.FailingPercentage > 100 {
+			return nil, fmt.Errorf("failing percentage must be between 0 and 100")
+		}
+		computeOutput := responseCalculationFn
+		// TODO: allow users to set the seed
+		rng := rand.New(rand.NewChaCha8([32]byte{}))
+
+		// TODO: allow users to specify the failed values
+		responseCalculationFn = func(taskIndex uint32, input Input) (Output, error) {
+			randomNumber := rng.UintN(100)
+			if randomNumber < c.FailingPercentage {
+				var emptyOutput Output
+				return emptyOutput, nil
+			}
+			return computeOutput(taskIndex, input)
+		}
 	}
 
 	operator := &Operator[Input, Output]{
@@ -170,8 +190,8 @@ func NewOperatorFromConfig[Input any, Output any](
 		operatorId:            operatorId,
 		newTaskCreatedLogs:    newTaskCreatedLogs,
 		taskManagerAbi:        c.TaskManagerAbi,
-		responseCalculationFn: ResponseCalculationFn,
-		taskResponseHashFn:    TaskResponseHashFn,
+		responseCalculationFn: responseCalculationFn,
+		taskResponseHashFn:    taskResponseHashFn,
 	}
 
 	c.Logger.Info("Operator info",

@@ -21,6 +21,10 @@ type OperatorConfig struct {
 
 	RegisterOnStartup bool
 
+	// Percentage chance of randomly failing a task
+	// This is used for testing purposes and defaults to not failing any tasks
+	FailingPercentage uint
+
 	Logger         logging.Logger
 	TaskManagerAbi *abi.ABI
 }
