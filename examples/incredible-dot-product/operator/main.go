@@ -6,7 +6,6 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/operator"
-	"github.com/Layr-Labs/eigensdk-go/types"
 
 	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
 )
@@ -48,29 +47,13 @@ func main() {
 		BlsPrivateKeyStorePath: "keys/test.bls.key.json",
 	}
 
-	// This function calculates the task response from a Task, in this case with the number to square
-	responseCalcFunction := func(task types.GenericInputTask[DotProductInput], taskIndex uint32) (types.GenericOutputTaskResponse[*big.Int], error) {
-		totalSum := big.NewInt(0)
-		for i := range task.InputValue.X {
-			currentSum := big.NewInt(0).Mul(task.InputValue.X[i], task.InputValue.Y[i])
-			totalSum.Add(totalSum, currentSum)
-		}
-
-		taskResponse := types.GenericOutputTaskResponse[*big.Int]{
-			ReferenceTaskIndex: taskIndex,
-			OutputValue:        totalSum,
-		}
-
-		return taskResponse, nil
-	}
-
 	err = RegisterOperatorOnStartup(logger)
 	if err != nil {
 		logger.Fatalf("Failed to register operator on startup: %v", err.Error())
 	}
 
 	// Setting the TaskResponseHashFn parameter in nil because I'm using the abi default encoding function
-	operator, err := operator.NewOperatorFromConfig(operatorConfig, responseCalcFunction, nil)
+	operator, err := operator.NewOperatorFromConfig(operatorConfig, dotProduct, nil)
 	if err != nil {
 		logger.Fatalf("Failed to create operator: %w", err)
 	}
@@ -79,4 +62,15 @@ func main() {
 	if err != nil {
 		logger.Fatalf("Failure while running operator: %w", err)
 	}
+}
+
+// This function computes the dot product of a pair of points
+func dotProduct(taskIndex uint32, points DotProductInput) (*big.Int, error) {
+	totalSum := big.NewInt(0)
+	for i := range points.X {
+		currentSum := big.NewInt(0).Mul(points.X[i], points.Y[i])
+		totalSum.Add(totalSum, currentSum)
+	}
+
+	return totalSum, nil
 }
