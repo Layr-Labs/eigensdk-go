@@ -6,7 +6,6 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	sdkoperator "github.com/Layr-Labs/eigensdk-go/operator"
-	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 
 	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/bindings/taskManager"
 )
@@ -24,18 +23,6 @@ func main() {
 		logger.Fatalf(err.Error())
 	}
 
-	// This function calculates the task response from a Task, in this case with the number to square
-	responseCalcFunction := func(task sdktypes.GenericInputTask[*big.Int], taskIndex uint32) (sdktypes.GenericOutputTaskResponse[*big.Int], error) {
-		numberSquared := big.NewInt(0).Exp(task.InputValue, big.NewInt(2), nil)
-
-		taskResponse := sdktypes.GenericOutputTaskResponse[*big.Int]{
-			ReferenceTaskIndex: taskIndex,
-			OutputValue:        numberSquared,
-		}
-
-		return taskResponse, nil
-	}
-
 	// The values from this config are extracted from an incredible squaring config file:
 	// https://github.com/Layr-Labs/incredible-squaring-avs/blob/dev/config-files/operator.anvil.yaml
 	operatorConfig := sdkoperator.OperatorConfig{
@@ -51,7 +38,7 @@ func main() {
 		TaskManagerAbi:                taskManagerAbi,
 	}
 
-	operator, err := sdkoperator.NewOperatorFromConfig(operatorConfig, responseCalcFunction, nil)
+	operator, err := sdkoperator.NewOperatorFromConfig(operatorConfig, square, nil)
 	if err != nil {
 		logger.Errorf("Failed to create operator from config: %v", err)
 		return
@@ -62,4 +49,11 @@ func main() {
 		logger.Errorf("Error while running operator: %v", err)
 		return
 	}
+}
+
+// This function computes the square of a number
+func square(taskIndex uint32, numberToSquare *big.Int) (*big.Int, error) {
+	numberSquared := big.NewInt(0).Exp(numberToSquare, big.NewInt(2), nil)
+
+	return numberSquared, nil
 }
