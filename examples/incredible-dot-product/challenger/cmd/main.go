@@ -7,6 +7,7 @@ import (
 	examplechallenger "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/challenger"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
@@ -24,7 +25,9 @@ func main() {
 		logger.Errorf("Failed to dial ethclient: %w", err)
 	}
 
-	challengerVerifier, err := examplechallenger.NewChallengeVerifier(logger)
+	taskManagerAddr := common.HexToAddress("0x")
+
+	challengerVerifier, err := examplechallenger.NewChallengeVerifier(logger, taskManagerAddr)
 	if err != nil {
 		logger.Errorf("Failed to create challenger verifier: %w", err)
 	}
@@ -41,4 +44,7 @@ func main() {
 	}
 
 	err = challenger.Start(context.Background())
+	if err != nil {
+		logger.Errorf("Failure while running challenger: %w", err)
+	}
 }
