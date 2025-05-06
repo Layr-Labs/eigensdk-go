@@ -40,7 +40,7 @@ start-aggregator: ##
 		2>&1 | zap-pretty
 
 start-operator: ## 
-	go run operator/main.go --config config-files/operator.anvil.yaml \
+	go run ./operator --config config-files/operator.anvil.yaml \
 		2>&1 | zap-pretty
 
 start-challenger: ## 
