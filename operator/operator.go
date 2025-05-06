@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"math/rand/v2"
 	"os"
+	"time"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -34,7 +36,7 @@ type Operator[Input any, Output any] struct {
 	taskResponseHashFn    TaskResponseHashFunction[Output]
 }
 
-type ResponseCalculationFunction[Input any, Output any] func(task sdktypes.GenericInputTask[Input], taskIndex uint32) (sdktypes.GenericOutputTaskResponse[Output], error)
+type ResponseCalculationFunction[Input any, Output any] func(taskIndex uint32, input Input) (Output, error)
 
 type TaskResponseHashFunction[Output any] func(taskResponse sdktypes.GenericOutputTaskResponse[Output]) ([32]byte, error)
 
@@ -79,8 +81,8 @@ func getDefaultHashFunction[Output any](taskResponseType abi.Type) TaskResponseH
 
 func NewOperatorFromConfig[Input any, Output any](
 	c OperatorConfig,
-	ResponseCalculationFn ResponseCalculationFunction[Input, Output],
-	TaskResponseHashFn TaskResponseHashFunction[Output],
+	responseCalculationFn ResponseCalculationFunction[Input, Output],
+	taskResponseHashFn TaskResponseHashFunction[Output],
 ) (*Operator[Input, Output], error) {
 	avs_config := avsregistry.Config{
 		RegistryCoordinatorAddress:    common.HexToAddress(c.AVSRegistryCoordinatorAddress),
@@ -153,14 +155,41 @@ func NewOperatorFromConfig[Input any, Output any](
 		c.Logger.Fatal("error subscribing to newTaskCreated events", "err", err)
 	}
 
-	if TaskResponseHashFn == nil {
+	if taskResponseHashFn == nil {
 		taskResponseType, err := extractTypeFromAbi(c.TaskManagerAbi)
 		if err != nil {
 			c.Logger.Error("Failed to get task response type in default abi.", "err", err)
 			return nil, err
 		}
 
-		TaskResponseHashFn = getDefaultHashFunction[Output](taskResponseType)
+		taskResponseHashFn = getDefaultHashFunction[Output](taskResponseType)
+	}
+
+	if c.TestingOpts.FailingPercentage != 0 {
+		failPercentage := c.TestingOpts.FailingPercentage
+		if failPercentage > 100 {
+			return nil, fmt.Errorf("failing percentage must be between 0 and 100")
+		}
+		computeOutput := responseCalculationFn
+
+		failSeed := c.TestingOpts.FailingSeed
+		if failSeed == 0 {
+			// If the seed is not set, we use the current time as the seed
+			failSeed = uint64(time.Now().UnixNano())
+		}
+		rng := rand.New(rand.NewPCG(42, failSeed))
+
+		c.Logger.Warn("FailingPercentage option was set. This operator will randomly fail tasks.")
+		c.Logger.Info("Using seed:", failSeed)
+
+		responseCalculationFn = func(taskIndex uint32, input Input) (Output, error) {
+			randomNumber := rng.UintN(100)
+			if randomNumber < failPercentage {
+				var emptyOutput Output
+				return emptyOutput, nil
+			}
+			return computeOutput(taskIndex, input)
+		}
 	}
 
 	operator := &Operator[Input, Output]{
@@ -170,8 +199,8 @@ func NewOperatorFromConfig[Input any, Output any](
 		operatorId:            operatorId,
 		newTaskCreatedLogs:    newTaskCreatedLogs,
 		taskManagerAbi:        c.TaskManagerAbi,
-		responseCalculationFn: ResponseCalculationFn,
-		taskResponseHashFn:    TaskResponseHashFn,
+		responseCalculationFn: responseCalculationFn,
+		taskResponseHashFn:    taskResponseHashFn,
 	}
 
 	c.Logger.Info("Operator info",
@@ -231,12 +260,15 @@ func (o *Operator[Input, Output]) processNewTaskCreatedLog(
 		"QuorumThresholdPercentage", newTaskCreatedLog.Task.QuorumThresholdPercentage,
 	)
 
-	taskResponse, err := o.responseCalculationFn(newTaskCreatedLog.Task, newTaskIndex)
+	output, err := o.responseCalculationFn(newTaskIndex, newTaskCreatedLog.Task.InputValue)
 	if err != nil {
 		return nil, fmt.Errorf("error calculating task response: %w", err)
 	}
-
-	return &taskResponse, nil
+	taskResponse := &sdktypes.GenericOutputTaskResponse[Output]{
+		ReferenceTaskIndex: newTaskIndex,
+		OutputValue:        output,
+	}
+	return taskResponse, nil
 }
 
 func (o *Operator[Input, Output]) signTaskResponse(
