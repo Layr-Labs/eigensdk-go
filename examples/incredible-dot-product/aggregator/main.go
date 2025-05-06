@@ -27,7 +27,7 @@ type DotProductOutput struct {
 }
 
 func main() {
-	logger, err := logging.NewZapLogger(logging.Development)
+	logger, err := logging.NewZapLogger(logging.Production)
 	if err != nil {
 		panic(err)
 	}
