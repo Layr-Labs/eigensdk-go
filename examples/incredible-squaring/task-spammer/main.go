@@ -6,10 +6,12 @@ import (
 	"math/big"
 	"time"
 
+	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/bindings/taskManager"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	taskspammer "github.com/Layr-Labs/eigensdk-go/task-spammer"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
@@ -28,7 +30,12 @@ func main() {
 		return
 	}
 
-	txMgr, err := GetTxManager(logger, ethHttpClient, taskSpammerPk)
+	ecdsaPrivateKey, err := crypto.HexToECDSA(taskSpammerPk)
+	if err != nil {
+		return
+	}
+
+	txMgr, err := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethHttpClient, ecdsaPrivateKey)
 	if err != nil {
 		return
 	}
