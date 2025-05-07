@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"math/big"
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/operator"
@@ -51,7 +50,7 @@ func main() {
 	}
 
 	// Setting the TaskResponseHashFn parameter in nil because I'm using the abi default encoding function
-	operator, err := operator.NewOperatorFromConfig(operatorConfig, dotProduct, nil)
+	operator, err := operator.NewOperatorFromConfig(operatorConfig, examplecommon.DotProduct, nil)
 	if err != nil {
 		logger.Fatalf("Failed to create operator: %w", err)
 	}
@@ -60,15 +59,4 @@ func main() {
 	if err != nil {
 		logger.Fatalf("Failure while running operator: %w", err)
 	}
-}
-
-// This function computes the dot product of a pair of points
-func dotProduct(taskIndex uint32, points examplecommon.DotProductInput) (*big.Int, error) {
-	totalSum := big.NewInt(0)
-	for i := range points.X {
-		currentSum := big.NewInt(0).Mul(points.X[i], points.Y[i])
-		totalSum.Add(totalSum, currentSum)
-	}
-
-	return totalSum, nil
 }
