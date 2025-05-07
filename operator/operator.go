@@ -40,7 +40,7 @@ type ResponseCalculationFunction[Input any, Output any] func(taskIndex uint32, i
 
 type TaskResponseHashFunction[Output any] func(taskResponse sdktypes.GenericOutputTaskResponse[Output]) ([32]byte, error)
 
-func FailingResponseCalculationFunction[Input any, Output any](function ResponseCalculationFunction[Input, Output], failureRate uint) (ResponseCalculationFunction[Input, Output]) {
+func FailingResponseCalculationFunction[Input any, Output any](function ResponseCalculationFunction[Input, Output], failureRate uint) ResponseCalculationFunction[Input, Output] {
 	failingFunction := func(taskIndex uint32, input Input) (Output, error) {
 		response, err := function(taskIndex, input)
 
@@ -57,8 +57,6 @@ func FailingResponseCalculationFunction[Input any, Output any](function Response
 
 	return failingFunction
 }
-
-
 
 func extractTypeFromAbi(taskManagerAbi *abi.ABI) (abi.Type, error) {
 	taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
