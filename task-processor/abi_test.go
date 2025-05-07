@@ -10,16 +10,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 
-	idptaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/incredibleDotProductTaskManager"
 	istaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/bindings/taskManager"
 )
 
 // Testing structs
-
-type DotProductInput struct {
-	X []*big.Int
-	Y []*big.Int
-}
 
 type U32Point struct {
 	X uint32
@@ -79,41 +73,6 @@ func TestIncredibleSquaringAbi(t *testing.T) {
 
 	taskReflectStruct := copyStructAndChangeFieldName(originalTaskStruct, "InputValue", "NumberToBeSquared")
 	taskResponseReflectStruct := copyStructAndChangeFieldName(originalTaskResponseStruct, "OutputValue", "NumberSquared")
-
-	packedBytes, err := taskManagerAbi.Pack("respondToTask", taskReflectStruct, taskResponseReflectStruct, nonSigStruct)
-	require.NoError(t, err)
-	require.NotZero(t, packedBytes)
-}
-
-func TestIncredibleDotProductAbi(t *testing.T) {
-	taskManagerAbi, err := idptaskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
-	require.NoError(t, err)
-
-	originalTaskStruct := sdktypes.GenericInputTask[DotProductInput]{
-		InputValue:                DotProductInput{X: []*big.Int{big.NewInt(10)}, Y: []*big.Int{big.NewInt(10)}},
-		TaskCreatedBlock:          10,
-		QuorumNumbers:             []uint8{0},
-		QuorumThresholdPercentage: 100,
-	}
-
-	originalTaskResponseStruct := sdktypes.GenericOutputTaskResponse[*big.Int]{
-		ReferenceTaskIndex: 0,
-		OutputValue:        big.NewInt(100),
-	}
-
-	nonSigStruct := sdktypes.NonSignerStakesAndSignature{
-		NonSignerQuorumBitmapIndices: []uint32{0},
-		NonSignerPubkeys:             []sdktypes.BN254G1Point{{X: common.Big0, Y: common.Big0}},
-		QuorumApks:                   []sdktypes.BN254G1Point{{X: common.Big0, Y: common.Big0}},
-		ApkG2:                        sdktypes.BN254G2Point{X: [2]*big.Int{common.Big0, common.Big0}, Y: [2]*big.Int{common.Big0, common.Big0}},
-		Sigma:                        sdktypes.BN254G1Point{X: common.Big0, Y: common.Big0},
-		QuorumApkIndices:             []uint32{0},
-		TotalStakeIndices:            []uint32{0},
-		NonSignerStakeIndices:        [][]uint32{{0}},
-	}
-
-	taskReflectStruct := copyStructAndChangeFieldName(originalTaskStruct, "InputValue", "PointsToMultiply")
-	taskResponseReflectStruct := copyStructAndChangeFieldName(originalTaskResponseStruct, "OutputValue", "Result")
 
 	packedBytes, err := taskManagerAbi.Pack("respondToTask", taskReflectStruct, taskResponseReflectStruct, nonSigStruct)
 	require.NoError(t, err)

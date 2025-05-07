@@ -24,3 +24,10 @@ jobs:
         with:
           version: latest
           args: --timeout 3m
+      
+      - name: golangci-lint-example
+        uses: cd examples/incredible-dot-product/
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          args: --timeout 3m
