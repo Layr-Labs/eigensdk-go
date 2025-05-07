@@ -25,6 +25,7 @@ func main() {
 	taskManagerAbi, err := taskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
 	if err != nil {
 		logger.Errorf("Failed to get task manager abi: %w", err)
+		return
 	}
 
 	ethHttpUrl := "http://localhost:8545"

@@ -32,23 +32,27 @@ func main() {
 	taskManagerAbi, err := taskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
 	if err != nil {
 		logger.Errorf("Failed to get task manager abi: %w", err)
+		return
 	}
 
 	ethHttpUrl := "http://localhost:8545"
 	ethClient, err := ethclient.Dial(ethHttpUrl)
 	if err != nil {
 		logger.Errorf("Failed to dial ethclient: %w", err)
+		return
 	}
 
 	aggregatorPrivateKey := "2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6"
 	ecdsaPrivateKey, err := crypto.HexToECDSA(aggregatorPrivateKey)
 	if err != nil {
 		logger.Errorf("Failed to create ecdsa private key: %w", err)
+		return
 	}
 
 	chainId, err := ethClient.ChainID(context.Background())
 	if err != nil {
 		logger.Error("Cannot get chainId", "err", err)
+		return
 	}
 
 	aggregatorAddr := gethcommon.HexToAddress("0xa0Ee7A142d267C1f36714E4a8F75612F20a79720")
@@ -84,20 +88,24 @@ func main() {
 	taskResponder, err := taskprocessor.NewTaskResponderFromAbi[DotProductInput, *big.Int](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
 	if err != nil {
 		logger.Errorf("Failed to create Task Responder: %w", err)
+		return
 	}
 
 	taskProcessor, err := taskprocessor.NewIndexingTaskProcessor(logger, taskResponder)
 	if err != nil {
 		logger.Errorf("Failed to create Task Processor: %w", err)
+		return
 	}
 
 	aggregator, err := aggregator.NewAggregator(aggConfig, taskProcessor)
 	if err != nil {
 		logger.Errorf("Failed to create aggregator: %w", err)
+		return
 	}
 
 	err = aggregator.Start(context.Background())
 	if err != nil {
 		logger.Errorf("Failure while running aggregator: %w", err)
+		return
 	}
 }

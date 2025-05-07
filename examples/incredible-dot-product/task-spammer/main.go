@@ -33,12 +33,14 @@ func main() {
 	taskManagerAbi, err := taskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
 	if err != nil {
 		logger.Errorf("Failed to get task manager abi: %w", err)
+		return
 	}
 
 	ethHttpUrl := "http://localhost:8545"
 	ethClient, err := ethclient.Dial(ethHttpUrl)
 	if err != nil {
 		logger.Errorf("Failed to dial ethclient: %w", err)
+		return
 	}
 
 	taskManagerAddr := common.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3")
@@ -47,11 +49,13 @@ func main() {
 	ecdsaPrivateKey, err := crypto.HexToECDSA(taskSpammerPrivateKey)
 	if err != nil {
 		logger.Errorf("Failed to create ecdsa private key: %w", err)
+		return
 	}
 
 	chainId, err := ethClient.ChainID(context.Background())
 	if err != nil {
 		logger.Error("Cannot get chainId", "err", err)
+		return
 	}
 
 	taskSpammerAddr := common.HexToAddress("0x14dC79964da2C08b23698B3D3cc7Ca32193d9955")
@@ -69,6 +73,7 @@ func main() {
 	taskCreator, err := taskspammer.NewTaskCreatorFromAbi[DotProductInput](taskManagerAddr, *taskManagerAbi, txMgr, ethClient)
 	if err != nil {
 		logger.Errorf("Failed to create Task Creator: %w", err)
+		return
 	}
 
 	taskSpammerConfig := taskspammer.Config{
@@ -80,6 +85,7 @@ func main() {
 	taskSpammer, err := taskspammer.NewTaskSpammer(taskCreator, taskSpammerConfig)
 	if err != nil {
 		logger.Errorf("Failed to create Task Spammer: %w", err)
+		return
 	}
 
 	seq := LinearRangeSequence()
@@ -87,6 +93,7 @@ func main() {
 	err = taskSpammer.Start(context.Background(), seq)
 	if err != nil {
 		logger.Errorf("Failure while running Task Spammer: %w", err)
+		return
 	}
 }
 

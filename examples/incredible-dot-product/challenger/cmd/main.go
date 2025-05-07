@@ -26,12 +26,14 @@ func main() {
 	taskManagerAbi, err := taskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
 	if err != nil {
 		logger.Errorf("Failed to get task manager abi: %w", err)
+		return
 	}
 
 	ethHttpUrl := "http://localhost:8545"
 	ethClient, err := ethclient.Dial(ethHttpUrl)
 	if err != nil {
 		logger.Errorf("Failed to dial ethclient: %w", err)
+		return
 	}
 
 	taskManagerAddr := gethcommon.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3")
@@ -40,11 +42,13 @@ func main() {
 	ecdsaPrivateKey, err := crypto.HexToECDSA(challengerPrivateKey)
 	if err != nil {
 		logger.Errorf("Failed to create ecdsa private key: %w", err)
+		return
 	}
 
 	chainId, err := ethClient.ChainID(context.Background())
 	if err != nil {
 		logger.Error("Cannot get chainId", "err", err)
+		return
 	}
 
 	challengerAddr := gethcommon.HexToAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")
@@ -62,6 +66,7 @@ func main() {
 	challengerVerifier, err := examplechallenger.NewChallengeVerifier(logger, taskManagerAddr, *ethClient, txMgr)
 	if err != nil {
 		logger.Errorf("Failed to create challenger verifier: %w", err)
+		return
 	}
 
 	challengerConfig := challenger.ChallengerConfig{
@@ -73,10 +78,12 @@ func main() {
 	challenger, err := challenger.NewChallenger(challengerConfig, challengerVerifier)
 	if err != nil {
 		logger.Errorf("Failed to create challenger: %w", err)
+		return
 	}
 
 	err = challenger.Start(context.Background())
 	if err != nil {
 		logger.Errorf("Failure while running challenger: %w", err)
+		return
 	}
 }
