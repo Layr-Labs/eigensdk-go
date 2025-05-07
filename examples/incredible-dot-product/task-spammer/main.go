@@ -26,7 +26,8 @@ type DotProductInput struct {
 func main() {
 	logger, err := logging.NewZapLogger(logging.Production)
 	if err != nil {
-		panic(err)
+		println("Failure creating logger")
+		return
 	}
 
 	taskManagerAbi, err := taskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
