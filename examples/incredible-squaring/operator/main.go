@@ -1,4 +1,4 @@
-package examples
+package main
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	sdkoperator "github.com/Layr-Labs/eigensdk-go/operator"
 
-	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/bindings/taskManager"
+	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/bindings/taskManager"
 )
 
 // The idea of this example is to show how to create a custom operator using the SDK generic implementation

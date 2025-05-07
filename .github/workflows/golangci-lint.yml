@@ -23,4 +23,11 @@ jobs:
         uses: golangci/golangci-lint-action@v6
         with:
           version: latest
+          args: --timeout 3m --skip-dirs=examples/incredible-dot-product/
+
+      - name: golangci-lint-example
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
           args: --timeout 3m
+          working-directory: examples/incredible-dot-product/

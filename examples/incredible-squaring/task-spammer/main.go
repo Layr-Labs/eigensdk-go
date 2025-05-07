@@ -1,4 +1,4 @@
-package taskspammerexample
+package main
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
-	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/bindings/taskManager"
+	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/bindings/taskManager"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	taskspammer "github.com/Layr-Labs/eigensdk-go/task-spammer"
 	"github.com/ethereum/go-ethereum/common"
