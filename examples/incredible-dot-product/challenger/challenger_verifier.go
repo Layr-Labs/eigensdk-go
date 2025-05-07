@@ -46,10 +46,10 @@ var _ challenger.ChallengeVerifier[examplecommon.DotProductInput, *big.Int] = (*
 
 func (cv ChallengeVerifier) VerifyChallenge(taskIndex uint32, task sdktypes.GenericInputTask[examplecommon.DotProductInput], taskResponse sdktypes.TaskResponseData[*big.Int]) error {
 	// Calculate response
-	totalSum := big.NewInt(0)
-	for i := range task.InputValue.X {
-		currentSum := big.NewInt(0).Mul(task.InputValue.X[i], task.InputValue.Y[i])
-		totalSum.Add(totalSum, currentSum)
+	totalSum, err := examplecommon.DotProduct(taskIndex, task.InputValue)
+	if err != nil {
+		cv.logger.Errorf("Failed to calculate task response: %w", err)
+		return err
 	}
 
 	// Compare submitted response with calculated here
