@@ -42,18 +42,18 @@ type TaskResponseHashFunction[Output any] func(taskResponse sdktypes.GenericOutp
 func ComputeWithFailures[Input any, Output any](
 	correctLogic, incorrectLogic ResponseCalculationFunction[Input, Output],
 	failureRate uint32,
-) ResponseCalculationFunction[Input, Output] {
+) (ResponseCalculationFunction[Input, Output], error) {
+	if failureRate > 100 {
+		return nil, fmt.Errorf("failure rate is over 100, should be a number between 0 and 100")
+	}
+
 	return func(taskIndex uint32, input Input) (Output, error) {
-		if failureRate > 100 {
-			var emptyOutput Output
-			return emptyOutput, fmt.Errorf("failure rate is over 100, should be a number between 0 and 100")
-		}
 		if rand.Uint32()%100 < failureRate {
 			return incorrectLogic(taskIndex, input)
 		} else {
 			return correctLogic(taskIndex, input)
 		}
-	}
+	}, nil
 }
 
 func extractTypeFromAbi(taskManagerAbi *abi.ABI) (abi.Type, error) {
