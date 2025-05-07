@@ -58,7 +58,7 @@ func RegisterOperatorOnStartup(logger logging.Logger) error {
 		PrivateKey: operatorEcdsaPrivateKey,
 	}, chainid)
 	if err != nil {
-		panic(err)
+		logger.Fatalf(err.Error())
 	}
 
 	pkWallet, err := wallet.NewPrivateKeyWallet(ethRpcClient, signerV2, senderAddr, logger)

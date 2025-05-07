@@ -51,11 +51,11 @@ func main() {
 
 	signerV2, _, err := signerv2.SignerFromConfig(signerv2.Config{PrivateKey: ecdsaPrivateKey}, chainId)
 	if err != nil {
-		panic(err)
+		logger.Fatalf(err.Error())
 	}
 	skWallet, err := wallet.NewPrivateKeyWallet(ethClient, signerV2, challengerAddr, logger)
 	if err != nil {
-		panic(err)
+		logger.Fatalf(err.Error())
 	}
 	txMgr := txmgr.NewSimpleTxManager(skWallet, ethClient, logger, challengerAddr)
 
