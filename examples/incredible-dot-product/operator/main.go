@@ -7,13 +7,9 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/operator"
 
+	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/common"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
 )
-
-type DotProductInput struct {
-	X []*big.Int
-	Y []*big.Int
-}
 
 func main() {
 	logger, err := logging.NewZapLogger(logging.Production)
@@ -67,7 +63,7 @@ func main() {
 }
 
 // This function computes the dot product of a pair of points
-func dotProduct(taskIndex uint32, points DotProductInput) (*big.Int, error) {
+func dotProduct(taskIndex uint32, points examplecommon.DotProductInput) (*big.Int, error) {
 	totalSum := big.NewInt(0)
 	for i := range points.X {
 		currentSum := big.NewInt(0).Mul(points.X[i], points.Y[i])

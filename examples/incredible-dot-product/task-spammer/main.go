@@ -13,13 +13,9 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
+	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/common"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
 )
-
-type DotProductInput struct {
-	X []*big.Int
-	Y []*big.Int
-}
 
 func main() {
 	logger, err := logging.NewZapLogger(logging.Production)
@@ -86,9 +82,9 @@ func main() {
 // Returns an iterator for the sequence 1, 2, 3, ...
 // Inspired on the one from examples/incredible-squaring/task-spammer/task_spammer_use_example.go
 // Returns [1, 2, ..., n]
-func LinearRangeSequence() iter.Seq[DotProductInput] {
+func LinearRangeSequence() iter.Seq[examplecommon.DotProductInput] {
 	n := big.NewInt(1)
-	return func(yield func(DotProductInput) bool) {
+	return func(yield func(examplecommon.DotProductInput) bool) {
 		for {
 			length := int(n.Int64())
 			x := make([]*big.Int, length)
@@ -98,7 +94,7 @@ func LinearRangeSequence() iter.Seq[DotProductInput] {
 				x[i] = v
 				y[i] = v
 			}
-			if !yield(DotProductInput{X: x, Y: y}) {
+			if !yield(examplecommon.DotProductInput{X: x, Y: y}) {
 				break
 			}
 			n.Add(n, big.NewInt(1))

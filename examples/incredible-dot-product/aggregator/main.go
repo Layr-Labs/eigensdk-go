@@ -13,12 +13,9 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
-)
 
-type DotProductInput struct {
-	X []*big.Int
-	Y []*big.Int
-}
+	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/common"
+)
 
 func main() {
 	logger, err := logging.NewZapLogger(logging.Production)
@@ -71,7 +68,7 @@ func main() {
 	}
 
 	taskManagerAddr := gethcommon.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3")
-	taskResponder, err := taskprocessor.NewTaskResponderFromAbi[DotProductInput, *big.Int](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
+	taskResponder, err := taskprocessor.NewTaskResponderFromAbi[examplecommon.DotProductInput, *big.Int](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
 	if err != nil {
 		logger.Errorf("Failed to create Task Responder: %w", err)
 		return

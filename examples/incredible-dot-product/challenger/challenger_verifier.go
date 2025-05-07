@@ -13,13 +13,9 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 
+	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/common"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
 )
-
-type DotProductInput struct {
-	X []*big.Int
-	Y []*big.Int
-}
 
 type ChallengeVerifier struct {
 	logger              logging.Logger
@@ -46,9 +42,9 @@ func NewChallengeVerifier(
 	}, nil
 }
 
-var _ challenger.ChallengeVerifier[DotProductInput, *big.Int] = (*ChallengeVerifier)(nil)
+var _ challenger.ChallengeVerifier[examplecommon.DotProductInput, *big.Int] = (*ChallengeVerifier)(nil)
 
-func (cv ChallengeVerifier) VerifyChallenge(taskIndex uint32, task sdktypes.GenericInputTask[DotProductInput], taskResponse sdktypes.TaskResponseData[*big.Int]) error {
+func (cv ChallengeVerifier) VerifyChallenge(taskIndex uint32, task sdktypes.GenericInputTask[examplecommon.DotProductInput], taskResponse sdktypes.TaskResponseData[*big.Int]) error {
 	// Calculate response
 	totalSum := big.NewInt(0)
 	for i := range task.InputValue.X {
