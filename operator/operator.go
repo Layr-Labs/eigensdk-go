@@ -39,22 +39,21 @@ type ResponseCalculationFunction[Input any, Output any] func(taskIndex uint32, i
 
 type TaskResponseHashFunction[Output any] func(taskResponse sdktypes.GenericOutputTaskResponse[Output]) ([32]byte, error)
 
-func FailingResponseCalculationFunction[Input any, Output any](function ResponseCalculationFunction[Input, Output], failureRate uint) ResponseCalculationFunction[Input, Output] {
-	failingFunction := func(taskIndex uint32, input Input) (Output, error) {
-		response, err := function(taskIndex, input)
-
-		rng := rand.New(rand.NewPCG(42, 86))
-
-		randomNumber := rng.UintN(100)
-		if randomNumber < failureRate {
+func ComputeWithFailures[Input any, Output any](
+	correctLogic, incorrectLogic ResponseCalculationFunction[Input, Output], 
+	failureRate uint32,
+) ResponseCalculationFunction[Input, Output] {
+	return func(taskIndex uint32, input Input) (Output, error) {
+		if failureRate > 100 {
 			var emptyOutput Output
-			return emptyOutput, nil
+			return emptyOutput, fmt.Errorf("failure rate is over 100, should be a number between 0 and 100")
 		}
-
-		return response, err
+		if rand.Uint32()%100 < failureRate {
+			return incorrectLogic(taskIndex, input)
+		} else {
+			return correctLogic(taskIndex, input)
+		}
 	}
-
-	return failingFunction
 }
 
 func extractTypeFromAbi(taskManagerAbi *abi.ABI) (abi.Type, error) {
