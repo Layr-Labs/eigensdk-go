@@ -56,3 +56,8 @@ start-task-spammer: ##
 		--core-deployment ${CORE_DEPLOYMENT_FILE} \
 		--ecdsa-private-key ${TASK_SPAMMER_PRIVATE_KEY} \
 		2>&1 | zap-pretty
+
+.PHONY: lint
+lint: ## runs all linters
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	golangci-lint run ./...
