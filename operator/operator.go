@@ -40,7 +40,7 @@ type ResponseCalculationFunction[Input any, Output any] func(taskIndex uint32, i
 type TaskResponseHashFunction[Output any] func(taskResponse sdktypes.GenericOutputTaskResponse[Output]) ([32]byte, error)
 
 func ComputeWithFailures[Input any, Output any](
-	correctLogic, incorrectLogic ResponseCalculationFunction[Input, Output], 
+	correctLogic, incorrectLogic ResponseCalculationFunction[Input, Output],
 	failureRate uint32,
 ) ResponseCalculationFunction[Input, Output] {
 	return func(taskIndex uint32, input Input) (Output, error) {
