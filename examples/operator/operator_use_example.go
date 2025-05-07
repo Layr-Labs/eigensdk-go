@@ -38,7 +38,12 @@ func main() {
 		TaskManagerAbi:                taskManagerAbi,
 	}
 
-	operator, err := sdkoperator.NewOperatorFromConfig(operatorConfig, square, nil)
+	logic, err := sdkoperator.ComputeWithFailures(square, wrongSquare, 50)
+	if err != nil {
+		logger.Fatalf(err.Error())
+	}
+
+	operator, err := sdkoperator.NewOperatorFromConfig(operatorConfig, logic, nil)
 	if err != nil {
 		logger.Errorf("Failed to create operator from config: %v", err)
 		return
@@ -56,4 +61,8 @@ func square(taskIndex uint32, numberToSquare *big.Int) (*big.Int, error) {
 	numberSquared := big.NewInt(0).Exp(numberToSquare, big.NewInt(2), nil)
 
 	return numberSquared, nil
+}
+
+func wrongSquare(taskIndex uint32, numberToSquare *big.Int) (*big.Int, error) {
+	return big.NewInt(0), nil
 }
