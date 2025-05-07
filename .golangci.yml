@@ -1,4 +1,3 @@
-linters-settings:
-  goanalysis:
-    skip-dirs:
-      - examples/incredible-dot-product/contracts/bindings
+run:
+  skip-dirs:
+    - examples/incredible-dot-product/contracts/bindings
