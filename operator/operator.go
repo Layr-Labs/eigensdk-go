@@ -6,7 +6,6 @@ import (
 	"math/big"
 	"math/rand/v2"
 	"os"
-	"time"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -181,33 +180,6 @@ func NewOperatorFromConfig[Input any, Output any](
 		}
 
 		taskResponseHashFn = getDefaultHashFunction[Output](taskResponseType)
-	}
-
-	if c.TestingOpts.FailingPercentage != 0 {
-		failPercentage := c.TestingOpts.FailingPercentage
-		if failPercentage > 100 {
-			return nil, fmt.Errorf("failing percentage must be between 0 and 100")
-		}
-		computeOutput := responseCalculationFn
-
-		failSeed := c.TestingOpts.FailingSeed
-		if failSeed == 0 {
-			// If the seed is not set, we use the current time as the seed
-			failSeed = uint64(time.Now().UnixNano())
-		}
-		rng := rand.New(rand.NewPCG(42, failSeed))
-
-		c.Logger.Warn("FailingPercentage option was set. This operator will randomly fail tasks.")
-		c.Logger.Info("Using seed:", failSeed)
-
-		responseCalculationFn = func(taskIndex uint32, input Input) (Output, error) {
-			randomNumber := rng.UintN(100)
-			if randomNumber < failPercentage {
-				var emptyOutput Output
-				return emptyOutput, nil
-			}
-			return computeOutput(taskIndex, input)
-		}
 	}
 
 	operator := &Operator[Input, Output]{
