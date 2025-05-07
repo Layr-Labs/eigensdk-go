@@ -1,4 +1,4 @@
-package taskspammerexample
+package main
 
 import (
 	"context"
@@ -6,14 +6,10 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
-	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/bindings/taskManager"
 	"github.com/Layr-Labs/eigensdk-go/logging"
-	"github.com/Layr-Labs/eigensdk-go/signerv2"
 	taskspammer "github.com/Layr-Labs/eigensdk-go/task-spammer"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
@@ -84,33 +80,4 @@ func NewNumberToSquareSequence() iter.Seq[*big.Int] {
 			acc.Add(acc, delta)
 		}
 	}
-}
-
-// TODO: this should be in the SDK
-func GetTxManager(logger logging.Logger, ethHttpClient *ethclient.Client, taskSpammerPk string) (*txmgr.SimpleTxManager, error) {
-	ecdsaPrivateKey, err := crypto.HexToECDSA(taskSpammerPk)
-	if err != nil {
-		return nil, err
-	}
-
-	rpcCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	chainid, err := ethHttpClient.ChainID(rpcCtx)
-	if err != nil {
-		logger.Error("Cannot get chain id", "err", err)
-		return nil, err
-	}
-
-	signerV2, senderAddr, err := signerv2.SignerFromConfig(signerv2.Config{PrivateKey: ecdsaPrivateKey}, chainid)
-	if err != nil {
-		return nil, err
-	}
-
-	pkWallet, err := wallet.NewPrivateKeyWallet(ethHttpClient, signerV2, senderAddr, logger)
-	if err != nil {
-		return nil, err
-	}
-
-	txMgr := txmgr.NewSimpleTxManager(pkWallet, ethHttpClient, logger, senderAddr)
-	return txMgr, nil
 }

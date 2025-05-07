@@ -1,4 +1,4 @@
-package challengerexample
+package main
 
 import (
 	"context"

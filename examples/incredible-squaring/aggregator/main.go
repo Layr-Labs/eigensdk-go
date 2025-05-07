@@ -1,4 +1,4 @@
-package aggregator_example
+package main
 
 import (
 	"context"
