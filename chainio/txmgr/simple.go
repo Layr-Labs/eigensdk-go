@@ -75,7 +75,7 @@ func NewSimpleTxManagerFromPrivateKey(
 	}
 
 	signerV2, senderAddr, err := signerv2.SignerFromConfig(signerv2.Config{PrivateKey: privateKey}, chainid)
-	// This should never happen
+	// This can only happen if privateKey is nil
 	if err != nil {
 		return nil, utils.WrapError("could not create signer", err)
 	}
