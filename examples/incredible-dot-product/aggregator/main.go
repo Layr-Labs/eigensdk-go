@@ -5,10 +5,8 @@ import (
 	"math/big"
 
 	"github.com/Layr-Labs/eigensdk-go/aggregator"
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/logging"
-	"github.com/Layr-Labs/eigensdk-go/signerv2"
 	taskprocessor "github.com/Layr-Labs/eigensdk-go/task-processor"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -49,23 +47,11 @@ func main() {
 		return
 	}
 
-	chainId, err := ethClient.ChainID(context.Background())
+	txMgr, err := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethClient, ecdsaPrivateKey)
 	if err != nil {
-		logger.Error("Cannot get chainId", "err", err)
+		logger.Errorf("Failed to create tx manager from private key: %w", err)
 		return
 	}
-
-	aggregatorAddr := gethcommon.HexToAddress("0xa0Ee7A142d267C1f36714E4a8F75612F20a79720")
-
-	signerV2, _, err := signerv2.SignerFromConfig(signerv2.Config{PrivateKey: ecdsaPrivateKey}, chainId)
-	if err != nil {
-		logger.Fatalf(err.Error())
-	}
-	skWallet, err := wallet.NewPrivateKeyWallet(ethClient, signerV2, aggregatorAddr, logger)
-	if err != nil {
-		logger.Fatalf(err.Error())
-	}
-	txMgr := txmgr.NewSimpleTxManager(skWallet, ethClient, logger, aggregatorAddr)
 
 	aggConfig := aggregator.AggregatorConfig{
 		Logger:             logger,

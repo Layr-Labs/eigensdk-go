@@ -6,10 +6,8 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/logging"
-	"github.com/Layr-Labs/eigensdk-go/signerv2"
 	taskspammer "github.com/Layr-Labs/eigensdk-go/task-spammer"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -52,25 +50,13 @@ func main() {
 		return
 	}
 
-	chainId, err := ethClient.ChainID(context.Background())
+	txMgr, err := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethClient, ecdsaPrivateKey)
 	if err != nil {
-		logger.Error("Cannot get chainId", "err", err)
+		logger.Errorf("Failed to create tx manager from private key: %w", err)
 		return
 	}
 
-	taskSpammerAddr := common.HexToAddress("0x14dC79964da2C08b23698B3D3cc7Ca32193d9955")
-
-	signerV2, _, err := signerv2.SignerFromConfig(signerv2.Config{PrivateKey: ecdsaPrivateKey}, chainId)
-	if err != nil {
-		logger.Fatalf(err.Error())
-	}
-	skWallet, err := wallet.NewPrivateKeyWallet(ethClient, signerV2, taskSpammerAddr, logger)
-	if err != nil {
-		logger.Fatalf(err.Error())
-	}
-	txMgr := txmgr.NewSimpleTxManager(skWallet, ethClient, logger, taskSpammerAddr)
-
-	taskCreator, err := taskspammer.NewTaskCreatorFromAbi[DotProductInput](taskManagerAddr, *taskManagerAbi, txMgr, ethClient)
+	taskCreator, err := taskspammer.NewTaskCreatorFromAbi[examplecommon.DotProductInput](taskManagerAddr, *taskManagerAbi, txMgr, ethClient)
 	if err != nil {
 		logger.Errorf("Failed to create Task Creator: %w", err)
 		return
