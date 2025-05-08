@@ -1,7 +1,8 @@
 package eigenpod
 
 import (
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eigenpod/bindings"
+	ieigenpod "github.com/Layr-Labs/eigenlayer-contracts/pkg/bindings/IEigenPod"
+	ieigenpodmanager "github.com/Layr-Labs/eigenlayer-contracts/pkg/bindings/IEigenPodManager"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/logging"
@@ -13,19 +14,19 @@ import (
 type ChainWriter struct {
 	logger    logging.Logger
 	ethClient eth.HttpBackend
-	eigenPod  *bindings.IEigenPod
+	eigenPod  *ieigenpod.IEigenPod
 	txMgr     txmgr.TxManager
 }
 
 type ManagerChainWriter struct {
 	logger    logging.Logger
 	ethClient eth.HttpBackend
-	manager   *bindings.IEigenPodManager
+	manager   *ieigenpodmanager.IEigenPodManager
 	txMgr     txmgr.TxManager
 }
 
 func newChainWriter(
-	eigenPod *bindings.IEigenPod,
+	eigenPod *ieigenpod.IEigenPod,
 	ethClient eth.HttpBackend,
 	logger logging.Logger,
 	txMgr txmgr.TxManager,
@@ -41,7 +42,7 @@ func newChainWriter(
 }
 
 func newManagerChainWriter(
-	manager *bindings.IEigenPodManager,
+	manager *ieigenpodmanager.IEigenPodManager,
 	ethClient eth.HttpBackend,
 	logger logging.Logger,
 	txMgr txmgr.TxManager,
@@ -62,7 +63,7 @@ func NewWriter(
 	txMgr txmgr.TxManager,
 	logger logging.Logger,
 ) (*ChainWriter, error) {
-	pod, err := bindings.NewIEigenPod(eigenPodAddress, ethClient)
+	pod, err := ieigenpod.NewIEigenPod(eigenPodAddress, ethClient)
 	if err != nil {
 		return nil, utils.WrapError("Failed to create EigenPod contract", err)
 	}
@@ -76,7 +77,7 @@ func NewManagerWriter(
 	txMgr txmgr.TxManager,
 	logger logging.Logger,
 ) (*ManagerChainWriter, error) {
-	manager, err := bindings.NewIEigenPodManager(eigenPodManagerAddress, ethClient)
+	manager, err := ieigenpodmanager.NewIEigenPodManager(eigenPodManagerAddress, ethClient)
 	if err != nil {
 		return nil, utils.WrapError("Failed to create EigenPodManager contract", err)
 	}
