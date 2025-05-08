@@ -1,6 +1,9 @@
 package eigenpod
 
 import (
+	"context"
+	"math/big"
+
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eigenpod/bindings"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
@@ -8,6 +11,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/utils"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type ChainWriter struct {
@@ -84,4 +88,87 @@ func NewManagerWriter(
 	return newManagerChainWriter(manager, ethClient, logger, txMgr), nil
 }
 
-// TODO(madhur): Add methods to ChainWriter and ManagerChainWriter to interact with the contracts.
+func (w *ChainWriter) VerifyWithdrawalCredentials(
+	ctx context.Context,
+	beaconTimestamp uint64,
+	stateRootProof bindings.BeaconChainProofsStateRootProof,
+	validatorIndices []*big.Int,
+	validatorFieldsProofs [][]byte,
+	validatorFields [][][32]byte,
+) (*types.Receipt, error) {
+	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
+	if err != nil {
+		return nil, err
+	}
+
+	tx, err := w.eigenPod.VerifyWithdrawalCredentials(
+		noSendTxOpts,
+		beaconTimestamp,
+		stateRootProof,
+		validatorIndices,
+		validatorFieldsProofs,
+		validatorFields,
+	)
+	if err != nil {
+		return nil, utils.WrapError("failed to create tx", err)
+	}
+
+	receipt, err := w.txMgr.Send(ctx, tx)
+	if err != nil {
+		return nil, utils.WrapError("failed to send tx", err)
+	}
+
+	return receipt, nil
+}
+
+func (w *ChainWriter) VerifyCheckpointProofs(
+	ctx context.Context,
+	balanceContainerProof bindings.BeaconChainProofsBalanceContainerProof,
+	balanceProof []bindings.BeaconChainProofsBalanceProof,
+) (*types.Receipt, error) {
+	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
+	if err != nil {
+		return nil, err
+	}
+
+	tx, err := w.eigenPod.VerifyCheckpointProofs(
+		noSendTxOpts,
+		balanceContainerProof,
+		balanceProof,
+	)
+	if err != nil {
+		return nil, utils.WrapError("failed to create tx", err)
+	}
+
+	receipt, err := w.txMgr.Send(ctx, tx)
+	if err != nil {
+		return nil, utils.WrapError("failed to send tx", err)
+	}
+
+	return receipt, nil
+}
+
+func (w *ChainWriter) StartCheckpoint(
+	ctx context.Context,
+	revertIfNoBalance bool,
+) (*types.Receipt, error) {
+	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
+	if err != nil {
+		return nil, err
+	}
+
+	tx, err := w.eigenPod.StartCheckpoint(
+		noSendTxOpts,
+		revertIfNoBalance,
+	)
+	if err != nil {
+		return nil, utils.WrapError("failed to create tx", err)
+	}
+
+	receipt, err := w.txMgr.Send(ctx, tx)
+	if err != nil {
+		return nil, utils.WrapError("failed to send tx", err)
+	}
+
+	return receipt, nil
+}
