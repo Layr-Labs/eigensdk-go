@@ -16,8 +16,11 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/metrics"
 	sdkoperator "github.com/Layr-Labs/eigensdk-go/operator"
 	"github.com/Layr-Labs/eigensdk-go/signerv2"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+
+	allocationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/AllocationManager"
 )
 
 func RegisterOperatorOnStartup(logger logging.Logger) error {
@@ -132,6 +135,18 @@ func RegisterOperatorOnStartup(logger logging.Logger) error {
 		logger.Fatalf("Failed to set allocation delay: %v", err.Error())
 	}
 
+	err = modifyAllocations(
+		[]common.Address{common.HexToAddress("0x2b961e3959b79326a8e7f64ef0d2d825707669b5")},
+		[]uint64{1000000000000000},
+		"http://localhost:8545",
+		txMgr,
+		0,
+		logger,
+	)
+	if err != nil {
+		logger.Fatalf("Failed to set modify allocations: %v", err.Error())
+	}
+
 	return nil
 }
 
@@ -196,6 +211,41 @@ func DepositIntoStrategyForOperator(
 		logger.Errorf("Error depositing into strategy", "err", err)
 		return err
 	}
+
+	return nil
+}
+
+func modifyAllocations(
+	strategies []common.Address,
+	newMagnitudes []uint64,
+	httpUrl string,
+	txMgr txmgr.TxManager,
+	id uint32,
+	logger logging.Logger,
+) error {
+	txOpts, _ := txMgr.GetNoSendTxOpts()
+
+	operatorAddress := common.HexToAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")
+	ethRpcClient, _ := ethclient.Dial(httpUrl)
+	waitForReceipt := true
+	allocationManagerContract, _ := allocationmanager.NewContractAllocationManager(common.HexToAddress("0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6"), ethRpcClient)
+	operatorSet := allocationmanager.OperatorSet{Avs: common.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"), Id: id}
+	var allocations []allocationmanager.IAllocationManagerTypesAllocateParams
+	allocations_1 := allocationmanager.IAllocationManagerTypesAllocateParams{
+		OperatorSet:   operatorSet,
+		Strategies:    strategies,
+		NewMagnitudes: newMagnitudes,
+	}
+	allocations = append(allocations, allocations_1)
+	tx, err := allocationManagerContract.ModifyAllocations(txOpts, operatorAddress, allocations)
+	if err != nil {
+		return err
+	}
+	receipt, err := txMgr.Send(context.Background(), tx, waitForReceipt)
+	if err != nil {
+		return utils.WrapError("failed to send modifyAllocations tx with err", err)
+	}
+	logger.Infof("tx successfully included for modifyAllocations. txHash: %v", receipt.TxHash.String())
 
 	return nil
 }
