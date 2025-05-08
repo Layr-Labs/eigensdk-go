@@ -10,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 
-	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/bindings/taskManager"
+	istaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/bindings/taskManager"
 )
 
 // Testing structs
@@ -45,7 +45,7 @@ type Arg2 struct {
 }
 
 func TestIncredibleSquaringAbi(t *testing.T) {
-	taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
+	taskManagerAbi, err := istaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
 	require.NoError(t, err)
 
 	originalTaskStruct := sdktypes.GenericInputTask[*big.Int]{

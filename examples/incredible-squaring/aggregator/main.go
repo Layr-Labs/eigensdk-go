@@ -1,10 +1,11 @@
-package aggregator_example
+package main
 
 import (
 	"context"
 	"math/big"
 
 	"github.com/Layr-Labs/eigensdk-go/aggregator"
+	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	taskprocessor "github.com/Layr-Labs/eigensdk-go/task-processor"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
@@ -12,8 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/bindings/taskManager"
-	taskspammerexample "github.com/Layr-Labs/eigensdk-go/examples/task-spammer"
+	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/bindings/taskManager"
 )
 
 func main() {
@@ -29,14 +29,15 @@ func main() {
 		return
 	}
 
-	txMgr, err := taskspammerexample.GetTxManager(logger, ethHttpClient, testutils.ANVIL_FIRST_PRIVATE_KEY)
-	if err != nil {
-		return
-	}
-
 	ecdsaPrivateKey, err := crypto.HexToECDSA(testutils.ANVIL_FIRST_PRIVATE_KEY)
 	if err != nil {
 		logger.Errorf("Cannot parse ecdsa private key", "err", err)
+		return
+	}
+
+	txMgr, err := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethHttpClient, ecdsaPrivateKey)
+	if err != nil {
+		logger.Errorf("Failed to create transaction manager", "err", err)
 		return
 	}
 

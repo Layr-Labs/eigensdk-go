@@ -2,18 +2,21 @@ package txmgr
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"errors"
 	"math/big"
 	"time"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
 	"github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/signerv2"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/log"
 )
 
@@ -41,7 +44,7 @@ type SimpleTxManager struct {
 
 var _ TxManager = (*SimpleTxManager)(nil)
 
-// NewSimpleTxManager creates a new simpleTxManager which can be used
+// Creates a new simpleTxManager which can be used
 // to send a transaction to smart contracts on the Ethereum node
 func NewSimpleTxManager(
 	wallet wallet.Wallet,
@@ -56,6 +59,32 @@ func NewSimpleTxManager(
 		sender:             sender,
 		gasLimitMultiplier: FallbackGasLimitMultiplier,
 	}
+}
+
+// Creates a new simpleTxManager from an ECDSA private key
+func NewSimpleTxManagerFromPrivateKey(
+	logger logging.Logger,
+	ethClient *ethclient.Client,
+	privateKey *ecdsa.PrivateKey,
+) (*SimpleTxManager, error) {
+	rpcCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	chainid, err := ethClient.ChainID(rpcCtx)
+	if err != nil {
+		return nil, utils.WrapError("cannot get chain id for signer", err)
+	}
+
+	signerV2, senderAddr, err := signerv2.SignerFromConfig(signerv2.Config{PrivateKey: privateKey}, chainid)
+	// This can only happen if privateKey is nil
+	if err != nil {
+		return nil, utils.WrapError("could not create signer", err)
+	}
+
+	pkWallet, err := wallet.NewPrivateKeyWallet(ethClient, signerV2, senderAddr, logger)
+	if err != nil {
+		return nil, utils.WrapError("could not create wallet", err)
+	}
+	return NewSimpleTxManager(pkWallet, ethClient, logger, senderAddr), nil
 }
 
 func (m *SimpleTxManager) WithGasLimitMultiplier(multiplier float64) *SimpleTxManager {

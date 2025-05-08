@@ -32,7 +32,7 @@ type SignedTaskResponse[Output any] struct {
 // rpc endpoint which is called by operator
 // reply doesn't need to be checked. If there are no errors, the task response is accepted
 // rpc framework forces a reply type to exist, so we put bool as a placeholder
-func (agg *Aggregator[Input, Output]) ProcessSignedTaskResponse(signedTaskResponse *SignedTaskResponse[Input], reply *bool) error {
+func (agg *Aggregator[Input, Output]) ProcessSignedTaskResponse(signedTaskResponse *SignedTaskResponse[Output], reply *bool) error {
 	agg.logger.Infof("Received signed task response: %#v", signedTaskResponse)
 	taskIndex := signedTaskResponse.TaskResponse.ReferenceTaskIndex
 
