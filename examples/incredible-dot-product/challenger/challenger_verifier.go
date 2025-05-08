@@ -31,6 +31,7 @@ func NewChallengeVerifier(
 	taskManagerAddr common.Address,
 	ethclient ethclient.Client,
 	txMgr txmgr.TxManager,
+	delegationManagerAddr common.Address,
 ) (ChallengeVerifier, error) {
 	// Get the task manager contract with the given address
 	taskManagerContract, err := taskmanager.NewContractIncredibleDotProductTaskManager(taskManagerAddr, &ethclient)
@@ -38,10 +39,18 @@ func NewChallengeVerifier(
 		logger.Errorf("Failed to get Task Manager Contract: %w", err)
 		return ChallengeVerifier{}, err
 	}
+
+	delegationManagerContract, err := delegationmanager.NewContractDelegationManager(delegationManagerAddr, &ethclient)
+	if err != nil {
+		logger.Errorf("Failed to get delegation Manager Contract: %w", err)
+		return ChallengeVerifier{}, err
+	}
+
 	return ChallengeVerifier{
 		logger:              logger,
 		taskManagerContract: taskManagerContract,
 		txMgr:               txMgr,
+		delegationManagerContract: delegationManagerContract,
 	}, nil
 }
 
