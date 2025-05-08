@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"math/big"
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/operator"
@@ -50,7 +51,12 @@ func main() {
 	}
 
 	// Setting the TaskResponseHashFn parameter in nil because I'm using the abi default encoding function
-	operator, err := operator.NewOperatorFromConfig(operatorConfig, examplecommon.DotProduct, nil)
+	possibleFailureFunction, err := operator.ComputeWithFailures(examplecommon.DotProduct, failingDotProduct, 50)
+	if err != nil {
+		logger.Fatalf("Failed to create the possible failure function: %v", err.Error())
+	}
+
+	operator, err := operator.NewOperatorFromConfig(operatorConfig, possibleFailureFunction, nil)
 	if err != nil {
 		logger.Fatalf("Failed to create operator: %w", err)
 	}
@@ -59,4 +65,8 @@ func main() {
 	if err != nil {
 		logger.Fatalf("Failure while running operator: %w", err)
 	}
+}
+
+func failingDotProduct(taskIndex uint32, points examplecommon.DotProductInput) (*big.Int, error) {
+	return big.NewInt(31234213443), nil
 }

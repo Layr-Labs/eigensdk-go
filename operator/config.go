@@ -23,15 +23,4 @@ type OperatorConfig struct {
 
 	Logger         logging.Logger
 	TaskManagerAbi *abi.ABI
-
-	// Testing options for the operator.
-	// These shouldn't be used in production.
-	TestingOpts struct {
-		// Percentage chance of randomly failing a task
-		// This is used for testing purposes and defaults to not failing any tasks
-		FailingPercentage uint
-		// Seed used to generate operator failures
-		// Defaults to the current time
-		FailingSeed uint64
-	}
 }

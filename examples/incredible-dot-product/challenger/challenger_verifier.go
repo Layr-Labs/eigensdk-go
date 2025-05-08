@@ -54,7 +54,7 @@ func (cv ChallengeVerifier) VerifyChallenge(taskIndex uint32, task sdktypes.Gene
 
 	// Compare submitted response with calculated here
 	receivedResponse := taskResponse.TaskResponse.OutputValue
-	shouldRaiseChallenge := totalSum == receivedResponse
+	shouldRaiseChallenge := totalSum.Cmp(receivedResponse) != 0
 
 	if shouldRaiseChallenge {
 		cv.logger.Infof("Response was not correct, expected %v and got %v", totalSum, receivedResponse)
