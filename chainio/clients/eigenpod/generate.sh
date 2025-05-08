@@ -18,7 +18,7 @@ cleanup_bindings_dir() {
 
 clone() {
   echo "Cloning the EigenLayer contracts repository"
-  git clone -b slashing-magnitudes --depth=1 https://github.com/Layr-Labs/eigenlayer-contracts.git "${TMP_DIR}"
+  git clone --depth=1 https://github.com/Layr-Labs/eigenlayer-contracts.git "${TMP_DIR}"
 }
 
 generate_bindings() {
