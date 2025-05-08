@@ -24,7 +24,14 @@ import (
 )
 
 func RegisterOperatorOnStartup(logger logging.Logger) error {
-	ethRpcClient, err := ethclient.Dial("http://localhost:8545")
+	operatorAddr := common.HexToAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")
+	allocationManagerAddr := common.HexToAddress("0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6")
+	serviceManagerAddr := common.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154")
+	registryCoordinatorAddr := common.HexToAddress("0x7bc06c482dead17c0e297afbc32f6e63d3846650")
+	strategyAddr := common.HexToAddress("0x2b961e3959b79326a8e7f64ef0d2d825707669b5")
+	ethHttpUrl := "http://localhost:8545"
+
+	ethRpcClient, err := ethclient.Dial(ethHttpUrl)
 	if err != nil {
 		logger.Errorf("Cannot create http ethclient", "err", err)
 		return err
@@ -72,7 +79,7 @@ func RegisterOperatorOnStartup(logger logging.Logger) error {
 	txMgr := txmgr.NewSimpleTxManager(pkWallet, ethRpcClient, logger, senderAddr)
 
 	err = sdkoperator.RegisterOperatorWithEigenlayer(
-		common.HexToAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"),
+		operatorAddr,
 		elcontractsConfig,
 		ethRpcClient,
 		logger,
@@ -88,9 +95,9 @@ func RegisterOperatorOnStartup(logger logging.Logger) error {
 		logger,
 		elcontractsConfig,
 		ethRpcClient,
-		common.HexToAddress("0x2b961e3959b79326a8e7f64ef0d2d825707669b5"),
+		strategyAddr,
 		txMgr,
-		common.HexToAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"),
+		operatorAddr,
 		amount,
 	)
 	if err != nil {
@@ -108,13 +115,13 @@ func RegisterOperatorOnStartup(logger logging.Logger) error {
 	}
 
 	err = sdkoperator.RegisterForOperatorSets(
-		common.HexToAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"),
+		operatorAddr,
 		logger,
 		elcontractsConfig,
 		ethRpcClient,
 		txMgr,
-		common.HexToAddress("0x7bc06c482dead17c0e297afbc32f6e63d3846650"),
-		common.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"),
+		registryCoordinatorAddr,
+		serviceManagerAddr,
 		[]uint32{0},
 		*blsKeyPair,
 		"",
@@ -125,9 +132,9 @@ func RegisterOperatorOnStartup(logger logging.Logger) error {
 
 	err = sdkoperator.SetAllocationDelay(
 		logger,
-		common.HexToAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"),
+		operatorAddr,
 		ethRpcClient,
-		common.HexToAddress("0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6"),
+		allocationManagerAddr,
 		txMgr,
 		0,
 	)
@@ -136,9 +143,12 @@ func RegisterOperatorOnStartup(logger logging.Logger) error {
 	}
 
 	err = modifyAllocations(
-		[]common.Address{common.HexToAddress("0x2b961e3959b79326a8e7f64ef0d2d825707669b5")},
+		operatorAddr,
+		allocationManagerAddr,
+		serviceManagerAddr,
+		[]common.Address{strategyAddr},
 		[]uint64{1000000000000000},
-		"http://localhost:8545",
+		ethHttpUrl,
 		txMgr,
 		0,
 		logger,
@@ -216,6 +226,9 @@ func DepositIntoStrategyForOperator(
 }
 
 func modifyAllocations(
+	operatorAddr common.Address,
+	allocationManagerAddr common.Address,
+	serviceManagerAddr common.Address,
 	strategies []common.Address,
 	newMagnitudes []uint64,
 	httpUrl string,
@@ -225,11 +238,10 @@ func modifyAllocations(
 ) error {
 	txOpts, _ := txMgr.GetNoSendTxOpts()
 
-	operatorAddress := common.HexToAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")
 	ethRpcClient, _ := ethclient.Dial(httpUrl)
 	waitForReceipt := true
-	allocationManagerContract, _ := allocationmanager.NewContractAllocationManager(common.HexToAddress("0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6"), ethRpcClient)
-	operatorSet := allocationmanager.OperatorSet{Avs: common.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"), Id: id}
+	allocationManagerContract, _ := allocationmanager.NewContractAllocationManager(allocationManagerAddr, ethRpcClient)
+	operatorSet := allocationmanager.OperatorSet{Avs: serviceManagerAddr, Id: id}
 	var allocations []allocationmanager.IAllocationManagerTypesAllocateParams
 	allocations_1 := allocationmanager.IAllocationManagerTypesAllocateParams{
 		OperatorSet:   operatorSet,
@@ -237,7 +249,7 @@ func modifyAllocations(
 		NewMagnitudes: newMagnitudes,
 	}
 	allocations = append(allocations, allocations_1)
-	tx, err := allocationManagerContract.ModifyAllocations(txOpts, operatorAddress, allocations)
+	tx, err := allocationManagerContract.ModifyAllocations(txOpts, operatorAddr, allocations)
 	if err != nil {
 		return err
 	}
