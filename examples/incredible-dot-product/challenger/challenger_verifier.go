@@ -47,9 +47,9 @@ func NewChallengeVerifier(
 	}
 
 	return ChallengeVerifier{
-		logger:              logger,
-		taskManagerContract: taskManagerContract,
-		txMgr:               txMgr,
+		logger:                    logger,
+		taskManagerContract:       taskManagerContract,
+		txMgr:                     txMgr,
 		delegationManagerContract: delegationManagerContract,
 	}, nil
 }
