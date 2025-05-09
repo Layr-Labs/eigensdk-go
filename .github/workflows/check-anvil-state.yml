@@ -1,4 +1,7 @@
 name: Check anvil state
+permissions:
+  contents: read
+  pull-requests: read
 on:
   push:
     branches:
