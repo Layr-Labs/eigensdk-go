@@ -12,7 +12,6 @@ remappings = [
     "@openzeppelin-v4.9.0/=lib/eigenlayer-middleware/lib/eigenlayer-contracts/lib/openzeppelin-contracts-v4.9.0/",
     "@openzeppelin/=lib/eigenlayer-middleware/lib/openzeppelin-contracts/",
     "ds-test/=lib/eigenlayer-middleware/lib/ds-test/src/",
-    "@eigenlayer/=lib/eigenlayer-middleware/lib/eigenlayer-contracts/src/",
     "eigenlayer-contracts/=lib/eigenlayer-middleware/lib/eigenlayer-contracts/",
     "eigenlayer-middleware/=lib/eigenlayer-middleware/",
     "forge-std/=lib/forge-std/src/",
