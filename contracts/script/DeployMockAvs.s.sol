@@ -3,6 +3,7 @@ pragma solidity ^0.8.27;
 
 import "./DeployMockAvsRegistries.s.sol";
 import "forge-std/console.sol";
+import {AllocationManager} from "eigenlayer-contracts/src/contracts/core/AllocationManager.sol";
 
 // forge script script/DeployMockAvs.s.sol --rpc-url $RPC_URL --private-key $PRIVATE_KEY --etherscan-api-key $ETHERSCAN_API_KEY --broadcast --verify
 contract DeployMockAvs is DeployMockAvsRegistries {

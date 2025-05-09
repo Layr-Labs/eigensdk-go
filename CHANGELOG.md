@@ -33,6 +33,8 @@ Each version will have a separate `Breaking Changes` section as well. To describ
 
 * Changed foundry image used in the repo to `stable` tag in [#633](https://github.com/Layr-Labs/eigensdk-go/pull/633)
 
+* update middleware contracts to v1.3.1 by @maximopalopoli in [#669](https://github.com/Layr-Labs/eigensdk-go/pull/669)
+
 ## [0.3.0] - 2025-03-19
 
 ### Added 🎉

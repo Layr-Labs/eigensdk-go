@@ -49,7 +49,20 @@ contract DeployTokensStrategiesCreateQuorums is Script, EigenlayerContractsParse
         } else {
             revert("Configure Token and Strategy for Chain");
         }
-        _createQuorum(mockAvsContracts.registryCoordinator, strat);
+
+        eigenlayerContracts.permissionController.setAppointee(
+            address(mockAvsContracts.mockAvsServiceManager),
+            address(msg.sender), // deployer address
+            address(eigenlayerContracts.allocationManager), // Allocation manager
+            AllocationManager.updateAVSMetadataURI.selector // 0xa9821821
+        );
+
+        _createQuorum(
+            mockAvsContracts.registryCoordinator,
+            strat,
+            address(mockAvsContracts.mockAvsServiceManager),
+            address(eigenlayerContracts.allocationManager)
+        );
         vm.stopBroadcast();
     }
 
@@ -94,7 +107,12 @@ contract DeployTokensStrategiesCreateQuorums is Script, EigenlayerContractsParse
         return (IERC20(mockERC20), erc20MockStrategy);
     }
 
-    function _createQuorum(SlashingRegistryCoordinator mockAvsRegCoord, IStrategy strat) internal {
+    function _createQuorum(
+        SlashingRegistryCoordinator mockAvsRegCoord,
+        IStrategy strat,
+        address serviceManagerAddr,
+        address allocationManagerAddr
+    ) internal {
         // for each quorum to setup, we need to define
         // quorumsOperatorSetParams, quorumsMinimumStake, and quorumsStrategyParams
         SlashingRegistryCoordinator.OperatorSetParam memory quorumOperatorSetParams = ISlashingRegistryCoordinatorTypes
@@ -116,8 +134,8 @@ contract DeployTokensStrategiesCreateQuorums is Script, EigenlayerContractsParse
         });
 
         // Update the metadata so does not fail with error InvalidAVSWithNoMetadataRegistered()
-        AllocationManager allocationManager = AllocationManager(0x8A791620dd6260079BF849Dc5567aDC3F2FdC318);
-        allocationManager.updateAVSMetadataURI(address(0xa82fF9aFd8f496c3d6ac40E2a0F282E47488CFc9), "metadataURI");
+        AllocationManager allocationManager = AllocationManager(allocationManagerAddr);
+        allocationManager.updateAVSMetadataURI(serviceManagerAddr, "metadataURI");
 
         SlashingRegistryCoordinator(address(mockAvsRegCoord)).createTotalDelegatedStakeQuorum(
             quorumOperatorSetParams, quorumMinimumStake, quorumStrategyParams
