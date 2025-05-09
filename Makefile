@@ -118,9 +118,17 @@ bindings: ## generates all contract bindings
 
 ___CONTRACTS___: ## 
 
-.PHONY: deploy-contracts-to-anvil-and-save-state
-deploy-contracts-to-anvil-and-save-state: ##
-	./contracts/anvil/deploy-contracts-save-anvil-state.sh
+.PHONY: deploy-eigenlayer
+deploy-eigenlayer:
+	./contracts/anvil/deploy-eigenlayer.sh
+
+.PHONY: deploy-avs
+deploy-avs:
+	./contracts/anvil/deploy-avs.sh
+
+.PHONY: dump-state
+dump-state:
+	./contracts/anvil/dump-state.sh
 
 deploy-M2-contracts-to-anvil-and-save-state: ##
 	./M2-contracts/anvil/deploy-contracts-save-anvil-state.sh

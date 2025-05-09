@@ -20,6 +20,7 @@ clean_up() {
 trap 'clean_up $LINENO "$BASH_COMMAND"' ERR
 
 # start_anvil_docker $LOAD_STATE_FILE $DUMP_STATE_FILE
+# this function will also take care of stopping the anvil container when the script exits
 start_anvil_docker() {
     LOAD_STATE_FILE=$1
     DUMP_STATE_FILE=$2
@@ -29,11 +30,10 @@ start_anvil_docker() {
     DUMP_STATE_ANVIL_ARG=$([[ -z $DUMP_STATE_FILE ]] && echo "" || echo "--dump-state /dump-state.json")
 
     trap 'docker stop anvil 2>/dev/null || true' EXIT
-    set -o xtrace
     docker run --rm -d --name anvil -p 8545:8545 $LOAD_STATE_VOLUME_DOCKER_ARG $DUMP_STATE_VOLUME_DOCKER_ARG \
         --entrypoint anvil \
         $FOUNDRY_IMAGE \
-        $LOAD_STATE_ANVIL_ARG $DUMP_STATE_ANVIL_ARG --host 0.0.0.0
-    set +o xtrace
+        $LOAD_STATE_ANVIL_ARG $DUMP_STATE_ANVIL_ARG --host 0.0.0.0 \
+        --timestamp 0
     sleep 2
 }
