@@ -63,13 +63,6 @@ contract DeployMockAvs is DeployMockAvsRegistries {
 
         eigenlayerContracts.permissionController.setAppointee(
             address(mockAvsContracts.mockAvsServiceManager),
-            address(mockAvsContracts.registryCoordinator), // Registry coordinator
-            address(eigenlayerContracts.allocationManager), // Allocation manager
-            AllocationManager.updateAVSMetadataURI.selector // 0xa9821821
-        );
-
-        eigenlayerContracts.permissionController.setAppointee(
-            address(mockAvsContracts.mockAvsServiceManager),
             address(msg.sender), // deployer address
             address(eigenlayerContracts.allocationManager), // Allocation manager
             AllocationManager.updateAVSMetadataURI.selector // 0xa9821821
