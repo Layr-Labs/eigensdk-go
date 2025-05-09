@@ -49,6 +49,14 @@ contract DeployTokensStrategiesCreateQuorums is Script, EigenlayerContractsParse
         } else {
             revert("Configure Token and Strategy for Chain");
         }
+
+        eigenlayerContracts.permissionController.setAppointee(
+            address(mockAvsContracts.mockAvsServiceManager),
+            address(msg.sender), // deployer address
+            address(eigenlayerContracts.allocationManager), // Allocation manager
+            AllocationManager.updateAVSMetadataURI.selector // 0xa9821821
+        );
+
         _createQuorum(mockAvsContracts.registryCoordinator, strat, address(mockAvsContracts.mockAvsServiceManager), address(eigenlayerContracts.allocationManager));
         vm.stopBroadcast();
     }

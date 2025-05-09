@@ -61,13 +61,6 @@ contract DeployMockAvs is DeployMockAvsRegistries {
             eigenlayerContracts.rewardsCoordinator.createOperatorDirectedAVSRewardsSubmission.selector
         );
 
-        eigenlayerContracts.permissionController.setAppointee(
-            address(mockAvsContracts.mockAvsServiceManager),
-            address(msg.sender), // deployer address
-            address(eigenlayerContracts.allocationManager), // Allocation manager
-            AllocationManager.updateAVSMetadataURI.selector // 0xa9821821
-        );
-
         eigenlayerContracts.allocationManager.setAVSRegistrar(avsAddress, mockAvsContracts.registryCoordinator);
 
         if (block.chainid == 31337 || block.chainid == 1337) {
