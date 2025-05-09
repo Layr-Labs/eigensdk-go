@@ -49,7 +49,8 @@ func main() {
 		return
 	}
 
-	challengerVerifier, err := examplechallenger.NewChallengeVerifier(logger, taskManagerAddr, *ethClient, txMgr)
+	delegationManagerAddr := gethcommon.HexToAddress("0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0")
+	challengerVerifier, err := examplechallenger.NewChallengeVerifier(logger, taskManagerAddr, *ethClient, txMgr, delegationManagerAddr)
 	if err != nil {
 		logger.Errorf("Failed to create challenger verifier: %w", err)
 		return

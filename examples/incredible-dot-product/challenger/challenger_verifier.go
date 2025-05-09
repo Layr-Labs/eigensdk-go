@@ -9,18 +9,21 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/Layr-Labs/eigensdk-go/utils"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 
+	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
 	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/common"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
 )
 
 type ChallengeVerifier struct {
-	logger              logging.Logger
-	taskManagerContract *taskmanager.ContractIncredibleDotProductTaskManager
-	txMgr               txmgr.TxManager
+	logger                    logging.Logger
+	taskManagerContract       *taskmanager.ContractIncredibleDotProductTaskManager
+	txMgr                     txmgr.TxManager
+	delegationManagerContract *delegationmanager.ContractDelegationManager
 }
 
 func NewChallengeVerifier(
@@ -28,6 +31,7 @@ func NewChallengeVerifier(
 	taskManagerAddr common.Address,
 	ethclient ethclient.Client,
 	txMgr txmgr.TxManager,
+	delegationManagerAddr common.Address,
 ) (ChallengeVerifier, error) {
 	// Get the task manager contract with the given address
 	taskManagerContract, err := taskmanager.NewContractIncredibleDotProductTaskManager(taskManagerAddr, &ethclient)
@@ -35,10 +39,18 @@ func NewChallengeVerifier(
 		logger.Errorf("Failed to get Task Manager Contract: %w", err)
 		return ChallengeVerifier{}, err
 	}
+
+	delegationManagerContract, err := delegationmanager.NewContractDelegationManager(delegationManagerAddr, &ethclient)
+	if err != nil {
+		logger.Errorf("Failed to get delegation Manager Contract: %w", err)
+		return ChallengeVerifier{}, err
+	}
+
 	return ChallengeVerifier{
-		logger:              logger,
-		taskManagerContract: taskManagerContract,
-		txMgr:               txMgr,
+		logger:                    logger,
+		taskManagerContract:       taskManagerContract,
+		txMgr:                     txMgr,
+		delegationManagerContract: delegationManagerContract,
 	}, nil
 }
 
@@ -106,6 +118,20 @@ func (cv ChallengeVerifier) VerifyChallenge(taskIndex uint32, task sdktypes.Gene
 			cv.logger.Error("receipt status was not success sending raise challenge tx")
 			return utils.WrapError(err, "receipt status was not success")
 		}
+
+		// Note: this printing logic is not necessary, but left here to show how the operator shares
+		// at strategy decreases after raising a challenge (because it's being slashed)
+		shares, err := cv.delegationManagerContract.OperatorShares(
+			&bind.CallOpts{},
+			common.HexToAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"), // Operator address
+			common.HexToAddress("0x2b961e3959b79326a8e7f64ef0d2d825707669b5"), // strategy address
+		)
+		if err != nil {
+			cv.logger.Errorf("Failed to get operator shares. Err: %w", err)
+			return err
+		}
+
+		cv.logger.Infof("After raising challenge, operator shares are %v", shares)
 	}
 
 	return nil
