@@ -1,4 +1,7 @@
 name: "Pull Request Workflow"
+permissions:
+  contents: read
+  pull-requests: read
 on:
   merge_group:
   pull_request:
