@@ -23,7 +23,7 @@ Each version will have a separate `Breaking Changes` section as well. To describ
 
 ### Other Changes
 
-## [1.0.0] - 2025-XX-XX
+## [1.0.0] - 2025-05-09
 
 ### Other Changes
 
