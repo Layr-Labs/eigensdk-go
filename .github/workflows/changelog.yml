@@ -1,11 +1,13 @@
 name: "Pull Request Workflow"
-permissions:
-  contents: read
-  pull-requests: read
+
 on:
   merge_group:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: read
 
 env:
   PR_URL: https://github.com/Layr-Labs/eigensdk-go/pull/${{ github.event.number }}

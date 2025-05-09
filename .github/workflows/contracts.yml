@@ -1,12 +1,14 @@
 name: Contracts CI
-permissions:
-  contents: read
-  pull-requests: read
+
 on:
   push:
     branches: [main]
   pull_request:
     branches: [ '**' ]
+
+permissions:
+  contents: read
+  pull-requests: read
 
 env:
   FOUNDRY_PROFILE: ci

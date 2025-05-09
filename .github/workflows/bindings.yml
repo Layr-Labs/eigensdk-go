@@ -1,7 +1,5 @@
 name: Bindings
-permissions:
-  contents: read
-  pull-requests: read
+
 on:
   push:
     branches:
@@ -11,6 +9,7 @@ on:
   
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
   generate_bindings:
