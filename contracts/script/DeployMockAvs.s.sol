@@ -3,6 +3,7 @@ pragma solidity ^0.8.27;
 
 import "./DeployMockAvsRegistries.s.sol";
 import "forge-std/console.sol";
+import {AllocationManager} from "eigenlayer-contracts/src/contracts/core/AllocationManager.sol";
 
 // forge script script/DeployMockAvs.s.sol --rpc-url $RPC_URL --private-key $PRIVATE_KEY --etherscan-api-key $ETHERSCAN_API_KEY --broadcast --verify
 contract DeployMockAvs is DeployMockAvsRegistries {
@@ -58,6 +59,20 @@ contract DeployMockAvs is DeployMockAvsRegistries {
             avsAddress,
             address(eigenlayerContracts.rewardsCoordinator),
             eigenlayerContracts.rewardsCoordinator.createOperatorDirectedAVSRewardsSubmission.selector
+        );
+
+        eigenlayerContracts.permissionController.setAppointee(
+            address(mockAvsContracts.mockAvsServiceManager),
+            address(mockAvsContracts.registryCoordinator), // Registry coordinator
+            address(eigenlayerContracts.allocationManager), // Allocation manager
+            AllocationManager.updateAVSMetadataURI.selector // 0xa9821821
+        );
+
+        eigenlayerContracts.permissionController.setAppointee(
+            address(mockAvsContracts.mockAvsServiceManager),
+            address(msg.sender), // deployer address
+            address(eigenlayerContracts.allocationManager), // Allocation manager
+            AllocationManager.updateAVSMetadataURI.selector // 0xa9821821
         );
 
         eigenlayerContracts.allocationManager.setAVSRegistrar(avsAddress, mockAvsContracts.registryCoordinator);
