@@ -57,7 +57,12 @@ contract DeployTokensStrategiesCreateQuorums is Script, EigenlayerContractsParse
             AllocationManager.updateAVSMetadataURI.selector // 0xa9821821
         );
 
-        _createQuorum(mockAvsContracts.registryCoordinator, strat, address(mockAvsContracts.mockAvsServiceManager), address(eigenlayerContracts.allocationManager));
+        _createQuorum(
+            mockAvsContracts.registryCoordinator,
+            strat,
+            address(mockAvsContracts.mockAvsServiceManager),
+            address(eigenlayerContracts.allocationManager)
+        );
         vm.stopBroadcast();
     }
 
@@ -102,7 +107,12 @@ contract DeployTokensStrategiesCreateQuorums is Script, EigenlayerContractsParse
         return (IERC20(mockERC20), erc20MockStrategy);
     }
 
-    function _createQuorum(SlashingRegistryCoordinator mockAvsRegCoord, IStrategy strat, address serviceManagerAddr, address allocationManagerAddr) internal {
+    function _createQuorum(
+        SlashingRegistryCoordinator mockAvsRegCoord,
+        IStrategy strat,
+        address serviceManagerAddr,
+        address allocationManagerAddr
+    ) internal {
         // for each quorum to setup, we need to define
         // quorumsOperatorSetParams, quorumsMinimumStake, and quorumsStrategyParams
         SlashingRegistryCoordinator.OperatorSetParam memory quorumOperatorSetParams = ISlashingRegistryCoordinatorTypes
