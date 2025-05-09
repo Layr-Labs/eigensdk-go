@@ -41,8 +41,8 @@ type BN254G2Point struct {
 	Y [2]*big.Int
 }
 
-// IBLSSignatureCheckerNonSignerStakesAndSignature is an auto generated low-level Go binding around an user-defined struct.
-type IBLSSignatureCheckerNonSignerStakesAndSignature struct {
+// IBLSSignatureCheckerTypesNonSignerStakesAndSignature is an auto generated low-level Go binding around an user-defined struct.
+type IBLSSignatureCheckerTypesNonSignerStakesAndSignature struct {
 	NonSignerQuorumBitmapIndices []uint32
 	NonSignerPubkeys             []BN254G1Point
 	QuorumApks                   []BN254G1Point
@@ -53,15 +53,15 @@ type IBLSSignatureCheckerNonSignerStakesAndSignature struct {
 	NonSignerStakeIndices        [][]uint32
 }
 
-// IBLSSignatureCheckerQuorumStakeTotals is an auto generated low-level Go binding around an user-defined struct.
-type IBLSSignatureCheckerQuorumStakeTotals struct {
+// IBLSSignatureCheckerTypesQuorumStakeTotals is an auto generated low-level Go binding around an user-defined struct.
+type IBLSSignatureCheckerTypesQuorumStakeTotals struct {
 	SignedStakeForQuorum []*big.Int
 	TotalStakeForQuorum  []*big.Int
 }
 
 // ContractIBLSSignatureCheckerMetaData contains all meta data concerning the ContractIBLSSignatureChecker contract.
 var ContractIBLSSignatureCheckerMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"function\",\"name\":\"blsApkRegistry\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIBLSApkRegistry\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"checkSignatures\",\"inputs\":[{\"name\":\"msgHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"quorumNumbers\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"referenceBlockNumber\",\"type\":\"uint32\",\"internalType\":\"uint32\"},{\"name\":\"nonSignerStakesAndSignature\",\"type\":\"tuple\",\"internalType\":\"structIBLSSignatureChecker.NonSignerStakesAndSignature\",\"components\":[{\"name\":\"nonSignerQuorumBitmapIndices\",\"type\":\"uint32[]\",\"internalType\":\"uint32[]\"},{\"name\":\"nonSignerPubkeys\",\"type\":\"tuple[]\",\"internalType\":\"structBN254.G1Point[]\",\"components\":[{\"name\":\"X\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"Y\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"quorumApks\",\"type\":\"tuple[]\",\"internalType\":\"structBN254.G1Point[]\",\"components\":[{\"name\":\"X\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"Y\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"apkG2\",\"type\":\"tuple\",\"internalType\":\"structBN254.G2Point\",\"components\":[{\"name\":\"X\",\"type\":\"uint256[2]\",\"internalType\":\"uint256[2]\"},{\"name\":\"Y\",\"type\":\"uint256[2]\",\"internalType\":\"uint256[2]\"}]},{\"name\":\"sigma\",\"type\":\"tuple\",\"internalType\":\"structBN254.G1Point\",\"components\":[{\"name\":\"X\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"Y\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"quorumApkIndices\",\"type\":\"uint32[]\",\"internalType\":\"uint32[]\"},{\"name\":\"totalStakeIndices\",\"type\":\"uint32[]\",\"internalType\":\"uint32[]\"},{\"name\":\"nonSignerStakeIndices\",\"type\":\"uint32[][]\",\"internalType\":\"uint32[][]\"}]}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIBLSSignatureChecker.QuorumStakeTotals\",\"components\":[{\"name\":\"signedStakeForQuorum\",\"type\":\"uint96[]\",\"internalType\":\"uint96[]\"},{\"name\":\"totalStakeForQuorum\",\"type\":\"uint96[]\",\"internalType\":\"uint96[]\"}]},{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"delegation\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIDelegationManager\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"registryCoordinator\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIRegistryCoordinator\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"stakeRegistry\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIStakeRegistry\"}],\"stateMutability\":\"view\"},{\"type\":\"event\",\"name\":\"StaleStakesForbiddenUpdate\",\"inputs\":[{\"name\":\"value\",\"type\":\"bool\",\"indexed\":false,\"internalType\":\"bool\"}],\"anonymous\":false}]",
+	ABI: "[{\"type\":\"function\",\"name\":\"blsApkRegistry\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIBLSApkRegistry\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"checkSignatures\",\"inputs\":[{\"name\":\"msgHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"quorumNumbers\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"referenceBlockNumber\",\"type\":\"uint32\",\"internalType\":\"uint32\"},{\"name\":\"nonSignerStakesAndSignature\",\"type\":\"tuple\",\"internalType\":\"structIBLSSignatureCheckerTypes.NonSignerStakesAndSignature\",\"components\":[{\"name\":\"nonSignerQuorumBitmapIndices\",\"type\":\"uint32[]\",\"internalType\":\"uint32[]\"},{\"name\":\"nonSignerPubkeys\",\"type\":\"tuple[]\",\"internalType\":\"structBN254.G1Point[]\",\"components\":[{\"name\":\"X\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"Y\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"quorumApks\",\"type\":\"tuple[]\",\"internalType\":\"structBN254.G1Point[]\",\"components\":[{\"name\":\"X\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"Y\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"apkG2\",\"type\":\"tuple\",\"internalType\":\"structBN254.G2Point\",\"components\":[{\"name\":\"X\",\"type\":\"uint256[2]\",\"internalType\":\"uint256[2]\"},{\"name\":\"Y\",\"type\":\"uint256[2]\",\"internalType\":\"uint256[2]\"}]},{\"name\":\"sigma\",\"type\":\"tuple\",\"internalType\":\"structBN254.G1Point\",\"components\":[{\"name\":\"X\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"Y\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"quorumApkIndices\",\"type\":\"uint32[]\",\"internalType\":\"uint32[]\"},{\"name\":\"totalStakeIndices\",\"type\":\"uint32[]\",\"internalType\":\"uint32[]\"},{\"name\":\"nonSignerStakeIndices\",\"type\":\"uint32[][]\",\"internalType\":\"uint32[][]\"}]}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIBLSSignatureCheckerTypes.QuorumStakeTotals\",\"components\":[{\"name\":\"signedStakeForQuorum\",\"type\":\"uint96[]\",\"internalType\":\"uint96[]\"},{\"name\":\"totalStakeForQuorum\",\"type\":\"uint96[]\",\"internalType\":\"uint96[]\"}]},{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"delegation\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIDelegationManager\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"registryCoordinator\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractISlashingRegistryCoordinator\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"stakeRegistry\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"contractIStakeRegistry\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"trySignatureAndApkVerification\",\"inputs\":[{\"name\":\"msgHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"apk\",\"type\":\"tuple\",\"internalType\":\"structBN254.G1Point\",\"components\":[{\"name\":\"X\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"Y\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"apkG2\",\"type\":\"tuple\",\"internalType\":\"structBN254.G2Point\",\"components\":[{\"name\":\"X\",\"type\":\"uint256[2]\",\"internalType\":\"uint256[2]\"},{\"name\":\"Y\",\"type\":\"uint256[2]\",\"internalType\":\"uint256[2]\"}]},{\"name\":\"sigma\",\"type\":\"tuple\",\"internalType\":\"structBN254.G1Point\",\"components\":[{\"name\":\"X\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"Y\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"outputs\":[{\"name\":\"pairingSuccessful\",\"type\":\"bool\",\"internalType\":\"bool\"},{\"name\":\"siganatureIsValid\",\"type\":\"bool\",\"internalType\":\"bool\"}],\"stateMutability\":\"view\"},{\"type\":\"error\",\"name\":\"InputArrayLengthMismatch\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InputEmptyQuorumNumbers\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InputNonSignerLengthMismatch\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidBLSPairingKey\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidBLSSignature\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidQuorumApkHash\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidReferenceBlocknumber\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"NonSignerPubkeysNotSorted\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"OnlyRegistryCoordinatorOwner\",\"inputs\":[]}]",
 }
 
 // ContractIBLSSignatureCheckerABI is the input ABI used to generate the binding from.
@@ -79,13 +79,18 @@ type ContractIBLSSignatureCheckerMethods interface {
 type ContractIBLSSignatureCheckerCalls interface {
 	BlsApkRegistry(opts *bind.CallOpts) (common.Address, error)
 
-	CheckSignatures(opts *bind.CallOpts, msgHash [32]byte, quorumNumbers []byte, referenceBlockNumber uint32, nonSignerStakesAndSignature IBLSSignatureCheckerNonSignerStakesAndSignature) (IBLSSignatureCheckerQuorumStakeTotals, [32]byte, error)
+	CheckSignatures(opts *bind.CallOpts, msgHash [32]byte, quorumNumbers []byte, referenceBlockNumber uint32, nonSignerStakesAndSignature IBLSSignatureCheckerTypesNonSignerStakesAndSignature) (IBLSSignatureCheckerTypesQuorumStakeTotals, [32]byte, error)
 
 	Delegation(opts *bind.CallOpts) (common.Address, error)
 
 	RegistryCoordinator(opts *bind.CallOpts) (common.Address, error)
 
 	StakeRegistry(opts *bind.CallOpts) (common.Address, error)
+
+	TrySignatureAndApkVerification(opts *bind.CallOpts, msgHash [32]byte, apk BN254G1Point, apkG2 BN254G2Point, sigma BN254G1Point) (struct {
+		PairingSuccessful bool
+		SiganatureIsValid bool
+	}, error)
 }
 
 // ContractIBLSSignatureCheckerTransacts is an auto generated interface that defines the transact methods available for an Ethereum contract.
@@ -94,9 +99,6 @@ type ContractIBLSSignatureCheckerTransacts interface {
 
 // ContractIBLSSignatureCheckerFilterer is an auto generated interface that defines the log filtering methods available for an Ethereum contract.
 type ContractIBLSSignatureCheckerFilters interface {
-	FilterStaleStakesForbiddenUpdate(opts *bind.FilterOpts) (*ContractIBLSSignatureCheckerStaleStakesForbiddenUpdateIterator, error)
-	WatchStaleStakesForbiddenUpdate(opts *bind.WatchOpts, sink chan<- *ContractIBLSSignatureCheckerStaleStakesForbiddenUpdate) (event.Subscription, error)
-	ParseStaleStakesForbiddenUpdate(log types.Log) (*ContractIBLSSignatureCheckerStaleStakesForbiddenUpdate, error)
 }
 
 // ContractIBLSSignatureChecker is an auto generated Go binding around an Ethereum contract.
@@ -287,15 +289,15 @@ func (_ContractIBLSSignatureChecker *ContractIBLSSignatureCheckerCallerSession) 
 // CheckSignatures is a free data retrieval call binding the contract method 0x6efb4636.
 //
 // Solidity: function checkSignatures(bytes32 msgHash, bytes quorumNumbers, uint32 referenceBlockNumber, (uint32[],(uint256,uint256)[],(uint256,uint256)[],(uint256[2],uint256[2]),(uint256,uint256),uint32[],uint32[],uint32[][]) nonSignerStakesAndSignature) view returns((uint96[],uint96[]), bytes32)
-func (_ContractIBLSSignatureChecker *ContractIBLSSignatureCheckerCaller) CheckSignatures(opts *bind.CallOpts, msgHash [32]byte, quorumNumbers []byte, referenceBlockNumber uint32, nonSignerStakesAndSignature IBLSSignatureCheckerNonSignerStakesAndSignature) (IBLSSignatureCheckerQuorumStakeTotals, [32]byte, error) {
+func (_ContractIBLSSignatureChecker *ContractIBLSSignatureCheckerCaller) CheckSignatures(opts *bind.CallOpts, msgHash [32]byte, quorumNumbers []byte, referenceBlockNumber uint32, nonSignerStakesAndSignature IBLSSignatureCheckerTypesNonSignerStakesAndSignature) (IBLSSignatureCheckerTypesQuorumStakeTotals, [32]byte, error) {
 	var out []interface{}
 	err := _ContractIBLSSignatureChecker.contract.Call(opts, &out, "checkSignatures", msgHash, quorumNumbers, referenceBlockNumber, nonSignerStakesAndSignature)
 
 	if err != nil {
-		return *new(IBLSSignatureCheckerQuorumStakeTotals), *new([32]byte), err
+		return *new(IBLSSignatureCheckerTypesQuorumStakeTotals), *new([32]byte), err
 	}
 
-	out0 := *abi.ConvertType(out[0], new(IBLSSignatureCheckerQuorumStakeTotals)).(*IBLSSignatureCheckerQuorumStakeTotals)
+	out0 := *abi.ConvertType(out[0], new(IBLSSignatureCheckerTypesQuorumStakeTotals)).(*IBLSSignatureCheckerTypesQuorumStakeTotals)
 	out1 := *abi.ConvertType(out[1], new([32]byte)).(*[32]byte)
 
 	return out0, out1, err
@@ -305,14 +307,14 @@ func (_ContractIBLSSignatureChecker *ContractIBLSSignatureCheckerCaller) CheckSi
 // CheckSignatures is a free data retrieval call binding the contract method 0x6efb4636.
 //
 // Solidity: function checkSignatures(bytes32 msgHash, bytes quorumNumbers, uint32 referenceBlockNumber, (uint32[],(uint256,uint256)[],(uint256,uint256)[],(uint256[2],uint256[2]),(uint256,uint256),uint32[],uint32[],uint32[][]) nonSignerStakesAndSignature) view returns((uint96[],uint96[]), bytes32)
-func (_ContractIBLSSignatureChecker *ContractIBLSSignatureCheckerSession) CheckSignatures(msgHash [32]byte, quorumNumbers []byte, referenceBlockNumber uint32, nonSignerStakesAndSignature IBLSSignatureCheckerNonSignerStakesAndSignature) (IBLSSignatureCheckerQuorumStakeTotals, [32]byte, error) {
+func (_ContractIBLSSignatureChecker *ContractIBLSSignatureCheckerSession) CheckSignatures(msgHash [32]byte, quorumNumbers []byte, referenceBlockNumber uint32, nonSignerStakesAndSignature IBLSSignatureCheckerTypesNonSignerStakesAndSignature) (IBLSSignatureCheckerTypesQuorumStakeTotals, [32]byte, error) {
 	return _ContractIBLSSignatureChecker.Contract.CheckSignatures(&_ContractIBLSSignatureChecker.CallOpts, msgHash, quorumNumbers, referenceBlockNumber, nonSignerStakesAndSignature)
 }
 
 // CheckSignatures is a free data retrieval call binding the contract method 0x6efb4636.
 //
 // Solidity: function checkSignatures(bytes32 msgHash, bytes quorumNumbers, uint32 referenceBlockNumber, (uint32[],(uint256,uint256)[],(uint256,uint256)[],(uint256[2],uint256[2]),(uint256,uint256),uint32[],uint32[],uint32[][]) nonSignerStakesAndSignature) view returns((uint96[],uint96[]), bytes32)
-func (_ContractIBLSSignatureChecker *ContractIBLSSignatureCheckerCallerSession) CheckSignatures(msgHash [32]byte, quorumNumbers []byte, referenceBlockNumber uint32, nonSignerStakesAndSignature IBLSSignatureCheckerNonSignerStakesAndSignature) (IBLSSignatureCheckerQuorumStakeTotals, [32]byte, error) {
+func (_ContractIBLSSignatureChecker *ContractIBLSSignatureCheckerCallerSession) CheckSignatures(msgHash [32]byte, quorumNumbers []byte, referenceBlockNumber uint32, nonSignerStakesAndSignature IBLSSignatureCheckerTypesNonSignerStakesAndSignature) (IBLSSignatureCheckerTypesQuorumStakeTotals, [32]byte, error) {
 	return _ContractIBLSSignatureChecker.Contract.CheckSignatures(&_ContractIBLSSignatureChecker.CallOpts, msgHash, quorumNumbers, referenceBlockNumber, nonSignerStakesAndSignature)
 }
 
@@ -409,136 +411,47 @@ func (_ContractIBLSSignatureChecker *ContractIBLSSignatureCheckerCallerSession) 
 	return _ContractIBLSSignatureChecker.Contract.StakeRegistry(&_ContractIBLSSignatureChecker.CallOpts)
 }
 
-// ContractIBLSSignatureCheckerStaleStakesForbiddenUpdateIterator is returned from FilterStaleStakesForbiddenUpdate and is used to iterate over the raw logs and unpacked data for StaleStakesForbiddenUpdate events raised by the ContractIBLSSignatureChecker contract.
-type ContractIBLSSignatureCheckerStaleStakesForbiddenUpdateIterator struct {
-	Event *ContractIBLSSignatureCheckerStaleStakesForbiddenUpdate // Event containing the contract specifics and raw log
-
-	contract *bind.BoundContract // Generic contract to use for unpacking event data
-	event    string              // Event name to use for unpacking event data
-
-	logs chan types.Log        // Log channel receiving the found contract events
-	sub  ethereum.Subscription // Subscription for errors, completion and termination
-	done bool                  // Whether the subscription completed delivering logs
-	fail error                 // Occurred error to stop iteration
-}
-
-// Next advances the iterator to the subsequent event, returning whether there
-// are any more events found. In case of a retrieval or parsing error, false is
-// returned and Error() can be queried for the exact failure.
-func (it *ContractIBLSSignatureCheckerStaleStakesForbiddenUpdateIterator) Next() bool {
-	// If the iterator failed, stop iterating
-	if it.fail != nil {
-		return false
-	}
-	// If the iterator completed, deliver directly whatever's available
-	if it.done {
-		select {
-		case log := <-it.logs:
-			it.Event = new(ContractIBLSSignatureCheckerStaleStakesForbiddenUpdate)
-			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-				it.fail = err
-				return false
-			}
-			it.Event.Raw = log
-			return true
-
-		default:
-			return false
-		}
-	}
-	// Iterator still in progress, wait for either a data or an error event
-	select {
-	case log := <-it.logs:
-		it.Event = new(ContractIBLSSignatureCheckerStaleStakesForbiddenUpdate)
-		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
-			it.fail = err
-			return false
-		}
-		it.Event.Raw = log
-		return true
-
-	case err := <-it.sub.Err():
-		it.done = true
-		it.fail = err
-		return it.Next()
-	}
-}
-
-// Error returns any retrieval or parsing error occurred during filtering.
-func (it *ContractIBLSSignatureCheckerStaleStakesForbiddenUpdateIterator) Error() error {
-	return it.fail
-}
-
-// Close terminates the iteration process, releasing any pending underlying
-// resources.
-func (it *ContractIBLSSignatureCheckerStaleStakesForbiddenUpdateIterator) Close() error {
-	it.sub.Unsubscribe()
-	return nil
-}
-
-// ContractIBLSSignatureCheckerStaleStakesForbiddenUpdate represents a StaleStakesForbiddenUpdate event raised by the ContractIBLSSignatureChecker contract.
-type ContractIBLSSignatureCheckerStaleStakesForbiddenUpdate struct {
-	Value bool
-	Raw   types.Log // Blockchain specific contextual infos
-}
-
-// FilterStaleStakesForbiddenUpdate is a free log retrieval operation binding the contract event 0x40e4ed880a29e0f6ddce307457fb75cddf4feef7d3ecb0301bfdf4976a0e2dfc.
+// TrySignatureAndApkVerification is a free data retrieval call binding the contract method 0x171f1d5b.
 //
-// Solidity: event StaleStakesForbiddenUpdate(bool value)
-func (_ContractIBLSSignatureChecker *ContractIBLSSignatureCheckerFilterer) FilterStaleStakesForbiddenUpdate(opts *bind.FilterOpts) (*ContractIBLSSignatureCheckerStaleStakesForbiddenUpdateIterator, error) {
+// Solidity: function trySignatureAndApkVerification(bytes32 msgHash, (uint256,uint256) apk, (uint256[2],uint256[2]) apkG2, (uint256,uint256) sigma) view returns(bool pairingSuccessful, bool siganatureIsValid)
+func (_ContractIBLSSignatureChecker *ContractIBLSSignatureCheckerCaller) TrySignatureAndApkVerification(opts *bind.CallOpts, msgHash [32]byte, apk BN254G1Point, apkG2 BN254G2Point, sigma BN254G1Point) (struct {
+	PairingSuccessful bool
+	SiganatureIsValid bool
+}, error) {
+	var out []interface{}
+	err := _ContractIBLSSignatureChecker.contract.Call(opts, &out, "trySignatureAndApkVerification", msgHash, apk, apkG2, sigma)
 
-	logs, sub, err := _ContractIBLSSignatureChecker.contract.FilterLogs(opts, "StaleStakesForbiddenUpdate")
+	outstruct := new(struct {
+		PairingSuccessful bool
+		SiganatureIsValid bool
+	})
 	if err != nil {
-		return nil, err
+		return *outstruct, err
 	}
-	return &ContractIBLSSignatureCheckerStaleStakesForbiddenUpdateIterator{contract: _ContractIBLSSignatureChecker.contract, event: "StaleStakesForbiddenUpdate", logs: logs, sub: sub}, nil
+
+	outstruct.PairingSuccessful = *abi.ConvertType(out[0], new(bool)).(*bool)
+	outstruct.SiganatureIsValid = *abi.ConvertType(out[1], new(bool)).(*bool)
+
+	return *outstruct, err
+
 }
 
-// WatchStaleStakesForbiddenUpdate is a free log subscription operation binding the contract event 0x40e4ed880a29e0f6ddce307457fb75cddf4feef7d3ecb0301bfdf4976a0e2dfc.
+// TrySignatureAndApkVerification is a free data retrieval call binding the contract method 0x171f1d5b.
 //
-// Solidity: event StaleStakesForbiddenUpdate(bool value)
-func (_ContractIBLSSignatureChecker *ContractIBLSSignatureCheckerFilterer) WatchStaleStakesForbiddenUpdate(opts *bind.WatchOpts, sink chan<- *ContractIBLSSignatureCheckerStaleStakesForbiddenUpdate) (event.Subscription, error) {
-
-	logs, sub, err := _ContractIBLSSignatureChecker.contract.WatchLogs(opts, "StaleStakesForbiddenUpdate")
-	if err != nil {
-		return nil, err
-	}
-	return event.NewSubscription(func(quit <-chan struct{}) error {
-		defer sub.Unsubscribe()
-		for {
-			select {
-			case log := <-logs:
-				// New log arrived, parse the event and forward to the user
-				event := new(ContractIBLSSignatureCheckerStaleStakesForbiddenUpdate)
-				if err := _ContractIBLSSignatureChecker.contract.UnpackLog(event, "StaleStakesForbiddenUpdate", log); err != nil {
-					return err
-				}
-				event.Raw = log
-
-				select {
-				case sink <- event:
-				case err := <-sub.Err():
-					return err
-				case <-quit:
-					return nil
-				}
-			case err := <-sub.Err():
-				return err
-			case <-quit:
-				return nil
-			}
-		}
-	}), nil
+// Solidity: function trySignatureAndApkVerification(bytes32 msgHash, (uint256,uint256) apk, (uint256[2],uint256[2]) apkG2, (uint256,uint256) sigma) view returns(bool pairingSuccessful, bool siganatureIsValid)
+func (_ContractIBLSSignatureChecker *ContractIBLSSignatureCheckerSession) TrySignatureAndApkVerification(msgHash [32]byte, apk BN254G1Point, apkG2 BN254G2Point, sigma BN254G1Point) (struct {
+	PairingSuccessful bool
+	SiganatureIsValid bool
+}, error) {
+	return _ContractIBLSSignatureChecker.Contract.TrySignatureAndApkVerification(&_ContractIBLSSignatureChecker.CallOpts, msgHash, apk, apkG2, sigma)
 }
 
-// ParseStaleStakesForbiddenUpdate is a log parse operation binding the contract event 0x40e4ed880a29e0f6ddce307457fb75cddf4feef7d3ecb0301bfdf4976a0e2dfc.
+// TrySignatureAndApkVerification is a free data retrieval call binding the contract method 0x171f1d5b.
 //
-// Solidity: event StaleStakesForbiddenUpdate(bool value)
-func (_ContractIBLSSignatureChecker *ContractIBLSSignatureCheckerFilterer) ParseStaleStakesForbiddenUpdate(log types.Log) (*ContractIBLSSignatureCheckerStaleStakesForbiddenUpdate, error) {
-	event := new(ContractIBLSSignatureCheckerStaleStakesForbiddenUpdate)
-	if err := _ContractIBLSSignatureChecker.contract.UnpackLog(event, "StaleStakesForbiddenUpdate", log); err != nil {
-		return nil, err
-	}
-	event.Raw = log
-	return event, nil
+// Solidity: function trySignatureAndApkVerification(bytes32 msgHash, (uint256,uint256) apk, (uint256[2],uint256[2]) apkG2, (uint256,uint256) sigma) view returns(bool pairingSuccessful, bool siganatureIsValid)
+func (_ContractIBLSSignatureChecker *ContractIBLSSignatureCheckerCallerSession) TrySignatureAndApkVerification(msgHash [32]byte, apk BN254G1Point, apkG2 BN254G2Point, sigma BN254G1Point) (struct {
+	PairingSuccessful bool
+	SiganatureIsValid bool
+}, error) {
+	return _ContractIBLSSignatureChecker.Contract.TrySignatureAndApkVerification(&_ContractIBLSSignatureChecker.CallOpts, msgHash, apk, apkG2, sigma)
 }

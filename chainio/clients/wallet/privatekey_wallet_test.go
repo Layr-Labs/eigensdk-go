@@ -31,8 +31,7 @@ func TestPrivateKeyWallet(t *testing.T) {
 		ethClient, err := ethclient.Dial(anvilHttpEndpoint)
 		require.NoError(t, err)
 
-		ecdsaPrivKeyHex := "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
-		ecdsaPrivKey, err := crypto.HexToECDSA(ecdsaPrivKeyHex)
+		ecdsaPrivKey, err := crypto.HexToECDSA(testutils.ANVIL_FIRST_PRIVATE_KEY)
 		require.NoError(t, err)
 		signerV2, signerAddr, err := signerv2.SignerFromConfig(signerv2.Config{PrivateKey: ecdsaPrivKey}, chainId)
 		if err != nil {

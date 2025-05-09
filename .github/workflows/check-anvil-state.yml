@@ -1,0 +1,63 @@
+name: Check anvil state
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+  merge_group:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  generate-anvil-state:
+    name: generate anvil state
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - name: Generate anvil state
+        run: make deploy-contracts-to-anvil-and-save-state
+  
+  check-anvil-state:
+    name: Check anvil dump is up-to-date
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # This step is needed to know if the contracts were changed.
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            contracts:
+              - 'contracts/lib/**'
+              - 'contracts/script/**'
+              - 'contracts/src/**'
+            anvil_state:
+              - 'contracts/anvil/contracts-deployed-anvil-state.json'
+
+      # This step runs only if some contract changed.
+      # It checks whether the anvil state has changed.
+      # If there are no changes, then the anvil state is outdated
+      # and therefore this step will fail.
+      - name: Check the anvil state is up-to-date
+        if: steps.filter.outputs.contracts == 'true'
+        run: |
+          ANVIL_STATE_UPDATED=${{ steps.filter.outputs.anvil_state }}
+          if [[ "$ANVIL_STATE_UPDATED" == "false" ]]; then
+            echo "The anvil state is outdated";
+            exit 1
+          fi

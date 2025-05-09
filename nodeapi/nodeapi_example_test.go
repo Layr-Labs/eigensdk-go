@@ -1,6 +1,9 @@
 package nodeapi_test
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/nodeapi"
 )
@@ -8,7 +11,8 @@ import (
 func ExampleNodeApi() {
 	logger, err := logging.NewZapLogger("development")
 	if err != nil {
-		panic(err)
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 
 	nodeApi := nodeapi.NewNodeApi("testAvs", "v0.0.1", "localhost:8080", logger)

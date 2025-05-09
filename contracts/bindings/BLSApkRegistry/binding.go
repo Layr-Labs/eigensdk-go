@@ -41,15 +41,15 @@ type BN254G2Point struct {
 	Y [2]*big.Int
 }
 
-// IBLSApkRegistryApkUpdate is an auto generated low-level Go binding around an user-defined struct.
-type IBLSApkRegistryApkUpdate struct {
+// IBLSApkRegistryTypesApkUpdate is an auto generated low-level Go binding around an user-defined struct.
+type IBLSApkRegistryTypesApkUpdate struct {
 	ApkHash               [24]byte
 	UpdateBlockNumber     uint32
 	NextUpdateBlockNumber uint32
 }
 
-// IBLSApkRegistryPubkeyRegistrationParams is an auto generated low-level Go binding around an user-defined struct.
-type IBLSApkRegistryPubkeyRegistrationParams struct {
+// IBLSApkRegistryTypesPubkeyRegistrationParams is an auto generated low-level Go binding around an user-defined struct.
+type IBLSApkRegistryTypesPubkeyRegistrationParams struct {
 	PubkeyRegistrationSignature BN254G1Point
 	PubkeyG1                    BN254G1Point
 	PubkeyG2                    BN254G2Point
@@ -57,8 +57,8 @@ type IBLSApkRegistryPubkeyRegistrationParams struct {
 
 // ContractBLSApkRegistryMetaData contains all meta data concerning the ContractBLSApkRegistry contract.
 var ContractBLSApkRegistryMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"constructor\",\"inputs\":[{\"name\":\"_registryCoordinator\",\"type\":\"address\",\"internalType\":\"contractIRegistryCoordinator\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"apkHistory\",\"inputs\":[{\"name\":\"\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"apkHash\",\"type\":\"bytes24\",\"internalType\":\"bytes24\"},{\"name\":\"updateBlockNumber\",\"type\":\"uint32\",\"internalType\":\"uint32\"},{\"name\":\"nextUpdateBlockNumber\",\"type\":\"uint32\",\"internalType\":\"uint32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"currentApk\",\"inputs\":[{\"name\":\"\",\"type\":\"uint8\",\"internalType\":\"uint8\"}],\"outputs\":[{\"name\":\"X\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"Y\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"deregisterOperator\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"quorumNumbers\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getApk\",\"inputs\":[{\"name\":\"quorumNumber\",\"type\":\"uint8\",\"internalType\":\"uint8\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structBN254.G1Point\",\"components\":[{\"name\":\"X\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"Y\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getApkHashAtBlockNumberAndIndex\",\"inputs\":[{\"name\":\"quorumNumber\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"blockNumber\",\"type\":\"uint32\",\"internalType\":\"uint32\"},{\"name\":\"index\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes24\",\"internalType\":\"bytes24\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getApkHistoryLength\",\"inputs\":[{\"name\":\"quorumNumber\",\"type\":\"uint8\",\"internalType\":\"uint8\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint32\",\"internalType\":\"uint32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getApkIndicesAtBlockNumber\",\"inputs\":[{\"name\":\"quorumNumbers\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"blockNumber\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint32[]\",\"internalType\":\"uint32[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getApkUpdateAtIndex\",\"inputs\":[{\"name\":\"quorumNumber\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"index\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIBLSApkRegistry.ApkUpdate\",\"components\":[{\"name\":\"apkHash\",\"type\":\"bytes24\",\"internalType\":\"bytes24\"},{\"name\":\"updateBlockNumber\",\"type\":\"uint32\",\"internalType\":\"uint32\"},{\"name\":\"nextUpdateBlockNumber\",\"type\":\"uint32\",\"internalType\":\"uint32\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getOperatorFromPubkeyHash\",\"inputs\":[{\"name\":\"pubkeyHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getOperatorId\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getRegisteredPubkey\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structBN254.G1Point\",\"components\":[{\"name\":\"X\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"Y\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"initializeQuorum\",\"inputs\":[{\"name\":\"quorumNumber\",\"type\":\"uint8\",\"internalType\":\"uint8\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"operatorToPubkey\",\"inputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"X\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"Y\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"operatorToPubkeyHash\",\"inputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"pubkeyHashToOperator\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"registerBLSPublicKey\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"params\",\"type\":\"tuple\",\"internalType\":\"structIBLSApkRegistry.PubkeyRegistrationParams\",\"components\":[{\"name\":\"pubkeyRegistrationSignature\",\"type\":\"tuple\",\"internalType\":\"structBN254.G1Point\",\"components\":[{\"name\":\"X\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"Y\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"pubkeyG1\",\"type\":\"tuple\",\"internalType\":\"structBN254.G1Point\",\"components\":[{\"name\":\"X\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"Y\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"pubkeyG2\",\"type\":\"tuple\",\"internalType\":\"structBN254.G2Point\",\"components\":[{\"name\":\"X\",\"type\":\"uint256[2]\",\"internalType\":\"uint256[2]\"},{\"name\":\"Y\",\"type\":\"uint256[2]\",\"internalType\":\"uint256[2]\"}]}]},{\"name\":\"pubkeyRegistrationMessageHash\",\"type\":\"tuple\",\"internalType\":\"structBN254.G1Point\",\"components\":[{\"name\":\"X\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"Y\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"outputs\":[{\"name\":\"operatorId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"registerOperator\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"quorumNumbers\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"registryCoordinator\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"event\",\"name\":\"Initialized\",\"inputs\":[{\"name\":\"version\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"uint8\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NewPubkeyRegistration\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"pubkeyG1\",\"type\":\"tuple\",\"indexed\":false,\"internalType\":\"structBN254.G1Point\",\"components\":[{\"name\":\"X\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"Y\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"pubkeyG2\",\"type\":\"tuple\",\"indexed\":false,\"internalType\":\"structBN254.G2Point\",\"components\":[{\"name\":\"X\",\"type\":\"uint256[2]\",\"internalType\":\"uint256[2]\"},{\"name\":\"Y\",\"type\":\"uint256[2]\",\"internalType\":\"uint256[2]\"}]}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OperatorAddedToQuorums\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"operatorId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"quorumNumbers\",\"type\":\"bytes\",\"indexed\":false,\"internalType\":\"bytes\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OperatorRemovedFromQuorums\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"operatorId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"quorumNumbers\",\"type\":\"bytes\",\"indexed\":false,\"internalType\":\"bytes\"}],\"anonymous\":false}]",
-	Bin: "0x60a06040523480156200001157600080fd5b506040516200210b3803806200210b833981016040819052620000349162000116565b6001600160a01b038116608052806200004c62000054565b505062000148565b600054610100900460ff1615620000c15760405162461bcd60e51b815260206004820152602760248201527f496e697469616c697a61626c653a20636f6e747261637420697320696e697469604482015266616c697a696e6760c81b606482015260840160405180910390fd5b60005460ff908116101562000114576000805460ff191660ff9081179091556040519081527f7f26b83ff96e1f2b6a682f133852f6798a09c465da95921460cefb38474024989060200160405180910390a15b565b6000602082840312156200012957600080fd5b81516001600160a01b03811681146200014157600080fd5b9392505050565b608051611f8b620001806000396000818161030f01528181610466015281816105bf015281816109c501526110310152611f8b6000f3fe608060405234801561001057600080fd5b50600436106101155760003560e01c80636d14a987116100a2578063bf79ce5811610071578063bf79ce58146103cc578063d5254a8c146103df578063de29fac0146103ff578063e8bb9ae61461041f578063f4e24fe51461044857600080fd5b80636d14a9871461030a5780637916cea6146103315780637ff81a8714610372578063a3db80e2146103a557600080fd5b80633fb27952116100e95780633fb27952146101df57806347b314e8146101f25780635f61a88414610233578063605747d51461028f57806368bccaac146102dd57600080fd5b8062a1f4cb1461011a57806313542a4e1461015b57806326d941f214610192578063377ed99d146101a7575b600080fd5b610141610128366004611904565b6003602052600090815260409020805460019091015482565b604080519283526020830191909152015b60405180910390f35b610184610169366004611904565b6001600160a01b031660009081526001602052604090205490565b604051908152602001610152565b6101a56101a0366004611937565b61045b565b005b6101ca6101b5366004611937565b60ff1660009081526004602052604090205490565b60405163ffffffff9091168152602001610152565b6101a56101ed3660046119c2565b6105b4565b61021b610200366004611a68565b6000908152600260205260409020546001600160a01b031690565b6040516001600160a01b039091168152602001610152565b610282610241366004611937565b60408051808201909152600080825260208201525060ff16600090815260056020908152604091829020825180840190935280548352600101549082015290565b6040516101529190611a81565b6102a261029d366004611a98565b610672565b60408051825167ffffffffffffffff1916815260208084015163ffffffff908116918301919091529282015190921690820152606001610152565b6102f06102eb366004611ac2565b610705565b60405167ffffffffffffffff199091168152602001610152565b61021b7f000000000000000000000000000000000000000000000000000000000000000081565b61034461033f366004611a98565b6108a0565b6040805167ffffffffffffffff19909416845263ffffffff9283166020850152911690820152606001610152565b610385610380366004611904565b6108eb565b604080518351815260209384015193810193909352820152606001610152565b6101416103b3366004611937565b6005602052600090815260409020805460019091015482565b6101846103da366004611b0a565b6109b8565b6103f26103ed366004611b67565b610e0c565b6040516101529190611bdf565b61018461040d366004611904565b60016020526000908152604090205481565b61021b61042d366004611a68565b6002602052600090815260409020546001600160a01b031681565b6101a56104563660046119c2565b611026565b336001600160a01b037f000000000000000000000000000000000000000000000000000000000000000016146104ac5760405162461bcd60e51b81526004016104a390611c29565b60405180910390fd5b60ff81166000908152600460205260409020541561052b5760405162461bcd60e51b815260206004820152603660248201527f424c5341706b52656769737472792e696e697469616c697a6551756f72756d3a6044820152752071756f72756d20616c72656164792065786973747360501b60648201526084016104a3565b60ff166000908152600460209081526040808320815160608101835284815263ffffffff4381168286019081528285018781528454600181018655948852959096209151919092018054955194518316600160e01b026001600160e01b0395909316600160c01b026001600160e01b03199096169190931c179390931791909116919091179055565b336001600160a01b037f000000000000000000000000000000000000000000000000000000000000000016146105fc5760405162461bcd60e51b81526004016104a390611c29565b6000610607836108eb565b50905061061482826110cf565b7f73a2b7fb844724b971802ae9b15db094d4b7192df9d7350e14eb466b9b22eb4e83610655856001600160a01b031660009081526001602052604090205490565b8460405161066593929190611c9d565b60405180910390a1505050565b604080516060810182526000808252602080830182905282840182905260ff8616825260049052919091208054839081106106af576106af611d09565b600091825260209182902060408051606081018252919092015467ffffffffffffffff1981841b16825263ffffffff600160c01b8204811694830194909452600160e01b90049092169082015290505b92915050565b60ff8316600090815260046020526040812080548291908490811061072c5761072c611d09565b600091825260209182902060408051606081018252919092015467ffffffffffffffff1981841b16825263ffffffff600160c01b82048116948301859052600160e01b9091048116928201929092529250851610156107f35760405162461bcd60e51b815260206004820152603e60248201527f424c5341706b52656769737472792e5f76616c696461746541706b486173684160448201527f74426c6f636b4e756d6265723a20696e64657820746f6f20726563656e74000060648201526084016104a3565b604081015163ffffffff1615806108195750806040015163ffffffff168463ffffffff16105b6108975760405162461bcd60e51b815260206004820152604360248201527f424c5341706b52656769737472792e5f76616c696461746541706b486173684160448201527f74426c6f636b4e756d6265723a206e6f74206c61746573742061706b2075706460648201526261746560e81b608482015260a4016104a3565b51949350505050565b600460205281600052604060002081815481106108bc57600080fd5b600091825260209091200154604081901b925063ffffffff600160c01b820481169250600160e01b9091041683565b60408051808201909152600080825260208201526001600160a01b0382166000818152600360209081526040808320815180830183528154815260019182015481850152948452909152812054909190806109ae5760405162461bcd60e51b815260206004820152603e60248201527f424c5341706b52656769737472792e676574526567697374657265645075626b60448201527f65793a206f70657261746f72206973206e6f742072656769737465726564000060648201526084016104a3565b9094909350915050565b6000336001600160a01b037f00000000000000000000000000000000000000000000000000000000000000001614610a025760405162461bcd60e51b81526004016104a390611c29565b6000610a30610a1936869003860160408701611d1f565b805160009081526020918201519091526040902090565b90507fad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5811415610ab8576040805162461bcd60e51b8152602060048201526024810191909152600080516020611f3683398151915260448201527f4b65793a2063616e6e6f74207265676973746572207a65726f207075626b657960648201526084016104a3565b6001600160a01b03851660009081526001602052604090205415610b425760405162461bcd60e51b81526020600482015260476024820152600080516020611f3683398151915260448201527f4b65793a206f70657261746f7220616c72656164792072656769737465726564606482015266207075626b657960c81b608482015260a4016104a3565b6000818152600260205260409020546001600160a01b031615610bc65760405162461bcd60e51b81526020600482015260426024820152600080516020611f3683398151915260448201527f4b65793a207075626c6963206b657920616c7265616479207265676973746572606482015261195960f21b608482015260a4016104a3565b604080516000917f30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f000000191610c1f918835916020808b0135928b01359160608c01359160808d019160c08e01918d35918e8201359101611d51565b6040516020818303038152906040528051906020012060001c610c429190611d9c565b9050610cdc610c7b610c6683610c60368a90038a0160408b01611d1f565b9061131a565b610c7536899003890189611d1f565b906113b1565b610c83611445565b610cc5610cb685610c60604080518082018252600080825260209182015281518083019092526001825260029082015290565b610c75368a90038a018a611d1f565b610cd7368a90038a0160808b01611e0e565b611505565b610d775760405162461bcd60e51b815260206004820152606c6024820152600080516020611f3683398151915260448201527f4b65793a2065697468657220746865204731207369676e61747572652069732060648201527f77726f6e672c206f7220473120616e642047322070726976617465206b65792060848201526b0c8de40dcdee840dac2e8c6d60a31b60a482015260c4016104a3565b6001600160a01b03861660008181526003602090815260408083208982018035825560608b013560019283015590835281842087905586845260029092529182902080546001600160a01b0319168417905590517fe3fb6613af2e8930cf85d47fcf6db10192224a64c6cbe8023e0eee1ba382804191610dfb9160808a0190611e6b565b60405180910390a250949350505050565b606060008367ffffffffffffffff811115610e2957610e29611952565b604051908082528060200260200182016040528015610e52578160200160208202803683370190505b50905060005b8481101561101d576000868683818110610e7457610e74611d09565b919091013560f81c6000818152600460205260409020549092509050801580610ed7575060ff821660009081526004602052604081208054909190610ebb57610ebb611d09565b600091825260209091200154600160c01b900463ffffffff1686105b15610f645760405162461bcd60e51b815260206004820152605160248201527f424c5341706b52656769737472792e67657441706b496e64696365734174426c60448201527f6f636b4e756d6265723a20626c6f636b4e756d626572206973206265666f7265606482015270207468652066697273742075706461746560781b608482015260a4016104a3565b805b80156110075760ff831660009081526004602052604090208790610f8b600184611eb5565b81548110610f9b57610f9b611d09565b600091825260209091200154600160c01b900463ffffffff1611610ff557610fc4600182611eb5565b858581518110610fd657610fd6611d09565b602002602001019063ffffffff16908163ffffffff1681525050611007565b80610fff81611ecc565b915050610f66565b505050808061101590611ee3565b915050610e58565b50949350505050565b336001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000161461106e5760405162461bcd60e51b81526004016104a390611c29565b6000611079836108eb565b50905061108e8261108983611772565b6110cf565b7ff843ecd53a563675e62107be1494fdde4a3d49aeedaf8d88c616d85346e3500e83610655856001600160a01b031660009081526001602052604090205490565b604080518082019091526000808252602082015260005b835181101561131457600084828151811061110357611103611d09565b0160209081015160f81c60008181526004909252604090912054909150806111935760405162461bcd60e51b815260206004820152603d60248201527f424c5341706b52656769737472792e5f70726f6365737351756f72756d41706b60448201527f5570646174653a2071756f72756d20646f6573206e6f7420657869737400000060648201526084016104a3565b60ff821660009081526005602090815260409182902082518084019093528054835260010154908201526111c790866113b1565b60ff831660008181526005602090815260408083208551808255868401805160019384015590855251835281842094845260049092528220939750919290916112109085611eb5565b8154811061122057611220611d09565b600091825260209091200180549091504363ffffffff908116600160c01b9092041614156112615780546001600160c01b031916604083901c1781556112fd565b805463ffffffff438116600160e01b8181026001600160e01b0394851617855560ff88166000908152600460209081526040808320815160608101835267ffffffffffffffff198b16815280840196875280830185815282546001810184559286529390942093519301805495519251871690940291909516600160c01b026001600160e01b0319949094169190941c17919091179092161790555b50505050808061130c90611ee3565b9150506110e6565b50505050565b6040805180820190915260008082526020820152611336611831565b835181526020808501519082015260408082018490526000908360608460076107d05a03fa90508080156113695761136b565bfe5b50806113a95760405162461bcd60e51b815260206004820152600d60248201526c1958cb5b5d5b0b59985a5b1959609a1b60448201526064016104a3565b505092915050565b60408051808201909152600080825260208201526113cd61184f565b835181526020808501518183015283516040808401919091529084015160608301526000908360808460066107d05a03fa90508080156113695750806113a95760405162461bcd60e51b815260206004820152600d60248201526c1958cb5859190b59985a5b1959609a1b60448201526064016104a3565b61144d61186d565b50604080516080810182527f198e9393920d483a7260bfb731fb5d25f1aa493335a9e71297e485b7aef312c28183019081527f1800deef121f1e76426a00665e5c4479674322d4f75edadd46debd5cd992f6ed6060830152815281518083019092527f275dc4a288d1afb3cbb1ac09187524c7db36395df7be3b99e673b13a075a65ec82527f1d9befcd05a5323e6da4d435f3b617cdb3af83285c2df711ef39c01571827f9d60208381019190915281019190915290565b604080518082018252858152602080820185905282518084019093528583528201839052600091611534611892565b60005b60028110156116f957600061154d826006611efe565b905084826002811061156157611561611d09565b60200201515183611573836000611f1d565b600c811061158357611583611d09565b602002015284826002811061159a5761159a611d09565b602002015160200151838260016115b19190611f1d565b600c81106115c1576115c1611d09565b60200201528382600281106115d8576115d8611d09565b60200201515151836115eb836002611f1d565b600c81106115fb576115fb611d09565b602002015283826002811061161257611612611d09565b602002015151600160200201518361162b836003611f1d565b600c811061163b5761163b611d09565b602002015283826002811061165257611652611d09565b60200201516020015160006002811061166d5761166d611d09565b60200201518361167e836004611f1d565b600c811061168e5761168e611d09565b60200201528382600281106116a5576116a5611d09565b6020020151602001516001600281106116c0576116c0611d09565b6020020151836116d1836005611f1d565b600c81106116e1576116e1611d09565b602002015250806116f181611ee3565b915050611537565b506117026118b1565b60006020826101808560086107d05a03fa90508080156113695750806117625760405162461bcd60e51b81526020600482015260156024820152741c185a5c9a5b99cb5bdc18dbd9194b59985a5b1959605a1b60448201526064016104a3565b5051151598975050505050505050565b6040805180820190915260008082526020820152815115801561179757506020820151155b156117b5575050604080518082019091526000808252602082015290565b6040518060400160405280836000015181526020017f30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd4784602001516117fa9190611d9c565b611824907f30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47611eb5565b905292915050565b919050565b60405180606001604052806003906020820280368337509192915050565b60405180608001604052806004906020820280368337509192915050565b60405180604001604052806118806118cf565b815260200161188d6118cf565b905290565b604051806101800160405280600c906020820280368337509192915050565b60405180602001604052806001906020820280368337509192915050565b60405180604001604052806002906020820280368337509192915050565b80356001600160a01b038116811461182c57600080fd5b60006020828403121561191657600080fd5b61191f826118ed565b9392505050565b803560ff8116811461182c57600080fd5b60006020828403121561194957600080fd5b61191f82611926565b634e487b7160e01b600052604160045260246000fd5b6040805190810167ffffffffffffffff8111828210171561198b5761198b611952565b60405290565b604051601f8201601f1916810167ffffffffffffffff811182821017156119ba576119ba611952565b604052919050565b600080604083850312156119d557600080fd5b6119de836118ed565b915060208084013567ffffffffffffffff808211156119fc57600080fd5b818601915086601f830112611a1057600080fd5b813581811115611a2257611a22611952565b611a34601f8201601f19168501611991565b91508082528784828501011115611a4a57600080fd5b80848401858401376000848284010152508093505050509250929050565b600060208284031215611a7a57600080fd5b5035919050565b8151815260208083015190820152604081016106ff565b60008060408385031215611aab57600080fd5b611ab483611926565b946020939093013593505050565b600080600060608486031215611ad757600080fd5b611ae084611926565b9250602084013563ffffffff81168114611af957600080fd5b929592945050506040919091013590565b6000806000838503610160811215611b2157600080fd5b611b2a856118ed565b9350610100601f1982011215611b3f57600080fd5b602085019250604061011f1982011215611b5857600080fd5b50610120840190509250925092565b600080600060408486031215611b7c57600080fd5b833567ffffffffffffffff80821115611b9457600080fd5b818601915086601f830112611ba857600080fd5b813581811115611bb757600080fd5b876020828501011115611bc957600080fd5b6020928301989097509590910135949350505050565b6020808252825182820181905260009190848201906040850190845b81811015611c1d57835163ffffffff1683529284019291840191600101611bfb565b50909695505050505050565b6020808252604e908201527f424c5341706b52656769737472792e6f6e6c795265676973747279436f6f726460408201527f696e61746f723a2063616c6c6572206973206e6f74207468652072656769737460608201526d393c9031b7b7b93234b730ba37b960911b608082015260a00190565b60018060a01b038416815260006020848184015260606040840152835180606085015260005b81811015611cdf57858101830151858201608001528201611cc3565b81811115611cf1576000608083870101525b50601f01601f19169290920160800195945050505050565b634e487b7160e01b600052603260045260246000fd5b600060408284031215611d3157600080fd5b611d39611968565b82358152602083013560208201528091505092915050565b8881528760208201528660408201528560608201526040856080830137600060c082016000815260408682375050610100810192909252610120820152610140019695505050505050565b600082611db957634e487b7160e01b600052601260045260246000fd5b500690565b600082601f830112611dcf57600080fd5b611dd7611968565b806040840185811115611de957600080fd5b845b81811015611e03578035845260209384019301611deb565b509095945050505050565b600060808284031215611e2057600080fd5b6040516040810181811067ffffffffffffffff82111715611e4357611e43611952565b604052611e508484611dbe565b8152611e5f8460408501611dbe565b60208201529392505050565b823581526020808401359082015260c081016040838184013760808201600081526040808501823750600081529392505050565b634e487b7160e01b600052601160045260246000fd5b600082821015611ec757611ec7611e9f565b500390565b600081611edb57611edb611e9f565b506000190190565b6000600019821415611ef757611ef7611e9f565b5060010190565b6000816000190483118215151615611f1857611f18611e9f565b500290565b60008219821115611f3057611f30611e9f565b50019056fe424c5341706b52656769737472792e7265676973746572424c535075626c6963a264697066735822122050dd2ab396214965939c9bae094a62350c112ffe5817e69d31274d001e7dcf2164736f6c634300080c0033",
+	ABI: "[{\"type\":\"constructor\",\"inputs\":[{\"name\":\"_slashingRegistryCoordinator\",\"type\":\"address\",\"internalType\":\"contractISlashingRegistryCoordinator\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"apkHistory\",\"inputs\":[{\"name\":\"quorumNumber\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"apkHash\",\"type\":\"bytes24\",\"internalType\":\"bytes24\"},{\"name\":\"updateBlockNumber\",\"type\":\"uint32\",\"internalType\":\"uint32\"},{\"name\":\"nextUpdateBlockNumber\",\"type\":\"uint32\",\"internalType\":\"uint32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"currentApk\",\"inputs\":[{\"name\":\"quorumNumber\",\"type\":\"uint8\",\"internalType\":\"uint8\"}],\"outputs\":[{\"name\":\"X\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"Y\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"deregisterOperator\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"quorumNumbers\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getApk\",\"inputs\":[{\"name\":\"quorumNumber\",\"type\":\"uint8\",\"internalType\":\"uint8\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structBN254.G1Point\",\"components\":[{\"name\":\"X\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"Y\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getApkHashAtBlockNumberAndIndex\",\"inputs\":[{\"name\":\"quorumNumber\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"blockNumber\",\"type\":\"uint32\",\"internalType\":\"uint32\"},{\"name\":\"index\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes24\",\"internalType\":\"bytes24\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getApkHistoryLength\",\"inputs\":[{\"name\":\"quorumNumber\",\"type\":\"uint8\",\"internalType\":\"uint8\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint32\",\"internalType\":\"uint32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getApkIndicesAtBlockNumber\",\"inputs\":[{\"name\":\"quorumNumbers\",\"type\":\"bytes\",\"internalType\":\"bytes\"},{\"name\":\"blockNumber\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"uint32[]\",\"internalType\":\"uint32[]\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getApkUpdateAtIndex\",\"inputs\":[{\"name\":\"quorumNumber\",\"type\":\"uint8\",\"internalType\":\"uint8\"},{\"name\":\"index\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structIBLSApkRegistryTypes.ApkUpdate\",\"components\":[{\"name\":\"apkHash\",\"type\":\"bytes24\",\"internalType\":\"bytes24\"},{\"name\":\"updateBlockNumber\",\"type\":\"uint32\",\"internalType\":\"uint32\"},{\"name\":\"nextUpdateBlockNumber\",\"type\":\"uint32\",\"internalType\":\"uint32\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getOperatorFromPubkeyHash\",\"inputs\":[{\"name\":\"pubkeyHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getOperatorId\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getOperatorPubkeyG2\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structBN254.G2Point\",\"components\":[{\"name\":\"X\",\"type\":\"uint256[2]\",\"internalType\":\"uint256[2]\"},{\"name\":\"Y\",\"type\":\"uint256[2]\",\"internalType\":\"uint256[2]\"}]}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"getOrRegisterOperatorId\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"params\",\"type\":\"tuple\",\"internalType\":\"structIBLSApkRegistryTypes.PubkeyRegistrationParams\",\"components\":[{\"name\":\"pubkeyRegistrationSignature\",\"type\":\"tuple\",\"internalType\":\"structBN254.G1Point\",\"components\":[{\"name\":\"X\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"Y\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"pubkeyG1\",\"type\":\"tuple\",\"internalType\":\"structBN254.G1Point\",\"components\":[{\"name\":\"X\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"Y\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"pubkeyG2\",\"type\":\"tuple\",\"internalType\":\"structBN254.G2Point\",\"components\":[{\"name\":\"X\",\"type\":\"uint256[2]\",\"internalType\":\"uint256[2]\"},{\"name\":\"Y\",\"type\":\"uint256[2]\",\"internalType\":\"uint256[2]\"}]}]},{\"name\":\"pubkeyRegistrationMessageHash\",\"type\":\"tuple\",\"internalType\":\"structBN254.G1Point\",\"components\":[{\"name\":\"X\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"Y\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"outputs\":[{\"name\":\"operatorId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getRegisteredPubkey\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"\",\"type\":\"tuple\",\"internalType\":\"structBN254.G1Point\",\"components\":[{\"name\":\"X\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"Y\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"initializeQuorum\",\"inputs\":[{\"name\":\"quorumNumber\",\"type\":\"uint8\",\"internalType\":\"uint8\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"operatorToPubkey\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"X\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"Y\",\"type\":\"uint256\",\"internalType\":\"uint256\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"operatorToPubkeyHash\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"outputs\":[{\"name\":\"operatorId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"pubkeyHashToOperator\",\"inputs\":[{\"name\":\"pubkeyHash\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"registerBLSPublicKey\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"params\",\"type\":\"tuple\",\"internalType\":\"structIBLSApkRegistryTypes.PubkeyRegistrationParams\",\"components\":[{\"name\":\"pubkeyRegistrationSignature\",\"type\":\"tuple\",\"internalType\":\"structBN254.G1Point\",\"components\":[{\"name\":\"X\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"Y\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"pubkeyG1\",\"type\":\"tuple\",\"internalType\":\"structBN254.G1Point\",\"components\":[{\"name\":\"X\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"Y\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"pubkeyG2\",\"type\":\"tuple\",\"internalType\":\"structBN254.G2Point\",\"components\":[{\"name\":\"X\",\"type\":\"uint256[2]\",\"internalType\":\"uint256[2]\"},{\"name\":\"Y\",\"type\":\"uint256[2]\",\"internalType\":\"uint256[2]\"}]}]},{\"name\":\"pubkeyRegistrationMessageHash\",\"type\":\"tuple\",\"internalType\":\"structBN254.G1Point\",\"components\":[{\"name\":\"X\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"Y\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]}],\"outputs\":[{\"name\":\"operatorId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"registerOperator\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"quorumNumbers\",\"type\":\"bytes\",\"internalType\":\"bytes\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"registryCoordinator\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"verifyAndRegisterG2PubkeyForOperator\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"internalType\":\"address\"},{\"name\":\"pubkeyG2\",\"type\":\"tuple\",\"internalType\":\"structBN254.G2Point\",\"components\":[{\"name\":\"X\",\"type\":\"uint256[2]\",\"internalType\":\"uint256[2]\"},{\"name\":\"Y\",\"type\":\"uint256[2]\",\"internalType\":\"uint256[2]\"}]}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"event\",\"name\":\"Initialized\",\"inputs\":[{\"name\":\"version\",\"type\":\"uint8\",\"indexed\":false,\"internalType\":\"uint8\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NewG2PubkeyRegistration\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"pubkeyG2\",\"type\":\"tuple\",\"indexed\":false,\"internalType\":\"structBN254.G2Point\",\"components\":[{\"name\":\"X\",\"type\":\"uint256[2]\",\"internalType\":\"uint256[2]\"},{\"name\":\"Y\",\"type\":\"uint256[2]\",\"internalType\":\"uint256[2]\"}]}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"NewPubkeyRegistration\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"indexed\":true,\"internalType\":\"address\"},{\"name\":\"pubkeyG1\",\"type\":\"tuple\",\"indexed\":false,\"internalType\":\"structBN254.G1Point\",\"components\":[{\"name\":\"X\",\"type\":\"uint256\",\"internalType\":\"uint256\"},{\"name\":\"Y\",\"type\":\"uint256\",\"internalType\":\"uint256\"}]},{\"name\":\"pubkeyG2\",\"type\":\"tuple\",\"indexed\":false,\"internalType\":\"structBN254.G2Point\",\"components\":[{\"name\":\"X\",\"type\":\"uint256[2]\",\"internalType\":\"uint256[2]\"},{\"name\":\"Y\",\"type\":\"uint256[2]\",\"internalType\":\"uint256[2]\"}]}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OperatorAddedToQuorums\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"operatorId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"quorumNumbers\",\"type\":\"bytes\",\"indexed\":false,\"internalType\":\"bytes\"}],\"anonymous\":false},{\"type\":\"event\",\"name\":\"OperatorRemovedFromQuorums\",\"inputs\":[{\"name\":\"operator\",\"type\":\"address\",\"indexed\":false,\"internalType\":\"address\"},{\"name\":\"operatorId\",\"type\":\"bytes32\",\"indexed\":false,\"internalType\":\"bytes32\"},{\"name\":\"quorumNumbers\",\"type\":\"bytes\",\"indexed\":false,\"internalType\":\"bytes\"}],\"anonymous\":false},{\"type\":\"error\",\"name\":\"BLSPubkeyAlreadyRegistered\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"BlockNumberBeforeFirstUpdate\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"BlockNumberNotLatest\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"BlockNumberTooRecent\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ECAddFailed\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ECMulFailed\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ECPairingFailed\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"G2PubkeyAlreadySet\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"InvalidBLSSignatureOrPrivateKey\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"OnlyRegistryCoordinator\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"OnlyRegistryCoordinatorOwner\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"OperatorAlreadyRegistered\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"OperatorNotRegistered\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"QuorumAlreadyExists\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"QuorumDoesNotExist\",\"inputs\":[]},{\"type\":\"error\",\"name\":\"ZeroPubKey\",\"inputs\":[]}]",
+	Bin: "0x60a060405234801561000f575f5ffd5b50604051611ef9380380611ef983398101604081905261002e91610107565b6001600160a01b0381166080528061004461004b565b5050610134565b5f54610100900460ff16156100b65760405162461bcd60e51b815260206004820152602760248201527f496e697469616c697a61626c653a20636f6e747261637420697320696e697469604482015266616c697a696e6760c81b606482015260840160405180910390fd5b5f5460ff90811614610105575f805460ff191660ff9081179091556040519081527f7f26b83ff96e1f2b6a682f133852f6798a09c465da95921460cefb38474024989060200160405180910390a15b565b5f60208284031215610117575f5ffd5b81516001600160a01b038116811461012d575f5ffd5b9392505050565b608051611d9f61015a5f395f818161035701528181610eb901526114bd0152611d9f5ff3fe608060405234801561000f575f5ffd5b5060043610610131575f3560e01c806368bccaac116100b4578063bf79ce5811610079578063bf79ce5814610413578063d1a6465014610426578063d5254a8c14610439578063de29fac014610459578063e8bb9ae614610478578063f4e24fe5146104a0575f5ffd5b806368bccaac146103255780636d14a987146103525780637916cea6146103795780637ff81a87146103ba578063a3db80e2146103ed575f5ffd5b80633fb27952116100fa5780633fb279521461020a57806347b314e81461021d5780635f61a8841461025d578063605747d5146102b75780636716991114610305575f5ffd5b8062a1f4cb1461013557806303c5a6b61461017557806313542a4e1461019657806326d941f2146101be578063377ed99d146101d3575b5f5ffd5b61015b61014336600461175c565b60036020525f90815260409020805460019091015482565b604080519283526020830191909152015b60405180910390f35b610188610183366004611777565b6104b3565b60405190815260200161016c565b6101886101a436600461175c565b6001600160a01b03165f9081526001602052604090205490565b6101d16101cc3660046117e1565b6104f2565b005b6101f56101e13660046117e1565b60ff165f9081526004602052604090205490565b60405163ffffffff909116815260200161016c565b6101d1610218366004611868565b6105b2565b61024561022b36600461190f565b5f908152600260205260409020546001600160a01b031690565b6040516001600160a01b03909116815260200161016c565b6102aa61026b3660046117e1565b604080518082019091525f80825260208201525060ff165f90815260056020908152604091829020825180840190935280548352600101549082015290565b60405161016c9190611926565b6102ca6102c536600461193d565b61062e565b60408051825167ffffffffffffffff1916815260208084015163ffffffff90811691830191909152928201519092169082015260600161016c565b61031861031336600461175c565b6106bf565b60405161016c9190611987565b6103386103333660046119b2565b610753565b60405167ffffffffffffffff19909116815260200161016c565b6102457f000000000000000000000000000000000000000000000000000000000000000081565b61038c61038736600461193d565b610836565b6040805167ffffffffffffffff19909416845263ffffffff928316602085015291169082015260600161016c565b6103cd6103c836600461175c565b61087d565b60408051835181526020938401519381019390935282015260600161016c565b61015b6103fb3660046117e1565b60056020525f90815260409020805460019091015482565b610188610421366004611777565b6108f3565b6101d16104343660046119f6565b610bc8565b61044c610447366004611a34565b610caf565b60405161016c9190611aa6565b61018861046736600461175c565b60016020525f908152604090205481565b61024561048636600461190f565b60026020525f90815260409020546001600160a01b031681565b6101d16104ae366004611868565b610e47565b5f6104bc610eae565b506001600160a01b0383165f90815260016020526040812054908190036104eb576104e88484846108f3565b90505b9392505050565b6104fa610eae565b60ff81165f908152600460205260409020541561052a576040516310cda51760e21b815260040160405180910390fd5b60ff165f908152600460209081526040808320815160608101835284815263ffffffff4381168286019081528285018781528454600181018655948852959096209151919092018054955194518316600160e01b026001600160e01b0395909316600160c01b026001600160e01b03199096169190931c179390931791909116919091179055565b6105ba610eae565b5f6105c48361087d565b5090506105d18282610ef9565b7f73a2b7fb844724b971802ae9b15db094d4b7192df9d7350e14eb466b9b22eb4e83610611856001600160a01b03165f9081526001602052604090205490565b8460405161062193929190611aee565b60405180910390a1505050565b604080516060810182525f808252602080830182905282840182905260ff86168252600490529190912080548390811061066a5761066a611b39565b5f91825260209182902060408051606081018252919092015467ffffffffffffffff1981841b16825263ffffffff600160c01b8204811694830194909452600160e01b90049092169082015290505b92915050565b6106c7611689565b6001600160a01b0382165f9081526006602052604090819020815160808101835291829081018260028282826020028201915b8154815260200190600101908083116106fa57505050918352505060408051808201918290526020909201919060028481019182845b815481526020019060010190808311610730575050505050815250509050919050565b60ff83165f90815260046020526040812080548291908490811061077957610779611b39565b5f91825260209182902060408051606081018252919092015467ffffffffffffffff1981841b16825263ffffffff600160c01b82048116948301859052600160e01b9091048116928201929092529250851610156107ea57604051633d22884160e01b815260040160405180910390fd5b604081015163ffffffff1615806108105750806040015163ffffffff168463ffffffff16105b61082d57604051636fe02d4b60e01b815260040160405180910390fd5b51949350505050565b6004602052815f5260405f20818154811061084f575f80fd5b5f91825260209091200154604081901b925063ffffffff600160c01b820481169250600160e01b9091041683565b604080518082019091525f80825260208201526001600160a01b0382165f818152600360209081526040808320815180830183528154815260019182015481850152948452909152812054909190806108e9576040516325ec6c1f60e01b815260040160405180910390fd5b9094909350915050565b5f6108fc610eae565b5f61092861091236869003860160408701611b4d565b80515f9081526020918201519091526040902090565b90507fad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5810361096a57604051630cc7509160e01b815260040160405180910390fd5b6001600160a01b0385165f90815260016020526040812054146109a0576040516342ee68b560e01b815260040160405180910390fd5b5f818152600260205260409020546001600160a01b0316156109d557604051634c334c9760e11b815260040160405180910390fd5b604080515f917f30644e72e131a029b85045b68181585d2833e84879b9709143e1f593f000000191610a2d918835916020808b0135928b01359160608c01359160808d019160c08e01918d35918e8201359101611b7e565b604051602081830303815290604052805190602001205f1c610a4f9190611bc0565b9050610ae8610a88610a7383610a6d368a90038a0160408b01611b4d565b906110e0565b610a8236899003890189611b4d565b90611150565b610a906111c4565b610ad1610ac285610a6d6040805180820182525f80825260209182015281518083019092526001825260029082015290565b610a82368a90038a018a611b4d565b610ae3368a90038a0160808b01611c21565b611284565b610b055760405163a72d026360e01b815260040160405180910390fd5b6001600160a01b0386165f9081526003602090815260408083208882013581556060890135600190910155600690915290206080860190610b468282611c8b565b50506001600160a01b0386165f81815260016020908152604080832086905585835260029091529081902080546001600160a01b0319168317905580517fe3fb6613af2e8930cf85d47fcf6db10192224a64c6cbe8023e0eee1ba382804191610bb7919089019060808a0190611ce6565b60405180910390a250949350505050565b610bd06114bb565b5f610bda8361087d565b509050610be68361156c565b610c2681610bf26111c4565b6040805180820182525f808252602091820152815180830190925260018252600290820152610ae336879003870187611c21565b610c435760405163a72d026360e01b815260040160405180910390fd5b6001600160a01b0383165f9081526006602052604090208290610c668282611c8b565b905050826001600160a01b03167f5c4f9f28153dbf3f00e69607a59e82ad806fffb78d09f179f62432f7e9d2511a83604051610ca29190611d05565b60405180910390a2505050565b60605f8367ffffffffffffffff811115610ccb57610ccb6117fa565b604051908082528060200260200182016040528015610cf4578160200160208202803683370190505b5090505f5b84811015610e3e575f868683818110610d1457610d14611b39565b919091013560f81c5f818152600460205260409020549092509050801580610d74575060ff82165f9081526004602052604081208054909190610d5957610d59611b39565b5f91825260209091200154600160c01b900463ffffffff1686105b15610d9257604051633f4cb70f60e01b815260040160405180910390fd5b805b8015610e335760ff83165f9081526004602052604090208790610db8600184611d13565b81548110610dc857610dc8611b39565b5f91825260209091200154600160c01b900463ffffffff1611610e2157610df0600182611d13565b858581518110610e0257610e02611b39565b602002602001019063ffffffff16908163ffffffff1681525050610e33565b80610e2b81611d26565b915050610d94565b505050600101610cf9565b50949350505050565b610e4f610eae565b5f610e598361087d565b509050610e6e82610e69836115cd565b610ef9565b7ff843ecd53a563675e62107be1494fdde4a3d49aeedaf8d88c616d85346e3500e83610611856001600160a01b03165f9081526001602052604090205490565b336001600160a01b037f00000000000000000000000000000000000000000000000000000000000000001614610ef757604051634394dbdf60e11b815260040160405180910390fd5b565b604080518082019091525f80825260208201525f5b83518110156110da575f848281518110610f2a57610f2a611b39565b0160209081015160f81c5f8181526004909252604082205490925090819003610f6657604051637310cff560e11b815260040160405180910390fd5b60ff82165f908152600560209081526040918290208251808401909352805483526001015490820152610f999086611150565b60ff83165f818152600560209081526040808320855180825586840180516001938401559085525183528184209484526004909252822093975091929091610fe19085611d13565b81548110610ff157610ff1611b39565b5f918252602090912001805490915063ffffffff438116600160c01b909204160361102f5780546001600160c01b031916604083901c1781556110ca565b805463ffffffff438116600160e01b8181026001600160e01b0394851617855560ff88165f908152600460209081526040808320815160608101835267ffffffffffffffff198b16815280840196875280830185815282546001810184559286529390942093519301805495519251871690940291909516600160c01b026001600160e01b0319949094169190941c17919091179092161790555b505060019092019150610f0e9050565b50505050565b604080518082019091525f80825260208201526110fb6116ae565b835181526020808501519082015260408082018490525f908360608460076107d05a03fa9050808061112957fe5b508061114857604051632319df1960e11b815260040160405180910390fd5b505092915050565b604080518082019091525f808252602082015261116b6116cc565b835181526020808501518183015283516040808401919091529084015160608301525f908360808460066107d05a03fa905080806111a557fe5b50806111485760405163d4b68fd760e01b815260040160405180910390fd5b6111cc611689565b50604080516080810182527f198e9393920d483a7260bfb731fb5d25f1aa493335a9e71297e485b7aef312c28183019081527f1800deef121f1e76426a00665e5c4479674322d4f75edadd46debd5cd992f6ed6060830152815281518083019092527f275dc4a288d1afb3cbb1ac09187524c7db36395df7be3b99e673b13a075a65ec82527f1d9befcd05a5323e6da4d435f3b617cdb3af83285c2df711ef39c01571827f9d60208381019190915281019190915290565b6040805180820182528581526020808201859052825180840190935285835282018390525f916112b26116ea565b5f5b6002811015611469575f6112c9826006611c74565b90508482600281106112dd576112dd611b39565b602002015151836112ee835f611d3b565b600c81106112fe576112fe611b39565b602002015284826002811061131557611315611b39565b6020020151602001518382600161132c9190611d3b565b600c811061133c5761133c611b39565b602002015283826002811061135357611353611b39565b6020020151515183611366836002611d3b565b600c811061137657611376611b39565b602002015283826002811061138d5761138d611b39565b60200201515160016020020151836113a6836003611d3b565b600c81106113b6576113b6611b39565b60200201528382600281106113cd576113cd611b39565b6020020151602001515f600281106113e7576113e7611b39565b6020020151836113f8836004611d3b565b600c811061140857611408611b39565b602002015283826002811061141f5761141f611b39565b60200201516020015160016002811061143a5761143a611b39565b60200201518361144b836005611d3b565b600c811061145b5761145b611b39565b6020020152506001016112b4565b50611472611709565b5f6020826101808560086107d05a03fa9050808061148c57fe5b50806114ab576040516324ccc79360e21b815260040160405180910390fd5b5051151598975050505050505050565b7f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316638da5cb5b6040518163ffffffff1660e01b8152600401602060405180830381865afa158015611517573d5f5f3e3d5ffd5b505050506040513d601f19601f8201168201806040525081019061153b9190611d4e565b6001600160a01b0316336001600160a01b031614610ef757604051637070f3b160e11b815260040160405180910390fd5b5f611576826106bf565b80515190915015801561158c5750805160200151155b801561159b5750602081015151155b80156115ac57506020818101510151155b6115c957604051630849e5cf60e41b815260040160405180910390fd5b5050565b604080518082019091525f808252602082015281511580156115f157506020820151155b1561160e575050604080518082019091525f808252602082015290565b6040518060400160405280835f015181526020017f30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd4784602001516116529190611bc0565b61167c907f30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47611d13565b905292915050565b919050565b604051806040016040528061169c611727565b81526020016116a9611727565b905290565b60405180606001604052806003906020820280368337509192915050565b60405180608001604052806004906020820280368337509192915050565b604051806101800160405280600c906020820280368337509192915050565b60405180602001604052806001906020820280368337509192915050565b60405180604001604052806002906020820280368337509192915050565b6001600160a01b0381168114611759575f5ffd5b50565b5f6020828403121561176c575f5ffd5b81356104eb81611745565b5f5f5f83850361016081121561178b575f5ffd5b843561179681611745565b9350610100601f19820112156117aa575f5ffd5b602085019250604061011f19820112156117c2575f5ffd5b50610120840190509250925092565b803560ff81168114611684575f5ffd5b5f602082840312156117f1575f5ffd5b6104eb826117d1565b634e487b7160e01b5f52604160045260245ffd5b6040805190810167ffffffffffffffff81118282101715611831576118316117fa565b60405290565b604051601f8201601f1916810167ffffffffffffffff81118282101715611860576118606117fa565b604052919050565b5f5f60408385031215611879575f5ffd5b823561188481611745565b9150602083013567ffffffffffffffff81111561189f575f5ffd5b8301601f810185136118af575f5ffd5b803567ffffffffffffffff8111156118c9576118c96117fa565b6118dc601f8201601f1916602001611837565b8181528660208385010111156118f0575f5ffd5b816020840160208301375f602083830101528093505050509250929050565b5f6020828403121561191f575f5ffd5b5035919050565b8151815260208083015190820152604081016106b9565b5f5f6040838503121561194e575f5ffd5b611957836117d1565b946020939093013593505050565b805f5b60028110156110da578151845260209384019390910190600101611968565b5f608082019050611999828451611965565b60208301516119ab6040840182611965565b5092915050565b5f5f5f606084860312156119c4575f5ffd5b6119cd846117d1565b9250602084013563ffffffff811681146119e5575f5ffd5b929592945050506040919091013590565b5f5f82840360a0811215611a08575f5ffd5b8335611a1381611745565b92506080601f1982011215611a26575f5ffd5b506020830190509250929050565b5f5f5f60408486031215611a46575f5ffd5b833567ffffffffffffffff811115611a5c575f5ffd5b8401601f81018613611a6c575f5ffd5b803567ffffffffffffffff811115611a82575f5ffd5b866020828401011115611a93575f5ffd5b6020918201979096509401359392505050565b602080825282518282018190525f918401906040840190835b81811015611ae357835163ffffffff16835260209384019390920191600101611abf565b509095945050505050565b60018060a01b0384168152826020820152606060408201525f82518060608401528060208501608085015e5f608082850101526080601f19601f830116840101915050949350505050565b634e487b7160e01b5f52603260045260245ffd5b5f6040828403128015611b5e575f5ffd5b50611b6761180e565b823581526020928301359281019290925250919050565b888152876020820152866040820152856060820152604085608083013760408460c0830137610100810192909252610120820152610140019695505050505050565b5f82611bda57634e487b7160e01b5f52601260045260245ffd5b500690565b5f82601f830112611bee575f5ffd5b611bf661180e565b806040840185811115611c07575f5ffd5b845b81811015611ae3578035845260209384019301611c09565b5f6080828403128015611c32575f5ffd5b50611c3b61180e565b611c458484611bdf565b8152611c548460408501611bdf565b60208201529392505050565b634e487b7160e01b5f52601160045260245ffd5b80820281158282048414176106b9576106b9611c60565b815f5b6002811015611cab57813583820155602090910190600101611c8e565b5050604082015f5b60028110156110da57813583820160020155602090910190600101611cb3565b6040818337604080820160408401375050565b823581526020808401359082015260c081016104eb6040830184611cd3565b608081016106b98284611cd3565b818103818111156106b9576106b9611c60565b5f81611d3457611d34611c60565b505f190190565b808201808211156106b9576106b9611c60565b5f60208284031215611d5e575f5ffd5b81516104eb8161174556fea26469706673582212205696f22cc405809ec131ae672eb6fae85e311fc5b939958e60ad9c14581f822864736f6c634300081b0033",
 }
 
 // ContractBLSApkRegistryABI is the input ABI used to generate the binding from.
@@ -70,7 +70,7 @@ var ContractBLSApkRegistryABI = ContractBLSApkRegistryMetaData.ABI
 var ContractBLSApkRegistryBin = ContractBLSApkRegistryMetaData.Bin
 
 // DeployContractBLSApkRegistry deploys a new Ethereum contract, binding an instance of ContractBLSApkRegistry to it.
-func DeployContractBLSApkRegistry(auth *bind.TransactOpts, backend bind.ContractBackend, _registryCoordinator common.Address) (common.Address, *types.Transaction, *ContractBLSApkRegistry, error) {
+func DeployContractBLSApkRegistry(auth *bind.TransactOpts, backend bind.ContractBackend, _slashingRegistryCoordinator common.Address) (common.Address, *types.Transaction, *ContractBLSApkRegistry, error) {
 	parsed, err := ContractBLSApkRegistryMetaData.GetAbi()
 	if err != nil {
 		return common.Address{}, nil, nil, err
@@ -79,7 +79,7 @@ func DeployContractBLSApkRegistry(auth *bind.TransactOpts, backend bind.Contract
 		return common.Address{}, nil, nil, errors.New("GetABI returned nil")
 	}
 
-	address, tx, contract, err := bind.DeployContract(auth, *parsed, common.FromHex(ContractBLSApkRegistryBin), backend, _registryCoordinator)
+	address, tx, contract, err := bind.DeployContract(auth, *parsed, common.FromHex(ContractBLSApkRegistryBin), backend, _slashingRegistryCoordinator)
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
@@ -95,13 +95,13 @@ type ContractBLSApkRegistryMethods interface {
 
 // ContractBLSApkRegistryCalls is an auto generated interface that defines the call methods available for an Ethereum contract.
 type ContractBLSApkRegistryCalls interface {
-	ApkHistory(opts *bind.CallOpts, arg0 uint8, arg1 *big.Int) (struct {
+	ApkHistory(opts *bind.CallOpts, quorumNumber uint8, arg1 *big.Int) (struct {
 		ApkHash               [24]byte
 		UpdateBlockNumber     uint32
 		NextUpdateBlockNumber uint32
 	}, error)
 
-	CurrentApk(opts *bind.CallOpts, arg0 uint8) (struct {
+	CurrentApk(opts *bind.CallOpts, quorumNumber uint8) (struct {
 		X *big.Int
 		Y *big.Int
 	}, error)
@@ -114,22 +114,24 @@ type ContractBLSApkRegistryCalls interface {
 
 	GetApkIndicesAtBlockNumber(opts *bind.CallOpts, quorumNumbers []byte, blockNumber *big.Int) ([]uint32, error)
 
-	GetApkUpdateAtIndex(opts *bind.CallOpts, quorumNumber uint8, index *big.Int) (IBLSApkRegistryApkUpdate, error)
+	GetApkUpdateAtIndex(opts *bind.CallOpts, quorumNumber uint8, index *big.Int) (IBLSApkRegistryTypesApkUpdate, error)
 
 	GetOperatorFromPubkeyHash(opts *bind.CallOpts, pubkeyHash [32]byte) (common.Address, error)
 
 	GetOperatorId(opts *bind.CallOpts, operator common.Address) ([32]byte, error)
 
+	GetOperatorPubkeyG2(opts *bind.CallOpts, operator common.Address) (BN254G2Point, error)
+
 	GetRegisteredPubkey(opts *bind.CallOpts, operator common.Address) (BN254G1Point, [32]byte, error)
 
-	OperatorToPubkey(opts *bind.CallOpts, arg0 common.Address) (struct {
+	OperatorToPubkey(opts *bind.CallOpts, operator common.Address) (struct {
 		X *big.Int
 		Y *big.Int
 	}, error)
 
-	OperatorToPubkeyHash(opts *bind.CallOpts, arg0 common.Address) ([32]byte, error)
+	OperatorToPubkeyHash(opts *bind.CallOpts, operator common.Address) ([32]byte, error)
 
-	PubkeyHashToOperator(opts *bind.CallOpts, arg0 [32]byte) (common.Address, error)
+	PubkeyHashToOperator(opts *bind.CallOpts, pubkeyHash [32]byte) (common.Address, error)
 
 	RegistryCoordinator(opts *bind.CallOpts) (common.Address, error)
 }
@@ -138,11 +140,15 @@ type ContractBLSApkRegistryCalls interface {
 type ContractBLSApkRegistryTransacts interface {
 	DeregisterOperator(opts *bind.TransactOpts, operator common.Address, quorumNumbers []byte) (*types.Transaction, error)
 
+	GetOrRegisterOperatorId(opts *bind.TransactOpts, operator common.Address, params IBLSApkRegistryTypesPubkeyRegistrationParams, pubkeyRegistrationMessageHash BN254G1Point) (*types.Transaction, error)
+
 	InitializeQuorum(opts *bind.TransactOpts, quorumNumber uint8) (*types.Transaction, error)
 
-	RegisterBLSPublicKey(opts *bind.TransactOpts, operator common.Address, params IBLSApkRegistryPubkeyRegistrationParams, pubkeyRegistrationMessageHash BN254G1Point) (*types.Transaction, error)
+	RegisterBLSPublicKey(opts *bind.TransactOpts, operator common.Address, params IBLSApkRegistryTypesPubkeyRegistrationParams, pubkeyRegistrationMessageHash BN254G1Point) (*types.Transaction, error)
 
 	RegisterOperator(opts *bind.TransactOpts, operator common.Address, quorumNumbers []byte) (*types.Transaction, error)
+
+	VerifyAndRegisterG2PubkeyForOperator(opts *bind.TransactOpts, operator common.Address, pubkeyG2 BN254G2Point) (*types.Transaction, error)
 }
 
 // ContractBLSApkRegistryFilterer is an auto generated interface that defines the log filtering methods available for an Ethereum contract.
@@ -150,6 +156,10 @@ type ContractBLSApkRegistryFilters interface {
 	FilterInitialized(opts *bind.FilterOpts) (*ContractBLSApkRegistryInitializedIterator, error)
 	WatchInitialized(opts *bind.WatchOpts, sink chan<- *ContractBLSApkRegistryInitialized) (event.Subscription, error)
 	ParseInitialized(log types.Log) (*ContractBLSApkRegistryInitialized, error)
+
+	FilterNewG2PubkeyRegistration(opts *bind.FilterOpts, operator []common.Address) (*ContractBLSApkRegistryNewG2PubkeyRegistrationIterator, error)
+	WatchNewG2PubkeyRegistration(opts *bind.WatchOpts, sink chan<- *ContractBLSApkRegistryNewG2PubkeyRegistration, operator []common.Address) (event.Subscription, error)
+	ParseNewG2PubkeyRegistration(log types.Log) (*ContractBLSApkRegistryNewG2PubkeyRegistration, error)
 
 	FilterNewPubkeyRegistration(opts *bind.FilterOpts, operator []common.Address) (*ContractBLSApkRegistryNewPubkeyRegistrationIterator, error)
 	WatchNewPubkeyRegistration(opts *bind.WatchOpts, sink chan<- *ContractBLSApkRegistryNewPubkeyRegistration, operator []common.Address) (event.Subscription, error)
@@ -320,14 +330,14 @@ func (_ContractBLSApkRegistry *ContractBLSApkRegistryTransactorRaw) Transact(opt
 
 // ApkHistory is a free data retrieval call binding the contract method 0x7916cea6.
 //
-// Solidity: function apkHistory(uint8 , uint256 ) view returns(bytes24 apkHash, uint32 updateBlockNumber, uint32 nextUpdateBlockNumber)
-func (_ContractBLSApkRegistry *ContractBLSApkRegistryCaller) ApkHistory(opts *bind.CallOpts, arg0 uint8, arg1 *big.Int) (struct {
+// Solidity: function apkHistory(uint8 quorumNumber, uint256 ) view returns(bytes24 apkHash, uint32 updateBlockNumber, uint32 nextUpdateBlockNumber)
+func (_ContractBLSApkRegistry *ContractBLSApkRegistryCaller) ApkHistory(opts *bind.CallOpts, quorumNumber uint8, arg1 *big.Int) (struct {
 	ApkHash               [24]byte
 	UpdateBlockNumber     uint32
 	NextUpdateBlockNumber uint32
 }, error) {
 	var out []interface{}
-	err := _ContractBLSApkRegistry.contract.Call(opts, &out, "apkHistory", arg0, arg1)
+	err := _ContractBLSApkRegistry.contract.Call(opts, &out, "apkHistory", quorumNumber, arg1)
 
 	outstruct := new(struct {
 		ApkHash               [24]byte
@@ -348,35 +358,35 @@ func (_ContractBLSApkRegistry *ContractBLSApkRegistryCaller) ApkHistory(opts *bi
 
 // ApkHistory is a free data retrieval call binding the contract method 0x7916cea6.
 //
-// Solidity: function apkHistory(uint8 , uint256 ) view returns(bytes24 apkHash, uint32 updateBlockNumber, uint32 nextUpdateBlockNumber)
-func (_ContractBLSApkRegistry *ContractBLSApkRegistrySession) ApkHistory(arg0 uint8, arg1 *big.Int) (struct {
+// Solidity: function apkHistory(uint8 quorumNumber, uint256 ) view returns(bytes24 apkHash, uint32 updateBlockNumber, uint32 nextUpdateBlockNumber)
+func (_ContractBLSApkRegistry *ContractBLSApkRegistrySession) ApkHistory(quorumNumber uint8, arg1 *big.Int) (struct {
 	ApkHash               [24]byte
 	UpdateBlockNumber     uint32
 	NextUpdateBlockNumber uint32
 }, error) {
-	return _ContractBLSApkRegistry.Contract.ApkHistory(&_ContractBLSApkRegistry.CallOpts, arg0, arg1)
+	return _ContractBLSApkRegistry.Contract.ApkHistory(&_ContractBLSApkRegistry.CallOpts, quorumNumber, arg1)
 }
 
 // ApkHistory is a free data retrieval call binding the contract method 0x7916cea6.
 //
-// Solidity: function apkHistory(uint8 , uint256 ) view returns(bytes24 apkHash, uint32 updateBlockNumber, uint32 nextUpdateBlockNumber)
-func (_ContractBLSApkRegistry *ContractBLSApkRegistryCallerSession) ApkHistory(arg0 uint8, arg1 *big.Int) (struct {
+// Solidity: function apkHistory(uint8 quorumNumber, uint256 ) view returns(bytes24 apkHash, uint32 updateBlockNumber, uint32 nextUpdateBlockNumber)
+func (_ContractBLSApkRegistry *ContractBLSApkRegistryCallerSession) ApkHistory(quorumNumber uint8, arg1 *big.Int) (struct {
 	ApkHash               [24]byte
 	UpdateBlockNumber     uint32
 	NextUpdateBlockNumber uint32
 }, error) {
-	return _ContractBLSApkRegistry.Contract.ApkHistory(&_ContractBLSApkRegistry.CallOpts, arg0, arg1)
+	return _ContractBLSApkRegistry.Contract.ApkHistory(&_ContractBLSApkRegistry.CallOpts, quorumNumber, arg1)
 }
 
 // CurrentApk is a free data retrieval call binding the contract method 0xa3db80e2.
 //
-// Solidity: function currentApk(uint8 ) view returns(uint256 X, uint256 Y)
-func (_ContractBLSApkRegistry *ContractBLSApkRegistryCaller) CurrentApk(opts *bind.CallOpts, arg0 uint8) (struct {
+// Solidity: function currentApk(uint8 quorumNumber) view returns(uint256 X, uint256 Y)
+func (_ContractBLSApkRegistry *ContractBLSApkRegistryCaller) CurrentApk(opts *bind.CallOpts, quorumNumber uint8) (struct {
 	X *big.Int
 	Y *big.Int
 }, error) {
 	var out []interface{}
-	err := _ContractBLSApkRegistry.contract.Call(opts, &out, "currentApk", arg0)
+	err := _ContractBLSApkRegistry.contract.Call(opts, &out, "currentApk", quorumNumber)
 
 	outstruct := new(struct {
 		X *big.Int
@@ -395,22 +405,22 @@ func (_ContractBLSApkRegistry *ContractBLSApkRegistryCaller) CurrentApk(opts *bi
 
 // CurrentApk is a free data retrieval call binding the contract method 0xa3db80e2.
 //
-// Solidity: function currentApk(uint8 ) view returns(uint256 X, uint256 Y)
-func (_ContractBLSApkRegistry *ContractBLSApkRegistrySession) CurrentApk(arg0 uint8) (struct {
+// Solidity: function currentApk(uint8 quorumNumber) view returns(uint256 X, uint256 Y)
+func (_ContractBLSApkRegistry *ContractBLSApkRegistrySession) CurrentApk(quorumNumber uint8) (struct {
 	X *big.Int
 	Y *big.Int
 }, error) {
-	return _ContractBLSApkRegistry.Contract.CurrentApk(&_ContractBLSApkRegistry.CallOpts, arg0)
+	return _ContractBLSApkRegistry.Contract.CurrentApk(&_ContractBLSApkRegistry.CallOpts, quorumNumber)
 }
 
 // CurrentApk is a free data retrieval call binding the contract method 0xa3db80e2.
 //
-// Solidity: function currentApk(uint8 ) view returns(uint256 X, uint256 Y)
-func (_ContractBLSApkRegistry *ContractBLSApkRegistryCallerSession) CurrentApk(arg0 uint8) (struct {
+// Solidity: function currentApk(uint8 quorumNumber) view returns(uint256 X, uint256 Y)
+func (_ContractBLSApkRegistry *ContractBLSApkRegistryCallerSession) CurrentApk(quorumNumber uint8) (struct {
 	X *big.Int
 	Y *big.Int
 }, error) {
-	return _ContractBLSApkRegistry.Contract.CurrentApk(&_ContractBLSApkRegistry.CallOpts, arg0)
+	return _ContractBLSApkRegistry.Contract.CurrentApk(&_ContractBLSApkRegistry.CallOpts, quorumNumber)
 }
 
 // GetApk is a free data retrieval call binding the contract method 0x5f61a884.
@@ -540,15 +550,15 @@ func (_ContractBLSApkRegistry *ContractBLSApkRegistryCallerSession) GetApkIndice
 // GetApkUpdateAtIndex is a free data retrieval call binding the contract method 0x605747d5.
 //
 // Solidity: function getApkUpdateAtIndex(uint8 quorumNumber, uint256 index) view returns((bytes24,uint32,uint32))
-func (_ContractBLSApkRegistry *ContractBLSApkRegistryCaller) GetApkUpdateAtIndex(opts *bind.CallOpts, quorumNumber uint8, index *big.Int) (IBLSApkRegistryApkUpdate, error) {
+func (_ContractBLSApkRegistry *ContractBLSApkRegistryCaller) GetApkUpdateAtIndex(opts *bind.CallOpts, quorumNumber uint8, index *big.Int) (IBLSApkRegistryTypesApkUpdate, error) {
 	var out []interface{}
 	err := _ContractBLSApkRegistry.contract.Call(opts, &out, "getApkUpdateAtIndex", quorumNumber, index)
 
 	if err != nil {
-		return *new(IBLSApkRegistryApkUpdate), err
+		return *new(IBLSApkRegistryTypesApkUpdate), err
 	}
 
-	out0 := *abi.ConvertType(out[0], new(IBLSApkRegistryApkUpdate)).(*IBLSApkRegistryApkUpdate)
+	out0 := *abi.ConvertType(out[0], new(IBLSApkRegistryTypesApkUpdate)).(*IBLSApkRegistryTypesApkUpdate)
 
 	return out0, err
 
@@ -557,14 +567,14 @@ func (_ContractBLSApkRegistry *ContractBLSApkRegistryCaller) GetApkUpdateAtIndex
 // GetApkUpdateAtIndex is a free data retrieval call binding the contract method 0x605747d5.
 //
 // Solidity: function getApkUpdateAtIndex(uint8 quorumNumber, uint256 index) view returns((bytes24,uint32,uint32))
-func (_ContractBLSApkRegistry *ContractBLSApkRegistrySession) GetApkUpdateAtIndex(quorumNumber uint8, index *big.Int) (IBLSApkRegistryApkUpdate, error) {
+func (_ContractBLSApkRegistry *ContractBLSApkRegistrySession) GetApkUpdateAtIndex(quorumNumber uint8, index *big.Int) (IBLSApkRegistryTypesApkUpdate, error) {
 	return _ContractBLSApkRegistry.Contract.GetApkUpdateAtIndex(&_ContractBLSApkRegistry.CallOpts, quorumNumber, index)
 }
 
 // GetApkUpdateAtIndex is a free data retrieval call binding the contract method 0x605747d5.
 //
 // Solidity: function getApkUpdateAtIndex(uint8 quorumNumber, uint256 index) view returns((bytes24,uint32,uint32))
-func (_ContractBLSApkRegistry *ContractBLSApkRegistryCallerSession) GetApkUpdateAtIndex(quorumNumber uint8, index *big.Int) (IBLSApkRegistryApkUpdate, error) {
+func (_ContractBLSApkRegistry *ContractBLSApkRegistryCallerSession) GetApkUpdateAtIndex(quorumNumber uint8, index *big.Int) (IBLSApkRegistryTypesApkUpdate, error) {
 	return _ContractBLSApkRegistry.Contract.GetApkUpdateAtIndex(&_ContractBLSApkRegistry.CallOpts, quorumNumber, index)
 }
 
@@ -630,6 +640,37 @@ func (_ContractBLSApkRegistry *ContractBLSApkRegistryCallerSession) GetOperatorI
 	return _ContractBLSApkRegistry.Contract.GetOperatorId(&_ContractBLSApkRegistry.CallOpts, operator)
 }
 
+// GetOperatorPubkeyG2 is a free data retrieval call binding the contract method 0x67169911.
+//
+// Solidity: function getOperatorPubkeyG2(address operator) view returns((uint256[2],uint256[2]))
+func (_ContractBLSApkRegistry *ContractBLSApkRegistryCaller) GetOperatorPubkeyG2(opts *bind.CallOpts, operator common.Address) (BN254G2Point, error) {
+	var out []interface{}
+	err := _ContractBLSApkRegistry.contract.Call(opts, &out, "getOperatorPubkeyG2", operator)
+
+	if err != nil {
+		return *new(BN254G2Point), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(BN254G2Point)).(*BN254G2Point)
+
+	return out0, err
+
+}
+
+// GetOperatorPubkeyG2 is a free data retrieval call binding the contract method 0x67169911.
+//
+// Solidity: function getOperatorPubkeyG2(address operator) view returns((uint256[2],uint256[2]))
+func (_ContractBLSApkRegistry *ContractBLSApkRegistrySession) GetOperatorPubkeyG2(operator common.Address) (BN254G2Point, error) {
+	return _ContractBLSApkRegistry.Contract.GetOperatorPubkeyG2(&_ContractBLSApkRegistry.CallOpts, operator)
+}
+
+// GetOperatorPubkeyG2 is a free data retrieval call binding the contract method 0x67169911.
+//
+// Solidity: function getOperatorPubkeyG2(address operator) view returns((uint256[2],uint256[2]))
+func (_ContractBLSApkRegistry *ContractBLSApkRegistryCallerSession) GetOperatorPubkeyG2(operator common.Address) (BN254G2Point, error) {
+	return _ContractBLSApkRegistry.Contract.GetOperatorPubkeyG2(&_ContractBLSApkRegistry.CallOpts, operator)
+}
+
 // GetRegisteredPubkey is a free data retrieval call binding the contract method 0x7ff81a87.
 //
 // Solidity: function getRegisteredPubkey(address operator) view returns((uint256,uint256), bytes32)
@@ -664,13 +705,13 @@ func (_ContractBLSApkRegistry *ContractBLSApkRegistryCallerSession) GetRegistere
 
 // OperatorToPubkey is a free data retrieval call binding the contract method 0x00a1f4cb.
 //
-// Solidity: function operatorToPubkey(address ) view returns(uint256 X, uint256 Y)
-func (_ContractBLSApkRegistry *ContractBLSApkRegistryCaller) OperatorToPubkey(opts *bind.CallOpts, arg0 common.Address) (struct {
+// Solidity: function operatorToPubkey(address operator) view returns(uint256 X, uint256 Y)
+func (_ContractBLSApkRegistry *ContractBLSApkRegistryCaller) OperatorToPubkey(opts *bind.CallOpts, operator common.Address) (struct {
 	X *big.Int
 	Y *big.Int
 }, error) {
 	var out []interface{}
-	err := _ContractBLSApkRegistry.contract.Call(opts, &out, "operatorToPubkey", arg0)
+	err := _ContractBLSApkRegistry.contract.Call(opts, &out, "operatorToPubkey", operator)
 
 	outstruct := new(struct {
 		X *big.Int
@@ -689,30 +730,30 @@ func (_ContractBLSApkRegistry *ContractBLSApkRegistryCaller) OperatorToPubkey(op
 
 // OperatorToPubkey is a free data retrieval call binding the contract method 0x00a1f4cb.
 //
-// Solidity: function operatorToPubkey(address ) view returns(uint256 X, uint256 Y)
-func (_ContractBLSApkRegistry *ContractBLSApkRegistrySession) OperatorToPubkey(arg0 common.Address) (struct {
+// Solidity: function operatorToPubkey(address operator) view returns(uint256 X, uint256 Y)
+func (_ContractBLSApkRegistry *ContractBLSApkRegistrySession) OperatorToPubkey(operator common.Address) (struct {
 	X *big.Int
 	Y *big.Int
 }, error) {
-	return _ContractBLSApkRegistry.Contract.OperatorToPubkey(&_ContractBLSApkRegistry.CallOpts, arg0)
+	return _ContractBLSApkRegistry.Contract.OperatorToPubkey(&_ContractBLSApkRegistry.CallOpts, operator)
 }
 
 // OperatorToPubkey is a free data retrieval call binding the contract method 0x00a1f4cb.
 //
-// Solidity: function operatorToPubkey(address ) view returns(uint256 X, uint256 Y)
-func (_ContractBLSApkRegistry *ContractBLSApkRegistryCallerSession) OperatorToPubkey(arg0 common.Address) (struct {
+// Solidity: function operatorToPubkey(address operator) view returns(uint256 X, uint256 Y)
+func (_ContractBLSApkRegistry *ContractBLSApkRegistryCallerSession) OperatorToPubkey(operator common.Address) (struct {
 	X *big.Int
 	Y *big.Int
 }, error) {
-	return _ContractBLSApkRegistry.Contract.OperatorToPubkey(&_ContractBLSApkRegistry.CallOpts, arg0)
+	return _ContractBLSApkRegistry.Contract.OperatorToPubkey(&_ContractBLSApkRegistry.CallOpts, operator)
 }
 
 // OperatorToPubkeyHash is a free data retrieval call binding the contract method 0xde29fac0.
 //
-// Solidity: function operatorToPubkeyHash(address ) view returns(bytes32)
-func (_ContractBLSApkRegistry *ContractBLSApkRegistryCaller) OperatorToPubkeyHash(opts *bind.CallOpts, arg0 common.Address) ([32]byte, error) {
+// Solidity: function operatorToPubkeyHash(address operator) view returns(bytes32 operatorId)
+func (_ContractBLSApkRegistry *ContractBLSApkRegistryCaller) OperatorToPubkeyHash(opts *bind.CallOpts, operator common.Address) ([32]byte, error) {
 	var out []interface{}
-	err := _ContractBLSApkRegistry.contract.Call(opts, &out, "operatorToPubkeyHash", arg0)
+	err := _ContractBLSApkRegistry.contract.Call(opts, &out, "operatorToPubkeyHash", operator)
 
 	if err != nil {
 		return *new([32]byte), err
@@ -726,24 +767,24 @@ func (_ContractBLSApkRegistry *ContractBLSApkRegistryCaller) OperatorToPubkeyHas
 
 // OperatorToPubkeyHash is a free data retrieval call binding the contract method 0xde29fac0.
 //
-// Solidity: function operatorToPubkeyHash(address ) view returns(bytes32)
-func (_ContractBLSApkRegistry *ContractBLSApkRegistrySession) OperatorToPubkeyHash(arg0 common.Address) ([32]byte, error) {
-	return _ContractBLSApkRegistry.Contract.OperatorToPubkeyHash(&_ContractBLSApkRegistry.CallOpts, arg0)
+// Solidity: function operatorToPubkeyHash(address operator) view returns(bytes32 operatorId)
+func (_ContractBLSApkRegistry *ContractBLSApkRegistrySession) OperatorToPubkeyHash(operator common.Address) ([32]byte, error) {
+	return _ContractBLSApkRegistry.Contract.OperatorToPubkeyHash(&_ContractBLSApkRegistry.CallOpts, operator)
 }
 
 // OperatorToPubkeyHash is a free data retrieval call binding the contract method 0xde29fac0.
 //
-// Solidity: function operatorToPubkeyHash(address ) view returns(bytes32)
-func (_ContractBLSApkRegistry *ContractBLSApkRegistryCallerSession) OperatorToPubkeyHash(arg0 common.Address) ([32]byte, error) {
-	return _ContractBLSApkRegistry.Contract.OperatorToPubkeyHash(&_ContractBLSApkRegistry.CallOpts, arg0)
+// Solidity: function operatorToPubkeyHash(address operator) view returns(bytes32 operatorId)
+func (_ContractBLSApkRegistry *ContractBLSApkRegistryCallerSession) OperatorToPubkeyHash(operator common.Address) ([32]byte, error) {
+	return _ContractBLSApkRegistry.Contract.OperatorToPubkeyHash(&_ContractBLSApkRegistry.CallOpts, operator)
 }
 
 // PubkeyHashToOperator is a free data retrieval call binding the contract method 0xe8bb9ae6.
 //
-// Solidity: function pubkeyHashToOperator(bytes32 ) view returns(address)
-func (_ContractBLSApkRegistry *ContractBLSApkRegistryCaller) PubkeyHashToOperator(opts *bind.CallOpts, arg0 [32]byte) (common.Address, error) {
+// Solidity: function pubkeyHashToOperator(bytes32 pubkeyHash) view returns(address operator)
+func (_ContractBLSApkRegistry *ContractBLSApkRegistryCaller) PubkeyHashToOperator(opts *bind.CallOpts, pubkeyHash [32]byte) (common.Address, error) {
 	var out []interface{}
-	err := _ContractBLSApkRegistry.contract.Call(opts, &out, "pubkeyHashToOperator", arg0)
+	err := _ContractBLSApkRegistry.contract.Call(opts, &out, "pubkeyHashToOperator", pubkeyHash)
 
 	if err != nil {
 		return *new(common.Address), err
@@ -757,16 +798,16 @@ func (_ContractBLSApkRegistry *ContractBLSApkRegistryCaller) PubkeyHashToOperato
 
 // PubkeyHashToOperator is a free data retrieval call binding the contract method 0xe8bb9ae6.
 //
-// Solidity: function pubkeyHashToOperator(bytes32 ) view returns(address)
-func (_ContractBLSApkRegistry *ContractBLSApkRegistrySession) PubkeyHashToOperator(arg0 [32]byte) (common.Address, error) {
-	return _ContractBLSApkRegistry.Contract.PubkeyHashToOperator(&_ContractBLSApkRegistry.CallOpts, arg0)
+// Solidity: function pubkeyHashToOperator(bytes32 pubkeyHash) view returns(address operator)
+func (_ContractBLSApkRegistry *ContractBLSApkRegistrySession) PubkeyHashToOperator(pubkeyHash [32]byte) (common.Address, error) {
+	return _ContractBLSApkRegistry.Contract.PubkeyHashToOperator(&_ContractBLSApkRegistry.CallOpts, pubkeyHash)
 }
 
 // PubkeyHashToOperator is a free data retrieval call binding the contract method 0xe8bb9ae6.
 //
-// Solidity: function pubkeyHashToOperator(bytes32 ) view returns(address)
-func (_ContractBLSApkRegistry *ContractBLSApkRegistryCallerSession) PubkeyHashToOperator(arg0 [32]byte) (common.Address, error) {
-	return _ContractBLSApkRegistry.Contract.PubkeyHashToOperator(&_ContractBLSApkRegistry.CallOpts, arg0)
+// Solidity: function pubkeyHashToOperator(bytes32 pubkeyHash) view returns(address operator)
+func (_ContractBLSApkRegistry *ContractBLSApkRegistryCallerSession) PubkeyHashToOperator(pubkeyHash [32]byte) (common.Address, error) {
+	return _ContractBLSApkRegistry.Contract.PubkeyHashToOperator(&_ContractBLSApkRegistry.CallOpts, pubkeyHash)
 }
 
 // RegistryCoordinator is a free data retrieval call binding the contract method 0x6d14a987.
@@ -821,6 +862,27 @@ func (_ContractBLSApkRegistry *ContractBLSApkRegistryTransactorSession) Deregist
 	return _ContractBLSApkRegistry.Contract.DeregisterOperator(&_ContractBLSApkRegistry.TransactOpts, operator, quorumNumbers)
 }
 
+// GetOrRegisterOperatorId is a paid mutator transaction binding the contract method 0x03c5a6b6.
+//
+// Solidity: function getOrRegisterOperatorId(address operator, ((uint256,uint256),(uint256,uint256),(uint256[2],uint256[2])) params, (uint256,uint256) pubkeyRegistrationMessageHash) returns(bytes32 operatorId)
+func (_ContractBLSApkRegistry *ContractBLSApkRegistryTransactor) GetOrRegisterOperatorId(opts *bind.TransactOpts, operator common.Address, params IBLSApkRegistryTypesPubkeyRegistrationParams, pubkeyRegistrationMessageHash BN254G1Point) (*types.Transaction, error) {
+	return _ContractBLSApkRegistry.contract.Transact(opts, "getOrRegisterOperatorId", operator, params, pubkeyRegistrationMessageHash)
+}
+
+// GetOrRegisterOperatorId is a paid mutator transaction binding the contract method 0x03c5a6b6.
+//
+// Solidity: function getOrRegisterOperatorId(address operator, ((uint256,uint256),(uint256,uint256),(uint256[2],uint256[2])) params, (uint256,uint256) pubkeyRegistrationMessageHash) returns(bytes32 operatorId)
+func (_ContractBLSApkRegistry *ContractBLSApkRegistrySession) GetOrRegisterOperatorId(operator common.Address, params IBLSApkRegistryTypesPubkeyRegistrationParams, pubkeyRegistrationMessageHash BN254G1Point) (*types.Transaction, error) {
+	return _ContractBLSApkRegistry.Contract.GetOrRegisterOperatorId(&_ContractBLSApkRegistry.TransactOpts, operator, params, pubkeyRegistrationMessageHash)
+}
+
+// GetOrRegisterOperatorId is a paid mutator transaction binding the contract method 0x03c5a6b6.
+//
+// Solidity: function getOrRegisterOperatorId(address operator, ((uint256,uint256),(uint256,uint256),(uint256[2],uint256[2])) params, (uint256,uint256) pubkeyRegistrationMessageHash) returns(bytes32 operatorId)
+func (_ContractBLSApkRegistry *ContractBLSApkRegistryTransactorSession) GetOrRegisterOperatorId(operator common.Address, params IBLSApkRegistryTypesPubkeyRegistrationParams, pubkeyRegistrationMessageHash BN254G1Point) (*types.Transaction, error) {
+	return _ContractBLSApkRegistry.Contract.GetOrRegisterOperatorId(&_ContractBLSApkRegistry.TransactOpts, operator, params, pubkeyRegistrationMessageHash)
+}
+
 // InitializeQuorum is a paid mutator transaction binding the contract method 0x26d941f2.
 //
 // Solidity: function initializeQuorum(uint8 quorumNumber) returns()
@@ -845,21 +907,21 @@ func (_ContractBLSApkRegistry *ContractBLSApkRegistryTransactorSession) Initiali
 // RegisterBLSPublicKey is a paid mutator transaction binding the contract method 0xbf79ce58.
 //
 // Solidity: function registerBLSPublicKey(address operator, ((uint256,uint256),(uint256,uint256),(uint256[2],uint256[2])) params, (uint256,uint256) pubkeyRegistrationMessageHash) returns(bytes32 operatorId)
-func (_ContractBLSApkRegistry *ContractBLSApkRegistryTransactor) RegisterBLSPublicKey(opts *bind.TransactOpts, operator common.Address, params IBLSApkRegistryPubkeyRegistrationParams, pubkeyRegistrationMessageHash BN254G1Point) (*types.Transaction, error) {
+func (_ContractBLSApkRegistry *ContractBLSApkRegistryTransactor) RegisterBLSPublicKey(opts *bind.TransactOpts, operator common.Address, params IBLSApkRegistryTypesPubkeyRegistrationParams, pubkeyRegistrationMessageHash BN254G1Point) (*types.Transaction, error) {
 	return _ContractBLSApkRegistry.contract.Transact(opts, "registerBLSPublicKey", operator, params, pubkeyRegistrationMessageHash)
 }
 
 // RegisterBLSPublicKey is a paid mutator transaction binding the contract method 0xbf79ce58.
 //
 // Solidity: function registerBLSPublicKey(address operator, ((uint256,uint256),(uint256,uint256),(uint256[2],uint256[2])) params, (uint256,uint256) pubkeyRegistrationMessageHash) returns(bytes32 operatorId)
-func (_ContractBLSApkRegistry *ContractBLSApkRegistrySession) RegisterBLSPublicKey(operator common.Address, params IBLSApkRegistryPubkeyRegistrationParams, pubkeyRegistrationMessageHash BN254G1Point) (*types.Transaction, error) {
+func (_ContractBLSApkRegistry *ContractBLSApkRegistrySession) RegisterBLSPublicKey(operator common.Address, params IBLSApkRegistryTypesPubkeyRegistrationParams, pubkeyRegistrationMessageHash BN254G1Point) (*types.Transaction, error) {
 	return _ContractBLSApkRegistry.Contract.RegisterBLSPublicKey(&_ContractBLSApkRegistry.TransactOpts, operator, params, pubkeyRegistrationMessageHash)
 }
 
 // RegisterBLSPublicKey is a paid mutator transaction binding the contract method 0xbf79ce58.
 //
 // Solidity: function registerBLSPublicKey(address operator, ((uint256,uint256),(uint256,uint256),(uint256[2],uint256[2])) params, (uint256,uint256) pubkeyRegistrationMessageHash) returns(bytes32 operatorId)
-func (_ContractBLSApkRegistry *ContractBLSApkRegistryTransactorSession) RegisterBLSPublicKey(operator common.Address, params IBLSApkRegistryPubkeyRegistrationParams, pubkeyRegistrationMessageHash BN254G1Point) (*types.Transaction, error) {
+func (_ContractBLSApkRegistry *ContractBLSApkRegistryTransactorSession) RegisterBLSPublicKey(operator common.Address, params IBLSApkRegistryTypesPubkeyRegistrationParams, pubkeyRegistrationMessageHash BN254G1Point) (*types.Transaction, error) {
 	return _ContractBLSApkRegistry.Contract.RegisterBLSPublicKey(&_ContractBLSApkRegistry.TransactOpts, operator, params, pubkeyRegistrationMessageHash)
 }
 
@@ -882,6 +944,27 @@ func (_ContractBLSApkRegistry *ContractBLSApkRegistrySession) RegisterOperator(o
 // Solidity: function registerOperator(address operator, bytes quorumNumbers) returns()
 func (_ContractBLSApkRegistry *ContractBLSApkRegistryTransactorSession) RegisterOperator(operator common.Address, quorumNumbers []byte) (*types.Transaction, error) {
 	return _ContractBLSApkRegistry.Contract.RegisterOperator(&_ContractBLSApkRegistry.TransactOpts, operator, quorumNumbers)
+}
+
+// VerifyAndRegisterG2PubkeyForOperator is a paid mutator transaction binding the contract method 0xd1a64650.
+//
+// Solidity: function verifyAndRegisterG2PubkeyForOperator(address operator, (uint256[2],uint256[2]) pubkeyG2) returns()
+func (_ContractBLSApkRegistry *ContractBLSApkRegistryTransactor) VerifyAndRegisterG2PubkeyForOperator(opts *bind.TransactOpts, operator common.Address, pubkeyG2 BN254G2Point) (*types.Transaction, error) {
+	return _ContractBLSApkRegistry.contract.Transact(opts, "verifyAndRegisterG2PubkeyForOperator", operator, pubkeyG2)
+}
+
+// VerifyAndRegisterG2PubkeyForOperator is a paid mutator transaction binding the contract method 0xd1a64650.
+//
+// Solidity: function verifyAndRegisterG2PubkeyForOperator(address operator, (uint256[2],uint256[2]) pubkeyG2) returns()
+func (_ContractBLSApkRegistry *ContractBLSApkRegistrySession) VerifyAndRegisterG2PubkeyForOperator(operator common.Address, pubkeyG2 BN254G2Point) (*types.Transaction, error) {
+	return _ContractBLSApkRegistry.Contract.VerifyAndRegisterG2PubkeyForOperator(&_ContractBLSApkRegistry.TransactOpts, operator, pubkeyG2)
+}
+
+// VerifyAndRegisterG2PubkeyForOperator is a paid mutator transaction binding the contract method 0xd1a64650.
+//
+// Solidity: function verifyAndRegisterG2PubkeyForOperator(address operator, (uint256[2],uint256[2]) pubkeyG2) returns()
+func (_ContractBLSApkRegistry *ContractBLSApkRegistryTransactorSession) VerifyAndRegisterG2PubkeyForOperator(operator common.Address, pubkeyG2 BN254G2Point) (*types.Transaction, error) {
+	return _ContractBLSApkRegistry.Contract.VerifyAndRegisterG2PubkeyForOperator(&_ContractBLSApkRegistry.TransactOpts, operator, pubkeyG2)
 }
 
 // ContractBLSApkRegistryInitializedIterator is returned from FilterInitialized and is used to iterate over the raw logs and unpacked data for Initialized events raised by the ContractBLSApkRegistry contract.
@@ -1012,6 +1095,151 @@ func (_ContractBLSApkRegistry *ContractBLSApkRegistryFilterer) WatchInitialized(
 func (_ContractBLSApkRegistry *ContractBLSApkRegistryFilterer) ParseInitialized(log types.Log) (*ContractBLSApkRegistryInitialized, error) {
 	event := new(ContractBLSApkRegistryInitialized)
 	if err := _ContractBLSApkRegistry.contract.UnpackLog(event, "Initialized", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// ContractBLSApkRegistryNewG2PubkeyRegistrationIterator is returned from FilterNewG2PubkeyRegistration and is used to iterate over the raw logs and unpacked data for NewG2PubkeyRegistration events raised by the ContractBLSApkRegistry contract.
+type ContractBLSApkRegistryNewG2PubkeyRegistrationIterator struct {
+	Event *ContractBLSApkRegistryNewG2PubkeyRegistration // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *ContractBLSApkRegistryNewG2PubkeyRegistrationIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(ContractBLSApkRegistryNewG2PubkeyRegistration)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(ContractBLSApkRegistryNewG2PubkeyRegistration)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *ContractBLSApkRegistryNewG2PubkeyRegistrationIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *ContractBLSApkRegistryNewG2PubkeyRegistrationIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// ContractBLSApkRegistryNewG2PubkeyRegistration represents a NewG2PubkeyRegistration event raised by the ContractBLSApkRegistry contract.
+type ContractBLSApkRegistryNewG2PubkeyRegistration struct {
+	Operator common.Address
+	PubkeyG2 BN254G2Point
+	Raw      types.Log // Blockchain specific contextual infos
+}
+
+// FilterNewG2PubkeyRegistration is a free log retrieval operation binding the contract event 0x5c4f9f28153dbf3f00e69607a59e82ad806fffb78d09f179f62432f7e9d2511a.
+//
+// Solidity: event NewG2PubkeyRegistration(address indexed operator, (uint256[2],uint256[2]) pubkeyG2)
+func (_ContractBLSApkRegistry *ContractBLSApkRegistryFilterer) FilterNewG2PubkeyRegistration(opts *bind.FilterOpts, operator []common.Address) (*ContractBLSApkRegistryNewG2PubkeyRegistrationIterator, error) {
+
+	var operatorRule []interface{}
+	for _, operatorItem := range operator {
+		operatorRule = append(operatorRule, operatorItem)
+	}
+
+	logs, sub, err := _ContractBLSApkRegistry.contract.FilterLogs(opts, "NewG2PubkeyRegistration", operatorRule)
+	if err != nil {
+		return nil, err
+	}
+	return &ContractBLSApkRegistryNewG2PubkeyRegistrationIterator{contract: _ContractBLSApkRegistry.contract, event: "NewG2PubkeyRegistration", logs: logs, sub: sub}, nil
+}
+
+// WatchNewG2PubkeyRegistration is a free log subscription operation binding the contract event 0x5c4f9f28153dbf3f00e69607a59e82ad806fffb78d09f179f62432f7e9d2511a.
+//
+// Solidity: event NewG2PubkeyRegistration(address indexed operator, (uint256[2],uint256[2]) pubkeyG2)
+func (_ContractBLSApkRegistry *ContractBLSApkRegistryFilterer) WatchNewG2PubkeyRegistration(opts *bind.WatchOpts, sink chan<- *ContractBLSApkRegistryNewG2PubkeyRegistration, operator []common.Address) (event.Subscription, error) {
+
+	var operatorRule []interface{}
+	for _, operatorItem := range operator {
+		operatorRule = append(operatorRule, operatorItem)
+	}
+
+	logs, sub, err := _ContractBLSApkRegistry.contract.WatchLogs(opts, "NewG2PubkeyRegistration", operatorRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(ContractBLSApkRegistryNewG2PubkeyRegistration)
+				if err := _ContractBLSApkRegistry.contract.UnpackLog(event, "NewG2PubkeyRegistration", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseNewG2PubkeyRegistration is a log parse operation binding the contract event 0x5c4f9f28153dbf3f00e69607a59e82ad806fffb78d09f179f62432f7e9d2511a.
+//
+// Solidity: event NewG2PubkeyRegistration(address indexed operator, (uint256[2],uint256[2]) pubkeyG2)
+func (_ContractBLSApkRegistry *ContractBLSApkRegistryFilterer) ParseNewG2PubkeyRegistration(log types.Log) (*ContractBLSApkRegistryNewG2PubkeyRegistration, error) {
+	event := new(ContractBLSApkRegistryNewG2PubkeyRegistration)
+	if err := _ContractBLSApkRegistry.contract.UnpackLog(event, "NewG2PubkeyRegistration", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log

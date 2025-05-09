@@ -3,6 +3,7 @@ package bls
 import (
 	"crypto/rand"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 	"os"
@@ -13,7 +14,10 @@ import (
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fp"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
+
 	"github.com/ethereum/go-ethereum/accounts/keystore"
+	"github.com/ethereum/go-ethereum/common/math"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 // We are using similar structure for saving bls keys as ethereum keystore
@@ -249,7 +253,7 @@ func ReadPrivateKeyFromFile(path string, password string) (*KeyPair, error) {
 	// This is to prevent and make sure pubkey is present.
 	// ecdsa keys doesn't have that field
 	if encryptedBLSStruct.PubKey == "" {
-		return nil, fmt.Errorf("invalid bls key file. pubkey field not found")
+		return nil, errors.New("invalid bls key file. pubkey field not found")
 	}
 
 	skBytes, err := keystore.DecryptDataV3(encryptedBLSStruct.Crypto, password)
@@ -281,4 +285,13 @@ func (k *KeyPair) GetPubKeyG2() *G2Point {
 
 func (k *KeyPair) GetPubKeyG1() *G1Point {
 	return k.PubKey
+}
+
+// GetOperatorID hashes the G1Point (public key of an operator) to generate the operator ID.
+// It does it to match how it's hashed in solidity: `keccak256(abi.encodePacked(pk.X, pk.Y))`
+// Ref: https://github.com/Layr-Labs/eigenlayer-contracts/blob/avs-unstable/src/contracts/libraries/BN254.sol#L285
+func (p *G1Point) GetOperatorID() string {
+	x := p.X.BigInt(new(big.Int))
+	y := p.Y.BigInt(new(big.Int))
+	return crypto.Keccak256Hash(append(math.U256Bytes(x), math.U256Bytes(y)...)).Hex()
 }

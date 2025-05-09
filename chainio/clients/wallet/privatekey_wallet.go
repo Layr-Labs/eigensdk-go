@@ -50,12 +50,14 @@ func (t *privateKeyWallet) SendTransaction(ctx context.Context, tx *types.Transa
 	t.logger.Debug("Sending transaction")
 	signedTx, err := signer(t.address, tx)
 	if err != nil {
-		return "", utils.WrapError(fmt.Errorf("sign: tx %v failed.", tx.Hash().String()), err)
+		text := fmt.Sprintf("sign: tx %v failed.", tx.Hash().String())
+		return "", utils.WrapError(text, err)
 	}
 
 	err = t.ethClient.SendTransaction(ctx, signedTx)
 	if err != nil {
-		return "", utils.WrapError(fmt.Errorf("send: tx %v failed.", tx.Hash().String()), err)
+		text := fmt.Sprintf("send: tx %v failed.", tx.Hash().String())
+		return "", utils.WrapError(text, err)
 	}
 
 	return signedTx.Hash().Hex(), nil

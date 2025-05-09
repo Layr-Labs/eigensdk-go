@@ -12,7 +12,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/event"
 
-	apkregistrybindings "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSApkRegistry"
 	blsapkreg "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSApkRegistry"
 	regcoord "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
@@ -25,14 +24,14 @@ import (
 )
 
 type fakeAVSRegistrySubscriber struct {
-	pubkeyRegistrationEventC   chan *apkregistrybindings.ContractBLSApkRegistryNewPubkeyRegistration
+	pubkeyRegistrationEventC   chan *blsapkreg.ContractBLSApkRegistryNewPubkeyRegistration
 	operatorSocketUpdateEventC chan *regcoord.ContractRegistryCoordinatorOperatorSocketUpdate
 	eventSubscription          *fakeEventSubscription
 }
 
 func newFakeAVSRegistrySubscriber(
 	eventSubscription *fakeEventSubscription,
-	pubkeyRegistrationEventC chan *apkregistrybindings.ContractBLSApkRegistryNewPubkeyRegistration,
+	pubkeyRegistrationEventC chan *blsapkreg.ContractBLSApkRegistryNewPubkeyRegistration,
 	operatorSocketUpdateEventC chan *regcoord.ContractRegistryCoordinatorOperatorSocketUpdate,
 ) *fakeAVSRegistrySubscriber {
 	return &fakeAVSRegistrySubscriber{
@@ -86,8 +85,8 @@ func TestGetOperatorInfo(t *testing.T) {
 		ContractG2Pubkey: contractG2Pubkey,
 	}
 
-	pubkeyRegistrationEventC := make(chan *apkregistrybindings.ContractBLSApkRegistryNewPubkeyRegistration, 1)
-	pubkeyRegistrationEvent := &apkregistrybindings.ContractBLSApkRegistryNewPubkeyRegistration{
+	pubkeyRegistrationEventC := make(chan *blsapkreg.ContractBLSApkRegistryNewPubkeyRegistration, 1)
+	pubkeyRegistrationEvent := &blsapkreg.ContractBLSApkRegistryNewPubkeyRegistration{
 		Operator: testOperator1.OperatorAddr,
 		PubkeyG1: testOperator1.ContractG1Pubkey,
 		PubkeyG2: testOperator1.ContractG2Pubkey,
@@ -106,7 +105,7 @@ func TestGetOperatorInfo(t *testing.T) {
 	var tests = []struct {
 		name                       string
 		operator                   *fakes.TestOperator
-		pubkeyRegistrationEventC   chan *apkregistrybindings.ContractBLSApkRegistryNewPubkeyRegistration
+		pubkeyRegistrationEventC   chan *blsapkreg.ContractBLSApkRegistryNewPubkeyRegistration
 		operatorSocketUpdateEventC chan *regcoord.ContractRegistryCoordinatorOperatorSocketUpdate
 		eventErrC                  chan error
 		queryOperatorAddr          common.Address

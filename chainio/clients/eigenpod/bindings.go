@@ -1,43 +1,43 @@
 package eigenpod
 
 import (
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eigenpod/bindings"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
-	ieigenpod "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IEigenPod"
-	ieigenpodmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IEigenPodManager"
+
 	"github.com/ethereum/go-ethereum/common"
 )
 
 type ContractBindings struct {
 	Address common.Address
-	*ieigenpod.ContractIEigenPod
+	*bindings.IEigenPod
 }
 
 type ContractCallerBindings struct {
 	Address common.Address
-	*ieigenpod.ContractIEigenPodCaller
+	*bindings.IEigenPodCaller
 }
 
 type ManagerContractBindings struct {
 	Address common.Address
-	*ieigenpodmanager.ContractIEigenPodManager
+	*bindings.IEigenPodManager
 }
 
 type ManagerContractCallerBindings struct {
 	Address common.Address
-	*ieigenpodmanager.ContractIEigenPodManagerCaller
+	*bindings.IEigenPodManagerCaller
 }
 
 func NewContractBindings(
 	address common.Address,
 	ethClient eth.HttpBackend,
 ) (*ContractBindings, error) {
-	pod, err := ieigenpod.NewContractIEigenPod(address, ethClient)
+	pod, err := bindings.NewIEigenPod(address, ethClient)
 	if err != nil {
 		return nil, err
 	}
 	return &ContractBindings{
-		Address:           address,
-		ContractIEigenPod: pod,
+		Address:   address,
+		IEigenPod: pod,
 	}, nil
 }
 
@@ -45,13 +45,13 @@ func NewContractCallerBindings(
 	address common.Address,
 	ethClient eth.HttpBackend,
 ) (*ContractCallerBindings, error) {
-	pod, err := ieigenpod.NewContractIEigenPodCaller(address, ethClient)
+	pod, err := bindings.NewIEigenPodCaller(address, ethClient)
 	if err != nil {
 		return nil, err
 	}
 	return &ContractCallerBindings{
-		Address:                 address,
-		ContractIEigenPodCaller: pod,
+		Address:         address,
+		IEigenPodCaller: pod,
 	}, nil
 }
 
@@ -59,13 +59,13 @@ func NewManagerContractBindings(
 	address common.Address,
 	ethClient eth.HttpBackend,
 ) (*ManagerContractBindings, error) {
-	manager, err := ieigenpodmanager.NewContractIEigenPodManager(address, ethClient)
+	manager, err := bindings.NewIEigenPodManager(address, ethClient)
 	if err != nil {
 		return nil, err
 	}
 	return &ManagerContractBindings{
-		Address:                  address,
-		ContractIEigenPodManager: manager,
+		Address:          address,
+		IEigenPodManager: manager,
 	}, nil
 }
 
@@ -73,12 +73,12 @@ func NewManagerContractCallerBindings(
 	address common.Address,
 	ethClient eth.HttpBackend,
 ) (*ManagerContractCallerBindings, error) {
-	manager, err := ieigenpodmanager.NewContractIEigenPodManagerCaller(address, ethClient)
+	manager, err := bindings.NewIEigenPodManagerCaller(address, ethClient)
 	if err != nil {
 		return nil, err
 	}
 	return &ManagerContractCallerBindings{
-		Address:                        address,
-		ContractIEigenPodManagerCaller: manager,
+		Address:                address,
+		IEigenPodManagerCaller: manager,
 	}, nil
 }

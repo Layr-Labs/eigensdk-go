@@ -6,6 +6,7 @@ import (
 	"encoding/asn1"
 	"fmt"
 
+	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/kms"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -28,18 +29,21 @@ func GetECDSAPublicKey(ctx context.Context, svc *kms.Client, keyId string) (*ecd
 		KeyId: aws.String(keyId),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get public key for KeyId=%s: %w", keyId, err)
+		text := fmt.Sprintf("failed to get public key for KeyId=%s", keyId)
+		return nil, utils.WrapError(text, err)
 	}
 
 	var asn1pubk asn1EcPublicKey
 	_, err = asn1.Unmarshal(getPubKeyOutput.PublicKey, &asn1pubk)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal public key for KeyId=%s: %w", keyId, err)
+		text := fmt.Sprintf("failed to unmarshal public key for KeyId=%s", keyId)
+		return nil, utils.WrapError(text, err)
 	}
 
 	pubkey, err := crypto.UnmarshalPubkey(asn1pubk.PublicKey.Bytes)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal public key for KeyId=%s: %w", keyId, err)
+		text := fmt.Sprintf("failed to unmarshal public key for KeyId=%s", keyId)
+		return nil, utils.WrapError(text, err)
 	}
 
 	return pubkey, nil

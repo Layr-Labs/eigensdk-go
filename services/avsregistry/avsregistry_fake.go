@@ -29,7 +29,7 @@ func NewFakeAvsRegistryService(blockNum types.BlockNum, operators []types.TestOp
 					G1Pubkey: operator.BlsKeypair.GetPubKeyG1(),
 					G2Pubkey: operator.BlsKeypair.GetPubKeyG2(),
 				},
-				Socket: "localhost:8080",
+				Socket: operator.Socket,
 			},
 			StakePerQuorum: operator.StakePerQuorum,
 			BlockNumber:    blockNum,

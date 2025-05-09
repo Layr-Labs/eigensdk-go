@@ -6,4 +6,5 @@ type TestOperator struct {
 	OperatorId     OperatorId
 	StakePerQuorum map[QuorumNum]StakeAmount
 	BlsKeypair     *bls.KeyPair
+	Socket         Socket
 }

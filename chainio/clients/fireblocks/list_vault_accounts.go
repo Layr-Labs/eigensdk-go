@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+
+	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
 type Asset struct {
@@ -36,7 +38,7 @@ func (f *client) ListVaultAccounts(ctx context.Context) ([]VaultAccount, error) 
 	for next {
 		u, err := url.Parse("/v1/vault/accounts_paged")
 		if err != nil {
-			return accounts, fmt.Errorf("error parsing URL: %w", err)
+			return accounts, utils.WrapError("error parsing URL", err)
 		}
 		q := u.Query()
 		q.Set("before", p.Before)
@@ -44,12 +46,13 @@ func (f *client) ListVaultAccounts(ctx context.Context) ([]VaultAccount, error) 
 		u.RawQuery = q.Encode()
 		res, err := f.makeRequest(ctx, "GET", u.String(), nil)
 		if err != nil {
-			return accounts, fmt.Errorf("error making request: %w", err)
+			return accounts, utils.WrapError("error making request", err)
 		}
 		body := string(res)
 		err = json.NewDecoder(strings.NewReader(body)).Decode(&response)
 		if err != nil {
-			return accounts, fmt.Errorf("error parsing response body: %s: %w", body, err)
+			text := fmt.Sprintf("error parsing response body: %s", body)
+			return accounts, utils.WrapError(text, err)
 		}
 
 		accounts = append(accounts, response.Accounts...)

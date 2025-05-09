@@ -377,7 +377,7 @@ func newIntegrationTestHarness(t *testing.T) *integrationTestHarness {
 	require.NoError(t, err)
 
 	ecdsaSk, ecdsaAddr, err := ecdsa.KeyAndAddressFromHexKey(
-		"0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
+		testutils.ANVIL_FIRST_PRIVATE_KEY,
 	)
 	require.NoError(t, err)
 

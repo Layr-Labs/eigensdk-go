@@ -16,7 +16,7 @@ type SignedTaskResponseDigest struct {
 	TaskResponse                TaskResponse
 	BlsSignature                *bls.Signature
 	OperatorId                  OperatorId
-	SignatureVerificationErrorC chan error `json:"-"` // removed from json because channels are not marshallable
+	SignatureVerificationErrorC chan<- error `json:"-"` // removed from json because channels are not marshallable
 }
 
 func (strd SignedTaskResponseDigest) LogValue() slog.Value {

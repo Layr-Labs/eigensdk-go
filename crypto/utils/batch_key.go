@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+
+	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
 const (
@@ -34,7 +36,7 @@ func ReadBatchKeys(folder string, isECDSA bool) ([]BatchKey, error) {
 	defer func(privateKeyFile *os.File) {
 		err := privateKeyFile.Close()
 		if err != nil {
-			_ = fmt.Errorf("error closing the file: %s", err)
+			_ = utils.WrapError("error closing the file", err)
 			return
 		}
 	}(privateKeyFile)
@@ -43,12 +45,12 @@ func ReadBatchKeys(folder string, isECDSA bool) ([]BatchKey, error) {
 	passwordFile, err := os.Open(filepath.Clean(absFolder + "/" + PasswordFile))
 	if err != nil {
 		fmt.Println("Error opening the file:", err)
-		return nil, err
+		return nil, utils.WrapError("error opening the file", err)
 	}
 	defer func(passwordFile *os.File) {
 		err := passwordFile.Close()
 		if err != nil {
-			_ = fmt.Errorf("error closing the file: %s", err)
+			_ = utils.WrapError("error closing the file", err)
 			return
 		}
 	}(passwordFile)

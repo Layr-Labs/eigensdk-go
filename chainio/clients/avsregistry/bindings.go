@@ -3,6 +3,7 @@ package avsregistry
 import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	blsapkregistry "github.com/Layr-Labs/eigensdk-go/contracts/bindings/BLSApkRegistry"
+	contractDelegationManager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
 	indexregistry "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IndexRegistry"
 	opstateretriever "github.com/Layr-Labs/eigensdk-go/contracts/bindings/OperatorStateRetriever"
 	regcoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
@@ -27,6 +28,7 @@ type ContractBindings struct {
 	IndexRegistryAddr          gethcommon.Address
 	DelegationManagerAddr      gethcommon.Address
 	AvsDirectoryAddr           gethcommon.Address
+	AllocationManagerAddr      gethcommon.Address
 	// contract bindings
 	ServiceManager         *servicemanager.ContractServiceManagerBase
 	RegistryCoordinator    *regcoordinator.ContractRegistryCoordinator
@@ -34,91 +36,6 @@ type ContractBindings struct {
 	BlsApkRegistry         *blsapkregistry.ContractBLSApkRegistry
 	IndexRegistry          *indexregistry.ContractIndexRegistry
 	OperatorStateRetriever *opstateretriever.ContractOperatorStateRetriever
-}
-
-// NewAVSRegistryContractBindings creates a new instance of ContractBindings
-// Deprecated: Use NewBindingsFromConfig instead
-func NewAVSRegistryContractBindings(
-	registryCoordinatorAddr gethcommon.Address,
-	operatorStateRetrieverAddr gethcommon.Address,
-	ethclient eth.HttpBackend,
-	logger logging.Logger,
-) (*ContractBindings, error) {
-	contractBlsRegistryCoordinator, err := regcoordinator.NewContractRegistryCoordinator(
-		registryCoordinatorAddr,
-		ethclient,
-	)
-	if err != nil {
-		return nil, utils.WrapError("Failed to create BLSRegistryCoordinator contract", err)
-	}
-
-	serviceManagerAddr, err := contractBlsRegistryCoordinator.ServiceManager(&bind.CallOpts{})
-	if err != nil {
-		return nil, utils.WrapError("Failed to fetch ServiceManager address", err)
-	}
-	contractServiceManager, err := servicemanager.NewContractServiceManagerBase(
-		serviceManagerAddr,
-		ethclient,
-	)
-	if err != nil {
-		return nil, utils.WrapError("Failed to fetch ServiceManager contract", err)
-	}
-
-	stakeregistryAddr, err := contractBlsRegistryCoordinator.StakeRegistry(&bind.CallOpts{})
-	if err != nil {
-		return nil, utils.WrapError("Failed to fetch StakeRegistry address", err)
-	}
-	contractStakeRegistry, err := stakeregistry.NewContractStakeRegistry(
-		stakeregistryAddr,
-		ethclient,
-	)
-	if err != nil {
-		return nil, utils.WrapError("Failed to fetch StakeRegistry contract", err)
-	}
-
-	blsApkRegistryAddr, err := contractBlsRegistryCoordinator.BlsApkRegistry(&bind.CallOpts{})
-	if err != nil {
-		return nil, utils.WrapError("Failed to fetch BLSPubkeyRegistry address", err)
-	}
-	contractBlsApkRegistry, err := blsapkregistry.NewContractBLSApkRegistry(
-		blsApkRegistryAddr,
-		ethclient,
-	)
-	if err != nil {
-		return nil, utils.WrapError("Failed to fetch BLSPubkeyRegistry contract", err)
-	}
-
-	indexRegistryAddr, err := contractBlsRegistryCoordinator.IndexRegistry(&bind.CallOpts{})
-	if err != nil {
-		return nil, utils.WrapError("Failed to fetch IndexRegistry address", err)
-	}
-	contractIndexRegistry, err := indexregistry.NewContractIndexRegistry(indexRegistryAddr, ethclient)
-	if err != nil {
-		return nil, utils.WrapError("Failed to fetch IndexRegistry contract", err)
-	}
-
-	contractOperatorStateRetriever, err := opstateretriever.NewContractOperatorStateRetriever(
-		operatorStateRetrieverAddr,
-		ethclient,
-	)
-	if err != nil {
-		return nil, utils.WrapError("Failed to fetch OperatorStateRetriever contract", err)
-	}
-
-	return &ContractBindings{
-		ServiceManagerAddr:         serviceManagerAddr,
-		RegistryCoordinatorAddr:    registryCoordinatorAddr,
-		StakeRegistryAddr:          stakeregistryAddr,
-		BlsApkRegistryAddr:         blsApkRegistryAddr,
-		IndexRegistryAddr:          indexRegistryAddr,
-		OperatorStateRetrieverAddr: operatorStateRetrieverAddr,
-		ServiceManager:             contractServiceManager,
-		RegistryCoordinator:        contractBlsRegistryCoordinator,
-		StakeRegistry:              contractStakeRegistry,
-		BlsApkRegistry:             contractBlsApkRegistry,
-		IndexRegistry:              contractIndexRegistry,
-		OperatorStateRetriever:     contractOperatorStateRetriever,
-	}, nil
 }
 
 // NewBindingsFromConfig creates a new instance of ContractBindings
@@ -130,12 +47,12 @@ func NewBindingsFromConfig(
 	var (
 		err error
 
-		serviceManagerAddr    gethcommon.Address
 		stakeRegistryAddr     gethcommon.Address
 		blsApkRegistryAddr    gethcommon.Address
 		indexRegistryAddr     gethcommon.Address
 		delegationManagerAddr gethcommon.Address
 		avsDirectoryAddr      gethcommon.Address
+		allocationManagerAddr gethcommon.Address
 
 		contractBlsRegistryCoordinator *regcoordinator.ContractRegistryCoordinator
 		contractServiceManager         *servicemanager.ContractServiceManagerBase
@@ -154,18 +71,6 @@ func NewBindingsFromConfig(
 		)
 		if err != nil {
 			return nil, utils.WrapError("Failed to create BLSRegistryCoordinator contract", err)
-		}
-
-		serviceManagerAddr, err = contractBlsRegistryCoordinator.ServiceManager(&bind.CallOpts{})
-		if err != nil {
-			return nil, utils.WrapError("Failed to fetch ServiceManager address", err)
-		}
-		contractServiceManager, err = servicemanager.NewContractServiceManagerBase(
-			serviceManagerAddr,
-			client,
-		)
-		if err != nil {
-			return nil, utils.WrapError("Failed to create ServiceManager contract", err)
 		}
 
 		stakeRegistryAddr, err = contractBlsRegistryCoordinator.StakeRegistry(&bind.CallOpts{})
@@ -205,6 +110,34 @@ func NewBindingsFromConfig(
 		if err != nil {
 			return nil, utils.WrapError("Failed to get DelegationManager address", err)
 		}
+
+		// NOTE: this is a hack to make this version of the SDK work with mainnet
+		// TODO: remove this once mainnet is updated with the new contracts
+		if !cfg.DontUseAllocationManager {
+			delegationManager, err := contractDelegationManager.NewContractDelegationManager(
+				delegationManagerAddr,
+				client)
+			if err != nil {
+				return nil, utils.WrapError("Failed to get DelegationManager contract", err)
+			}
+			allocationManagerAddr, err = delegationManager.AllocationManager(&bind.CallOpts{})
+			if err != nil {
+				return nil, utils.WrapError("Failed to get AllocationManager address", err)
+			}
+		}
+	}
+
+	if isZeroAddress(cfg.ServiceManagerAddress) {
+		logger.Debug("ServiceManager address not provided, the calls to the contract will not work")
+	} else {
+		contractServiceManager, err = servicemanager.NewContractServiceManagerBase(
+			cfg.ServiceManagerAddress,
+			client,
+		)
+		if err != nil {
+			return nil, utils.WrapError("Failed to create ServiceManager contract", err)
+		}
+
 		avsDirectoryAddr, err = contractServiceManager.AvsDirectory(&bind.CallOpts{})
 		if err != nil {
 			return nil, utils.WrapError("Failed to get AvsDirectory address", err)
@@ -225,7 +158,7 @@ func NewBindingsFromConfig(
 	}
 
 	return &ContractBindings{
-		ServiceManagerAddr:         serviceManagerAddr,
+		ServiceManagerAddr:         cfg.ServiceManagerAddress,
 		RegistryCoordinatorAddr:    cfg.RegistryCoordinatorAddress,
 		StakeRegistryAddr:          stakeRegistryAddr,
 		BlsApkRegistryAddr:         blsApkRegistryAddr,
@@ -233,6 +166,7 @@ func NewBindingsFromConfig(
 		OperatorStateRetrieverAddr: cfg.OperatorStateRetrieverAddress,
 		DelegationManagerAddr:      delegationManagerAddr,
 		AvsDirectoryAddr:           avsDirectoryAddr,
+		AllocationManagerAddr:      allocationManagerAddr,
 		ServiceManager:             contractServiceManager,
 		RegistryCoordinator:        contractBlsRegistryCoordinator,
 		StakeRegistry:              contractStakeRegistry,

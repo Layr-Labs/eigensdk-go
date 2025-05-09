@@ -2,7 +2,6 @@
 package economic
 
 import (
-	"context"
 	"errors"
 	"strconv"
 
@@ -15,7 +14,6 @@ import (
 )
 
 type eLReader interface {
-	OperatorIsFrozen(ctx context.Context, operatorAddr common.Address) (bool, error)
 }
 
 type avsRegistryReader interface {
@@ -147,26 +145,8 @@ func (ec *Collector) initOperatorId() error {
 // collect just makes jsonrpc calls to the slasher and delegationManager and then creates
 // constant metrics with the results
 func (ec *Collector) Collect(ch chan<- prometheus.Metric) {
-	// collect slashingStatus metric
-	// TODO(samlaf): note that this call is not avs specific, so every avs will have the same value if the operator has
-	// been slashed
-	// if we want instead to only output 1 if the operator has been slashed for a specific avs, we have 2 choices:
-	// 1. keep this collector format but query the OperatorFrozen event from a subgraph
-	// 2. subscribe to the event and keep a local state of whether the operator has been slashed, exporting it via
-	// normal prometheus instrumentation
-	operatorIsFrozen, err := ec.elReader.OperatorIsFrozen(context.Background(), ec.operatorAddr)
-	if err != nil {
-		ec.logger.Error("Failed to get slashing incurred", "err", err)
-	} else {
-		operatorIsFrozenFloat := 0.0
-		if operatorIsFrozen {
-			operatorIsFrozenFloat = 1.0
-		}
-		ch <- prometheus.MustNewConstMetric(ec.slashingStatus, prometheus.CounterValue, operatorIsFrozenFloat)
-	}
-
 	// collect registeredStake metric
-	err = ec.initOperatorId()
+	err := ec.initOperatorId()
 	if err != nil {
 		ec.logger.Warn(
 			"Failed to fetch and cache operator id. Skipping collection of registeredStake metric.",

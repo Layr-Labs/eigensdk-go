@@ -6,6 +6,8 @@ package metrics_test
 
 import (
 	"context"
+	"fmt"
+	"os"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
@@ -26,13 +28,15 @@ func ExampleEigenMetrics() {
 
 	logger, err := logging.NewZapLogger("development")
 	if err != nil {
-		panic(err)
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 
 	// get the Writer for the EL contracts
 	ecdsaPrivateKey, err := crypto.HexToECDSA("0x0")
 	if err != nil {
-		panic(err)
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 	operatorEcdsaAddr := crypto.PubkeyToAddress(ecdsaPrivateKey.PublicKey)
 
@@ -43,10 +47,12 @@ func ExampleEigenMetrics() {
 		OperatorStateRetrieverAddr: "0x0",
 		AvsName:                    "exampleAvs",
 		PromMetricsIpPortAddress:   ":9090",
+		ServiceManagerAddress:      "0x0",
 	}
 	clients, err := clients.BuildAll(chainioConfig, ecdsaPrivateKey, logger)
 	if err != nil {
-		panic(err)
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 	reg := prometheus.NewRegistry()
 	eigenMetrics := metrics.NewEigenMetrics("exampleAvs", ":9090", reg, logger)
@@ -71,7 +77,8 @@ func ExampleEigenMetrics() {
 	rpcCallsCollector := rpccalls.NewCollector("exampleAvs", reg)
 	instrumentedEthClient, err := eth.NewInstrumentedClient("http://localhost:8545", rpcCallsCollector)
 	if err != nil {
-		panic(err)
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 
 	eigenMetrics.Start(context.Background(), reg)

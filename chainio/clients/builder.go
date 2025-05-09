@@ -3,9 +3,11 @@ package clients
 import (
 	"context"
 	"crypto/ecdsa"
+	"errors"
 	"time"
 
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/testcontainers/testcontainers-go"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
@@ -21,12 +23,23 @@ import (
 )
 
 type BuildAllConfig struct {
-	EthHttpUrl                 string
-	EthWsUrl                   string
-	RegistryCoordinatorAddr    string
-	OperatorStateRetrieverAddr string
-	AvsName                    string
-	PromMetricsIpPortAddress   string
+	EthHttpUrl               string
+	EthWsUrl                 string
+	AvsName                  string
+	PromMetricsIpPortAddress string
+
+	RegistryCoordinatorAddr     string
+	OperatorStateRetrieverAddr  string
+	RewardsCoordinatorAddress   string
+	PermissionControllerAddress string
+
+	/// The address of the ServiceManager contract.
+	ServiceManagerAddress string
+
+	/// Setting this to true will disable the fetching of the AllocationManager address.
+	/// This is useful for older deployments, which don't have the contract deployed.
+	// TODO: remove this once mainnet is updated with the new contracts
+	DontUseAllocationManager bool
 }
 
 // ReadClients is a struct that holds only the read clients for interacting with the AVS and EL contracts.
@@ -49,6 +62,7 @@ type Clients struct {
 	TxManager              txmgr.TxManager
 	ElChainWriter          *elcontracts.ChainWriter
 	AvsRegistryChainWriter *avsregistry.ChainWriter
+	AnvilC                 testcontainers.Container
 }
 
 // BuildReadClients creates all the read clients needed to interact with the AVS and EL contracts.
@@ -56,7 +70,10 @@ func BuildReadClients(
 	config BuildAllConfig,
 	logger logging.Logger,
 ) (*ReadClients, error) {
-	config.validate(logger)
+	err := config.validate(logger)
+	if err != nil {
+		return nil, utils.WrapError("Failed to validate logger", err)
+	}
 
 	// Create the metrics server
 	promReg := prometheus.NewRegistry()
@@ -73,12 +90,17 @@ func BuildReadClients(
 		return nil, utils.WrapError("Failed to create Eth WS client", err)
 	}
 
+	avsCfg := avsregistry.Config{
+		RegistryCoordinatorAddress:    gethcommon.HexToAddress(config.RegistryCoordinatorAddr),
+		OperatorStateRetrieverAddress: gethcommon.HexToAddress(config.OperatorStateRetrieverAddr),
+	}
+	if config.ServiceManagerAddress != "" {
+		avsCfg.ServiceManagerAddress = gethcommon.HexToAddress(config.ServiceManagerAddress)
+	}
+
 	// creating AVS clients: Reader
 	avsRegistryChainReader, avsRegistryChainSubscriber, avsRegistryContractBindings, err := avsregistry.BuildReadClients(
-		avsregistry.Config{
-			RegistryCoordinatorAddress:    gethcommon.HexToAddress(config.RegistryCoordinatorAddr),
-			OperatorStateRetrieverAddress: gethcommon.HexToAddress(config.OperatorStateRetrieverAddr),
-		},
+		avsCfg,
 		ethHttpClient,
 		ethWsClient,
 		logger,
@@ -127,7 +149,10 @@ func BuildAll(
 	ecdsaPrivateKey *ecdsa.PrivateKey,
 	logger logging.Logger,
 ) (*Clients, error) {
-	config.validate(logger)
+	err := config.validate(logger)
+	if err != nil {
+		return nil, utils.WrapError("Failed to validate logger", err)
+	}
 
 	// Create the metrics server
 	promReg := prometheus.NewRegistry()
@@ -148,7 +173,8 @@ func BuildAll(
 	defer cancel()
 	chainid, err := ethHttpClient.ChainID(rpcCtx)
 	if err != nil {
-		logger.Fatal("Cannot get chain id", "err", err)
+		logger.Error("Cannot get chain id", "err", err)
+		return nil, utils.WrapError("Cannot get chain id", err)
 	}
 	signerV2, addr, err := signerv2.SignerFromConfig(signerv2.Config{PrivateKey: ecdsaPrivateKey}, chainid)
 	if err != nil {
@@ -160,13 +186,18 @@ func BuildAll(
 		return nil, utils.WrapError("Failed to create transaction sender", err)
 	}
 	txMgr := txmgr.NewSimpleTxManager(pkWallet, ethHttpClient, logger, addr)
+	avsCfg := avsregistry.Config{
+		RegistryCoordinatorAddress:    gethcommon.HexToAddress(config.RegistryCoordinatorAddr),
+		OperatorStateRetrieverAddress: gethcommon.HexToAddress(config.OperatorStateRetrieverAddr),
+		DontUseAllocationManager:      config.DontUseAllocationManager,
+	}
+	if config.ServiceManagerAddress != "" {
+		avsCfg.ServiceManagerAddress = gethcommon.HexToAddress(config.ServiceManagerAddress)
+	}
 
 	// creating AVS clients: Reader and Writer
 	avsRegistryChainReader, avsRegistryChainSubscriber, avsRegistryChainWriter, avsRegistryContractBindings, err := avsregistry.BuildClients(
-		avsregistry.Config{
-			RegistryCoordinatorAddress:    gethcommon.HexToAddress(config.RegistryCoordinatorAddr),
-			OperatorStateRetrieverAddress: gethcommon.HexToAddress(config.OperatorStateRetrieverAddr),
-		},
+		avsCfg,
 		ethHttpClient,
 		ethWsClient,
 		txMgr,
@@ -176,12 +207,21 @@ func BuildAll(
 		return nil, utils.WrapError("Failed to create AVS Registry Reader and Writer", err)
 	}
 
+	elcontractsCfg := elcontracts.Config{
+		DelegationManagerAddress: avsRegistryContractBindings.DelegationManagerAddr,
+		AvsDirectoryAddress:      avsRegistryContractBindings.AvsDirectoryAddr,
+		DontUseAllocationManager: config.DontUseAllocationManager,
+	}
+	if config.RewardsCoordinatorAddress != "" {
+		elcontractsCfg.RewardsCoordinatorAddress = gethcommon.HexToAddress(config.RewardsCoordinatorAddress)
+	}
+	if config.PermissionControllerAddress != "" {
+		elcontractsCfg.PermissionControllerAddress = gethcommon.HexToAddress(config.PermissionControllerAddress)
+	}
+
 	// creating EL clients: Reader, Writer and EigenLayer Contract Bindings
 	elChainReader, elChainWriter, elContractBindings, err := elcontracts.BuildClients(
-		elcontracts.Config{
-			DelegationManagerAddress: avsRegistryContractBindings.DelegationManagerAddr,
-			AvsDirectoryAddress:      avsRegistryContractBindings.AvsDirectoryAddr,
-		},
+		elcontractsCfg,
 		ethHttpClient,
 		txMgr,
 		logger,
@@ -215,23 +255,39 @@ func BuildAll(
 // Very basic validation that makes sure all fields are nonempty
 // we might eventually want more sophisticated validation, based on regexp,
 // or use something like https://json-schema.org/ (?)
-func (config *BuildAllConfig) validate(logger logging.Logger) {
+func (config *BuildAllConfig) validate(logger logging.Logger) error {
 	if config.EthHttpUrl == "" {
-		logger.Fatalf("BuildAllConfig.validate: Missing eth http url")
+		logger.Error("BuildAllConfig.validate: Missing eth http url")
+		return errors.New("BuildAllConfig.validate: Missing eth http url")
 	}
 	if config.EthWsUrl == "" {
-		logger.Fatalf("BuildAllConfig.validate: Missing eth ws url")
-	}
-	if config.RegistryCoordinatorAddr == "" {
-		logger.Fatalf("BuildAllConfig.validate: Missing bls registry coordinator address")
-	}
-	if config.OperatorStateRetrieverAddr == "" {
-		logger.Fatalf("BuildAllConfig.validate: Missing bls operator state retriever address")
+		logger.Error("BuildAllConfig.validate: Missing eth ws url")
+		return errors.New("BuildAllConfig.validate: Missing eth ws url")
 	}
 	if config.AvsName == "" {
-		logger.Fatalf("BuildAllConfig.validate: Missing avs name")
+		logger.Error("BuildAllConfig.validate: Missing avs name")
+		return errors.New("BuildAllConfig.validate: Missing avs name")
 	}
 	if config.PromMetricsIpPortAddress == "" {
-		logger.Fatalf("BuildAllConfig.validate: Missing prometheus metrics ip port address")
+		logger.Error("BuildAllConfig.validate: Missing prometheus metrics ip port address")
+		return errors.New("BuildAllConfig.validate: Missing prometheus metrics ip port address")
 	}
+	if config.RegistryCoordinatorAddr == "" {
+		logger.Error("BuildAllConfig.validate: Missing bls registry coordinator address")
+		return errors.New("BuildAllConfig.validate: Missing bls registry coordinator address")
+	}
+	if config.OperatorStateRetrieverAddr == "" {
+		logger.Error("BuildAllConfig.validate: Missing bls operator state retriever address")
+		return errors.New("BuildAllConfig.validate: Missing bls operator state retriever address")
+	}
+	if config.RewardsCoordinatorAddress == "" {
+		logger.Info("BuildAllConfig.validate: Missing optional rewards coordinator address")
+	}
+	if config.PermissionControllerAddress == "" {
+		logger.Info("BuildAllConfig.validate: Missing optional permission controller address")
+	}
+	if config.ServiceManagerAddress == "" {
+		logger.Info("BuildAllConfig.validate: Missing optional service manager address")
+	}
+	return nil
 }

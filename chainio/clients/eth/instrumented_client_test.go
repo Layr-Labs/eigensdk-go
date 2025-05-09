@@ -11,6 +11,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	rpccalls "github.com/Layr-Labs/eigensdk-go/metrics/collectors/rpc_calls"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -43,15 +44,15 @@ func setup() error {
 	var err error
 	anvil, err = testutils.StartAnvilContainer("")
 	if err != nil {
-		return fmt.Errorf("failed to start Anvil container: %w", err)
+		return utils.WrapError("failed to start Anvil container", err)
 	}
 	anvilHttpEndpoint, err = anvil.Endpoint(context.Background(), "http")
 	if err != nil {
-		return fmt.Errorf("failed to get Anvil endpoint: %w", err)
+		return utils.WrapError("failed to get Anvil endpoint", err)
 	}
 	anvilWsEndpoint, err = anvil.Endpoint(context.Background(), "ws")
 	if err != nil {
-		return fmt.Errorf("failed to get Anvil endpoint: %w", err)
+		return utils.WrapError("failed to get Anvil endpoint", err)
 	}
 	reg := prometheus.NewRegistry()
 	rpcCallsCollector = rpccalls.NewCollector("exampleAvs", reg)
@@ -362,8 +363,7 @@ func TestTransactionMethods(t *testing.T) {
 		Gas:   21000,
 	})
 
-	ecdsaPrivKeyHex := "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
-	ecdsaPrivKey, err := crypto.HexToECDSA(ecdsaPrivKeyHex)
+	ecdsaPrivKey, err := crypto.HexToECDSA(testutils.ANVIL_FIRST_PRIVATE_KEY)
 	assert.NoError(t, err)
 	signer := types.LatestSignerForChainID(big.NewInt(31337))
 	signature, err := crypto.Sign(signer.Hash(tx).Bytes(), ecdsaPrivKey)

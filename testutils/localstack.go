@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/Layr-Labs/eigensdk-go/aws"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/aws/aws-sdk-go-v2/service/kms"
 	"github.com/aws/aws-sdk-go-v2/service/kms/types"
 	"github.com/testcontainers/testcontainers-go"
@@ -39,7 +40,7 @@ func NewKMSClient(localStackPort string) (*kms.Client, error) {
 		fmt.Sprintf("http://127.0.0.1:%s", localStackPort),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load AWS config: %w", err)
+		return nil, utils.WrapError("failed to load AWS config", err)
 	}
 
 	c := kms.NewFromConfig(*cfg)
@@ -49,14 +50,14 @@ func NewKMSClient(localStackPort string) (*kms.Client, error) {
 func CreateKMSKey(localStackPort string) (*types.KeyMetadata, error) {
 	c, err := NewKMSClient(localStackPort)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create KMS client: %w", err)
+		return nil, utils.WrapError("failed to create KMS client", err)
 	}
 	res, err := c.CreateKey(context.Background(), &kms.CreateKeyInput{
 		KeySpec:  types.KeySpecEccSecgP256k1,
 		KeyUsage: types.KeyUsageTypeSignVerify,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create key: %w", err)
+		return nil, utils.WrapError("failed to create key", err)
 	}
 	return res.KeyMetadata, nil
 }

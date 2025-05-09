@@ -3,6 +3,7 @@ package logging
 import (
 	"fmt"
 
+	"github.com/Layr-Labs/eigensdk-go/utils"
 	"go.uber.org/zap"
 )
 
@@ -28,7 +29,7 @@ func NewZapLogger(env LogLevel) (Logger, error) {
 	} else if env == Development {
 		config = zap.NewDevelopmentConfig()
 	} else {
-		panic(fmt.Sprintf("Unknown environment. Expected %s or %s. Received %s.", Development, Production, env))
+		return nil, fmt.Errorf("unknown environment. Expected %s or %s. Received %s", Development, Production, env)
 	}
 
 	return NewZapLoggerByConfig(config, zap.AddCallerSkip(1))
@@ -39,7 +40,7 @@ func NewZapLogger(env LogLevel) (Logger, error) {
 func NewZapLoggerByConfig(config zap.Config, options ...zap.Option) (Logger, error) {
 	logger, err := config.Build(options...)
 	if err != nil {
-		panic(err)
+		return nil, utils.WrapError("Can not build config with the given options", err)
 	}
 
 	return &ZapLogger{

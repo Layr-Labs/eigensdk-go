@@ -8,6 +8,8 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
 	"github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/utils"
+	"github.com/cenkalti/backoff/v4"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -91,6 +93,38 @@ func (m *SimpleTxManager) Send(
 	return receipt, nil
 }
 
+// SendWithRetry is used to send a transaction to the Ethereum node, same as Send but adding retry logic.
+// If the transaction fails, it will retry sending the transaction until it gets a receipt, using
+// **exponential backoff** with factor `multiplier`, starting with `initialInterval`.
+func (m *SimpleTxManager) SendWithRetry(
+	ctx context.Context,
+	tx *types.Transaction,
+	initialInterval time.Duration,
+	maxElapsedTime time.Duration,
+	multiplier float64,
+) (*types.Receipt, error) {
+	backoffConfig := backoff.NewExponentialBackOff(
+		backoff.WithInitialInterval(initialInterval),
+		backoff.WithMultiplier(multiplier),
+		backoff.WithMaxElapsedTime(maxElapsedTime),
+	)
+
+	retryCount := 0
+
+	sendAndWait := func() (*types.Receipt, error) {
+		defer func() { retryCount++ }()
+
+		r, err := m.send(ctx, tx)
+		if err != nil {
+			m.logger.Warn("failed to send transaction", err, "retryCount", retryCount)
+			return nil, err
+		}
+		return m.waitForReceipt(ctx, r.TxHash.Hex())
+	}
+
+	return backoff.RetryWithData(sendAndWait, backoffConfig)
+}
+
 func (m *SimpleTxManager) send(ctx context.Context, tx *types.Transaction) (*types.Receipt, error) {
 	// Estimate gas and nonce
 	// can't print tx hash in logs because the tx changes below when we complete and sign it
@@ -139,7 +173,7 @@ func (m *SimpleTxManager) waitForReceipt(ctx context.Context, txID wallet.TxID) 
 	for {
 		select {
 		case <-ctx.Done():
-			return nil, errors.Join(errors.New("Context done before tx was mined"), ctx.Err())
+			return nil, utils.WrapError(ctx.Err(), "context done before tx was mined")
 		case <-queryTicker.C:
 			if receipt := m.queryReceipt(ctx, txID); receipt != nil {
 				return receipt, nil

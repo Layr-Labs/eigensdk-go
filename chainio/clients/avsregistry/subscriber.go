@@ -2,7 +2,6 @@ package avsregistry
 
 import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/event"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
@@ -34,28 +33,6 @@ func NewChainSubscriber(
 	}
 }
 
-// BuildAvsRegistryChainSubscriber creates a new instance of ChainSubscriber
-// Deprecated: Use NewSubscriberFromConfig instead
-func BuildAvsRegistryChainSubscriber(
-	regCoordAddr common.Address,
-	ethWsClient eth.WsBackend,
-	logger logging.Logger,
-) (*ChainSubscriber, error) {
-	regCoord, err := regcoord.NewContractRegistryCoordinator(regCoordAddr, ethWsClient)
-	if err != nil {
-		return nil, utils.WrapError("Failed to create RegistryCoordinator contract", err)
-	}
-	blsApkRegAddr, err := regCoord.BlsApkRegistry(&bind.CallOpts{})
-	if err != nil {
-		return nil, utils.WrapError("Failed to get BLSApkRegistry address from RegistryCoordinator", err)
-	}
-	blsApkReg, err := blsapkreg.NewContractBLSApkRegistry(blsApkRegAddr, ethWsClient)
-	if err != nil {
-		return nil, utils.WrapError("Failed to create BLSApkRegistry contract", err)
-	}
-	return NewChainSubscriber(regCoord, blsApkReg, logger), nil
-}
-
 // NewSubscriberFromConfig creates a new instance of ChainSubscriber
 // A websocket ETH Client must be provided
 func NewSubscriberFromConfig(
@@ -71,6 +48,7 @@ func NewSubscriberFromConfig(
 	return NewChainSubscriber(bindings.RegistryCoordinator, bindings.BlsApkRegistry, logger), nil
 }
 
+// Returns a channel that receives new BLS pubkey registration events.
 func (s *ChainSubscriber) SubscribeToNewPubkeyRegistrations() (chan *blsapkreg.ContractBLSApkRegistryNewPubkeyRegistration, event.Subscription, error) {
 	newPubkeyRegistrationChan := make(chan *blsapkreg.ContractBLSApkRegistryNewPubkeyRegistration)
 	sub, err := s.blsApkRegistry.WatchNewPubkeyRegistration(
@@ -82,6 +60,7 @@ func (s *ChainSubscriber) SubscribeToNewPubkeyRegistrations() (chan *blsapkreg.C
 	return newPubkeyRegistrationChan, sub, nil
 }
 
+// Returns a channel that receives operator socket update events.
 func (s *ChainSubscriber) SubscribeToOperatorSocketUpdates() (chan *regcoord.ContractRegistryCoordinatorOperatorSocketUpdate, event.Subscription, error) {
 	operatorSocketUpdateChan := make(chan *regcoord.ContractRegistryCoordinatorOperatorSocketUpdate)
 	sub, err := s.regCoord.WatchOperatorSocketUpdate(

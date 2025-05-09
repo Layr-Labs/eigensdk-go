@@ -1,0 +1,78 @@
+name: Bindings
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+  merge_group:
+  
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  generate_bindings:
+    name: Generate bindings
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install go1.21
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.21"
+
+      - name: Add Ethereum PPA
+        run: sudo add-apt-repository -y ppa:ethereum/ethereum
+
+      - name: Install Abigen
+        run: sudo apt-get update && sudo apt-get install ethereum
+
+      - name: Show abigen version
+        run: abigen --version
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: v0.3.0
+
+      - name: Run make bindings
+        run: make bindings
+
+  check_bindings:
+    name: Check bindings are up-to-date
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      
+       # This step is needed to know if the contracts were changed.
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            contracts:
+              - 'contracts/lib/**'
+              - 'contracts/src/**'
+            bindings:
+              - 'contracts/bindings/**'
+            
+      
+      # This step runs only if some contract changed.
+      # It checks whether the bindings directory have changed.
+      # If there are no changes, then the bindings are outdated
+      # and therefore this step will fail.
+      - name: Check the bindings are up-to-date
+        if: steps.filter.outputs.contracts == 'true'
+        run: |
+          BINDINGS_UPDATED=${{ steps.filter.outputs.bindings }}
+          if [[ "$BINDINGS_UPDATED" == "false" ]]; then
+            echo "The bindings are outdated";
+            exit 1
+          fi

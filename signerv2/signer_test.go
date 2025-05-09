@@ -14,8 +14,7 @@ import (
 )
 
 func TestPrivateKeySignerFn(t *testing.T) {
-	privateKeyHex := "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
-	privateKey, err := crypto.HexToECDSA(privateKeyHex)
+	privateKey, err := crypto.HexToECDSA(testutils.ANVIL_FIRST_PRIVATE_KEY)
 	require.NoError(t, err)
 	chainID := big.NewInt(1)
 
@@ -74,7 +73,7 @@ func TestWeb3SignerFn(t *testing.T) {
 	signer, err := signerv2.Web3SignerFn(anvilHttpEndpoint)
 	require.NoError(t, err)
 
-	privateKey, err := crypto.HexToECDSA("ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80")
+	privateKey, err := crypto.HexToECDSA(testutils.ANVIL_FIRST_PRIVATE_KEY)
 	require.NoError(t, err)
 	anvilChainID := big.NewInt(31337)
 	address := crypto.PubkeyToAddress(privateKey.PublicKey)
