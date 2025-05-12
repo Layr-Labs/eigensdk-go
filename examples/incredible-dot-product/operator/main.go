@@ -50,13 +50,15 @@ func main() {
 		logger.Fatalf("Failed to register operator on startup: %v", err.Error())
 	}
 
-	possibleFailureFunction, err := operator.ComputeWithFailures(examplecommon.DotProduct, failingDotProduct, 50)
+	responseCalculator := operator.NewResponseCalculatorFunction(examplecommon.DotProduct)
+
+	possibleFailureCalculator, err := operator.ComputeWithFailures(responseCalculator, big.NewInt(31234213443), 50)
 	if err != nil {
 		logger.Fatalf("Failed to create the possible failure function: %v", err.Error())
 	}
 
 	// Setting the TaskResponseHashFn parameter in nil because I'm using the abi default encoding function
-	operator, err := operator.NewOperatorFromConfig(operatorConfig, possibleFailureFunction, nil)
+	operator, err := operator.NewOperatorFromConfig(operatorConfig, possibleFailureCalculator, nil)
 	if err != nil {
 		logger.Fatalf("Failed to create operator: %w", err)
 	}
@@ -65,8 +67,4 @@ func main() {
 	if err != nil {
 		logger.Fatalf("Failure while running operator: %w", err)
 	}
-}
-
-func failingDotProduct(taskIndex uint32, points examplecommon.DotProductInput) (*big.Int, error) {
-	return big.NewInt(31234213443), nil
 }

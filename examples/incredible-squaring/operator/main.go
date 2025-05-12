@@ -38,7 +38,9 @@ func main() {
 		TaskManagerAbi:                taskManagerAbi,
 	}
 
-	logic, err := sdkoperator.ComputeWithFailures(square, wrongSquare, 50)
+	calculator := sdkoperator.NewResponseCalculatorFunction(square)
+
+	logic, err := sdkoperator.ComputeWithFailures(calculator, big.NewInt(0), 50)
 	if err != nil {
 		logger.Fatalf(err.Error())
 	}
@@ -61,8 +63,4 @@ func square(taskIndex uint32, numberToSquare *big.Int) (*big.Int, error) {
 	numberSquared := big.NewInt(0).Exp(numberToSquare, big.NewInt(2), nil)
 
 	return numberSquared, nil
-}
-
-func wrongSquare(taskIndex uint32, numberToSquare *big.Int) (*big.Int, error) {
-	return big.NewInt(0), nil
 }

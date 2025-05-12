@@ -20,18 +20,18 @@ type responseCalculatorFunction[Input any, Output any] struct {
 func NewResponseCalculatorFunction[Input any, Output any](
 	computeFn func(taskIndex uint32, input Input) (Output, error),
 ) ResponseCalculator[Input, Output] {
-	return &responseCalculatorFunction[Input, Output]{computeFn: computeFn}
+	return responseCalculatorFunction[Input, Output]{computeFn: computeFn}
 }
 
-func (r *responseCalculatorFunction[Input, Output]) ComputeResponse(
+func (r responseCalculatorFunction[Input, Output]) ComputeResponse(
 	taskIndex uint32, input Input,
 ) (Output, error) {
 	return r.computeFn(taskIndex, input)
 }
 
 // Takes a ResponseCalculator and a value that is always an incorrect response.
-// It returns a new ResponseCalculator that will return the incorrect value with a certain probability.
-// Note that the response calculator will always be called, even if the incorrect value is returned.
+// It returns a new ResponseCalculator that will compute a response using the received response calculator,
+// but swap the response for the incorrect value with a certain probability.
 //
 // The function will return an error if the failure rate percentage is over 100.
 func ComputeWithFailures[Input any, Output any](
@@ -46,7 +46,7 @@ func ComputeWithFailures[Input any, Output any](
 	return NewResponseCalculatorFunction(func(taskIndex uint32, input Input) (Output, error) {
 		correctResult, err := responseCalculator.ComputeResponse(taskIndex, input)
 		if rand.Uint32()%100 < failureRatePercentage {
-			return incorrectValue, nil
+			return incorrectValue, err
 		} else {
 			return correctResult, err
 		}
