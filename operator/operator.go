@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math/big"
-	"math/rand/v2"
 	"os"
 
 	"github.com/ethereum/go-ethereum"
@@ -23,10 +22,6 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
-type ResponseCalculator[Input any, Output any] interface {
-	ComputeResponse(taskIndex uint32, input Input) (Output, error)
-}
-
 type Operator[Input any, Output any] struct {
 	logger              logging.Logger
 	operatorId          sdktypes.OperatorId
@@ -39,65 +34,7 @@ type Operator[Input any, Output any] struct {
 	taskResponseHashFn  TaskResponseHashFunction[Output]
 }
 
-type ResponseCalculationFunction[Input any, Output any] func(taskIndex uint32, input Input) (Output, error)
-
 type TaskResponseHashFunction[Output any] func(taskResponse sdktypes.GenericOutputTaskResponse[Output]) ([32]byte, error)
-
-func ComputeWithFailures[Input any, Output any](
-	correctLogic, incorrectLogic ResponseCalculationFunction[Input, Output],
-	failureRate uint32,
-) (ResponseCalculationFunction[Input, Output], error) {
-	if failureRate > 100 {
-		return nil, fmt.Errorf("failure rate is over 100, should be a number between 0 and 100")
-	}
-
-	return func(taskIndex uint32, input Input) (Output, error) {
-		if rand.Uint32()%100 < failureRate {
-			return incorrectLogic(taskIndex, input)
-		} else {
-			return correctLogic(taskIndex, input)
-		}
-	}, nil
-}
-
-func extractTypeFromAbi(taskManagerAbi *abi.ABI) (abi.Type, error) {
-	taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
-		{
-			Name: "referenceTaskIndex",
-			Type: "uint32",
-		},
-		{
-			Name: "OutputValue", // Left because abi does not support purely anonymous or underscored fields
-			Type: taskManagerAbi.Events["TaskResponded"].Inputs[0].Type.TupleElems[1].String(),
-		},
-	})
-	if err != nil {
-		return abi.Type{}, fmt.Errorf("error creating abi task response type: %w", err)
-	}
-
-	return taskResponseType, nil
-}
-
-func getDefaultHashFunction[Output any](taskResponseType abi.Type) TaskResponseHashFunction[Output] {
-	return func(taskResponse sdktypes.GenericOutputTaskResponse[Output]) ([32]byte, error) {
-		arguments := abi.Arguments{
-			{
-				Type: taskResponseType,
-			},
-		}
-
-		encodeTaskResponseByte, err := arguments.Pack(taskResponse)
-		if err != nil {
-			return [32]byte{}, fmt.Errorf("error encoding task response: %w", err)
-		}
-
-		var taskResponseDigest [32]byte
-		hasher := sha3.NewLegacyKeccak256()
-		hasher.Write(encodeTaskResponseByte)
-		copy(taskResponseDigest[:], hasher.Sum(nil)[:32])
-		return taskResponseDigest, nil
-	}
-}
 
 func NewOperatorFromConfig[Input any, Output any](
 	c OperatorConfig,
@@ -281,4 +218,43 @@ func (o *Operator[Input, Output]) signTaskResponse(
 	}
 	o.logger.Debug("Signed task response", "signedTaskResponse", signedTaskResponse)
 	return signedTaskResponse, nil
+}
+
+func extractTypeFromAbi(taskManagerAbi *abi.ABI) (abi.Type, error) {
+	taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
+		{
+			Name: "referenceTaskIndex",
+			Type: "uint32",
+		},
+		{
+			Name: "OutputValue", // Left because abi does not support purely anonymous or underscored fields
+			Type: taskManagerAbi.Events["TaskResponded"].Inputs[0].Type.TupleElems[1].String(),
+		},
+	})
+	if err != nil {
+		return abi.Type{}, fmt.Errorf("error creating abi task response type: %w", err)
+	}
+
+	return taskResponseType, nil
+}
+
+func getDefaultHashFunction[Output any](taskResponseType abi.Type) TaskResponseHashFunction[Output] {
+	return func(taskResponse sdktypes.GenericOutputTaskResponse[Output]) ([32]byte, error) {
+		arguments := abi.Arguments{
+			{
+				Type: taskResponseType,
+			},
+		}
+
+		encodeTaskResponseByte, err := arguments.Pack(taskResponse)
+		if err != nil {
+			return [32]byte{}, fmt.Errorf("error encoding task response: %w", err)
+		}
+
+		var taskResponseDigest [32]byte
+		hasher := sha3.NewLegacyKeccak256()
+		hasher.Write(encodeTaskResponseByte)
+		copy(taskResponseDigest[:], hasher.Sum(nil)[:32])
+		return taskResponseDigest, nil
+	}
 }
