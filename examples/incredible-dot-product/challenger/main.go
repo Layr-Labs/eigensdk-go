@@ -6,6 +6,7 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/challenger"
+	challengerprocessor "github.com/Layr-Labs/eigensdk-go/challenger/challenger_processor"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -50,13 +51,13 @@ func main() {
 		return
 	}
 
-	challengerRaiser, err := challenger.NewChallengerRaiserFromAbi[*big.Int, *big.Int](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
+	challengerRaiser, err := challengerprocessor.NewChallengerRaiserFromAbi[*big.Int, *big.Int](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
 	if err != nil {
 		logger.Errorf("Failed to create challenger raiser: %w", err)
 		return
 	}
 
-	challengerProcessor, err := challenger.NewIndexingChallengerProcessor(logger, squareValidation, challengerRaiser)
+	challengerProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, squareValidation, challengerRaiser)
 	if err != nil {
 		logger.Errorf("Failed to create challenger verifier: %w", err)
 		return

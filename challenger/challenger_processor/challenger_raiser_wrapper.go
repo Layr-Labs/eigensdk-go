@@ -1,4 +1,4 @@
-package challenger
+package challengerprocessor
 
 import (
 	"context"

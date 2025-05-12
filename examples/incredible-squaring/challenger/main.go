@@ -6,6 +6,7 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/challenger"
+	challengerprocessor "github.com/Layr-Labs/eigensdk-go/challenger/challenger_processor"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
 	"github.com/Layr-Labs/eigensdk-go/utils"
@@ -53,7 +54,7 @@ func main() {
 		return
 	}
 
-	challengerRaiser, err := challenger.NewChallengerRaiserFromAbi[*big.Int, *big.Int](
+	challengerRaiser, err := challengerprocessor.NewChallengerRaiserFromAbi[*big.Int, *big.Int](
 		common.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3"),
 		taskManagerAbi,
 		txMgr,
@@ -64,7 +65,7 @@ func main() {
 		return
 	}
 
-	challengeVerifierImpl, err := challenger.NewIndexingChallengerProcessor(logger, squareValidation, challengerRaiser)
+	challengeVerifierImpl, err := challengerprocessor.NewIndexingChallengerProcessor(logger, squareValidation, challengerRaiser)
 	if err != nil {
 		logger.Errorf("Failed to create challenger logic from config: %v", err)
 		return
