@@ -1,7 +1,8 @@
 package eigenpod
 
 import (
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eigenpod/bindings"
+	ieigenpod "github.com/Layr-Labs/eigenlayer-contracts/pkg/bindings/IEigenPod"
+	ieigenpodmanager "github.com/Layr-Labs/eigenlayer-contracts/pkg/bindings/IEigenPodManager"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -9,29 +10,29 @@ import (
 
 type ContractBindings struct {
 	Address common.Address
-	*bindings.IEigenPod
+	*ieigenpod.IEigenPod
 }
 
 type ContractCallerBindings struct {
 	Address common.Address
-	*bindings.IEigenPodCaller
+	*ieigenpod.IEigenPodCaller
 }
 
 type ManagerContractBindings struct {
 	Address common.Address
-	*bindings.IEigenPodManager
+	*ieigenpodmanager.IEigenPodManager
 }
 
 type ManagerContractCallerBindings struct {
 	Address common.Address
-	*bindings.IEigenPodManagerCaller
+	*ieigenpodmanager.IEigenPodManagerCaller
 }
 
 func NewContractBindings(
 	address common.Address,
 	ethClient eth.HttpBackend,
 ) (*ContractBindings, error) {
-	pod, err := bindings.NewIEigenPod(address, ethClient)
+	pod, err := ieigenpod.NewIEigenPod(address, ethClient)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +46,7 @@ func NewContractCallerBindings(
 	address common.Address,
 	ethClient eth.HttpBackend,
 ) (*ContractCallerBindings, error) {
-	pod, err := bindings.NewIEigenPodCaller(address, ethClient)
+	pod, err := ieigenpod.NewIEigenPodCaller(address, ethClient)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +60,7 @@ func NewManagerContractBindings(
 	address common.Address,
 	ethClient eth.HttpBackend,
 ) (*ManagerContractBindings, error) {
-	manager, err := bindings.NewIEigenPodManager(address, ethClient)
+	manager, err := ieigenpodmanager.NewIEigenPodManager(address, ethClient)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +74,7 @@ func NewManagerContractCallerBindings(
 	address common.Address,
 	ethClient eth.HttpBackend,
 ) (*ManagerContractCallerBindings, error) {
-	manager, err := bindings.NewIEigenPodManagerCaller(address, ethClient)
+	manager, err := ieigenpodmanager.NewIEigenPodManagerCaller(address, ethClient)
 	if err != nil {
 		return nil, err
 	}
