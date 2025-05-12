@@ -23,16 +23,20 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
+type ResponseCalculator[Input any, Output any] interface {
+	ComputeResponse(taskIndex uint32, input Input) (Output, error)
+}
+
 type Operator[Input any, Output any] struct {
-	logger                logging.Logger
-	operatorId            sdktypes.OperatorId
-	aggregatorRpcClient   AggregatorRpcClienter[Output]
-	EthWsUrl              string
-	blsKeypair            *bls.KeyPair
-	newTaskCreatedLogs    chan types.Log
-	taskManagerAbi        *abi.ABI
-	responseCalculationFn ResponseCalculationFunction[Input, Output]
-	taskResponseHashFn    TaskResponseHashFunction[Output]
+	logger              logging.Logger
+	operatorId          sdktypes.OperatorId
+	aggregatorRpcClient AggregatorRpcClienter[Output]
+	EthWsUrl            string
+	blsKeypair          *bls.KeyPair
+	newTaskCreatedLogs  chan types.Log
+	taskManagerAbi      *abi.ABI
+	responseCalculator  ResponseCalculator[Input, Output]
+	taskResponseHashFn  TaskResponseHashFunction[Output]
 }
 
 type ResponseCalculationFunction[Input any, Output any] func(taskIndex uint32, input Input) (Output, error)
@@ -97,7 +101,7 @@ func getDefaultHashFunction[Output any](taskResponseType abi.Type) TaskResponseH
 
 func NewOperatorFromConfig[Input any, Output any](
 	c OperatorConfig,
-	responseCalculationFn ResponseCalculationFunction[Input, Output],
+	responseCalculator ResponseCalculator[Input, Output],
 	taskResponseHashFn TaskResponseHashFunction[Output],
 ) (*Operator[Input, Output], error) {
 	avs_config := avsregistry.Config{
@@ -182,14 +186,14 @@ func NewOperatorFromConfig[Input any, Output any](
 	}
 
 	operator := &Operator[Input, Output]{
-		logger:                c.Logger,
-		blsKeypair:            blsKeyPair,
-		aggregatorRpcClient:   *aggregatorRpcClient,
-		operatorId:            operatorId,
-		newTaskCreatedLogs:    newTaskCreatedLogs,
-		taskManagerAbi:        c.TaskManagerAbi,
-		responseCalculationFn: responseCalculationFn,
-		taskResponseHashFn:    taskResponseHashFn,
+		logger:              c.Logger,
+		blsKeypair:          blsKeyPair,
+		aggregatorRpcClient: *aggregatorRpcClient,
+		operatorId:          operatorId,
+		newTaskCreatedLogs:  newTaskCreatedLogs,
+		taskManagerAbi:      c.TaskManagerAbi,
+		responseCalculator:  responseCalculator,
+		taskResponseHashFn:  taskResponseHashFn,
 	}
 
 	c.Logger.Info("Operator info",
@@ -249,7 +253,7 @@ func (o *Operator[Input, Output]) processNewTaskCreatedLog(
 		"QuorumThresholdPercentage", newTaskCreatedLog.Task.QuorumThresholdPercentage,
 	)
 
-	output, err := o.responseCalculationFn(newTaskIndex, newTaskCreatedLog.Task.InputValue)
+	output, err := o.responseCalculator.ComputeResponse(newTaskIndex, newTaskCreatedLog.Task.InputValue)
 	if err != nil {
 		return nil, fmt.Errorf("error calculating task response: %w", err)
 	}
