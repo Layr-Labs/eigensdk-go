@@ -12,18 +12,18 @@ type ResponseCalculator[Input any, Output any] interface {
 	ComputeResponse(taskIndex uint32, input Input) (Output, error)
 }
 
-type responseCalculatorFunction[Input any, Output any] struct {
+type functionResponseCalculator[Input any, Output any] struct {
 	computeFn func(taskIndex uint32, input Input) (Output, error)
 }
 
 // Turns a function that receives a task index and an input value and returns an output value into a ResponseCalculator.
-func NewResponseCalculatorFunction[Input any, Output any](
+func NewFunctionResponseCalculator[Input any, Output any](
 	computeFn func(taskIndex uint32, input Input) (Output, error),
 ) ResponseCalculator[Input, Output] {
-	return responseCalculatorFunction[Input, Output]{computeFn: computeFn}
+	return functionResponseCalculator[Input, Output]{computeFn: computeFn}
 }
 
-func (r responseCalculatorFunction[Input, Output]) ComputeResponse(
+func (r functionResponseCalculator[Input, Output]) ComputeResponse(
 	taskIndex uint32, input Input,
 ) (Output, error) {
 	return r.computeFn(taskIndex, input)
@@ -43,7 +43,7 @@ func ComputeWithFailures[Input any, Output any](
 		return nil, fmt.Errorf("failure rate is over 100, should be a number between 0 and 100")
 	}
 
-	return NewResponseCalculatorFunction(func(taskIndex uint32, input Input) (Output, error) {
+	return NewFunctionResponseCalculator(func(taskIndex uint32, input Input) (Output, error) {
 		correctResult, err := responseCalculator.ComputeResponse(taskIndex, input)
 		if rand.Uint32()%100 < failureRatePercentage {
 			return incorrectValue, err

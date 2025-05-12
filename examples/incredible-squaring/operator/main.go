@@ -38,7 +38,7 @@ func main() {
 		TaskManagerAbi:                taskManagerAbi,
 	}
 
-	calculator := sdkoperator.NewResponseCalculatorFunction(square)
+	calculator := sdkoperator.NewFunctionResponseCalculator(square)
 
 	logic, err := sdkoperator.ComputeWithFailures(calculator, big.NewInt(0), 50)
 	if err != nil {

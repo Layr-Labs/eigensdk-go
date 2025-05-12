@@ -50,7 +50,7 @@ func main() {
 		logger.Fatalf("Failed to register operator on startup: %v", err.Error())
 	}
 
-	responseCalculator := operator.NewResponseCalculatorFunction(examplecommon.DotProduct)
+	responseCalculator := operator.NewFunctionResponseCalculator(examplecommon.DotProduct)
 
 	possibleFailureCalculator, err := operator.ComputeWithFailures(responseCalculator, big.NewInt(31234213443), 50)
 	if err != nil {
