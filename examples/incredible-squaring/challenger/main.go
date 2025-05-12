@@ -54,7 +54,7 @@ func main() {
 		return
 	}
 
-	challengerRaiser, err := challengerprocessor.NewChallengerRaiserFromAbi[*big.Int, *big.Int](
+	challengerRaiser, err := challengerprocessor.NewChallengeRaiserFromAbi[*big.Int, *big.Int](
 		common.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3"),
 		taskManagerAbi,
 		txMgr,

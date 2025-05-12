@@ -52,7 +52,7 @@ func main() {
 		return
 	}
 
-	challengerRaiser, err := challengerprocessor.NewChallengerRaiserFromAbi[examplecommon.DotProductInput, *big.Int](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
+	challengerRaiser, err := challengerprocessor.NewChallengeRaiserFromAbi[examplecommon.DotProductInput, *big.Int](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
 	if err != nil {
 		logger.Errorf("Failed to create challenger raiser: %w", err)
 		return
