@@ -90,10 +90,9 @@ func square(taskIndex uint32, numberToSquare *big.Int) (*big.Int, error) {
 
 func squareValidation(taskIndex uint32, numberToSquare *big.Int, numberSquared *big.Int) (bool, error) {
 	result, err := square(taskIndex, numberToSquare)
-	if err != nil{
+	if err != nil {
 		return false, utils.WrapError("failed to calculate square", err)
 	}
 
 	return result.Cmp(numberSquared) == 0, nil
 }
-
