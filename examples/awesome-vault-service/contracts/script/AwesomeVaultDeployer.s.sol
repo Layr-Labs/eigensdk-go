@@ -99,9 +99,7 @@ contract AwesomeVaultDeployer is Script {
         // Eigenlayer contracts
         vm.startBroadcast(deployer);
         AwesomeVaultDeploymentLib.AwesomeVaultSetupConfig memory idpConfig =
-        AwesomeVaultDeploymentLib.readAwesomeVaultConfigJson(
-            "config/avs/incredible_dot_product_config"
-        );
+            AwesomeVaultDeploymentLib.readAwesomeVaultConfigJson("config/avs/awesome_vault_config");
         configData = CoreDeploymentLib.readDeploymentJson("script/deployments/core/", block.chainid);
 
         erc20Mock = new MockERC20();

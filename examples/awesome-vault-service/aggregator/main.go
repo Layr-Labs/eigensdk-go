@@ -12,9 +12,9 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
+	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/contracts/bindings/AwesomeVaultTaskManager"
 
-	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/common"
+	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/common"
 )
 
 func main() {
@@ -24,7 +24,7 @@ func main() {
 		return
 	}
 
-	taskManagerAbi, err := taskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
+	taskManagerAbi, err := taskmanager.ContractAwesomeVaultTaskManagerMetaData.GetAbi()
 	if err != nil {
 		logger.Errorf("Failed to get task manager abi: %w", err)
 		return
@@ -68,7 +68,7 @@ func main() {
 	}
 
 	taskManagerAddr := gethcommon.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3")
-	taskResponder, err := taskprocessor.NewTaskResponderFromAbi[examplecommon.DotProductInput, *big.Int](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
+	taskResponder, err := taskprocessor.NewTaskResponderFromAbi[examplecommon.TaskInput, *big.Int](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
 	if err != nil {
 		logger.Errorf("Failed to create Task Responder: %w", err)
 		return

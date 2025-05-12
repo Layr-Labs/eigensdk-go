@@ -2,7 +2,6 @@ package challenger
 
 import (
 	"context"
-	"math/big"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/challenger"
@@ -15,13 +14,13 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
-	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/common"
-	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
+	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/common"
+	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/contracts/bindings/AwesomeVaultTaskManager"
 )
 
 type ChallengeVerifier struct {
 	logger                    logging.Logger
-	taskManagerContract       *taskmanager.ContractIncredibleDotProductTaskManager
+	taskManagerContract       *taskmanager.ContractAwesomeVaultTaskManager
 	txMgr                     txmgr.TxManager
 	delegationManagerContract *delegationmanager.ContractDelegationManager
 }
@@ -34,7 +33,7 @@ func NewChallengeVerifier(
 	delegationManagerAddr common.Address,
 ) (ChallengeVerifier, error) {
 	// Get the task manager contract with the given address
-	taskManagerContract, err := taskmanager.NewContractIncredibleDotProductTaskManager(taskManagerAddr, &ethclient)
+	taskManagerContract, err := taskmanager.NewContractAwesomeVaultTaskManager(taskManagerAddr, &ethclient)
 	if err != nil {
 		logger.Errorf("Failed to get Task Manager Contract: %w", err)
 		return ChallengeVerifier{}, err
@@ -54,11 +53,11 @@ func NewChallengeVerifier(
 	}, nil
 }
 
-var _ challenger.ChallengeVerifier[examplecommon.DotProductInput, *big.Int] = (*ChallengeVerifier)(nil)
+var _ challenger.ChallengeVerifier[examplecommon.TaskInput, [32]byte] = (*ChallengeVerifier)(nil)
 
-func (cv ChallengeVerifier) VerifyChallenge(taskIndex uint32, task sdktypes.GenericInputTask[examplecommon.DotProductInput], taskResponse sdktypes.TaskResponseData[*big.Int]) error {
+func (cv ChallengeVerifier) VerifyChallenge(taskIndex uint32, task sdktypes.GenericInputTask[examplecommon.TaskInput], taskResponse sdktypes.TaskResponseData[[32]byte]) error {
 	// Calculate response
-	totalSum, err := examplecommon.DotProduct(taskIndex, task.InputValue)
+	result, err := examplecommon.VaultSet(taskIndex, task.InputValue)
 	if err != nil {
 		cv.logger.Errorf("Failed to calculate task response: %w", err)
 		return err
@@ -66,10 +65,11 @@ func (cv ChallengeVerifier) VerifyChallenge(taskIndex uint32, task sdktypes.Gene
 
 	// Compare submitted response with calculated here
 	receivedResponse := taskResponse.TaskResponse.OutputValue
-	shouldRaiseChallenge := totalSum.Cmp(receivedResponse) != 0
+	// TODO: compare
+	shouldRaiseChallenge := result != [32]byte{0}
 
 	if shouldRaiseChallenge {
-		cv.logger.Infof("Response was not correct, expected %v and got %v", totalSum, receivedResponse)
+		cv.logger.Infof("Response was not correct, expected %v and got %v", result, receivedResponse)
 		// Call the Raise Challenge method of the on-chain contract
 
 		noSendTxOpts, err := cv.txMgr.GetNoSendTxOpts()
@@ -78,19 +78,19 @@ func (cv ChallengeVerifier) VerifyChallenge(taskIndex uint32, task sdktypes.Gene
 			return err
 		}
 
-		incredibleTask := taskmanager.IIncredibleDotProductTaskManagerTask{
-			PointsToMultiply:          taskmanager.IIncredibleDotProductTaskManagerDotProductInput{X: task.InputValue.X, Y: task.InputValue.Y},
+		taskValue := taskmanager.IAwesomeVaultTaskManagerTask{
+			Input:                     taskmanager.IAwesomeVaultTaskManagerTaskInput{Key: task.InputValue.Key, Value: task.InputValue.Value},
 			TaskCreatedBlock:          task.TaskCreatedBlock,
 			QuorumNumbers:             task.QuorumNumbers,
 			QuorumThresholdPercentage: task.QuorumThresholdPercentage,
 		}
 
-		incredibleTaskResponse := taskmanager.IIncredibleDotProductTaskManagerTaskResponse{
+		taskResponseValue := taskmanager.IAwesomeVaultTaskManagerTaskResponse{
 			ReferenceTaskIndex: taskResponse.TaskResponse.ReferenceTaskIndex,
 			Result:             taskResponse.TaskResponse.OutputValue,
 		}
 
-		incredibleTaskResponseMetadata := taskmanager.IIncredibleDotProductTaskManagerTaskResponseMetadata{
+		taskResponseMetadataValue := taskmanager.IAwesomeVaultTaskManagerTaskResponseMetadata{
 			TaskRespondedBlock: taskResponse.TaskResponseMetadata.TaskRespondedBlock,
 			HashOfNonSigners:   taskResponse.TaskResponseMetadata.HashOfNonSigners,
 		}
@@ -103,7 +103,7 @@ func (cv ChallengeVerifier) VerifyChallenge(taskIndex uint32, task sdktypes.Gene
 			}
 		}
 
-		tx, err := cv.taskManagerContract.RaiseAndResolveChallenge(noSendTxOpts, incredibleTask, incredibleTaskResponse, incredibleTaskResponseMetadata, pubkeysOfNonSigningOperators)
+		tx, err := cv.taskManagerContract.RaiseAndResolveChallenge(noSendTxOpts, taskValue, taskResponseValue, taskResponseMetadataValue, pubkeysOfNonSigningOperators)
 		if err != nil {
 			cv.logger.Errorf("Failed to create raise and resolve challenge tx: %w", err)
 			return err

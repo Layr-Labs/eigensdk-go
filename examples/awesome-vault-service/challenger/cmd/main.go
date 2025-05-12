@@ -5,13 +5,13 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/challenger"
-	examplechallenger "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/challenger"
+	examplechallenger "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/challenger"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
+	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/contracts/bindings/AwesomeVaultTaskManager"
 )
 
 func main() {
@@ -21,7 +21,7 @@ func main() {
 		return
 	}
 
-	taskManagerAbi, err := taskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
+	taskManagerAbi, err := taskmanager.ContractAwesomeVaultTaskManagerMetaData.GetAbi()
 	if err != nil {
 		logger.Errorf("Failed to get task manager abi: %w", err)
 		return

@@ -279,7 +279,7 @@ library AwesomeVaultDeploymentLib {
     function readDeploymentJson(
         uint256 chainId
     ) internal returns (DeploymentData memory) {
-        return readDeploymentJson("script/deployments/incredible-dot-product/", chainId);
+        return readDeploymentJson("script/deployments/awesome-vault/", chainId);
     }
 
     function readAwesomeVaultConfigJson(
@@ -331,7 +331,7 @@ library AwesomeVaultDeploymentLib {
     function writeDeploymentJson(
         DeploymentData memory data
     ) internal {
-        writeDeploymentJson("script/deployments/incredible-dot-product/", block.chainid, data);
+        writeDeploymentJson("script/deployments/awesome-vault/", block.chainid, data);
     }
 
     function writeDeploymentJson(

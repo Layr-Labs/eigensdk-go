@@ -11,7 +11,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/crypto/ecdsa"
-	erc20mock "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/MockERC20"
+	erc20mock "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/contracts/bindings/MockERC20"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/metrics"
 	sdkoperator "github.com/Layr-Labs/eigensdk-go/operator"

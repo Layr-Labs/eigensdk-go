@@ -14,7 +14,7 @@ import {ISlashingRegistryCoordinator} from
     "@eigenlayer-middleware/src/interfaces/ISlashingRegistryCoordinator.sol";
 
 /**
- * @title Primary entrypoint for procuring services from IncredibleDotProduct.
+ * @title Primary entrypoint for procuring services from AwesomeVaultService.
  * @author Layr Labs, Inc.
  */
 contract AwesomeVaultServiceManager is ServiceManagerBase {

@@ -2,13 +2,12 @@ package main
 
 import (
 	"context"
-	"math/big"
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/operator"
 
-	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/common"
-	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
+	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/common"
+	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/contracts/bindings/AwesomeVaultTaskManager"
 )
 
 func main() {
@@ -18,7 +17,7 @@ func main() {
 		return
 	}
 
-	taskManagerAbi, err := taskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
+	taskManagerAbi, err := taskmanager.ContractAwesomeVaultTaskManagerMetaData.GetAbi()
 	if err != nil {
 		logger.Errorf("Failed to get task manager abi: %w", err)
 		return
@@ -50,7 +49,7 @@ func main() {
 		logger.Fatalf("Failed to register operator on startup: %v", err.Error())
 	}
 
-	possibleFailureFunction, err := operator.ComputeWithFailures(examplecommon.DotProduct, failingDotProduct, 50)
+	possibleFailureFunction, err := operator.ComputeWithFailures(examplecommon.VaultSet, failingVaultSet, 50)
 	if err != nil {
 		logger.Fatalf("Failed to create the possible failure function: %v", err.Error())
 	}
@@ -67,6 +66,6 @@ func main() {
 	}
 }
 
-func failingDotProduct(taskIndex uint32, points examplecommon.DotProductInput) (*big.Int, error) {
-	return big.NewInt(31234213443), nil
+func failingVaultSet(taskIndex uint32, input examplecommon.TaskInput) ([32]byte, error) {
+	return [32]byte{0}, nil
 }

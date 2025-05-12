@@ -23,7 +23,7 @@ rm -rf bindings/*
 forge clean
 forge build
 
-avs_service_contracts="IncredibleDotProductServiceManager IncredibleDotProductTaskManager"
+avs_service_contracts="AwesomeVaultServiceManager AwesomeVaultTaskManager"
 for contract in $avs_service_contracts; do
     create_binding . $contract ./bindings
 done
