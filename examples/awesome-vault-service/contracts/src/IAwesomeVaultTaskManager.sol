@@ -4,7 +4,7 @@ pragma solidity ^0.8.9;
 import "@eigenlayer-middleware/src/libraries/BN254.sol";
 import {IStrategy} from "@eigenlayer/contracts/interfaces/IStrategy.sol";
 
-interface IIncredibleDotProductTaskManager {
+interface IAwesomeVaultTaskManager {
     // EVENTS
     event NewTaskCreated(uint32 indexed taskIndex, Task task);
 
@@ -18,7 +18,7 @@ interface IIncredibleDotProductTaskManager {
 
     // STRUCTS
     struct Task {
-        DotProductInput pointsToMultiply;
+        TaskInput input;
         uint32 taskCreatedBlock;
         // task submitter decides on the criteria for a task to be completed
         // note that this does not mean the task was "correctly" answered (i.e. the product was calculated correctly)
@@ -36,7 +36,7 @@ interface IIncredibleDotProductTaskManager {
         // Can be obtained by the operator from the event NewTaskCreated.
         uint32 referenceTaskIndex;
         // This is just the response that the operator has to compute by itself.
-        uint256 result;
+        bytes32 result;
     }
 
     // Extra information related to taskResponse, which is filled inside the contract.
@@ -47,15 +47,15 @@ interface IIncredibleDotProductTaskManager {
         bytes32 hashOfNonSigners;
     }
 
-    struct DotProductInput {
-        uint256[] X;
-        uint256[] Y;
+    struct TaskInput {
+        string key;
+        string value;
     }
 
     // FUNCTIONS
     // NOTE: this function creates new task.
     function createNewTask(
-        IIncredibleDotProductTaskManager.DotProductInput calldata points,
+        TaskInput calldata input,
         uint32 quorumThresholdPercentage,
         bytes calldata quorumNumbers
     ) external;

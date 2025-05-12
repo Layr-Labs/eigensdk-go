@@ -15,17 +15,17 @@ import {OperatorStateRetriever} from "@eigenlayer-middleware/src/OperatorStateRe
 import {InstantSlasher} from "@eigenlayer-middleware/src/slashers/InstantSlasher.sol";
 import "@eigenlayer-middleware/src/libraries/BN254.sol";
 // import {IStrategy} from "@eigenlayer/contracts/interfaces/IStrategy.sol";
-import "./IIncredibleDotProductTaskManager.sol";
+import "./IAwesomeVaultTaskManager.sol";
 import {IAllocationManagerTypes} from "@eigenlayer/contracts/interfaces/IAllocationManager.sol";
 import {OperatorSet} from "@eigenlayer/contracts/libraries/OperatorSetLib.sol";
 
-contract IncredibleDotProductTaskManager is
+contract AwesomeVaultTaskManager is
     Initializable,
     OwnableUpgradeable,
     Pausable,
     BLSSignatureChecker,
     OperatorStateRetriever,
-    IIncredibleDotProductTaskManager
+    IAwesomeVaultTaskManager
 {
     using BN254 for BN254.G1Point;
 
@@ -97,13 +97,13 @@ contract IncredibleDotProductTaskManager is
     /* FUNCTIONS */
     // NOTE: this function creates new task, assigns it a taskId
     function createNewTask(
-        IIncredibleDotProductTaskManager.DotProductInput calldata points,
+        IAwesomeVaultTaskManager.TaskInput calldata input,
         uint32 quorumThresholdPercentage,
         bytes calldata quorumNumbers
     ) external onlyTaskGenerator {
         // create a new task struct
         Task memory newTask;
-        newTask.pointsToMultiply = points;
+        newTask.input = input;
         newTask.taskCreatedBlock = uint32(block.number);
         newTask.quorumThresholdPercentage = quorumThresholdPercentage;
         newTask.quorumNumbers = quorumNumbers;
@@ -179,7 +179,7 @@ contract IncredibleDotProductTaskManager is
         BN254.G1Point[] memory pubkeysOfNonSigningOperators
     ) external {
         uint32 referenceTaskIndex = taskResponse.referenceTaskIndex;
-        IIncredibleDotProductTaskManager.DotProductInput memory pointsToMultiply = task.pointsToMultiply;
+
         // some logical checks
         require(
             allTaskResponses[referenceTaskIndex] != bytes32(0), "Task hasn't been responded to yet"
@@ -200,14 +200,10 @@ contract IncredibleDotProductTaskManager is
             "The challenge period for this task has already expired."
         );
 
-        // // logic for checking whether challenge is valid or not
-        uint256 totalSum = 0;
-        for (uint256 index = 0; index < pointsToMultiply.X.length; index++) {
-            totalSum = totalSum + (pointsToMultiply.X[index] * pointsToMultiply.Y[index]);
-        }
-
-        bool isResponseCorrect = (totalSum == taskResponse.result);
-        // // if response was correct, no slashing happens so we return
+        // logic for checking whether challenge is valid or not
+        // TODO: submit proof that shows the response is incorrect
+        bool isResponseCorrect = true;
+        // if response was correct, no slashing happens so we return
         if (isResponseCorrect == true) {
             emit TaskChallengedUnsuccessfully(referenceTaskIndex, msg.sender);
             return;

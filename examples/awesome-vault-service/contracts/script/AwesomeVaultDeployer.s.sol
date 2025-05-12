@@ -23,12 +23,9 @@ import {IndexRegistry} from "@eigenlayer-middleware/src/IndexRegistry.sol";
 import {StakeRegistry} from "@eigenlayer-middleware/src/StakeRegistry.sol";
 import "@eigenlayer-middleware/src/OperatorStateRetriever.sol";
 
-import {
-    IncredibleDotProductServiceManager,
-    IServiceManager
-} from "../src/IncredibleDotProductServiceManager.sol";
-import {IncredibleDotProductTaskManager} from "../src/IncredibleDotProductTaskManager.sol";
-import {IIncredibleDotProductTaskManager} from "../src/IIncredibleDotProductTaskManager.sol";
+import {AwesomeVaultServiceManager, IServiceManager} from "../src/AwesomeVaultServiceManager.sol";
+import {AwesomeVaultTaskManager} from "../src/AwesomeVaultTaskManager.sol";
+import {IAwesomeVaultTaskManager} from "../src/IAwesomeVaultTaskManager.sol";
 import "../src/MockERC20.sol";
 
 import "forge-std/Test.sol";
@@ -38,14 +35,14 @@ import "forge-std/console.sol";
 import {StrategyFactory} from "@eigenlayer/contracts/strategies/StrategyFactory.sol";
 
 import {ContractsRegistry} from "../src/ContractsRegistry.sol";
-import {IncredibleDotProductDeploymentLib} from "../script/utils/IncredibleDotProductDeploymentLib.sol";
+import {AwesomeVaultDeploymentLib} from "../script/utils/AwesomeVaultDeploymentLib.sol";
 import {UpgradeableProxyLib} from "./utils/UpgradeableProxyLib.sol";
 
 import {FundOperator} from "./utils/FundOperator.sol";
 // # To deploy and verify our contract
-// forge script script/IncredibleDotProductDeployer.s.sol:IncredibleDotProductDeployer --rpc-url $RPC_URL  --private-key $PRIVATE_KEY --broadcast -vvvv
+// forge script script/AwesomeVaultDeployer.s.sol:AwesomeVaultDeployer --rpc-url $RPC_URL  --private-key $PRIVATE_KEY --broadcast -vvvv
 
-contract IncredibleDotProductDeployer is Script {
+contract AwesomeVaultDeployer is Script {
     // DEPLOYMENT CONSTANTS
     uint256 public constant QUORUM_THRESHOLD_PERCENTAGE = 100;
     uint32 public constant TASK_RESPONSE_WINDOW_BLOCK = 30;
@@ -61,8 +58,8 @@ contract IncredibleDotProductDeployer is Script {
 
     address public rewardscoordinator;
 
-    ProxyAdmin public incredibleDotProductProxyAdmin;
-    PauserRegistry public incredibleDotProductPauserReg;
+    ProxyAdmin public awesomeVaultProxyAdmin;
+    PauserRegistry public awesomeVaultPauserReg;
 
     regcoord.RegistryCoordinator public registryCoordinator;
     regcoord.IRegistryCoordinator public registryCoordinatorImplementation;
@@ -78,16 +75,16 @@ contract IncredibleDotProductDeployer is Script {
 
     OperatorStateRetriever public operatorStateRetriever;
 
-    IncredibleDotProductServiceManager public incredibleDotProductServiceManager;
-    IServiceManager public incredibleDotProductServiceManagerImplementation;
+    AwesomeVaultServiceManager public awesomeVaultServiceManager;
+    IServiceManager public awesomeVaultServiceManagerImplementation;
 
-    IncredibleDotProductTaskManager public incredibleDotProductTaskManager;
-    IIncredibleDotProductTaskManager public incredibleDotProductTaskManagerImplementation;
+    AwesomeVaultTaskManager public awesomeVaultTaskManager;
+    IAwesomeVaultTaskManager public awesomeVaultTaskManagerImplementation;
     CoreDeploymentLib.DeploymentData internal configData;
-    IStrategy incredibleDotProductStrategy;
+    IStrategy awesomeVaultStrategy;
     address private deployer;
     MockERC20 public erc20Mock;
-    IncredibleDotProductDeploymentLib.DeploymentData incredibleDotProductDeployment;
+    AwesomeVaultDeploymentLib.DeploymentData awesomeVaultDeployment;
 
     using UpgradeableProxyLib for address;
 
@@ -101,8 +98,8 @@ contract IncredibleDotProductDeployer is Script {
     function run() external {
         // Eigenlayer contracts
         vm.startBroadcast(deployer);
-        IncredibleDotProductDeploymentLib.IncredibleDotProductSetupConfig memory idpConfig =
-        IncredibleDotProductDeploymentLib.readIncredibleDotProductConfigJson(
+        AwesomeVaultDeploymentLib.AwesomeVaultSetupConfig memory idpConfig =
+        AwesomeVaultDeploymentLib.readAwesomeVaultConfigJson(
             "config/avs/incredible_dot_product_config"
         );
         configData = CoreDeploymentLib.readDeploymentJson("script/deployments/core/", block.chainid);
@@ -114,23 +111,23 @@ contract IncredibleDotProductDeployer is Script {
         console.log(idpConfig.operator_2_addr);
         (bool s,) = idpConfig.operator_2_addr.call{value: 0.1 ether}("");
         require(s);
-        incredibleDotProductStrategy =
+        awesomeVaultStrategy =
             IStrategy(StrategyFactory(configData.strategyFactory).deployNewStrategy(erc20Mock));
         rewardscoordinator = configData.rewardsCoordinator;
 
         proxyAdmin = UpgradeableProxyLib.deployProxyAdmin();
-        require(address(incredibleDotProductStrategy) != address(0));
-        incredibleDotProductDeployment = IncredibleDotProductDeploymentLib.deployContracts(
-            proxyAdmin, configData, address(incredibleDotProductStrategy), idpConfig, msg.sender
+        require(address(awesomeVaultStrategy) != address(0));
+        awesomeVaultDeployment = AwesomeVaultDeploymentLib.deployContracts(
+            proxyAdmin, configData, address(awesomeVaultStrategy), idpConfig, msg.sender
         );
-        console.log("instantSlasher", incredibleDotProductDeployment.slasher);
+        console.log("instantSlasher", awesomeVaultDeployment.slasher);
 
         FundOperator.fund_operator(
-            address(erc20Mock), incredibleDotProductDeployment.incredibleDotProductServiceManager, 1e18
+            address(erc20Mock), awesomeVaultDeployment.awesomeVaultServiceManager, 1e18
         );
-        incredibleDotProductDeployment.token = address(erc20Mock);
+        awesomeVaultDeployment.token = address(erc20Mock);
 
-        IncredibleDotProductDeploymentLib.writeDeploymentJson(incredibleDotProductDeployment);
+        AwesomeVaultDeploymentLib.writeDeploymentJson(awesomeVaultDeployment);
 
         vm.stopBroadcast();
     }

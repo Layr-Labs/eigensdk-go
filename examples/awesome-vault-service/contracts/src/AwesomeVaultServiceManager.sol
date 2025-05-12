@@ -2,7 +2,7 @@
 pragma solidity ^0.8.9;
 
 import "@eigenlayer/contracts/libraries/BytesLib.sol";
-import "./IIncredibleDotProductTaskManager.sol";
+import "./IAwesomeVaultTaskManager.sol";
 import "@eigenlayer-middleware/src/ServiceManagerBase.sol";
 import {
     IAllocationManager,
@@ -17,16 +17,16 @@ import {ISlashingRegistryCoordinator} from
  * @title Primary entrypoint for procuring services from IncredibleDotProduct.
  * @author Layr Labs, Inc.
  */
-contract IncredibleDotProductServiceManager is ServiceManagerBase {
+contract AwesomeVaultServiceManager is ServiceManagerBase {
     using BytesLib for bytes;
 
-    IIncredibleDotProductTaskManager public immutable incredibleDotProductTaskManager;
+    IAwesomeVaultTaskManager public immutable awesomeVaultTaskManager;
 
     /// @notice when applied to a function, ensures that the function is only callable by the `registryCoordinator`.
-    modifier onlyIncredibleDotProductTaskManager() {
+    modifier onlyAwesomeVaultTaskManager() {
         require(
-            msg.sender == address(incredibleDotProductTaskManager),
-            "onlyIncredibleDotProductTaskManager: not from credible Dot Product task manager"
+            msg.sender == address(awesomeVaultTaskManager),
+            "onlyAwesomeVaultTaskManager: not from Awesome Vault task manager"
         );
         _;
     }
@@ -38,7 +38,7 @@ contract IncredibleDotProductServiceManager is ServiceManagerBase {
         address rewards_coordinator,
         IAllocationManager allocationManager,
         IPermissionController _permissionController,
-        IIncredibleDotProductTaskManager _incredibleDotProductTaskManager
+        IAwesomeVaultTaskManager _awesomeVaultTaskManager
     )
         ServiceManagerBase(
             _avsDirectory,
@@ -49,7 +49,7 @@ contract IncredibleDotProductServiceManager is ServiceManagerBase {
             allocationManager
         )
     {
-        incredibleDotProductTaskManager = _incredibleDotProductTaskManager;
+        awesomeVaultTaskManager = _awesomeVaultTaskManager;
     }
 
     function initialize(address initialOwner, address rewardsInitiator) external initializer {
