@@ -33,7 +33,7 @@ func (r functionResponseCalculator[Input, Output]) ComputeResponse(
 // It returns a new ResponseCalculator that will compute a response using the received response calculator,
 // but swap the response for the incorrect value with a certain probability.
 //
-// The function will return an error if the failure rate percentage is over 100.
+// An error will be returned if the given failure rate percentage is over 100.
 func NewFailingResponseCalculator[Input any, Output any](
 	responseCalculator ResponseCalculator[Input, Output],
 	failureRatePercentage uint32,
