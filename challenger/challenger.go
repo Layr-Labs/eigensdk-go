@@ -14,14 +14,14 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-type ChallengeVerifier[Input any, Output any] interface {
+type ChallengerProcessor[Input any, Output any] interface {
 	ProcessNewTaskCreated(taskIndex uint32, task sdktypes.GenericInputTask[Input]) error
 	VerifyChallenge(taskIndex uint32, taskResponse sdktypes.TaskResponseData[Output]) error
 }
 
 type Challenger[Input any, Output any] struct {
 	logger             logging.Logger
-	challengeVerifier  ChallengeVerifier[Input, Output]
+	challengeVerifier  ChallengerProcessor[Input, Output]
 	taskResponseChan   chan types.Log
 	newTaskCreatedChan chan types.Log
 
@@ -32,7 +32,7 @@ type Challenger[Input any, Output any] struct {
 
 func NewChallenger[Input any, Output any](
 	c ChallengerConfig,
-	challengeVerifier ChallengeVerifier[Input, Output],
+	challengeVerifier ChallengerProcessor[Input, Output],
 ) (*Challenger[Input, Output], error) {
 	client, err := ethclient.Dial(c.EthWsUrl)
 	if err != nil {
