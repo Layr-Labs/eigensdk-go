@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"slices"
+	"strings"
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/operator"
+	"github.com/ethereum/go-ethereum/crypto"
 
 	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/common"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/contracts/bindings/AwesomeVaultTaskManager"
@@ -49,7 +52,23 @@ func main() {
 		logger.Fatalf("Failed to register operator on startup: %v", err.Error())
 	}
 
-	possibleFailureFunction, err := operator.ComputeWithFailures(examplecommon.VaultSet, failingVaultSet, 50)
+	cmpFn := func(vault examplecommon.TaskInput, key string) int {
+		return strings.Compare(vault.Key, key)
+	}
+
+	vaults := make([]examplecommon.TaskInput, 0)
+
+	computeFn := func(taskIndex uint32, input examplecommon.TaskInput) ([32]byte, error) {
+		index, wasFound := slices.BinarySearchFunc(vaults, input.Key, cmpFn)
+		if wasFound {
+			vaults[index].Value = input.Value
+		} else {
+			vaults = slices.Insert(vaults, index, input)
+		}
+		return computeVaultsRoot(vaults), nil
+	}
+
+	possibleFailureFunction, err := operator.ComputeWithFailures(computeFn, failingVaultSet, 50)
 	if err != nil {
 		logger.Fatalf("Failed to create the possible failure function: %v", err.Error())
 	}
@@ -68,4 +87,34 @@ func main() {
 
 func failingVaultSet(taskIndex uint32, input examplecommon.TaskInput) ([32]byte, error) {
 	return [32]byte{0}, nil
+}
+
+func computeVaultsRoot(vaults []examplecommon.TaskInput) [32]byte {
+	leaves := make([][32]byte, len(vaults))
+	for i, vault := range vaults {
+		leaves[i] = hashVault(vault)
+	}
+	for len(leaves) > 1 {
+		halfLength := (len(leaves) + 1) / 2
+		for i := range halfLength {
+			rightIdx := i*2 + 1
+			if rightIdx >= len(leaves) {
+				rightIdx = i * 2
+			}
+			leaves[i] = hashNodes(leaves[i*2], leaves[rightIdx])
+		}
+		leaves = leaves[:halfLength]
+	}
+	return leaves[0]
+}
+
+func hashVault(input examplecommon.TaskInput) [32]byte {
+	return crypto.Keccak256Hash([]byte(input.Key + input.Value))
+}
+
+func hashNodes(leftNode [32]byte, rightNode [32]byte) [32]byte {
+	if slices.Compare(leftNode[:], rightNode[:]) > 0 {
+		leftNode, rightNode = rightNode, leftNode
+	}
+	return crypto.Keccak256Hash(leftNode[:], rightNode[:])
 }
