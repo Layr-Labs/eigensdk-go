@@ -1,7 +1,8 @@
 package eigenpod
 
 import (
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eigenpod/bindings"
+	ieigenpod "github.com/Layr-Labs/eigenlayer-contracts/pkg/bindings/IEigenPod"
+	ieigenpodmanager "github.com/Layr-Labs/eigenlayer-contracts/pkg/bindings/IEigenPodManager"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/utils"
@@ -15,7 +16,7 @@ import (
 type ChainReader struct {
 	logger    logging.Logger
 	ethClient eth.HttpBackend
-	*bindings.IEigenPodCaller
+	*ieigenpod.IEigenPodCaller
 }
 
 // ManagerChainReader is a reader for the EigenPodManager contract.
@@ -24,11 +25,11 @@ type ChainReader struct {
 type ManagerChainReader struct {
 	logger    logging.Logger
 	ethClient eth.HttpBackend
-	*bindings.IEigenPodManagerCaller
+	*ieigenpodmanager.IEigenPodManagerCaller
 }
 
 func newChainReader(
-	eigenPod *bindings.IEigenPodCaller,
+	eigenPod *ieigenpod.IEigenPodCaller,
 	ethClient eth.HttpBackend,
 	logger logging.Logger,
 ) *ChainReader {
@@ -42,7 +43,7 @@ func newChainReader(
 }
 
 func newManagerChainReader(
-	manager *bindings.IEigenPodManagerCaller,
+	manager *ieigenpodmanager.IEigenPodManagerCaller,
 	ethClient eth.HttpBackend,
 	logger logging.Logger,
 ) *ManagerChainReader {

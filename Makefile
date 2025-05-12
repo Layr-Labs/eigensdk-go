@@ -107,13 +107,9 @@ else
 	cd contracts && ./generate-bindings.sh $(sdk_location) $(sdk_default) $(sdk_bindings_location)
 endif
 
-.PHONY: eigenpod-bindings
-eigenpod-bindings: ## generates contract bindings for eigenpod
-	cd chainio/clients/eigenpod && ./generate.sh
-
 .PHONY: bindings
 bindings: ## generates all contract bindings
-	rm -rf contracts/bindings/* && make core-bindings middleware-bindings sdk-bindings eigenpod-bindings
+	rm -rf contracts/bindings/* && make core-bindings middleware-bindings sdk-bindings
 
 
 ___CONTRACTS___: ## 
@@ -175,4 +171,4 @@ endif
 
 .PHONY: M2-bindings
 M2-bindings: ## generates all contract bindings
-	rm -rf M2-contracts/bindings/* && make M2-core-bindings M2-middleware-bindings M2-sdk-bindings eigenpod-bindings
+	rm -rf M2-contracts/bindings/* && make M2-core-bindings M2-middleware-bindings M2-sdk-bindings
