@@ -5,7 +5,7 @@ type TaskInput struct {
 	Value string
 }
 
-// This function computes the dot product of a pair of points
+// This function computes simulates the vault setting behavior
 func VaultSet(taskIndex uint32, input TaskInput) ([32]byte, error) {
 	// TODO: complete
 	return [32]byte{0}, nil
