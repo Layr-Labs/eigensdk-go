@@ -3,8 +3,6 @@ package taskprocessor
 import (
 	"context"
 	"fmt"
-	"reflect"
-	"strings"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
@@ -106,11 +104,11 @@ func (senderWrapper *taskResponderContractWrapper[Input, Output]) RespondToTask(
 		return utils.WrapError("Error getting tx opts", err)
 	}
 
-	inputFieldName := capitalizeFieldName(senderWrapper.taskManagerAbi.Methods["respondToTask"].Inputs[0].Type.TupleRawNames[0])
-	outputFieldName := capitalizeFieldName(senderWrapper.taskManagerAbi.Methods["respondToTask"].Inputs[1].Type.TupleRawNames[1])
+	inputFieldName := utils.CapitalizeFieldName(senderWrapper.taskManagerAbi.Methods["respondToTask"].Inputs[0].Type.TupleRawNames[0])
+	outputFieldName := utils.CapitalizeFieldName(senderWrapper.taskManagerAbi.Methods["respondToTask"].Inputs[1].Type.TupleRawNames[1])
 
-	newTaskStruct := copyStructAndChangeFieldName(task, "InputValue", inputFieldName)
-	newTaskResponseStruct := copyStructAndChangeFieldName(taskResponse, "OutputValue", outputFieldName)
+	newTaskStruct := utils.CopyStructAndChangeFieldName(task, "InputValue", inputFieldName)
+	newTaskResponseStruct := utils.CopyStructAndChangeFieldName(taskResponse, "OutputValue", outputFieldName)
 
 	tx, err := senderWrapper.contract.RespondToTask(txOpts, newTaskStruct, newTaskResponseStruct, nonSignersStakesAndSig)
 	if err != nil {
@@ -126,32 +124,4 @@ func (senderWrapper *taskResponderContractWrapper[Input, Output]) RespondToTask(
 	}
 
 	return nil
-}
-
-func capitalizeFieldName(name string) string {
-	return strings.ToUpper(name[:1]) + name[1:]
-}
-
-func copyStructAndChangeFieldName(originalStruct any, previousName string, newName string) any {
-	val := reflect.ValueOf(originalStruct)
-	typ := reflect.TypeOf(originalStruct)
-
-	var newFields []reflect.StructField
-	for i := 0; i < typ.NumField(); i++ {
-		field := typ.Field(i)
-		if field.Name == previousName {
-			field.Name = newName
-		}
-		newFields = append(newFields, field)
-	}
-
-	newStructType := reflect.StructOf(newFields)
-	newStruct := reflect.New(newStructType).Elem()
-
-	for i := 0; i < newStruct.NumField(); i++ {
-		originalField2 := val.Field(i)
-		newStruct.Field(i).Set(originalField2)
-	}
-
-	return newStruct.Interface()
 }
