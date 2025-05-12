@@ -34,12 +34,7 @@ func NewChallengerRaiserFromAbi[Input any, Output any](address common.Address, a
 	boundContract := bind.NewBoundContract(address, *abi, httpClient, httpClient, httpClient)
 	// TODO: check if the ABI is compatible
 	contract := taskManagerAbiContract[Input, Output]{boundContract}
-	return NewChallengerRaiserFromContract(abi, contract, txMgr), nil
-}
-
-// Creates a ChallengerRaiser from a contract implementing the given interface.
-func NewChallengerRaiserFromContract[Input any, Output any](taskManagerAbi *abi.ABI, contract taskManagerAbiContract[Input, Output], txMgr txmgr.TxManager) ChallengerRaiser[Input, Output] {
-	return &challengerRaiserContractWrapper[Input, Output]{taskManagerAbi, contract, txMgr}
+	return &challengerRaiserContractWrapper[Input, Output]{abi, contract, txMgr}, nil
 }
 
 func (challengerRaiser *challengerRaiserContractWrapper[Input, Output]) RaiseChallenge(

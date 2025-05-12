@@ -86,12 +86,7 @@ func NewTaskResponderFromAbi[Input any, Output any](address common.Address, abi 
 	boundContract := bind.NewBoundContract(address, *abi, httpClient, httpClient, httpClient)
 	// TODO: check if the ABI is compatible
 	contract := taskManagerAbiContract[Input, Output]{boundContract}
-	return NewTaskResponderFromContract(abi, contract, txMgr), nil
-}
-
-// Creates a TaskResponder from a contract implementing the given interface.
-func NewTaskResponderFromContract[Input any, Output any](taskManagerAbi *abi.ABI, contract taskManagerAbiContract[Input, Output], txMgr txmgr.TxManager) TaskResponder[Input, Output] {
-	return &taskResponderContractWrapper[Input, Output]{taskManagerAbi, contract, txMgr}
+	return &taskResponderContractWrapper[Input, Output]{abi, contract, txMgr}, nil
 }
 
 func (senderWrapper *taskResponderContractWrapper[Input, Output]) RespondToTask(
