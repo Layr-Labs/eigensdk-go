@@ -202,7 +202,7 @@ contract AwesomeVaultTaskManager is
 
         // logic for checking whether challenge is valid or not
         // TODO: submit proof that shows the response is incorrect
-        bool isResponseCorrect = true;
+        bool isResponseCorrect = false;
         // if response was correct, no slashing happens so we return
         if (isResponseCorrect == true) {
             emit TaskChallengedUnsuccessfully(referenceTaskIndex, msg.sender);
