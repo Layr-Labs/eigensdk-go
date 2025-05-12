@@ -59,15 +59,15 @@ func main() {
 		EthWsUrl:                   "ws://localhost:8545",
 		AggregatorServerIpPortAddr: "localhost:8090",
 
-		RegistryCoordinatorAddress:    gethcommon.HexToAddress("0x7bc06c482dead17c0e297afbc32f6e63d3846650"),
-		OperatorStateRetrieverAddress: gethcommon.HexToAddress("0x4c5859f0f772848b2d91f1d83e2fe57935348029"),
-		ServiceManagerAddress:         gethcommon.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"),
+		RegistryCoordinatorAddress:    gethcommon.HexToAddress("0xfd471836031dc5108809d173a067e8486b9047a3"),
+		OperatorStateRetrieverAddress: gethcommon.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"),
+		ServiceManagerAddress:         gethcommon.HexToAddress("0xcd8a1c3ba11cf5ecfa6267617243239504a98d90"),
 
 		EthHttpClient:   ethClient,
 		EcdsaPrivateKey: ecdsaPrivateKey,
 	}
 
-	taskManagerAddr := gethcommon.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3")
+	taskManagerAddr := gethcommon.HexToAddress("0x7bc06c482dead17c0e297afbc32f6e63d3846650")
 	taskResponder, err := taskprocessor.NewTaskResponderFromAbi[examplecommon.TaskInput, *big.Int](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
 	if err != nil {
 		logger.Errorf("Failed to create Task Responder: %w", err)
