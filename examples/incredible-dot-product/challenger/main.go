@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
+	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/common"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
 )
 
@@ -51,13 +52,13 @@ func main() {
 		return
 	}
 
-	challengerRaiser, err := challengerprocessor.NewChallengerRaiserFromAbi[*big.Int, *big.Int](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
+	challengerRaiser, err := challengerprocessor.NewChallengerRaiserFromAbi[examplecommon.DotProductInput, *big.Int](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
 	if err != nil {
 		logger.Errorf("Failed to create challenger raiser: %w", err)
 		return
 	}
 
-	challengerProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, squareValidation, challengerRaiser)
+	challengerProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, dotProductValidation, challengerRaiser)
 	if err != nil {
 		logger.Errorf("Failed to create challenger verifier: %w", err)
 		return
@@ -82,17 +83,11 @@ func main() {
 	}
 }
 
-func square(taskIndex uint32, numberToSquare *big.Int) (*big.Int, error) {
-	numberSquared := big.NewInt(0).Exp(numberToSquare, big.NewInt(2), nil)
-
-	return numberSquared, nil
-}
-
-func squareValidation(taskIndex uint32, numberToSquare *big.Int, numberSquared *big.Int) (bool, error) {
-	result, err := square(taskIndex, numberToSquare)
+func dotProductValidation(taskIndex uint32, points examplecommon.DotProductInput, totalSum *big.Int) (bool, error) {
+	result, err := examplecommon.DotProduct(taskIndex, points)
 	if err != nil {
 		return false, utils.WrapError("failed to calculate square", err)
 	}
 
-	return result.Cmp(numberSquared) == 0, nil
+	return result.Cmp(totalSum) != 0, nil
 }
