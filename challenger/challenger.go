@@ -16,7 +16,7 @@ import (
 
 type ChallengerProcessor[Input any, Output any] interface {
 	ProcessNewTaskCreated(taskIndex uint32, task sdktypes.GenericInputTask[Input]) error
-	VerifyChallenge(taskIndex uint32, taskResponse sdktypes.TaskResponseData[Output]) error
+	ProcessTaskResponded(taskIndex uint32, taskResponse sdktypes.TaskResponseData[Output]) error
 }
 
 type Challenger[Input any, Output any] struct {
@@ -83,7 +83,7 @@ func (c *Challenger[Input, Output]) Start(ctx context.Context) error {
 			}
 		case taskResponseLog := <-c.taskResponseChan:
 			c.logger.Info("Task response log received")
-			err := c.processTaskResponseLog(taskResponseLog)
+			err := c.processTaskRespondedLog(taskResponseLog)
 			if err != nil {
 				c.logger.Fatalf("Error processing TaskResponded log: %v", err)
 			}
@@ -110,7 +110,7 @@ func (c *Challenger[Input, Output]) processNewTaskCreatedLog(log types.Log) erro
 	return nil
 }
 
-func (c *Challenger[Input, Output]) processTaskResponseLog(
+func (c *Challenger[Input, Output]) processTaskRespondedLog(
 	log types.Log,
 ) error {
 	var taskRespondedLog sdktypes.TaskRespondedEvent[Output]
@@ -130,7 +130,7 @@ func (c *Challenger[Input, Output]) processTaskResponseLog(
 		NonSigningOperatorPubKeys: nonSigningOperatorPubKeys,
 	}
 
-	err = c.challengeVerifier.VerifyChallenge(taskIndex, taskResponseData)
+	err = c.challengeVerifier.ProcessTaskResponded(taskIndex, taskResponseData)
 	if err != nil {
 		return fmt.Errorf("error verifying the challenge: %w", err)
 	}

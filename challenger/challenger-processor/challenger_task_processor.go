@@ -39,7 +39,7 @@ func (icp IndexingChallengerProcessor[Input, Output]) ProcessNewTaskCreated(newT
 	return nil
 }
 
-func (icp IndexingChallengerProcessor[Input, Output]) VerifyChallenge(taskIndex uint32, taskResponse sdktypes.TaskResponseData[Output]) error {
+func (icp IndexingChallengerProcessor[Input, Output]) ProcessTaskResponded(taskIndex uint32, taskResponse sdktypes.TaskResponseData[Output]) error {
 	task, found := icp.tasks[taskIndex]
 	if !found {
 		return fmt.Errorf("could not find the task for the received task index")

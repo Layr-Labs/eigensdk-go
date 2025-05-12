@@ -65,7 +65,7 @@ func main() {
 		return
 	}
 
-	challengeVerifierImpl, err := challengerprocessor.NewIndexingChallengerProcessor(logger, squareValidation, challengerRaiser)
+	indexingTaskProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, squareValidation, challengerRaiser)
 	if err != nil {
 		logger.Errorf("Failed to create challenger logic from config: %v", err)
 		return
@@ -73,7 +73,7 @@ func main() {
 
 	challenger, err := challenger.NewChallenger(
 		cfg,
-		challengeVerifierImpl,
+		indexingTaskProcessor,
 	)
 	if err != nil {
 		logger.Errorf("Failed to create challenger from config: %v", err)
