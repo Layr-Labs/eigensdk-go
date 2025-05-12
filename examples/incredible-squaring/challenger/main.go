@@ -15,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/bindings/taskManager"
+	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/common"
 )
 
 func main() {
@@ -87,14 +88,8 @@ func main() {
 	}
 }
 
-func square(taskIndex uint32, numberToSquare *big.Int) (*big.Int, error) {
-	numberSquared := big.NewInt(0).Exp(numberToSquare, big.NewInt(2), nil)
-
-	return numberSquared, nil
-}
-
 func squareValidation(taskIndex uint32, numberToSquare *big.Int, numberSquared *big.Int) (bool, error) {
-	result, err := square(taskIndex, numberToSquare)
+	result, err := examplecommon.Square(taskIndex, numberToSquare)
 	if err != nil {
 		return false, utils.WrapError("failed to calculate square", err)
 	}
