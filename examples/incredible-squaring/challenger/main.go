@@ -6,7 +6,7 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/challenger"
-	challengerprocessor "github.com/Layr-Labs/eigensdk-go/challenger/challenger_processor"
+	challengerprocessor "github.com/Layr-Labs/eigensdk-go/challenger/challenger-processor"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
 	"github.com/Layr-Labs/eigensdk-go/utils"
