@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-import "@eigenlayer/contracts/libraries/BytesLib.sol";
 import "./IIncredibleDotProductTaskManager.sol";
 import "@eigenlayer-middleware/src/ServiceManagerBase.sol";
 import {
@@ -18,8 +17,6 @@ import {ISlashingRegistryCoordinator} from
  * @author Layr Labs, Inc.
  */
 contract IncredibleDotProductServiceManager is ServiceManagerBase {
-    using BytesLib for bytes;
-
     IIncredibleDotProductTaskManager public immutable incredibleDotProductTaskManager;
 
     /// @notice when applied to a function, ensures that the function is only callable by the `registryCoordinator`.
