@@ -66,7 +66,7 @@ func (cv ChallengeVerifier) VerifyChallenge(taskIndex uint32, task sdktypes.Gene
 	// Compare submitted response with calculated here
 	receivedResponse := taskResponse.TaskResponse.OutputValue
 	// TODO: compare
-	shouldRaiseChallenge := result != [32]byte{0}
+	shouldRaiseChallenge := result == [32]byte{0}
 
 	if shouldRaiseChallenge {
 		cv.logger.Infof("Response was not correct, expected %v and got %v", result, receivedResponse)
