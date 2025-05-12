@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	internalutils "github.com/Layr-Labs/eigensdk-go/internal/utils"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
-	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
@@ -72,8 +72,8 @@ func TestIncredibleSquaringAbi(t *testing.T) {
 		NonSignerStakeIndices:        [][]uint32{{0}},
 	}
 
-	taskReflectStruct := utils.CopyStructAndChangeFieldName(originalTaskStruct, "InputValue", "NumberToBeSquared")
-	taskResponseReflectStruct := utils.CopyStructAndChangeFieldName(originalTaskResponseStruct, "OutputValue", "NumberSquared")
+	taskReflectStruct := internalutils.CopyStructAndChangeFieldName(originalTaskStruct, "InputValue", "NumberToBeSquared")
+	taskResponseReflectStruct := internalutils.CopyStructAndChangeFieldName(originalTaskResponseStruct, "OutputValue", "NumberSquared")
 
 	packedBytes, err := taskManagerAbi.Pack("respondToTask", taskReflectStruct, taskResponseReflectStruct, nonSigStruct)
 	require.NoError(t, err)
@@ -108,8 +108,8 @@ func TestSimpleStructValueAbi(t *testing.T) {
 		NonSignerStakeIndices:        [][]uint32{{0}},
 	}
 
-	taskReflectStruct := utils.CopyStructAndChangeFieldName(originalTaskStruct, "InputValue", "InputPoint")
-	taskResponseReflectStruct := utils.CopyStructAndChangeFieldName(originalTaskResponseStruct, "OutputValue", "OutputPoint")
+	taskReflectStruct := internalutils.CopyStructAndChangeFieldName(originalTaskStruct, "InputValue", "InputPoint")
+	taskResponseReflectStruct := internalutils.CopyStructAndChangeFieldName(originalTaskResponseStruct, "OutputValue", "OutputPoint")
 
 	packedBytes, err := parsedAbi.Pack("respondToTask", taskReflectStruct, taskResponseReflectStruct, nonSigStruct)
 	require.NoError(t, err)
@@ -144,8 +144,8 @@ func TestStructureOfVectorsAbi(t *testing.T) {
 		NonSignerStakeIndices:        [][]uint32{{0}},
 	}
 
-	taskReflectStruct := utils.CopyStructAndChangeFieldName(originalTaskStruct, "InputValue", "DoubleVector")
-	taskResponseReflectStruct := utils.CopyStructAndChangeFieldName(originalTaskResponseStruct, "OutputValue", "DoubleVector")
+	taskReflectStruct := internalutils.CopyStructAndChangeFieldName(originalTaskStruct, "InputValue", "DoubleVector")
+	taskResponseReflectStruct := internalutils.CopyStructAndChangeFieldName(originalTaskResponseStruct, "OutputValue", "DoubleVector")
 
 	packedBytes, err := parsedAbi.Pack("respondToTask", taskReflectStruct, taskResponseReflectStruct, nonSigStruct)
 	require.NoError(t, err)
@@ -180,8 +180,8 @@ func TestAddressAndBoolValuesAbi(t *testing.T) {
 		NonSignerStakeIndices:        [][]uint32{{0}},
 	}
 
-	taskReflectStruct := utils.CopyStructAndChangeFieldName(originalTaskStruct, "InputValue", "QueryAddress")
-	taskResponseReflectStruct := utils.CopyStructAndChangeFieldName(originalTaskResponseStruct, "OutputValue", "IsRegistered")
+	taskReflectStruct := internalutils.CopyStructAndChangeFieldName(originalTaskStruct, "InputValue", "QueryAddress")
+	taskResponseReflectStruct := internalutils.CopyStructAndChangeFieldName(originalTaskResponseStruct, "OutputValue", "IsRegistered")
 
 	packedBytes, err := parsedAbi.Pack("respondToTask", taskReflectStruct, taskResponseReflectStruct, nonSigStruct)
 	require.NoError(t, err)
@@ -217,8 +217,8 @@ func TestNestedStructsAbi(t *testing.T) {
 		NonSignerStakeIndices:        [][]uint32{{0}},
 	}
 
-	taskReflectStruct := utils.CopyStructAndChangeFieldName(originalTaskStruct, "InputValue", "MainArg")
-	taskResponseReflectStruct := utils.CopyStructAndChangeFieldName(originalTaskResponseStruct, "OutputValue", "Total")
+	taskReflectStruct := internalutils.CopyStructAndChangeFieldName(originalTaskStruct, "InputValue", "MainArg")
+	taskResponseReflectStruct := internalutils.CopyStructAndChangeFieldName(originalTaskResponseStruct, "OutputValue", "Total")
 
 	packedBytes, err := parsedAbi.Pack("respondToTask", taskReflectStruct, taskResponseReflectStruct, nonSigStruct)
 	require.NoError(t, err)

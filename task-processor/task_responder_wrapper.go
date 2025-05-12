@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
+	internalutils "github.com/Layr-Labs/eigensdk-go/internal/utils"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -99,11 +100,11 @@ func (senderWrapper *taskResponderContractWrapper[Input, Output]) RespondToTask(
 		return utils.WrapError("Error getting tx opts", err)
 	}
 
-	inputFieldName := utils.CapitalizeFieldName(senderWrapper.taskManagerAbi.Methods["respondToTask"].Inputs[0].Type.TupleRawNames[0])
-	outputFieldName := utils.CapitalizeFieldName(senderWrapper.taskManagerAbi.Methods["respondToTask"].Inputs[1].Type.TupleRawNames[1])
+	inputFieldName := internalutils.CapitalizeFieldName(senderWrapper.taskManagerAbi.Methods["respondToTask"].Inputs[0].Type.TupleRawNames[0])
+	outputFieldName := internalutils.CapitalizeFieldName(senderWrapper.taskManagerAbi.Methods["respondToTask"].Inputs[1].Type.TupleRawNames[1])
 
-	newTaskStruct := utils.CopyStructAndChangeFieldName(task, "InputValue", inputFieldName)
-	newTaskResponseStruct := utils.CopyStructAndChangeFieldName(taskResponse, "OutputValue", outputFieldName)
+	newTaskStruct := internalutils.CopyStructAndChangeFieldName(task, "InputValue", inputFieldName)
+	newTaskResponseStruct := internalutils.CopyStructAndChangeFieldName(taskResponse, "OutputValue", outputFieldName)
 
 	tx, err := senderWrapper.contract.RespondToTask(txOpts, newTaskStruct, newTaskResponseStruct, nonSignersStakesAndSig)
 	if err != nil {
