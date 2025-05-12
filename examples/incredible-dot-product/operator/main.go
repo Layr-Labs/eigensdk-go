@@ -52,7 +52,7 @@ func main() {
 
 	responseCalculator := operator.NewFunctionResponseCalculator(examplecommon.DotProduct)
 
-	possibleFailureCalculator, err := operator.ComputeWithFailures(responseCalculator, big.NewInt(31234213443), 50)
+	possibleFailureCalculator, err := operator.NewFailingResponseCalculator(responseCalculator, 50, big.NewInt(31234213443))
 	if err != nil {
 		logger.Fatalf("Failed to create the possible failure function: %v", err.Error())
 	}

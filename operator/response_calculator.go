@@ -34,10 +34,10 @@ func (r functionResponseCalculator[Input, Output]) ComputeResponse(
 // but swap the response for the incorrect value with a certain probability.
 //
 // The function will return an error if the failure rate percentage is over 100.
-func ComputeWithFailures[Input any, Output any](
+func NewFailingResponseCalculator[Input any, Output any](
 	responseCalculator ResponseCalculator[Input, Output],
-	incorrectValue Output,
 	failureRatePercentage uint32,
+	incorrectValue Output,
 ) (ResponseCalculator[Input, Output], error) {
 	if failureRatePercentage > 100 {
 		return nil, fmt.Errorf("failure rate is over 100, should be a number between 0 and 100")

@@ -40,7 +40,7 @@ func main() {
 
 	calculator := sdkoperator.NewFunctionResponseCalculator(square)
 
-	logic, err := sdkoperator.ComputeWithFailures(calculator, big.NewInt(0), 50)
+	logic, err := sdkoperator.NewFailingResponseCalculator(calculator, 50, big.NewInt(0))
 	if err != nil {
 		logger.Fatalf(err.Error())
 	}
