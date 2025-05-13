@@ -7,7 +7,6 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/operator"
-	"github.com/ethereum/go-ethereum/crypto"
 
 	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/common"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/contracts/bindings/AwesomeVaultTaskManager"
@@ -65,7 +64,7 @@ func main() {
 		} else {
 			vaults = slices.Insert(vaults, index, input)
 		}
-		return computeVaultsRoot(vaults), nil
+		return examplecommon.ComputeVaultsRoot(vaults), nil
 	}
 
 	possibleFailureFunction, err := operator.ComputeWithFailures(computeFn, failingVaultSet, 50)
@@ -87,34 +86,4 @@ func main() {
 
 func failingVaultSet(taskIndex uint32, input examplecommon.TaskInput) ([32]byte, error) {
 	return [32]byte{0}, nil
-}
-
-func computeVaultsRoot(vaults []examplecommon.TaskInput) [32]byte {
-	leaves := make([][32]byte, len(vaults))
-	for i, vault := range vaults {
-		leaves[i] = hashVault(vault)
-	}
-	for len(leaves) > 1 {
-		halfLength := (len(leaves) + 1) / 2
-		for i := range halfLength {
-			rightIdx := i*2 + 1
-			if rightIdx >= len(leaves) {
-				rightIdx = i * 2
-			}
-			leaves[i] = hashNodes(leaves[i*2], leaves[rightIdx])
-		}
-		leaves = leaves[:halfLength]
-	}
-	return leaves[0]
-}
-
-func hashVault(input examplecommon.TaskInput) [32]byte {
-	return crypto.Keccak256Hash([]byte(input.Key + input.Value))
-}
-
-func hashNodes(leftNode [32]byte, rightNode [32]byte) [32]byte {
-	if slices.Compare(leftNode[:], rightNode[:]) > 0 {
-		leftNode, rightNode = rightNode, leftNode
-	}
-	return crypto.Keccak256Hash(leftNode[:], rightNode[:])
 }
