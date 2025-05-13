@@ -10,10 +10,11 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/operator"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
-	"github.com/ethereum/go-ethereum/common"
+	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
+	"github.com/Layr-Labs/eigensdk-go/examples/common"
 	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/bindings/taskManager"
 	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/common"
 )
@@ -56,7 +57,7 @@ func main() {
 	}
 
 	challengerRaiser, err := challengerprocessor.NewChallengeRaiserFromAbi[*big.Int, *big.Int](
-		common.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3"),
+		gethcommon.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3"),
 		taskManagerAbi,
 		txMgr,
 		ethHttpClient,
@@ -67,7 +68,7 @@ func main() {
 	}
 
 	squareCalculator := operator.NewFunctionResponseCalculator(examplecommon.Square)
-	squareValidation := challengerprocessor.ResponseValidationFunctionFromResponseCalculator(squareCalculator, examplecommon.BigIntEqual)
+	squareValidation := challengerprocessor.ResponseValidationFunctionFromResponseCalculator(squareCalculator, common.BigIntEqual)
 	indexingTaskProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, squareValidation, challengerRaiser)
 	if err != nil {
 		logger.Errorf("Failed to create challenger logic from config: %v", err)

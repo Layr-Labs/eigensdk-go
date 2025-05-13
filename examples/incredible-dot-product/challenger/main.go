@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
+	common "github.com/Layr-Labs/eigensdk-go/examples/common"
 	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/common"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
 )
@@ -58,7 +59,7 @@ func main() {
 		return
 	}
 	dotProductCalculator := operator.NewFunctionResponseCalculator(examplecommon.DotProduct)
-	dotProductValidation := challengerprocessor.ResponseValidationFunctionFromResponseCalculator(dotProductCalculator, examplecommon.BigIntEqual)
+	dotProductValidation := challengerprocessor.ResponseValidationFunctionFromResponseCalculator(dotProductCalculator, common.BigIntEqual)
 	challengerProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, dotProductValidation, challengerRaiser)
 	if err != nil {
 		logger.Errorf("Failed to create challenger verifier: %w", err)
