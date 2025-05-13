@@ -65,15 +65,15 @@ func (icp IndexingChallengerProcessor[Input, Output]) ProcessTaskResponded(taskI
 	return nil
 }
 
-func ResponseValidationFunctionFromResponseCalculator[Input any, Output comparable](
+func ResponseValidationFunctionFromResponseCalculator[Input any, Output any](
 	responseCalculator operator.ResponseCalculator[Input, Output],
+	equalFn func(a, b Output) bool,
 ) ResponseValidationFunction[Input, Output] {
 	return func(taskIndex uint32, input Input, output Output) (bool, error) {
 		computedResponse, err := responseCalculator.ComputeResponse(taskIndex, input)
 		if err != nil {
 			return false, err
 		}
-		// TODO: support comparing other types such as slices
-		return output == computedResponse, nil
+		return equalFn(computedResponse, output), nil
 	}
 }
