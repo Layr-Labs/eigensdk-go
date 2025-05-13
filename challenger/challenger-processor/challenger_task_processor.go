@@ -6,6 +6,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/operator"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
 type IndexingChallengerProcessor[Input any, Output any] struct {
@@ -76,7 +77,7 @@ func ResponseValidationFunctionFromResponseCalculator[Input any, Output any](
 	return func(taskIndex uint32, input Input, output Output) (bool, error) {
 		computedResponse, err := responseCalculator.ComputeResponse(taskIndex, input)
 		if err != nil {
-			return false, err
+			return false, utils.WrapError("failed to calculate square", err)
 		}
 		return !equalFn(computedResponse, output), nil
 	}
