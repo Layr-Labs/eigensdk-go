@@ -8,6 +8,7 @@ import (
 	sdkoperator "github.com/Layr-Labs/eigensdk-go/operator"
 
 	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/bindings/taskManager"
+	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/common"
 )
 
 // The idea of this example is to show how to create a custom operator using the SDK generic implementation
@@ -38,7 +39,7 @@ func main() {
 		TaskManagerAbi:                taskManagerAbi,
 	}
 
-	logic, err := sdkoperator.ComputeWithFailures(square, wrongSquare, 50)
+	logic, err := sdkoperator.ComputeWithFailures(examplecommon.Square, wrongSquare, 50)
 	if err != nil {
 		logger.Fatalf(err.Error())
 	}
@@ -54,13 +55,6 @@ func main() {
 		logger.Errorf("Error while running operator: %v", err)
 		return
 	}
-}
-
-// This function computes the square of a number
-func square(taskIndex uint32, numberToSquare *big.Int) (*big.Int, error) {
-	numberSquared := big.NewInt(0).Exp(numberToSquare, big.NewInt(2), nil)
-
-	return numberSquared, nil
 }
 
 func wrongSquare(taskIndex uint32, numberToSquare *big.Int) (*big.Int, error) {

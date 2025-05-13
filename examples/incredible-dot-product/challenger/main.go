@@ -2,15 +2,18 @@ package main
 
 import (
 	"context"
+	"math/big"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/challenger"
-	examplechallenger "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/challenger"
+	challengerprocessor "github.com/Layr-Labs/eigensdk-go/challenger/challenger-processor"
 	"github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
+	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/common"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
 )
 
@@ -49,8 +52,13 @@ func main() {
 		return
 	}
 
-	delegationManagerAddr := gethcommon.HexToAddress("0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0")
-	challengerVerifier, err := examplechallenger.NewChallengeVerifier(logger, taskManagerAddr, *ethClient, txMgr, delegationManagerAddr)
+	challengerRaiser, err := challengerprocessor.NewChallengeRaiserFromAbi[examplecommon.DotProductInput, *big.Int](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
+	if err != nil {
+		logger.Errorf("Failed to create challenger raiser: %w", err)
+		return
+	}
+
+	challengerProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, dotProductValidation, challengerRaiser)
 	if err != nil {
 		logger.Errorf("Failed to create challenger verifier: %w", err)
 		return
@@ -62,7 +70,7 @@ func main() {
 		EthClient:      ethClient,
 		EthWsUrl:       "ws://localhost:8545",
 	}
-	challenger, err := challenger.NewChallenger(challengerConfig, challengerVerifier)
+	challenger, err := challenger.NewChallenger(challengerConfig, challengerProcessor)
 	if err != nil {
 		logger.Errorf("Failed to create challenger: %w", err)
 		return
@@ -73,4 +81,13 @@ func main() {
 		logger.Errorf("Failure while running challenger: %w", err)
 		return
 	}
+}
+
+func dotProductValidation(taskIndex uint32, points examplecommon.DotProductInput, totalSum *big.Int) (bool, error) {
+	result, err := examplecommon.DotProduct(taskIndex, points)
+	if err != nil {
+		return false, utils.WrapError("failed to calculate square", err)
+	}
+
+	return result.Cmp(totalSum) != 0, nil
 }

@@ -115,12 +115,12 @@ func (agg *Aggregator[Input, Output]) Start(ctx context.Context) error {
 			return nil
 		case blsAggServiceResp := <-agg.blsAggregationService.GetResponseChannel():
 			agg.logger.Info("Received response from blsAggregationService", "blsAggServiceResp", blsAggServiceResp)
-			err := agg.processAggregatedResponse(context.Background(), blsAggServiceResp)
+			err := agg.processAggregatedResponse(blsAggServiceResp)
 			if err != nil {
 				continue
 			}
 		case log := <-agg.newTaskCreatedLogs:
-			metadata, err := agg.processNewTask(context.Background(), log)
+			metadata, err := agg.processNewTask(log)
 			if err != nil {
 				agg.logger.Fatal("Error processing the task", "err", err)
 			}
@@ -131,7 +131,7 @@ func (agg *Aggregator[Input, Output]) Start(ctx context.Context) error {
 	}
 }
 
-func (agg *Aggregator[Input, Output]) processNewTask(ctx context.Context, log types.Log) (blsagg.TaskMetadata, error) {
+func (agg *Aggregator[Input, Output]) processNewTask(log types.Log) (blsagg.TaskMetadata, error) {
 	var newTaskCreatedLog sdktypes.NewTaskCreatedEvent[Input]
 
 	err := agg.taskManagerAbi.UnpackIntoInterface(&newTaskCreatedLog, "NewTaskCreated", log.Data)
@@ -155,7 +155,6 @@ func (agg *Aggregator[Input, Output]) processNewTask(ctx context.Context, log ty
 }
 
 func (agg *Aggregator[Input, Output]) processAggregatedResponse(
-	ctx context.Context,
 	response blsagg.BlsAggregationServiceResponse,
 ) error {
 	if response.Err != nil {
