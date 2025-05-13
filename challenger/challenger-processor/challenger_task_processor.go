@@ -77,7 +77,7 @@ func ResponseValidationFunctionFromResponseCalculator[Input any, Output any](
 	return func(taskIndex uint32, input Input, output Output) (bool, error) {
 		computedResponse, err := responseCalculator.ComputeResponse(taskIndex, input)
 		if err != nil {
-			return false, utils.WrapError("failed to calculate square", err)
+			return false, utils.WrapError("failed to compute response", err)
 		}
 		return !equalFn(computedResponse, output), nil
 	}
