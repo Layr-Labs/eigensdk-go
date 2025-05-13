@@ -2,6 +2,9 @@ package main
 
 import (
 	"context"
+	"encoding/hex"
+	"slices"
+	"strings"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/challenger"
@@ -57,6 +60,33 @@ func main() {
 		return
 	}
 
+	cmpFn := func(vault examplecommon.TaskInput, key string) int {
+		return strings.Compare(vault.Key, key)
+	}
+
+	vaults := make([]examplecommon.TaskInput, 0)
+
+	computeFn := func(taskIndex uint32, input examplecommon.TaskInput) ([32]byte, error) {
+		index, wasFound := slices.BinarySearchFunc(vaults, input.Key, cmpFn)
+		if wasFound {
+			vaults[index].Value = input.Value
+		} else {
+			vaults = slices.Insert(vaults, index, input)
+		}
+		return examplecommon.ComputeVaultsRoot(vaults), nil
+	}
+
+	vaultSetValidation := func(taskIndex uint32, taskInput examplecommon.TaskInput, expectedOutput [32]byte) (bool, error) {
+		result, err := computeFn(taskIndex, taskInput)
+		if err != nil {
+			return false, utils.WrapError("failed to set in the vault", err)
+		}
+
+		println("Result is %v and expected is %v",hex.EncodeToString(result[:]), hex.EncodeToString(expectedOutput[:]))
+
+		return result != expectedOutput, nil
+	}
+
 	challengerProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, vaultSetValidation, challengerRaiser)
 	if err != nil {
 		logger.Errorf("Failed to create challenger verifier: %w", err)
@@ -80,13 +110,4 @@ func main() {
 		logger.Errorf("Failure while running challenger: %w", err)
 		return
 	}
-}
-
-func vaultSetValidation(taskIndex uint32, taskInput examplecommon.TaskInput, expectedOutput [32]byte) (bool, error) {
-	result, err := examplecommon.VaultSet(taskIndex, taskInput)
-	if err != nil {
-		return false, utils.WrapError("failed to set in the vault", err)
-	}
-
-	return result == expectedOutput, nil
 }
