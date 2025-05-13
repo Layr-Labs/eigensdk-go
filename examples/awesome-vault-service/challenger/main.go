@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"slices"
-	"strings"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/challenger"
@@ -59,24 +57,10 @@ func main() {
 		return
 	}
 
-	cmpFn := func(vault examplecommon.TaskInput, key string) int {
-		return strings.Compare(vault.Key, key)
-	}
-
-	vaults := make([]examplecommon.TaskInput, 0)
-
-	computeFn := func(taskIndex uint32, input examplecommon.TaskInput) ([32]byte, error) {
-		index, wasFound := slices.BinarySearchFunc(vaults, input.Key, cmpFn)
-		if wasFound {
-			vaults[index].Value = input.Value
-		} else {
-			vaults = slices.Insert(vaults, index, input)
-		}
-		return examplecommon.ComputeVaultsRoot(vaults), nil
-	}
+	vaultServiceResponseCalc := examplecommon.NewVaultServiceResponseCalculator()
 
 	vaultSetValidation := func(taskIndex uint32, taskInput examplecommon.TaskInput, expectedOutput [32]byte) (bool, error) {
-		result, err := computeFn(taskIndex, taskInput)
+		result, err := vaultServiceResponseCalc.ComputeResponse(taskIndex, taskInput)
 		if err != nil {
 			return false, utils.WrapError("failed to set in the vault", err)
 		}
