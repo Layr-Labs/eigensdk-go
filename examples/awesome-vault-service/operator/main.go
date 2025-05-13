@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"slices"
-	"strings"
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/operator"
@@ -51,7 +49,7 @@ func main() {
 		logger.Fatalf("Failed to register operator on startup: %v", err.Error())
 	}
 
-	vaultServiceResponseCalc := NewVaultServiceResponseCalculator()
+	vaultServiceResponseCalc := examplecommon.NewVaultServiceResponseCalculator()
 
 	possibleFailureCalculator, err := operator.NewFailingResponseCalculator(vaultServiceResponseCalc, 50, [32]byte{0})
 	if err != nil {
@@ -68,30 +66,4 @@ func main() {
 	if err != nil {
 		logger.Fatalf("Failure while running operator: %w", err)
 	}
-}
-
-type VaultServiceResponseCalculator struct {
-	vaults []examplecommon.TaskInput
-}
-
-func NewVaultServiceResponseCalculator() *VaultServiceResponseCalculator {
-	vaults := make([]examplecommon.TaskInput, 0)
-
-	return &VaultServiceResponseCalculator{
-		vaults: vaults,
-	}
-}
-
-func (vsrc *VaultServiceResponseCalculator) ComputeResponse(taskIndex uint32, input examplecommon.TaskInput) ([32]byte, error) {
-	cmpFn := func(vault examplecommon.TaskInput, key string) int {
-		return strings.Compare(vault.Key, key)
-	}
-	index, wasFound := slices.BinarySearchFunc(vsrc.vaults, input.Key, cmpFn)
-	if wasFound {
-		vsrc.vaults[index].Value = input.Value
-	} else {
-		vsrc.vaults = slices.Insert(vsrc.vaults, index, input)
-	}
-
-	return examplecommon.ComputeVaultsRoot(vsrc.vaults), nil
 }
