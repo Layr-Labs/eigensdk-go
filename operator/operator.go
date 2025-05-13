@@ -48,10 +48,11 @@ func ComputeWithFailures[Input any, Output any](
 	}
 
 	return func(taskIndex uint32, input Input) (Output, error) {
+		correctResult, err := correctLogic(taskIndex, input)
 		if rand.Uint32()%100 < failureRate {
 			return incorrectLogic(taskIndex, input)
 		} else {
-			return correctLogic(taskIndex, input)
+			return correctResult, err
 		}
 	}, nil
 }
