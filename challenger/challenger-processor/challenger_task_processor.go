@@ -4,7 +4,9 @@ import (
 	"fmt"
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/operator"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
 type IndexingChallengerProcessor[Input any, Output any] struct {
@@ -45,13 +47,13 @@ func (icp IndexingChallengerProcessor[Input, Output]) ProcessTaskResponded(taskI
 		return fmt.Errorf("could not find the task for the received task index")
 	}
 
-	shouldRaiseChallenge, err := icp.responseValidationFn(taskIndex, task.InputValue, taskResponse.TaskResponse.OutputValue)
+	isResponseCorrect, err := icp.responseValidationFn(taskIndex, task.InputValue, taskResponse.TaskResponse.OutputValue)
 	if err != nil {
 		icp.logger.Errorf("Failure while validating response. Err: %w", err)
 		return err
 	}
 
-	if shouldRaiseChallenge {
+	if !isResponseCorrect {
 		icp.logger.Infof("Response was not correct, input was %v and output was %v", task.InputValue, taskResponse.TaskResponse.OutputValue)
 
 		err = icp.challengerRaiser.RaiseChallenge(task, taskResponse.TaskResponse, taskResponse.TaskResponseMetadata, taskResponse.NonSigningOperatorPubKeys)
@@ -62,4 +64,21 @@ func (icp IndexingChallengerProcessor[Input, Output]) ProcessTaskResponded(taskI
 	}
 
 	return nil
+}
+
+// Takes a ResponseCalculator and an Equal function.
+// Returns a function that receives a task input and output, calculates the expected
+// output using the ResponseCalculator and returns whether it is equal to the given output,
+// using the given Equal function.
+func ResponseValidationFunctionFromResponseCalculator[Input any, Output any](
+	responseCalculator operator.ResponseCalculator[Input, Output],
+	equalFn func(a, b Output) bool,
+) ResponseValidationFunction[Input, Output] {
+	return func(taskIndex uint32, input Input, output Output) (bool, error) {
+		computedResponse, err := responseCalculator.ComputeResponse(taskIndex, input)
+		if err != nil {
+			return false, utils.WrapError("failed to compute response", err)
+		}
+		return equalFn(computedResponse, output), nil
+	}
 }
