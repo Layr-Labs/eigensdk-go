@@ -8,8 +8,8 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/challenger"
 	challengerprocessor "github.com/Layr-Labs/eigensdk-go/challenger/challenger-processor"
 	"github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/operator"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
-	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -66,6 +66,8 @@ func main() {
 		return
 	}
 
+	squareCalculator := operator.NewFunctionResponseCalculator(examplecommon.Square)
+	squareValidation := challengerprocessor.ResponseValidationFunctionFromResponseCalculator(squareCalculator, examplecommon.BigIntEqual)
 	indexingTaskProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, squareValidation, challengerRaiser)
 	if err != nil {
 		logger.Errorf("Failed to create challenger logic from config: %v", err)
@@ -86,13 +88,4 @@ func main() {
 		logger.Errorf("Error while running operator: %v", err)
 		return
 	}
-}
-
-func squareValidation(taskIndex uint32, numberToSquare *big.Int, numberSquared *big.Int) (bool, error) {
-	result, err := examplecommon.Square(taskIndex, numberToSquare)
-	if err != nil {
-		return false, utils.WrapError("failed to calculate square", err)
-	}
-
-	return result.Cmp(numberSquared) != 0, nil
 }
