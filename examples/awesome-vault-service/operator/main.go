@@ -51,25 +51,9 @@ func main() {
 		logger.Fatalf("Failed to register operator on startup: %v", err.Error())
 	}
 
-	cmpFn := func(vault examplecommon.TaskInput, key string) int {
-		return strings.Compare(vault.Key, key)
-	}
+	vaultServiceResponseCalc := NewVaultServiceResponseCalculator()
 
-	vaults := make([]examplecommon.TaskInput, 0)
-
-	computeFn := func(taskIndex uint32, input examplecommon.TaskInput) ([32]byte, error) {
-		index, wasFound := slices.BinarySearchFunc(vaults, input.Key, cmpFn)
-		if wasFound {
-			vaults[index].Value = input.Value
-		} else {
-			vaults = slices.Insert(vaults, index, input)
-		}
-		return examplecommon.ComputeVaultsRoot(vaults), nil
-	}
-
-	responseCalculator := operator.NewFunctionResponseCalculator(computeFn)
-
-	possibleFailureCalculator, err := operator.NewFailingResponseCalculator(responseCalculator, 50, [32]byte{0})
+	possibleFailureCalculator, err := operator.NewFailingResponseCalculator(vaultServiceResponseCalc, 50, [32]byte{0})
 	if err != nil {
 		logger.Fatalf("Failed to create the possible failure function: %v", err.Error())
 	}
@@ -84,4 +68,34 @@ func main() {
 	if err != nil {
 		logger.Fatalf("Failure while running operator: %w", err)
 	}
+}
+
+type VaultServiceResponseCalculator struct {
+	vaults []examplecommon.TaskInput
+}
+
+func NewVaultServiceResponseCalculator() *VaultServiceResponseCalculator {
+	vaults := make([]examplecommon.TaskInput, 0)
+
+	return &VaultServiceResponseCalculator{
+		vaults: vaults,
+	}
+}
+
+func (vsrc *VaultServiceResponseCalculator) ComputeResponse(taskIndex uint32, input examplecommon.TaskInput) ([32]byte, error) {
+	cmpFn := func(vault examplecommon.TaskInput, key string) int {
+		return strings.Compare(vault.Key, key)
+	}
+	index, wasFound := slices.BinarySearchFunc(vsrc.vaults, input.Key, cmpFn)
+	println("was found is ", wasFound)
+	if wasFound {
+		vsrc.vaults[index].Value = input.Value
+	} else {
+		vsrc.vaults = slices.Insert(vsrc.vaults, index, input)
+	}
+
+	println("Vaults is ", vsrc.vaults)
+	println("Vaults len is ", len(vsrc.vaults))
+
+	return examplecommon.ComputeVaultsRoot(vsrc.vaults), nil
 }
