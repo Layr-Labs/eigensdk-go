@@ -67,13 +67,15 @@ func main() {
 		return examplecommon.ComputeVaultsRoot(vaults), nil
 	}
 
-	possibleFailureFunction, err := operator.ComputeWithFailures(computeFn, failingVaultSet, 50)
+	responseCalculator := operator.NewFunctionResponseCalculator(computeFn)
+
+	possibleFailureCalculator, err := operator.NewFailingResponseCalculator(responseCalculator, 50, [32]byte{0})
 	if err != nil {
 		logger.Fatalf("Failed to create the possible failure function: %v", err.Error())
 	}
 
 	// Setting the TaskResponseHashFn parameter in nil because I'm using the abi default encoding function
-	operator, err := operator.NewOperatorFromConfig(operatorConfig, possibleFailureFunction, nil)
+	operator, err := operator.NewOperatorFromConfig(operatorConfig, possibleFailureCalculator, nil)
 	if err != nil {
 		logger.Fatalf("Failed to create operator: %w", err)
 	}
@@ -82,8 +84,4 @@ func main() {
 	if err != nil {
 		logger.Fatalf("Failure while running operator: %w", err)
 	}
-}
-
-func failingVaultSet(taskIndex uint32, input examplecommon.TaskInput) ([32]byte, error) {
-	return [32]byte{0}, nil
 }
