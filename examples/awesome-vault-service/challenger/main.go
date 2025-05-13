@@ -59,9 +59,16 @@ func main() {
 
 	vaultServiceResponseCalc := examplecommon.NewVaultServiceResponseCalculator()
 
-	responseValidator := NewVaultServiceResponseValidatorFromResponseCalculator(vaultServiceResponseCalc)
+	vaultSetValidation := func(taskIndex uint32, taskInput examplecommon.TaskInput, expectedOutput [32]byte) (bool, error) {
+		result, err := vaultServiceResponseCalc.ComputeResponse(taskIndex, taskInput)
+		if err != nil {
+			return false, utils.WrapError("failed to set in the vault", err)
+		}
 
-	challengerProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, responseValidator.ValidateResponse, challengerRaiser)
+		return result != expectedOutput, nil
+	}
+
+	challengerProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, vaultSetValidation, challengerRaiser)
 	if err != nil {
 		logger.Errorf("Failed to create challenger verifier: %w", err)
 		return
@@ -84,23 +91,4 @@ func main() {
 		logger.Errorf("Failure while running challenger: %w", err)
 		return
 	}
-}
-
-type VaultServiceResponseValidator struct{
-	vaultServiceResponseCalculator *examplecommon.VaultServiceResponseCalculator
-}
-
-func NewVaultServiceResponseValidatorFromResponseCalculator(vaultServiceResponseCalc *examplecommon.VaultServiceResponseCalculator) *VaultServiceResponseValidator{
-	return &VaultServiceResponseValidator{
-		vaultServiceResponseCalculator: vaultServiceResponseCalc,
-	}
-}
-
-func (validator *VaultServiceResponseValidator) ValidateResponse(taskIndex uint32, taskInput examplecommon.TaskInput, expectedOutput [32]byte) (bool, error) {
-	result, err := validator.vaultServiceResponseCalculator.ComputeResponse(taskIndex, taskInput)
-	if err != nil {
-		return false, utils.WrapError("failed to set in the vault", err)
-	}
-
-	return result != expectedOutput, nil
 }
