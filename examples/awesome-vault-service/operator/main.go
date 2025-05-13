@@ -87,15 +87,11 @@ func (vsrc *VaultServiceResponseCalculator) ComputeResponse(taskIndex uint32, in
 		return strings.Compare(vault.Key, key)
 	}
 	index, wasFound := slices.BinarySearchFunc(vsrc.vaults, input.Key, cmpFn)
-	println("was found is ", wasFound)
 	if wasFound {
 		vsrc.vaults[index].Value = input.Value
 	} else {
 		vsrc.vaults = slices.Insert(vsrc.vaults, index, input)
 	}
-
-	println("Vaults is ", vsrc.vaults)
-	println("Vaults len is ", len(vsrc.vaults))
 
 	return examplecommon.ComputeVaultsRoot(vsrc.vaults), nil
 }
