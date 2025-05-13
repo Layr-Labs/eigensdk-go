@@ -100,7 +100,7 @@ func NewAggregator[Input any, Output any](
 		blsAggregationService: blsAggregationService,
 		newTaskCreatedLogs:    newTaskCreatedLogs,
 		taskManagerAbi:        c.TaskManagerAbi,
-		taskProcessor: taskProcessor,
+		taskProcessor:         taskProcessor,
 	}, nil
 }
 

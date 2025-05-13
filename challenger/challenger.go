@@ -20,10 +20,10 @@ type ChallengerProcessor[Input any, Output any] interface {
 }
 
 type Challenger[Input any, Output any] struct {
-	logger             logging.Logger
-	challengerProcessor  ChallengerProcessor[Input, Output]
-	taskResponseChan   chan types.Log
-	newTaskCreatedChan chan types.Log
+	logger              logging.Logger
+	challengerProcessor ChallengerProcessor[Input, Output]
+	taskResponseChan    chan types.Log
+	newTaskCreatedChan  chan types.Log
 
 	taskManagerAbi *abi.ABI
 
@@ -61,12 +61,12 @@ func NewChallenger[Input any, Output any](
 	}
 
 	return &Challenger[Input, Output]{
-		logger:             c.Logger,
-		challengerProcessor:  challengerProcessor,
-		newTaskCreatedChan: newTaskCreatedLogs,
-		taskResponseChan:   taskRespondedLogs,
-		taskManagerAbi:     c.TaskManagerAbi,
-		ethClient:          c.EthClient,
+		logger:              c.Logger,
+		challengerProcessor: challengerProcessor,
+		newTaskCreatedChan:  newTaskCreatedLogs,
+		taskResponseChan:    taskRespondedLogs,
+		taskManagerAbi:      c.TaskManagerAbi,
+		ethClient:           c.EthClient,
 	}, nil
 }
 

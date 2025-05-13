@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/hex"
 	"slices"
 	"strings"
 
@@ -81,8 +80,6 @@ func main() {
 		if err != nil {
 			return false, utils.WrapError("failed to set in the vault", err)
 		}
-
-		println("Result is %v and expected is %v",hex.EncodeToString(result[:]), hex.EncodeToString(expectedOutput[:]))
 
 		return result != expectedOutput, nil
 	}
