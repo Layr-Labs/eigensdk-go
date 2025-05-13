@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/operator"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 )
 
@@ -62,4 +63,17 @@ func (icp IndexingChallengerProcessor[Input, Output]) ProcessTaskResponded(taskI
 	}
 
 	return nil
+}
+
+func ResponseValidationFunctionFromResponseCalculator[Input comparable, Output comparable](
+	responseCalculator operator.ResponseCalculator[Input, Output],
+) ResponseValidationFunction[Input, Output] {
+	return func(taskIndex uint32, input Input, output Output) (bool, error) {
+		computedResponse, err := responseCalculator.ComputeResponse(taskIndex, input)
+		if err != nil {
+			return false, err
+		}
+		// TODO: support comparing other types such as slices
+		return output == computedResponse, nil
+	}
 }
