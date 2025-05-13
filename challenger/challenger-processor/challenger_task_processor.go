@@ -4,7 +4,9 @@ import (
 	"fmt"
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/operator"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
 type IndexingChallengerProcessor[Input any, Output any] struct {
@@ -62,4 +64,21 @@ func (icp IndexingChallengerProcessor[Input, Output]) ProcessTaskResponded(taskI
 	}
 
 	return nil
+}
+
+// Takes a ResponseCalculator and an Equal function.
+// Returns a function that receives a task input and output, calculates the expected
+// output using the ResponseCalculator and returns whether is different to the given output,
+// using the given Equal function.
+func ResponseValidationFunctionFromResponseCalculator[Input any, Output any](
+	responseCalculator operator.ResponseCalculator[Input, Output],
+	equalFn func(a, b Output) bool,
+) ResponseValidationFunction[Input, Output] {
+	return func(taskIndex uint32, input Input, output Output) (bool, error) {
+		computedResponse, err := responseCalculator.ComputeResponse(taskIndex, input)
+		if err != nil {
+			return false, utils.WrapError("failed to compute response", err)
+		}
+		return !equalFn(computedResponse, output), nil
+	}
 }
