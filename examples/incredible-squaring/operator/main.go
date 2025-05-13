@@ -39,7 +39,9 @@ func main() {
 		TaskManagerAbi:                taskManagerAbi,
 	}
 
-	logic, err := sdkoperator.ComputeWithFailures(examplecommon.Square, wrongSquare, 50)
+	calculator := sdkoperator.NewFunctionResponseCalculator(examplecommon.Square)
+
+	logic, err := sdkoperator.NewFailingResponseCalculator(calculator, 50, big.NewInt(0))
 	if err != nil {
 		logger.Fatalf(err.Error())
 	}
@@ -55,8 +57,4 @@ func main() {
 		logger.Errorf("Error while running operator: %v", err)
 		return
 	}
-}
-
-func wrongSquare(taskIndex uint32, numberToSquare *big.Int) (*big.Int, error) {
-	return big.NewInt(0), nil
 }
