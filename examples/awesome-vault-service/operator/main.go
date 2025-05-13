@@ -51,7 +51,7 @@ func main() {
 
 	vaultServiceResponseCalc := examplecommon.NewVaultServiceResponseCalculator()
 
-	possibleFailureCalculator, err := operator.NewFailingResponseCalculator(vaultServiceResponseCalc, 50, [32]byte{0})
+	possibleFailureCalculator, err := operator.NewFailingResponseCalculator(vaultServiceResponseCalc, 35, [32]byte{0})
 	if err != nil {
 		logger.Fatalf("Failed to create the possible failure function: %v", err.Error())
 	}
