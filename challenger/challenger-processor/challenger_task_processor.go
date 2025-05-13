@@ -65,6 +65,10 @@ func (icp IndexingChallengerProcessor[Input, Output]) ProcessTaskResponded(taskI
 	return nil
 }
 
+// Takes a ResponseCalculator and an Equal function.
+// Returns a function that receives a task input and output, calculates the expected
+// output using the ResponseCalculator and returns whether is equal to the given output,
+// using the given Equal function.
 func ResponseValidationFunctionFromResponseCalculator[Input any, Output any](
 	responseCalculator operator.ResponseCalculator[Input, Output],
 	equalFn func(a, b Output) bool,
