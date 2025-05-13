@@ -7,7 +7,6 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/challenger"
 	challengerprocessor "github.com/Layr-Labs/eigensdk-go/challenger/challenger-processor"
 	"github.com/Layr-Labs/eigensdk-go/logging"
-	"github.com/Layr-Labs/eigensdk-go/utils"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -59,14 +58,7 @@ func main() {
 
 	vaultServiceResponseCalc := examplecommon.NewVaultServiceResponseCalculator()
 
-	vaultSetValidation := func(taskIndex uint32, taskInput examplecommon.TaskInput, expectedOutput [32]byte) (bool, error) {
-		result, err := vaultServiceResponseCalc.ComputeResponse(taskIndex, taskInput)
-		if err != nil {
-			return false, utils.WrapError("failed to set in the vault", err)
-		}
-
-		return result != expectedOutput, nil
-	}
+	vaultSetValidation := challengerprocessor.ResponseValidationFunctionFromResponseCalculator(vaultServiceResponseCalc, func(a, b [32]byte) bool { return a == b })
 
 	challengerProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, vaultSetValidation, challengerRaiser)
 	if err != nil {
