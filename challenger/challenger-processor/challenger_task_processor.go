@@ -65,7 +65,7 @@ func (icp IndexingChallengerProcessor[Input, Output]) ProcessTaskResponded(taskI
 	return nil
 }
 
-func ResponseValidationFunctionFromResponseCalculator[Input comparable, Output comparable](
+func ResponseValidationFunctionFromResponseCalculator[Input any, Output comparable](
 	responseCalculator operator.ResponseCalculator[Input, Output],
 ) ResponseValidationFunction[Input, Output] {
 	return func(taskIndex uint32, input Input, output Output) (bool, error) {
