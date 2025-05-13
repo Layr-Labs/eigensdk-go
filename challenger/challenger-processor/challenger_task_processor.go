@@ -46,13 +46,13 @@ func (icp IndexingChallengerProcessor[Input, Output]) ProcessTaskResponded(taskI
 		return fmt.Errorf("could not find the task for the received task index")
 	}
 
-	shouldRaiseChallenge, err := icp.responseValidationFn(taskIndex, task.InputValue, taskResponse.TaskResponse.OutputValue)
+	isResponseCorrect, err := icp.responseValidationFn(taskIndex, task.InputValue, taskResponse.TaskResponse.OutputValue)
 	if err != nil {
 		icp.logger.Errorf("Failure while validating response. Err: %w", err)
 		return err
 	}
 
-	if shouldRaiseChallenge {
+	if !isResponseCorrect {
 		icp.logger.Infof("Response was not correct, input was %v and output was %v", task.InputValue, taskResponse.TaskResponse.OutputValue)
 
 		err = icp.challengerRaiser.RaiseChallenge(task, taskResponse.TaskResponse, taskResponse.TaskResponseMetadata, taskResponse.NonSigningOperatorPubKeys)
