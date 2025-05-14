@@ -32,13 +32,13 @@ type Aggregator[Input any, Output any] struct {
 
 	taskManagerAbi *abi.ABI
 
-	indexingTaskProcessor taskprocessor.TaskProcessor[Input, Output]
+	taskProcessor taskprocessor.TaskProcessor[Input, Output]
 }
 
 // NewAggregator creates a new Aggregator with the provided config.
 func NewAggregator[Input any, Output any](
 	c AggregatorConfig,
-	indexingTaskProcessor taskprocessor.TaskProcessor[Input, Output],
+	taskProcessor taskprocessor.TaskProcessor[Input, Output],
 ) (*Aggregator[Input, Output], error) {
 	chainioConfig := sdkclients.BuildAllConfig{
 		EthHttpUrl:                 c.EthHttpUrl,
@@ -71,7 +71,7 @@ func NewAggregator[Input any, Output any](
 			c.Logger.Error("task Response could not be converted to sdk aggregator's Task Response type")
 		}
 
-		return indexingTaskProcessor.ProcessTaskResponse(taskResponse)
+		return taskProcessor.ProcessTaskResponse(taskResponse)
 	}
 
 	avsRegistryService := avsregistryservice.NewAvsRegistryServiceChainCaller(clients.AvsRegistryChainReader, operatorPubkeysService, c.Logger)
@@ -100,7 +100,7 @@ func NewAggregator[Input any, Output any](
 		blsAggregationService: blsAggregationService,
 		newTaskCreatedLogs:    newTaskCreatedLogs,
 		taskManagerAbi:        c.TaskManagerAbi,
-		indexingTaskProcessor: indexingTaskProcessor,
+		taskProcessor:         taskProcessor,
 	}, nil
 }
 
@@ -146,7 +146,7 @@ func (agg *Aggregator[Input, Output]) processNewTask(log types.Log) (blsagg.Task
 
 	newTask := newTaskCreatedLog.Task
 
-	metadata, err := agg.indexingTaskProcessor.ProcessNewTask(newTaskIndex, newTask)
+	metadata, err := agg.taskProcessor.ProcessNewTask(newTaskIndex, newTask)
 	if err != nil {
 		return blsagg.TaskMetadata{}, err
 	}
@@ -161,7 +161,7 @@ func (agg *Aggregator[Input, Output]) processAggregatedResponse(
 		return utils.WrapError("BlsAggregationServiceResponse contains an error", response.Err)
 	}
 
-	err := agg.indexingTaskProcessor.ProcessAggregatedResponse(response)
+	err := agg.taskProcessor.ProcessAggregatedResponse(response)
 	if err != nil {
 		return utils.WrapError("Aggregator failed to respond to task", err)
 	}
