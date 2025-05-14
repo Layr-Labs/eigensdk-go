@@ -19,6 +19,7 @@ type taskManagerContractWrapper[Input any, Output any] struct {
 	taskManagerAbi *abi.ABI
 	contract       taskManagerAbiContract[Input, Output]
 	txMgr          txmgr.TxManager
+	hashFunction   sdktypes.TaskResponseHashFunction
 }
 
 type taskManagerAbiContract[Input any, Output any] struct {
@@ -41,9 +42,16 @@ func (tm taskManagerAbiContract[Input, Output]) CreateNewTask(opts *bind.Transac
 // Returns an error in case the ABI is not compatible.
 func NewTaskManagerFromAbi[Input any, Output any](address common.Address, abi *abi.ABI, txMgr txmgr.TxManager, httpClient bind.ContractBackend) (TaskManager[Input, Output], error) {
 	boundContract := bind.NewBoundContract(address, *abi, httpClient, httpClient, httpClient)
+
+	abiType, err := internalutils.ExtractTypeFromAbi(abi)
+	if err != nil {
+		return nil, err
+	}
+	hashFn := internalutils.GetDefaultHashFunction(abiType)
+
 	// TODO: check if the ABI is compatible
 	contract := taskManagerAbiContract[Input, Output]{boundContract}
-	return &taskManagerContractWrapper[Input, Output]{abi, contract, txMgr}, nil
+	return &taskManagerContractWrapper[Input, Output]{abi, contract, txMgr, hashFn}, nil
 }
 
 func (senderWrapper *taskManagerContractWrapper[Input, Output]) RaiseChallenge(
@@ -136,11 +144,5 @@ func (senderWrapper *taskManagerContractWrapper[Input, Output]) RespondToTask(
 }
 
 func (tr taskManagerContractWrapper[Input, Output]) HashTaskResponse(taskResponse sdktypes.GenericOutputTaskResponse[Output]) (sdktypes.Bytes32, error) {
-	abiType, err := internalutils.ExtractTypeFromAbi(tr.taskManagerAbi)
-	if err != nil {
-		return [32]byte{}, err
-	}
-	hashFn := internalutils.GetDefaultHashFunction(abiType)
-
-	return hashFn(taskResponse)
+	return tr.hashFunction(taskResponse)
 }
