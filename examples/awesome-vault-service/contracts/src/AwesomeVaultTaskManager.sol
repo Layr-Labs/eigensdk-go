@@ -52,7 +52,7 @@ contract AwesomeVaultTaskManager is
     // mapping of task indices to state roots
     mapping(uint32 => bytes32) public allStateRoots;
 
-    mapping(uint32 => bool) public taskSuccesfullyChallenged;
+    mapping(uint32 => bool) public taskSuccessfullyChallenged;
 
     address public aggregator;
     address public generator;
@@ -195,7 +195,7 @@ contract AwesomeVaultTaskManager is
             "Task response does not match the one recorded in the contract"
         );
         require(
-            taskSuccesfullyChallenged[referenceTaskIndex] == false,
+            taskSuccessfullyChallenged[referenceTaskIndex] == false,
             "The response to this task has already been challenged successfully."
         );
 
@@ -294,7 +294,7 @@ contract AwesomeVaultTaskManager is
         }
 
         // the task response has been challenged successfully
-        taskSuccesfullyChallenged[referenceTaskIndex] = true;
+        taskSuccessfullyChallenged[referenceTaskIndex] = true;
         allStateRoots[referenceTaskIndex] = stateRoot;
 
         emit TaskChallengedSuccessfully(referenceTaskIndex, msg.sender);
