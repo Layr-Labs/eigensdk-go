@@ -206,9 +206,14 @@ contract AwesomeVaultTaskManager is
         );
 
         // logic for checking whether challenge is valid or not
-        bytes32 prevStateRoot = hashState(prevStateLeaves);
+        bytes32 prevStateRoot = bytes32(0);
+        // if the task is the first task, then we set the prevStateRoot to 0
+        if (referenceTaskIndex > 0) {
+            prevStateRoot = allStateRoots[referenceTaskIndex - 1];
+        }
+
         require(
-            prevStateRoot == allStateRoots[referenceTaskIndex - 1],
+            hashState(prevStateLeaves) == prevStateRoot,
             "The state root of the previous task does not match the one recorded in the contract"
         );
 
