@@ -6,8 +6,8 @@ import (
 	"math/big"
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
+	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
 	taskprocessor "github.com/Layr-Labs/eigensdk-go/task-processor"
-	taskmanager "github.com/Layr-Labs/eigensdk-go/task-processor/task-manager"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum"
