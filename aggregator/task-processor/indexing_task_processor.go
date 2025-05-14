@@ -117,6 +117,10 @@ func (itp *IndexingTaskProcessor[Input, Output]) ProcessAggregatedResponse(respo
 		return utils.WrapError("Aggregator failed to respond to task", err)
 	}
 
+	itp.tasksMu.RLock()
+	delete(itp.tasks, response.TaskIndex)
+	itp.tasksMu.RUnlock()
+
 	return nil
 }
 
