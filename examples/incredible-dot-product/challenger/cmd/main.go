@@ -34,7 +34,7 @@ func main() {
 		return
 	}
 
-	taskManagerAddr := gethcommon.HexToAddress("0x7bc06c482dead17c0e297afbc32f6e63d3846650")
+	taskManagerAddr := gethcommon.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3")
 
 	challengerPrivateKey := "ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
 	ecdsaPrivateKey, err := crypto.HexToECDSA(challengerPrivateKey)

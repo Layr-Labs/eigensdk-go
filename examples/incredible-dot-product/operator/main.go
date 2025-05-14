@@ -34,9 +34,9 @@ func main() {
 
 		OperatorAddress: operatorAddr,
 
-		AVSRegistryCoordinatorAddress: "0xfd471836031dc5108809d173a067e8486b9047a3",
-		OperatorStateRetrieverAddress: "0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154",
-		ServiceManagerAddress:         "0xcd8a1c3ba11cf5ecfa6267617243239504a98d90",
+		AVSRegistryCoordinatorAddress: "0x7bc06c482dead17c0e297afbc32f6e63d3846650",
+		OperatorStateRetrieverAddress: "0x4c5859f0f772848b2d91f1d83e2fe57935348029",
+		ServiceManagerAddress:         "0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154",
 
 		EthWsUrl:                      "ws://localhost:8545",
 		EthRpcUrl:                     ethHttpUrl,

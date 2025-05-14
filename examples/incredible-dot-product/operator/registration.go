@@ -26,8 +26,8 @@ import (
 func RegisterOperatorOnStartup(logger logging.Logger) error {
 	operatorAddr := common.HexToAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")
 	allocationManagerAddr := common.HexToAddress("0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6")
-	serviceManagerAddr := common.HexToAddress("0xcd8a1c3ba11cf5ecfa6267617243239504a98d90")
-	registryCoordinatorAddr := common.HexToAddress("0xfd471836031dc5108809d173a067e8486b9047a3")
+	serviceManagerAddr := common.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154")
+	registryCoordinatorAddr := common.HexToAddress("0x7bc06c482dead17c0e297afbc32f6e63d3846650")
 	strategyAddr := common.HexToAddress("0x2b961e3959b79326a8e7f64ef0d2d825707669b5")
 	ethHttpUrl := "http://localhost:8545"
 
