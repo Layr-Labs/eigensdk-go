@@ -13,7 +13,7 @@ import (
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
 )
 
-var _ TaskManagerContract[any, any] = (*TaskManagerContractWrapper[any, any])(nil)
+var _ TaskManager[any, any] = (*TaskManagerContractWrapper[any, any])(nil)
 
 type TaskManagerContractWrapper[Input any, Output any] struct {
 	taskManagerAbi *abi.ABI
@@ -37,9 +37,9 @@ func (tm taskManagerAbiContract[Input, Output]) CreateNewTask(opts *bind.Transac
 	return tm.contract.Transact(opts, "createNewTask", input, quorumThresholdPercentage, quorumNumbers)
 }
 
-// Creates a taskManagerContract wrapper from an address and ABI.
+// Creates a taskManager wrapper from an address and ABI.
 // Returns an error in case the ABI is not compatible.
-func NewTaskManagerContractFromAbi[Input any, Output any](address common.Address, abi *abi.ABI, txMgr txmgr.TxManager, httpClient bind.ContractBackend) (TaskManagerContract[Input, Output], error) {
+func NewTaskManagerContractFromAbi[Input any, Output any](address common.Address, abi *abi.ABI, txMgr txmgr.TxManager, httpClient bind.ContractBackend) (TaskManager[Input, Output], error) {
 	boundContract := bind.NewBoundContract(address, *abi, httpClient, httpClient, httpClient)
 	// TODO: check if the ABI is compatible
 	contract := taskManagerAbiContract[Input, Output]{boundContract}

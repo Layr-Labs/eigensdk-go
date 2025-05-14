@@ -6,7 +6,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/types"
 )
 
-type TaskManagerContract[Input any, Output any] interface {
+type TaskManager[Input any, Output any] interface {
 	TaskCreator[Input]
 
 	TaskResponder[Input, Output]
