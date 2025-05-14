@@ -54,7 +54,7 @@ func main() {
 		return
 	}
 
-	challengerRaiser, err := taskmanager.NewTaskManagerContractFromAbi[examplecommon.DotProductInput, *big.Int](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
+	challengerRaiser, err := taskmanager.NewTaskManagerFromAbi[examplecommon.DotProductInput, *big.Int](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
 	if err != nil {
 		logger.Errorf("Failed to create challenger raiser: %w", err)
 		return

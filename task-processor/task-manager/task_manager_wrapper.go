@@ -39,7 +39,7 @@ func (tm taskManagerAbiContract[Input, Output]) CreateNewTask(opts *bind.Transac
 
 // Creates a taskManager wrapper from an address and ABI.
 // Returns an error in case the ABI is not compatible.
-func NewTaskManagerContractFromAbi[Input any, Output any](address common.Address, abi *abi.ABI, txMgr txmgr.TxManager, httpClient bind.ContractBackend) (TaskManager[Input, Output], error) {
+func NewTaskManagerFromAbi[Input any, Output any](address common.Address, abi *abi.ABI, txMgr txmgr.TxManager, httpClient bind.ContractBackend) (TaskManager[Input, Output], error) {
 	boundContract := bind.NewBoundContract(address, *abi, httpClient, httpClient, httpClient)
 	// TODO: check if the ABI is compatible
 	contract := taskManagerAbiContract[Input, Output]{boundContract}
