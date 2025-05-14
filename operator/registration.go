@@ -27,6 +27,157 @@ import (
 	"github.com/ethereum/go-ethereum/event"
 )
 
+
+func RegisterOperatorOnStartup(logger logging.Logger) error {
+	operatorAddr := common.HexToAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")
+	allocationManagerAddr := common.HexToAddress("0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6")
+	serviceManagerAddr := common.HexToAddress("0xcd8a1c3ba11cf5ecfa6267617243239504a98d90")
+	registryCoordinatorAddr := common.HexToAddress("0xfd471836031dc5108809d173a067e8486b9047a3")
+	strategyAddr := common.HexToAddress("0x2b961e3959b79326a8e7f64ef0d2d825707669b5")
+	ethHttpUrl := "http://localhost:8545"
+
+	delegationManagerAddress := common.HexToAddress("0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0")
+	rewardsCoordinatorAddress := common.HexToAddress("0xa51c1fc2f0d1a1b8494ed1fe312d7c3a78ed91c0")
+	permissionControllerAddress := common.HexToAddress("0x59b670e9fa9d0a427751af201d676719a970857b")
+
+	ecdsaKeyStorePath := "keys/test.ecdsa.key.json"
+	blsKeyStorePath := "keys/test.bls.key.json"
+	stringMintAmount := "1000000000000000000000"
+
+	allocatableMagnitude := uint64(1000000000000000)
+	operatorSetId := uint32(0)
+
+	ethRpcClient, err := ethclient.Dial(ethHttpUrl)
+	if err != nil {
+		logger.Errorf("Cannot create http ethclient", "err", err)
+		return err
+	}
+
+	elcontractsConfig := elcontracts.Config{
+		DelegationManagerAddress: delegationManagerAddress,
+		RewardsCoordinatorAddress: rewardsCoordinatorAddress,
+		PermissionControllerAddress: permissionControllerAddress,
+	}
+
+	rpcCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	chainid, err := ethRpcClient.ChainID(rpcCtx)
+	if err != nil {
+		logger.Error("Cannot get chain id", "err", err)
+		return err
+	}
+
+	ecdsaKeyPassword, ok := os.LookupEnv("OPERATOR_ECDSA_KEY_PASSWORD")
+	if !ok {
+		logger.Warnf("OPERATOR_ECDSA_KEY_PASSWORD env var not set. using empty string")
+	}
+
+	operatorEcdsaPrivateKey, err := ecdsa.ReadKey(
+		ecdsaKeyStorePath,
+		ecdsaKeyPassword,
+	)
+	if err != nil {
+		return err
+	}
+
+	signerV2, senderAddr, err := signerv2.SignerFromConfig(signerv2.Config{
+		PrivateKey: operatorEcdsaPrivateKey,
+	}, chainid)
+	if err != nil {
+		logger.Fatalf(err.Error())
+	}
+
+	pkWallet, err := wallet.NewPrivateKeyWallet(ethRpcClient, signerV2, senderAddr, logger)
+	if err != nil {
+		return err
+	}
+
+	txMgr := txmgr.NewSimpleTxManager(pkWallet, ethRpcClient, logger, senderAddr)
+
+	err = RegisterOperatorWithEigenlayer(
+		operatorAddr,
+		elcontractsConfig,
+		ethRpcClient,
+		logger,
+		txMgr,
+	)
+	if err != nil {
+		logger.Fatalf("Failed to register operator with EigenLayer on startup: %v", err.Error())
+	}
+
+	amount := new(big.Int)
+	amount.SetString(stringMintAmount, 10)
+	err = DepositIntoStrategyForOperator(
+		logger,
+		elcontractsConfig,
+		ethRpcClient,
+		strategyAddr,
+		txMgr,
+		operatorAddr,
+		amount,
+	)
+	if err != nil {
+		logger.Fatalf("Failed to deposit into strategy for operator on startup: %v", err.Error())
+	}
+
+	blsKeyPassword, ok := os.LookupEnv("OPERATOR_BLS_KEY_PASSWORD")
+	if !ok {
+		logger.Warnf("OPERATOR_BLS_KEY_PASSWORD env var not set. using empty string")
+	}
+	blsKeyPair, err := bls.ReadPrivateKeyFromFile(blsKeyStorePath, blsKeyPassword)
+	if err != nil {
+		logger.Errorf("Cannot parse bls private key", "err", err)
+		return err
+	}
+
+	err = RegisterForOperatorSets(
+		operatorAddr,
+		logger,
+		elcontractsConfig,
+		ethRpcClient,
+		txMgr,
+		registryCoordinatorAddr,
+		serviceManagerAddr,
+		[]uint32{operatorSetId},
+		*blsKeyPair,
+		"",
+	)
+	if err != nil {
+		logger.Fatalf("Failed to register operator for operator sets on startup: %v", err.Error())
+	}
+
+	err = SetAllocationDelay(
+		logger,
+		operatorAddr,
+		ethRpcClient,
+		allocationManagerAddr,
+		txMgr,
+		0,
+	)
+	if err != nil {
+		logger.Fatalf("Failed to set allocation delay: %v", err.Error())
+	}
+
+	err = modifyAllocations(
+		operatorAddr,
+		allocationManagerAddr,
+		serviceManagerAddr,
+		[]common.Address{strategyAddr},
+		[]uint64{allocatableMagnitude},
+		ethHttpUrl,
+		txMgr,
+		operatorSetId,
+		logger,
+	)
+	if err != nil {
+		logger.Fatalf("Failed to set modify allocations: %v", err.Error())
+	}
+
+	return nil
+}
+
+
+
 // The idea is to have a util function that just registers an operator for an operator set if the avs needs it
 func RegisterOperatorWithEigenlayer(
 	operatorAddr common.Address,
