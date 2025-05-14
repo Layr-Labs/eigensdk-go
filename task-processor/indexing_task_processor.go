@@ -75,7 +75,7 @@ func (itp *IndexingTaskProcessor[Input, Output]) ProcessNewTask(
 }
 
 func (itp *IndexingTaskProcessor[Input, Output]) ProcessTaskResponse(taskResponse sdktypes.GenericOutputTaskResponse[Output]) ([32]byte, error) {
-	return itp.taskResponder.ProcessTaskResponse(taskResponse)
+	return itp.taskResponder.HashTaskResponse(taskResponse)
 }
 
 func (itp *IndexingTaskProcessor[Input, Output]) ProcessAggregatedResponse(response blsagg.BlsAggregationServiceResponse) error {

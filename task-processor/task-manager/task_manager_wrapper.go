@@ -135,7 +135,7 @@ func (senderWrapper *TaskManagerContractWrapper[Input, Output]) RespondToTask(
 	return nil
 }
 
-func (tr TaskManagerContractWrapper[Input, Output]) ProcessTaskResponse(taskResponse sdktypes.GenericOutputTaskResponse[Output]) (sdktypes.Bytes32, error) {
+func (tr TaskManagerContractWrapper[Input, Output]) HashTaskResponse(taskResponse sdktypes.GenericOutputTaskResponse[Output]) (sdktypes.Bytes32, error) {
 	abiType, err := internalutils.ExtractTypeFromAbi(tr.taskManagerAbi)
 	if err != nil {
 		return [32]byte{}, err

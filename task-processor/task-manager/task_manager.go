@@ -30,7 +30,7 @@ type TaskResponder[Input any, Output any] interface {
 	// Saves the task response for a given task.
 	// Implementations usually submits to the on chain task manager contract the response to a task.
 	RespondToTask(task types.GenericInputTask[Input], taskResponse types.GenericOutputTaskResponse[Output], nonSignersStakesAndSig types.NonSignerStakesAndSignature) error
-	ProcessTaskResponse(taskResponse types.GenericOutputTaskResponse[Output]) (types.TaskResponseDigest, error)
+	HashTaskResponse(taskResponse types.GenericOutputTaskResponse[Output]) (types.TaskResponseDigest, error)
 }
 
 // Interface for raising challenges for responded tasks.
