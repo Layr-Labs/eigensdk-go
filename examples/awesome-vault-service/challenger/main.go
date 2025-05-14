@@ -54,13 +54,13 @@ func main() {
 		return
 	}
 
-	challengeRaiser, err := NewChallengeRaiser(taskManagerAddr, ethClient, txMgr)
+	vaultServiceResponseCalc := examplecommon.NewVaultServiceResponseCalculator()
+
+	challengeRaiser, err := NewChallengeRaiser(taskManagerAddr, ethClient, txMgr, vaultServiceResponseCalc)
 	if err != nil {
 		logger.Errorf("Failed to create challenger raiser: %w", err)
 		return
 	}
-
-	vaultServiceResponseCalc := examplecommon.NewVaultServiceResponseCalculator()
 
 	vaultSetValidation := challengerprocessor.ResponseValidationFunctionFromResponseCalculator(vaultServiceResponseCalc, func(a, b [32]byte) bool { return a == b })
 
@@ -92,11 +92,12 @@ func main() {
 type ChallengeRaiser struct {
 	taskManager *taskmanager.ContractAwesomeVaultTaskManager
 	txMgr       txmgr.TxManager
+	verifier    *examplecommon.VaultServiceResponseCalculator
 }
 
 var _ challengerprocessor.ChallengeRaiser[examplecommon.TaskInput, [32]byte] = (*ChallengeRaiser)(nil)
 
-func NewChallengeRaiser(address gethcommon.Address, ethClient *ethclient.Client, txMgr txmgr.TxManager) (*ChallengeRaiser, error) {
+func NewChallengeRaiser(address gethcommon.Address, ethClient *ethclient.Client, txMgr txmgr.TxManager, verifier *examplecommon.VaultServiceResponseCalculator) (*ChallengeRaiser, error) {
 	tm, err := taskmanager.NewContractAwesomeVaultTaskManager(address, ethClient)
 	if err != nil {
 		return nil, err
@@ -105,6 +106,7 @@ func NewChallengeRaiser(address gethcommon.Address, ethClient *ethclient.Client,
 	return &ChallengeRaiser{
 		taskManager: tm,
 		txMgr:       txMgr,
+		verifier:    verifier,
 	}, nil
 }
 
@@ -138,7 +140,18 @@ func (cr *ChallengeRaiser) RaiseChallenge(task sdktypes.GenericInputTask[example
 			Y: pubKey.Y,
 		}
 	}
-	tx, err := cr.taskManager.RaiseAndResolveChallenge(txOpts, contractTask, contractTaskResponse, contractTaskResponseMetadata, contractNonSigningOperatorPubKeys)
+	oldLeaves, err := cr.verifier.GetPreviousState(task.InputValue)
+	if err != nil {
+		return utils.WrapError("Error getting previous state", err)
+	}
+	contractOldLeaves := make([]taskmanager.IAwesomeVaultTaskManagerTaskInput, len(oldLeaves))
+	for i, leaf := range oldLeaves {
+		contractOldLeaves[i] = taskmanager.IAwesomeVaultTaskManagerTaskInput{
+			Key:   leaf.Key,
+			Value: leaf.Value,
+		}
+	}
+	tx, err := cr.taskManager.RaiseAndResolveChallenge(txOpts, contractTask, contractTaskResponse, contractTaskResponseMetadata, contractNonSigningOperatorPubKeys, contractOldLeaves)
 	if err != nil {
 		return utils.WrapError("Error raising challenge", err)
 	}
