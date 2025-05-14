@@ -37,7 +37,7 @@ func (tm taskManagerAbiContract[Input, Output]) CreateNewTask(opts *bind.Transac
 	return tm.contract.Transact(opts, "createNewTask", input, quorumThresholdPercentage, quorumNumbers)
 }
 
-// Creates a senderWrapper from an address and ABI.
+// Creates a taskManagerContract wrapper from an address and ABI.
 // Returns an error in case the ABI is not compatible.
 func NewTaskManagerContractFromAbi[Input any, Output any](address common.Address, abi *abi.ABI, txMgr txmgr.TxManager, httpClient bind.ContractBackend) (TaskManagerContract[Input, Output], error) {
 	boundContract := bind.NewBoundContract(address, *abi, httpClient, httpClient, httpClient)
