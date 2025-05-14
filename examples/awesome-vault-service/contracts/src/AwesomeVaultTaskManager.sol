@@ -307,6 +307,9 @@ contract AwesomeVaultTaskManager is
     function hashState(
         TaskInput[] calldata stateLeaves
     ) internal pure returns (bytes32) {
+        if (stateLeaves.length == 0) {
+            return bytes32(0);
+        }
         bytes32[] memory nodes = new bytes32[](stateLeaves.length);
         for (uint256 i = 0; i < stateLeaves.length; i++) {
             nodes[i] = keccak256(abi.encode(stateLeaves[i]));
