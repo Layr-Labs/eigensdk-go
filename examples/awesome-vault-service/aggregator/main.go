@@ -7,11 +7,12 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	taskprocessor "github.com/Layr-Labs/eigensdk-go/task-processor"
+	taskmanager "github.com/Layr-Labs/eigensdk-go/task-processor/task-manager"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/contracts/bindings/AwesomeVaultTaskManager"
+	avtaskmanager "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/contracts/bindings/AwesomeVaultTaskManager"
 
 	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/common"
 )
@@ -23,7 +24,7 @@ func main() {
 		return
 	}
 
-	taskManagerAbi, err := taskmanager.ContractAwesomeVaultTaskManagerMetaData.GetAbi()
+	taskManagerAbi, err := avtaskmanager.ContractAwesomeVaultTaskManagerMetaData.GetAbi()
 	if err != nil {
 		logger.Errorf("Failed to get task manager abi: %w", err)
 		return
@@ -67,7 +68,7 @@ func main() {
 	}
 
 	taskManagerAddr := gethcommon.HexToAddress("0x7bc06c482dead17c0e297afbc32f6e63d3846650")
-	taskResponder, err := taskprocessor.NewTaskResponderFromAbi[examplecommon.TaskInput, [32]byte](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
+	taskResponder, err := taskmanager.NewTaskManagerContractFromAbi[examplecommon.TaskInput, [32]byte](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
 	if err != nil {
 		logger.Errorf("Failed to create Task Responder: %w", err)
 		return
