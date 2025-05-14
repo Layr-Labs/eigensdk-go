@@ -57,7 +57,7 @@ func ExtractTypeFromAbi(taskManagerAbi *abi.ABI) (abi.Type, error) {
 }
 
 func GetDefaultHashFunction(taskResponseType abi.Type) sdktypes.TaskResponseHashFunction {
-	return func(taskResponse sdktypes.TaskResponse) (sdktypes.TaskResponseDigest, error) {
+	return func(taskResponse sdktypes.TaskResponseInterface) (sdktypes.TaskResponseDigest, error) {
 		arguments := abi.Arguments{
 			{
 				Type: taskResponseType,
