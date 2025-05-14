@@ -39,7 +39,7 @@ func TestBlsAgg(t *testing.T) {
 	// 1 second seems to be enough for tests to pass. Currently takes 5s to run all tests
 	tasksTimeToExpiry := 1 * time.Second
 
-	hashFunction := func(taskResponse types.TaskResponse) (types.TaskResponseDigest, error) {
+	hashFunction := func(taskResponse types.TaskResponseInterface) (types.TaskResponseDigest, error) {
 		taskResponseBytes, err := json.Marshal(taskResponse)
 		if err != nil {
 			return types.TaskResponseDigest{}, err
@@ -47,7 +47,7 @@ func TestBlsAgg(t *testing.T) {
 		return types.TaskResponseDigest(sha256.Sum256(taskResponseBytes)), nil
 	}
 
-	wrongHashFunction := func(taskResponse types.TaskResponse) (types.TaskResponseDigest, error) {
+	wrongHashFunction := func(taskResponse types.TaskResponseInterface) (types.TaskResponseDigest, error) {
 		taskResponseBytes, err := json.Marshal(taskResponse)
 		if err != nil {
 			return types.TaskResponseDigest{}, err
@@ -1549,7 +1549,7 @@ func TestIntegrationBlsAgg(t *testing.T) {
 
 	tasksTimeToExpiry := 10 * time.Second
 
-	hashFunction := func(taskResponse types.TaskResponse) (types.TaskResponseDigest, error) {
+	hashFunction := func(taskResponse types.TaskResponseInterface) (types.TaskResponseDigest, error) {
 		taskResponseBytes, err := json.Marshal(taskResponse)
 		if err != nil {
 			return types.TaskResponseDigest{}, err

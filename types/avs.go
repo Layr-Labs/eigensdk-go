@@ -8,12 +8,12 @@ import (
 
 type TaskIndex = uint32
 type TaskResponseDigest = Bytes32
-type TaskResponse = interface{}
+type TaskResponseInterface = interface{}
 
-type TaskResponseHashFunction func(taskResponse TaskResponse) (TaskResponseDigest, error)
+type TaskResponseHashFunction func(taskResponse TaskResponseInterface) (TaskResponseDigest, error)
 
 type SignedTaskResponseDigest struct {
-	TaskResponse                TaskResponse
+	TaskResponse                TaskResponseInterface
 	BlsSignature                *bls.Signature
 	OperatorId                  OperatorId
 	SignatureVerificationErrorC chan<- error `json:"-"` // removed from json because channels are not marshallable
