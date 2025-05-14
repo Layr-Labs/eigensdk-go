@@ -317,7 +317,7 @@ contract AwesomeVaultTaskManager is
         }
         bytes32[] memory nodes = new bytes32[](stateLeaves.length);
         for (uint256 i = 0; i < stateLeaves.length; i++) {
-            nodes[i] = keccak256(abi.encode(stateLeaves[i]));
+            nodes[i] = _hashLeaf(stateLeaves[i]);
         }
         hashHashedLeaves(nodes, nodes.length);
         return nodes[0];
@@ -332,10 +332,10 @@ contract AwesomeVaultTaskManager is
         uint256 insertIndex = 0;
         for (uint256 i = 0; i < stateLeaves.length; i++) {
             if (!inserted) {
-                int256 cmp = stringCompare(stateLeaves[i].key, stateLeafToInsert.key);
+                int256 cmp = _stringCompare(stateLeaves[i].key, stateLeafToInsert.key);
                 if (cmp >= 0) {
                     inserted = true;
-                    nodes[insertIndex] = keccak256(abi.encode(stateLeafToInsert));
+                    nodes[insertIndex] = _hashLeaf(stateLeafToInsert);
                     insertIndex++;
                     // If the keys are equal, we need to skip the current leaf
                     // to avoid duplicates in the tree.
@@ -344,11 +344,11 @@ contract AwesomeVaultTaskManager is
                     }
                 }
             }
-            nodes[insertIndex] = keccak256(abi.encode(stateLeaves[i]));
+            nodes[insertIndex] = _hashLeaf(stateLeaves[i]);
             insertIndex++;
         }
         if (!inserted) {
-            nodes[insertIndex] = keccak256(abi.encode(stateLeafToInsert));
+            nodes[insertIndex] = _hashLeaf(stateLeafToInsert);
             insertIndex++;
         }
         hashHashedLeaves(nodes, insertIndex);
@@ -364,9 +364,9 @@ contract AwesomeVaultTaskManager is
             for (uint256 i = 0; i < newNumberOfNodes; i++) {
                 bytes32 leftNode = nodes[i * 2];
                 if (i * 2 + 1 < numberOfNodes) {
-                    nodes[i] = hashNodes(leftNode, nodes[i * 2 + 1]);
+                    nodes[i] = _hashNodes(leftNode, nodes[i * 2 + 1]);
                 } else {
-                    nodes[i] = hashNodes(leftNode, leftNode);
+                    nodes[i] = _hashNodes(leftNode, leftNode);
                 }
             }
             numberOfNodes = newNumberOfNodes;
@@ -374,15 +374,15 @@ contract AwesomeVaultTaskManager is
         return nodes[0];
     }
 
-    function hashNodes(bytes32 left, bytes32 right) internal pure returns (bytes32) {
+    function _hashNodes(bytes32 left, bytes32 right) internal pure returns (bytes32) {
         if (left <= right) {
-            return keccak256(abi.encode(left, right));
+            return keccak256(abi.encodePacked(left, right));
         } else {
-            return keccak256(abi.encode(right, left));
+            return keccak256(abi.encodePacked(right, left));
         }
     }
 
-    function stringCompare(string calldata a, string calldata b) internal pure returns (int256) {
+    function _stringCompare(string calldata a, string calldata b) internal pure returns (int256) {
         bytes memory aBytes = bytes(a);
         bytes memory bBytes = bytes(b);
         uint256 minLength = aBytes.length < bBytes.length ? aBytes.length : bBytes.length;
@@ -399,5 +399,11 @@ contract AwesomeVaultTaskManager is
             return 1;
         }
         return 0;
+    }
+
+    function _hashLeaf(
+        TaskInput calldata stateLeaf
+    ) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(stateLeaf.key, stateLeaf.value));
     }
 }
