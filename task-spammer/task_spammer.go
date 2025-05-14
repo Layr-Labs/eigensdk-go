@@ -4,23 +4,16 @@ import (
 	"context"
 	"iter"
 	"time"
+
+	taskmanager "github.com/Layr-Labs/eigensdk-go/task-processor/task-manager"
 )
 
-// Interface for creating new tasks.
-//
-// Interface is generic over the task input type.
-type TaskCreator[Input any] interface {
-	// Creates a new task with the given input.
-	// Implementations usually send a transaction to a smart contract.
-	CreateNewTask(ctx context.Context, input Input) error
-}
-
 type TaskSpammer[Input any] struct {
-	taskCreator TaskCreator[Input]
+	taskCreator taskmanager.TaskCreator[Input]
 	config      Config
 }
 
-func NewTaskSpammer[Input any](taskCreator TaskCreator[Input], config Config) (*TaskSpammer[Input], error) {
+func NewTaskSpammer[Input any](taskCreator taskmanager.TaskCreator[Input], config Config) (*TaskSpammer[Input], error) {
 	// TODO: validate config
 	return &TaskSpammer[Input]{
 		taskCreator,
@@ -51,7 +44,7 @@ func (taskGen *TaskSpammer[Input]) Start(ctx context.Context, inputGen iter.Seq[
 			logger.Info("Task Spammer finished sending tasks")
 			return nil
 		}
-		err := taskGen.taskCreator.CreateNewTask(ctx, value)
+		err := taskGen.taskCreator.CreateNewTask(ctx, value, taskGen.config.QuorumThresholdPercentage, taskGen.config.QuorumNumbers)
 		if err != nil {
 			logger.Error("Task Spammer failed to send new task", "err", err)
 			return err

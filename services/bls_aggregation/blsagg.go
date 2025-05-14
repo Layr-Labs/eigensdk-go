@@ -47,10 +47,10 @@ var (
 
 // BlsAggregationServiceResponse is the response from the bls aggregation service
 type BlsAggregationServiceResponse struct {
-	Err                error                    // if Err is not nil, the other fields are not valid
-	TaskIndex          types.TaskIndex          // unique identifier of the task
-	TaskResponse       types.TaskResponse       // the task response that was signed
-	TaskResponseDigest types.TaskResponseDigest // digest of the task response that was signed
+	Err                error                       // if Err is not nil, the other fields are not valid
+	TaskIndex          types.TaskIndex             // unique identifier of the task
+	TaskResponse       types.TaskResponseInterface // the task response that was signed
+	TaskResponseDigest types.TaskResponseDigest    // digest of the task response that was signed
 	// The below 8 fields are the data needed to build the IBLSSignatureChecker.NonSignerStakesAndSignature struct
 	// users of this service will need to build the struct themselves by converting the bls points
 	// into the BN254.G1/G2Point structs that the IBLSSignatureChecker expects
@@ -83,7 +83,7 @@ type TaskSignature struct {
 	// unique identifier of the task associated with this signature
 	taskIndex types.TaskIndex
 	// response data that has been signed
-	taskResponse types.TaskResponse
+	taskResponse types.TaskResponseInterface
 	// BLS cryptographic signature for the task response
 	blsSignature *bls.Signature
 	// id of the operator who signed the task response
@@ -93,7 +93,7 @@ type TaskSignature struct {
 // NewTaskSignature creates a new instance of TaskSignature
 func NewTaskSignature(
 	taskIndex types.TaskIndex,
-	taskResponse types.TaskResponse,
+	taskResponse types.TaskResponseInterface,
 	blsSignature *bls.Signature,
 	operatorId types.OperatorId,
 ) TaskSignature {

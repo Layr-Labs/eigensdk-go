@@ -8,22 +8,18 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	blsagg "github.com/Layr-Labs/eigensdk-go/services/bls_aggregation"
+	taskmanager "github.com/Layr-Labs/eigensdk-go/task-processor/task-manager"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
 type IndexingTaskProcessor[Input any, Output any] struct {
-	tasks   map[sdktypes.TaskIndex]sdktypes.GenericInputTask[Input]
+	tasks   map[sdktypes.TaskIndex]taskmanager.Task[Input]
 	tasksMu sync.RWMutex
 
-	taskResponder TaskResponder[Input, Output]
+	taskResponder taskmanager.TaskResponder[Input, Output]
 
 	logger logging.Logger
-}
-
-type TaskResponder[Input any, Output any] interface {
-	RespondToTask(task sdktypes.GenericInputTask[Input], taskResponse sdktypes.GenericOutputTaskResponse[Output], nonSignersStakesAndSig sdktypes.NonSignerStakesAndSignature) error
-	ProcessTaskResponse(taskResponse sdktypes.GenericOutputTaskResponse[Output]) (sdktypes.TaskResponseDigest, error)
 }
 
 const (
@@ -35,10 +31,10 @@ const (
 
 func NewIndexingTaskProcessor[Input any, Output any](
 	logger logging.Logger,
-	taskResponder TaskResponder[Input, Output],
+	taskResponder taskmanager.TaskResponder[Input, Output],
 ) (*IndexingTaskProcessor[Input, Output], error) {
 	return &IndexingTaskProcessor[Input, Output]{
-		tasks:         make(map[sdktypes.TaskIndex]sdktypes.GenericInputTask[Input]),
+		tasks:         make(map[sdktypes.TaskIndex]taskmanager.Task[Input]),
 		taskResponder: taskResponder,
 		logger:        logger,
 	}, nil
@@ -46,7 +42,7 @@ func NewIndexingTaskProcessor[Input any, Output any](
 
 func (itp *IndexingTaskProcessor[Input, Output]) ProcessNewTask(
 	taskIndex sdktypes.TaskIndex,
-	task sdktypes.GenericInputTask[Input],
+	task taskmanager.Task[Input],
 ) (blsagg.TaskMetadata, error) {
 	itp.logger.Infof("Indexing task processor received new task: %v: ", task)
 
@@ -78,8 +74,8 @@ func (itp *IndexingTaskProcessor[Input, Output]) ProcessNewTask(
 	return metadata, nil
 }
 
-func (itp *IndexingTaskProcessor[Input, Output]) ProcessTaskResponse(taskResponse sdktypes.GenericOutputTaskResponse[Output]) ([32]byte, error) {
-	return itp.taskResponder.ProcessTaskResponse(taskResponse)
+func (itp *IndexingTaskProcessor[Input, Output]) ProcessTaskResponse(taskResponse taskmanager.TaskResponse[Output]) ([32]byte, error) {
+	return itp.taskResponder.HashTaskResponse(taskResponse)
 }
 
 func (itp *IndexingTaskProcessor[Input, Output]) ProcessAggregatedResponse(response blsagg.BlsAggregationServiceResponse) error {
@@ -111,7 +107,7 @@ func (itp *IndexingTaskProcessor[Input, Output]) ProcessAggregatedResponse(respo
 
 	itp.logger.Info("Threshold reached. Sending aggregated response onchain.", "taskIndex", response.TaskIndex)
 
-	taskResponseAgg, ok := response.TaskResponse.(sdktypes.GenericOutputTaskResponse[Output])
+	taskResponseAgg, ok := response.TaskResponse.(taskmanager.TaskResponse[Output])
 	if !ok {
 		itp.logger.Error("task Response could not be converted to sdk aggregator's Task Response type")
 	}

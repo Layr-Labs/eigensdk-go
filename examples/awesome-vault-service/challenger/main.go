@@ -7,16 +7,19 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/challenger"
 	challengerprocessor "github.com/Layr-Labs/eigensdk-go/challenger/challenger-processor"
 	"github.com/Layr-Labs/eigensdk-go/logging"
+	taskmanager "github.com/Layr-Labs/eigensdk-go/task-processor/task-manager"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
+	tmcontract "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/contracts/bindings/AwesomeVaultTaskManager"
+
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 
 	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/common"
-	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/contracts/bindings/AwesomeVaultTaskManager"
+	avtaskmanager "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/contracts/bindings/AwesomeVaultTaskManager"
 )
 
 func main() {
@@ -26,7 +29,7 @@ func main() {
 		return
 	}
 
-	taskManagerAbi, err := taskmanager.ContractAwesomeVaultTaskManagerMetaData.GetAbi()
+	taskManagerAbi, err := avtaskmanager.ContractAwesomeVaultTaskManagerMetaData.GetAbi()
 	if err != nil {
 		logger.Errorf("Failed to get task manager abi: %w", err)
 		return
@@ -70,7 +73,7 @@ func main() {
 		return
 	}
 
-	challengerConfig := challenger.ChallengerConfig{
+	challengerConfig := challenger.Config{
 		Logger:         logger,
 		TaskManagerAbi: taskManagerAbi,
 		EthClient:      ethClient,
@@ -90,15 +93,15 @@ func main() {
 }
 
 type ChallengeRaiser struct {
-	taskManager *taskmanager.ContractAwesomeVaultTaskManager
+	taskManager *tmcontract.ContractAwesomeVaultTaskManager
 	txMgr       txmgr.TxManager
 	verifier    *examplecommon.VaultServiceResponseCalculator
 }
 
-var _ challengerprocessor.ChallengeRaiser[examplecommon.TaskInput, [32]byte] = (*ChallengeRaiser)(nil)
+var _ taskmanager.ChallengeRaiser[examplecommon.TaskInput, [32]byte] = (*ChallengeRaiser)(nil)
 
 func NewChallengeRaiser(address gethcommon.Address, ethClient *ethclient.Client, txMgr txmgr.TxManager, verifier *examplecommon.VaultServiceResponseCalculator) (*ChallengeRaiser, error) {
-	tm, err := taskmanager.NewContractAwesomeVaultTaskManager(address, ethClient)
+	tm, err := tmcontract.NewContractAwesomeVaultTaskManager(address, ethClient)
 	if err != nil {
 		return nil, err
 	}
@@ -110,32 +113,32 @@ func NewChallengeRaiser(address gethcommon.Address, ethClient *ethclient.Client,
 	}, nil
 }
 
-func (cr *ChallengeRaiser) RaiseChallenge(task sdktypes.GenericInputTask[examplecommon.TaskInput], taskResponse sdktypes.GenericOutputTaskResponse[[32]byte], taskResponseMetadata sdktypes.GenericTaskResponseMetadata, nonSigningOperatorPubKeys []sdktypes.BN254G1Point) error {
+func (cr *ChallengeRaiser) RaiseChallenge(task taskmanager.Task[examplecommon.TaskInput], taskResponse taskmanager.TaskResponse[[32]byte], taskResponseMetadata sdktypes.TaskResponseMetadata, nonSigningOperatorPubKeys []sdktypes.BN254G1Point) error {
 	txOpts, err := cr.txMgr.GetNoSendTxOpts()
 	if err != nil {
 		return utils.WrapError("Error getting tx opts", err)
 	}
-	taskInput := taskmanager.IAwesomeVaultTaskManagerTaskInput{
+	taskInput := tmcontract.IAwesomeVaultTaskManagerTaskInput{
 		Key:   task.InputValue.Key,
 		Value: task.InputValue.Value,
 	}
-	contractTask := taskmanager.IAwesomeVaultTaskManagerTask{
+	contractTask := tmcontract.IAwesomeVaultTaskManagerTask{
 		Input:                     taskInput,
 		TaskCreatedBlock:          task.TaskCreatedBlock,
 		QuorumNumbers:             task.QuorumNumbers,
 		QuorumThresholdPercentage: task.QuorumThresholdPercentage,
 	}
-	contractTaskResponse := taskmanager.IAwesomeVaultTaskManagerTaskResponse{
+	contractTaskResponse := tmcontract.IAwesomeVaultTaskManagerTaskResponse{
 		ReferenceTaskIndex: taskResponse.ReferenceTaskIndex,
 		Result:             taskResponse.OutputValue,
 	}
-	contractTaskResponseMetadata := taskmanager.IAwesomeVaultTaskManagerTaskResponseMetadata{
+	contractTaskResponseMetadata := tmcontract.IAwesomeVaultTaskManagerTaskResponseMetadata{
 		TaskRespondedBlock: taskResponseMetadata.TaskRespondedBlock,
 		HashOfNonSigners:   taskResponseMetadata.HashOfNonSigners,
 	}
-	contractNonSigningOperatorPubKeys := make([]taskmanager.BN254G1Point, len(nonSigningOperatorPubKeys))
+	contractNonSigningOperatorPubKeys := make([]tmcontract.BN254G1Point, len(nonSigningOperatorPubKeys))
 	for i, pubKey := range nonSigningOperatorPubKeys {
-		contractNonSigningOperatorPubKeys[i] = taskmanager.BN254G1Point{
+		contractNonSigningOperatorPubKeys[i] = tmcontract.BN254G1Point{
 			X: pubKey.X,
 			Y: pubKey.Y,
 		}
@@ -144,9 +147,9 @@ func (cr *ChallengeRaiser) RaiseChallenge(task sdktypes.GenericInputTask[example
 	if err != nil {
 		return utils.WrapError("Error getting previous state", err)
 	}
-	contractOldLeaves := make([]taskmanager.IAwesomeVaultTaskManagerTaskInput, len(oldLeaves))
+	contractOldLeaves := make([]tmcontract.IAwesomeVaultTaskManagerTaskInput, len(oldLeaves))
 	for i, leaf := range oldLeaves {
-		contractOldLeaves[i] = taskmanager.IAwesomeVaultTaskManagerTaskInput{
+		contractOldLeaves[i] = tmcontract.IAwesomeVaultTaskManagerTaskInput{
 			Key:   leaf.Key,
 			Value: leaf.Value,
 		}

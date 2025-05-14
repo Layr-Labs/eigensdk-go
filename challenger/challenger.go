@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
+	taskmanager "github.com/Layr-Labs/eigensdk-go/task-processor/task-manager"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -15,8 +16,8 @@ import (
 )
 
 type ChallengerProcessor[Input any, Output any] interface {
-	ProcessNewTaskCreated(taskIndex uint32, task sdktypes.GenericInputTask[Input]) error
-	ProcessTaskResponded(taskIndex uint32, taskResponse sdktypes.TaskResponseData[Output]) error
+	ProcessNewTaskCreated(taskIndex uint32, task taskmanager.Task[Input]) error
+	ProcessTaskResponded(taskIndex uint32, taskResponse taskmanager.TaskResponse[Output], taskResponseMetadata sdktypes.TaskResponseMetadata, nonSigningOperatorPubKeys []sdktypes.BN254G1Point) error
 }
 
 type Challenger[Input any, Output any] struct {
@@ -31,7 +32,7 @@ type Challenger[Input any, Output any] struct {
 }
 
 func NewChallenger[Input any, Output any](
-	c ChallengerConfig,
+	c Config,
 	challengerProcessor ChallengerProcessor[Input, Output],
 ) (*Challenger[Input, Output], error) {
 	client, err := ethclient.Dial(c.EthWsUrl)
@@ -93,7 +94,7 @@ func (c *Challenger[Input, Output]) Start(ctx context.Context) error {
 }
 
 func (c *Challenger[Input, Output]) processNewTaskCreatedLog(log types.Log) error {
-	var newTaskCreatedLog sdktypes.NewTaskCreatedEvent[Input]
+	var newTaskCreatedLog taskmanager.NewTaskCreatedEvent[Input]
 
 	err := c.taskManagerAbi.UnpackIntoInterface(&newTaskCreatedLog, "NewTaskCreated", log.Data)
 	if err != nil {
@@ -113,7 +114,7 @@ func (c *Challenger[Input, Output]) processNewTaskCreatedLog(log types.Log) erro
 func (c *Challenger[Input, Output]) processTaskRespondedLog(
 	log types.Log,
 ) error {
-	var taskRespondedLog sdktypes.TaskRespondedEvent[Output]
+	var taskRespondedLog taskmanager.TaskRespondedEvent[Output]
 
 	err := c.taskManagerAbi.UnpackIntoInterface(&taskRespondedLog, "TaskResponded", log.Data)
 	if err != nil {
@@ -124,13 +125,13 @@ func (c *Challenger[Input, Output]) processTaskRespondedLog(
 
 	// get the inputs necessary for raising a challenge
 	nonSigningOperatorPubKeys := c.getNonSigningOperatorPubKeys(log.TxHash)
-	taskResponseData := sdktypes.TaskResponseData[Output]{
-		TaskResponse:              taskRespondedLog.TaskResponse,
-		TaskResponseMetadata:      taskRespondedLog.TaskResponseMetadata,
-		NonSigningOperatorPubKeys: nonSigningOperatorPubKeys,
-	}
 
-	err = c.challengerProcessor.ProcessTaskResponded(taskIndex, taskResponseData)
+	err = c.challengerProcessor.ProcessTaskResponded(
+		taskIndex,
+		taskRespondedLog.TaskResponse,
+		taskRespondedLog.TaskResponseMetadata,
+		nonSigningOperatorPubKeys,
+	)
 	if err != nil {
 		return fmt.Errorf("error verifying the challenge: %w", err)
 	}
