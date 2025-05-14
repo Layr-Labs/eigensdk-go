@@ -10,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-type AggregatorConfig struct {
+type Config struct {
 	EthHttpUrl                 string
 	EthWsUrl                   string
 	AggregatorServerIpPortAddr string

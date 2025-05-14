@@ -28,7 +28,7 @@ func main() {
 
 	operatorAddr := "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
 
-	operatorConfig := operator.OperatorConfig{
+	operatorConfig := operator.Config{
 		Logger:         logger,
 		TaskManagerAbi: taskManagerAbi,
 

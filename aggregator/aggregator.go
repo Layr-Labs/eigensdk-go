@@ -37,7 +37,7 @@ type Aggregator[Input any, Output any] struct {
 
 // NewAggregator creates a new Aggregator with the provided config.
 func NewAggregator[Input any, Output any](
-	c AggregatorConfig,
+	c Config,
 	taskProcessor taskprocessor.TaskProcessor[Input, Output],
 ) (*Aggregator[Input, Output], error) {
 	chainioConfig := sdkclients.BuildAllConfig{

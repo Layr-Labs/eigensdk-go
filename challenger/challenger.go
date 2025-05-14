@@ -31,7 +31,7 @@ type Challenger[Input any, Output any] struct {
 }
 
 func NewChallenger[Input any, Output any](
-	c ChallengerConfig,
+	c Config,
 	challengerProcessor ChallengerProcessor[Input, Output],
 ) (*Challenger[Input, Output], error) {
 	client, err := ethclient.Dial(c.EthWsUrl)

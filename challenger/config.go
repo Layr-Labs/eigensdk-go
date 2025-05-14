@@ -6,7 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-type ChallengerConfig struct {
+type Config struct {
 	EthWsUrl       string
 	Logger         logging.Logger
 	TaskManagerAbi *abi.ABI

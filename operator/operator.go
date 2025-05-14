@@ -37,7 +37,7 @@ type Operator[Input any, Output any] struct {
 type TaskResponseHashFunction[Output any] func(taskResponse sdktypes.TaskResponse[Output]) ([32]byte, error)
 
 func NewOperatorFromConfig[Input any, Output any](
-	c OperatorConfig,
+	c Config,
 	responseCalculator ResponseCalculator[Input, Output],
 	taskResponseHashFn TaskResponseHashFunction[Output],
 ) (*Operator[Input, Output], error) {

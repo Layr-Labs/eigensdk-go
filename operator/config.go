@@ -5,7 +5,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
-type OperatorConfig struct {
+type Config struct {
 	OperatorAddress string
 
 	// Avs Reader addresses

@@ -37,7 +37,7 @@ func main() {
 		return
 	}
 
-	cfg := challenger.ChallengerConfig{
+	cfg := challenger.Config{
 		EthWsUrl:       "ws://localhost:8545",
 		Logger:         logger,
 		TaskManagerAbi: taskManagerAbi,
