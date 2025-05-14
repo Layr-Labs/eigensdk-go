@@ -7,6 +7,7 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	taskprocessor "github.com/Layr-Labs/eigensdk-go/task-processor"
+	taskmanager "github.com/Layr-Labs/eigensdk-go/task-processor/task-manager"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum"
@@ -66,7 +67,7 @@ func NewAggregator[Input any, Output any](
 	)
 
 	taskResponseHashFn := func(response any) (sdktypes.TaskResponseDigest, error) {
-		taskResponse, ok := response.(sdktypes.TaskResponse[Output])
+		taskResponse, ok := response.(taskmanager.TaskResponse[Output])
 		if !ok {
 			c.Logger.Error("task Response could not be converted to sdk aggregator's Task Response type")
 		}
@@ -132,7 +133,7 @@ func (agg *Aggregator[Input, Output]) Start(ctx context.Context) error {
 }
 
 func (agg *Aggregator[Input, Output]) processNewTask(log types.Log) (blsagg.TaskMetadata, error) {
-	var newTaskCreatedLog sdktypes.NewTaskCreatedEvent[Input]
+	var newTaskCreatedLog taskmanager.NewTaskCreatedEvent[Input]
 
 	err := agg.taskManagerAbi.UnpackIntoInterface(&newTaskCreatedLog, "NewTaskCreated", log.Data)
 	if err != nil {

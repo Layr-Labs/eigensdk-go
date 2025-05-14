@@ -60,8 +60,8 @@ func NewTaskManagerFromAbi[Input any, Output any](address common.Address, abi *a
 }
 
 func (senderWrapper *taskManagerContractWrapper[Input, Output]) RaiseChallenge(
-	task sdktypes.Task[Input],
-	taskResponse sdktypes.TaskResponse[Output],
+	task Task[Input],
+	taskResponse TaskResponse[Output],
 	TaskResponseMetadata sdktypes.TaskResponseMetadata,
 	NonSigningOperatorPubKeys []sdktypes.BN254G1Point,
 ) error {
@@ -111,8 +111,8 @@ func (senderWrapper *taskManagerContractWrapper[Input, Output]) CreateNewTask(ct
 }
 
 func (senderWrapper *taskManagerContractWrapper[Input, Output]) RespondToTask(
-	task sdktypes.Task[Input],
-	taskResponse sdktypes.TaskResponse[Output],
+	task Task[Input],
+	taskResponse TaskResponse[Output],
 	nonSignersStakesAndSig sdktypes.NonSignerStakesAndSignature,
 ) error {
 	txOpts, err := senderWrapper.txMgr.GetNoSendTxOpts()
@@ -139,6 +139,6 @@ func (senderWrapper *taskManagerContractWrapper[Input, Output]) RespondToTask(
 	return nil
 }
 
-func (tr taskManagerContractWrapper[Input, Output]) HashTaskResponse(taskResponse sdktypes.TaskResponse[Output]) (sdktypes.Bytes32, error) {
+func (tr taskManagerContractWrapper[Input, Output]) HashTaskResponse(taskResponse TaskResponse[Output]) (sdktypes.Bytes32, error) {
 	return tr.hashFunction(taskResponse)
 }

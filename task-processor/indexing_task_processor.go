@@ -14,7 +14,7 @@ import (
 )
 
 type IndexingTaskProcessor[Input any, Output any] struct {
-	tasks   map[sdktypes.TaskIndex]sdktypes.Task[Input]
+	tasks   map[sdktypes.TaskIndex]taskmanager.Task[Input]
 	tasksMu sync.RWMutex
 
 	taskResponder taskmanager.TaskResponder[Input, Output]
@@ -34,7 +34,7 @@ func NewIndexingTaskProcessor[Input any, Output any](
 	taskResponder taskmanager.TaskResponder[Input, Output],
 ) (*IndexingTaskProcessor[Input, Output], error) {
 	return &IndexingTaskProcessor[Input, Output]{
-		tasks:         make(map[sdktypes.TaskIndex]sdktypes.Task[Input]),
+		tasks:         make(map[sdktypes.TaskIndex]taskmanager.Task[Input]),
 		taskResponder: taskResponder,
 		logger:        logger,
 	}, nil
@@ -42,7 +42,7 @@ func NewIndexingTaskProcessor[Input any, Output any](
 
 func (itp *IndexingTaskProcessor[Input, Output]) ProcessNewTask(
 	taskIndex sdktypes.TaskIndex,
-	task sdktypes.Task[Input],
+	task taskmanager.Task[Input],
 ) (blsagg.TaskMetadata, error) {
 	itp.logger.Infof("Indexing task processor received new task: %v: ", task)
 
@@ -74,7 +74,7 @@ func (itp *IndexingTaskProcessor[Input, Output]) ProcessNewTask(
 	return metadata, nil
 }
 
-func (itp *IndexingTaskProcessor[Input, Output]) ProcessTaskResponse(taskResponse sdktypes.TaskResponse[Output]) ([32]byte, error) {
+func (itp *IndexingTaskProcessor[Input, Output]) ProcessTaskResponse(taskResponse taskmanager.TaskResponse[Output]) ([32]byte, error) {
 	return itp.taskResponder.HashTaskResponse(taskResponse)
 }
 
@@ -107,7 +107,7 @@ func (itp *IndexingTaskProcessor[Input, Output]) ProcessAggregatedResponse(respo
 
 	itp.logger.Info("Threshold reached. Sending aggregated response onchain.", "taskIndex", response.TaskIndex)
 
-	taskResponseAgg, ok := response.TaskResponse.(sdktypes.TaskResponse[Output])
+	taskResponseAgg, ok := response.TaskResponse.(taskmanager.TaskResponse[Output])
 	if !ok {
 		itp.logger.Error("task Response could not be converted to sdk aggregator's Task Response type")
 	}

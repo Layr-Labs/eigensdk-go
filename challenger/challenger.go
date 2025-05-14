@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
+	taskmanager "github.com/Layr-Labs/eigensdk-go/task-processor/task-manager"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -15,7 +16,7 @@ import (
 )
 
 type ChallengerProcessor[Input any, Output any] interface {
-	ProcessNewTaskCreated(taskIndex uint32, task sdktypes.Task[Input]) error
+	ProcessNewTaskCreated(taskIndex uint32, task taskmanager.Task[Input]) error
 	ProcessTaskResponded(taskIndex uint32, taskResponse sdktypes.TaskResponseData[Output]) error
 }
 
@@ -93,7 +94,7 @@ func (c *Challenger[Input, Output]) Start(ctx context.Context) error {
 }
 
 func (c *Challenger[Input, Output]) processNewTaskCreatedLog(log types.Log) error {
-	var newTaskCreatedLog sdktypes.NewTaskCreatedEvent[Input]
+	var newTaskCreatedLog taskmanager.NewTaskCreatedEvent[Input]
 
 	err := c.taskManagerAbi.UnpackIntoInterface(&newTaskCreatedLog, "NewTaskCreated", log.Data)
 	if err != nil {
@@ -113,7 +114,7 @@ func (c *Challenger[Input, Output]) processNewTaskCreatedLog(log types.Log) erro
 func (c *Challenger[Input, Output]) processTaskRespondedLog(
 	log types.Log,
 ) error {
-	var taskRespondedLog sdktypes.TaskRespondedEvent[Output]
+	var taskRespondedLog taskmanager.TaskRespondedEvent[Output]
 
 	err := c.taskManagerAbi.UnpackIntoInterface(&taskRespondedLog, "TaskResponded", log.Data)
 	if err != nil {

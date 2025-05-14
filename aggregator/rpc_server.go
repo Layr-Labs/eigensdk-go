@@ -7,6 +7,7 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	blsagg "github.com/Layr-Labs/eigensdk-go/services/bls_aggregation"
+	taskmanager "github.com/Layr-Labs/eigensdk-go/task-processor/task-manager"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 )
 
@@ -24,7 +25,7 @@ func (agg *Aggregator[Input, Output]) startServer(ctx context.Context) {
 }
 
 type SignedTaskResponse[Output any] struct {
-	TaskResponse sdktypes.TaskResponse[Output]
+	TaskResponse taskmanager.TaskResponse[Output]
 	BlsSignature bls.Signature
 	OperatorId   sdktypes.OperatorId
 }

@@ -14,7 +14,7 @@ type IndexingChallengerProcessor[Input any, Output any] struct {
 	logger               logging.Logger
 	responseValidationFn ResponseValidationFunction[Input, Output]
 	challengerRaiser     taskmanager.ChallengeRaiser[Input, Output]
-	tasks                map[uint32]sdktypes.Task[Input]
+	tasks                map[uint32]taskmanager.Task[Input]
 }
 
 type ResponseValidationFunction[Input any, Output any] func(taskIndex uint32, input Input, output Output) (bool, error)
@@ -28,11 +28,11 @@ func NewIndexingChallengerProcessor[Input any, Output any](
 		logger:               logger,
 		responseValidationFn: responseValidationFn,
 		challengerRaiser:     challengerRaiser,
-		tasks:                make(map[uint32]sdktypes.Task[Input]),
+		tasks:                make(map[uint32]taskmanager.Task[Input]),
 	}, nil
 }
 
-func (icp IndexingChallengerProcessor[Input, Output]) ProcessNewTaskCreated(newTaskIndex uint32, newTask sdktypes.Task[Input]) error {
+func (icp IndexingChallengerProcessor[Input, Output]) ProcessNewTaskCreated(newTaskIndex uint32, newTask taskmanager.Task[Input]) error {
 	icp.tasks[newTaskIndex] = newTask
 
 	return nil
