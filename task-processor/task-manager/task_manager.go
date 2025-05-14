@@ -30,6 +30,8 @@ type TaskResponder[Input any, Output any] interface {
 	// Saves the task response for a given task.
 	// Implementations usually submits to the on chain task manager contract the response to a task.
 	RespondToTask(task types.GenericInputTask[Input], taskResponse types.GenericOutputTaskResponse[Output], nonSignersStakesAndSig types.NonSignerStakesAndSignature) error
+	// Hashes a generic task response, first encoding it on the task manager abi and then hashing the encoded response.
+	// Returns the 32 byte digest or an error in case the hashing process fails
 	HashTaskResponse(taskResponse types.GenericOutputTaskResponse[Output]) (types.TaskResponseDigest, error)
 }
 
