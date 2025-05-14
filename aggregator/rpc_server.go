@@ -24,7 +24,7 @@ func (agg *Aggregator[Input, Output]) startServer(ctx context.Context) {
 }
 
 type SignedTaskResponse[Output any] struct {
-	TaskResponse sdktypes.GenericOutputTaskResponse[Output]
+	TaskResponse sdktypes.TaskResponse[Output]
 	BlsSignature bls.Signature
 	OperatorId   sdktypes.OperatorId
 }

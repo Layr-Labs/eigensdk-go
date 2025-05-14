@@ -39,9 +39,9 @@ func NewChallengeRaiserFromAbi[Input any, Output any](address common.Address, ab
 }
 
 func (challengerRaiser *challengerRaiserContractWrapper[Input, Output]) RaiseChallenge(
-	task sdktypes.GenericInputTask[Input],
-	taskResponse sdktypes.GenericOutputTaskResponse[Output],
-	TaskResponseMetadata sdktypes.GenericTaskResponseMetadata,
+	task sdktypes.Task[Input],
+	taskResponse sdktypes.TaskResponse[Output],
+	TaskResponseMetadata sdktypes.TaskResponseMetadata,
 	NonSigningOperatorPubKeys []sdktypes.BN254G1Point,
 ) error {
 	txOpts, err := challengerRaiser.txMgr.GetNoSendTxOpts()

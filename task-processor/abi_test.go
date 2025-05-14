@@ -49,14 +49,14 @@ func TestIncredibleSquaringAbi(t *testing.T) {
 	taskManagerAbi, err := istaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
 	require.NoError(t, err)
 
-	originalTaskStruct := sdktypes.GenericInputTask[*big.Int]{
+	originalTaskStruct := sdktypes.Task[*big.Int]{
 		InputValue:                big.NewInt(10),
 		TaskCreatedBlock:          10,
 		QuorumNumbers:             []uint8{0},
 		QuorumThresholdPercentage: 100,
 	}
 
-	originalTaskResponseStruct := sdktypes.GenericOutputTaskResponse[*big.Int]{
+	originalTaskResponseStruct := sdktypes.TaskResponse[*big.Int]{
 		ReferenceTaskIndex: 0,
 		OutputValue:        big.NewInt(100),
 	}
@@ -85,14 +85,14 @@ func TestSimpleStructValueAbi(t *testing.T) {
 	parsedAbi, err := abi.JSON(strings.NewReader(rawAbi))
 	require.NoError(t, err)
 
-	originalTaskStruct := sdktypes.GenericInputTask[U32Point]{
+	originalTaskStruct := sdktypes.Task[U32Point]{
 		InputValue:                U32Point{0, 1},
 		TaskCreatedBlock:          10,
 		QuorumNumbers:             []uint8{0},
 		QuorumThresholdPercentage: 100,
 	}
 
-	originalTaskResponseStruct := sdktypes.GenericOutputTaskResponse[U32Point]{
+	originalTaskResponseStruct := sdktypes.TaskResponse[U32Point]{
 		ReferenceTaskIndex: 0,
 		OutputValue:        U32Point{2, 3},
 	}
@@ -121,14 +121,14 @@ func TestStructureOfVectorsAbi(t *testing.T) {
 	parsedAbi, err := abi.JSON(strings.NewReader(rawAbi))
 	require.NoError(t, err)
 
-	originalTaskStruct := sdktypes.GenericInputTask[DoubleBigIntVector]{
+	originalTaskStruct := sdktypes.Task[DoubleBigIntVector]{
 		InputValue:                DoubleBigIntVector{[]*big.Int{common.Big1}, []*big.Int{common.Big2}},
 		TaskCreatedBlock:          10,
 		QuorumNumbers:             []uint8{0},
 		QuorumThresholdPercentage: 100,
 	}
 
-	originalTaskResponseStruct := sdktypes.GenericOutputTaskResponse[DoubleStringVector]{
+	originalTaskResponseStruct := sdktypes.TaskResponse[DoubleStringVector]{
 		ReferenceTaskIndex: 0,
 		OutputValue:        DoubleStringVector{[]string{"1"}, []string{"2"}},
 	}
@@ -157,14 +157,14 @@ func TestAddressAndBoolValuesAbi(t *testing.T) {
 	parsedAbi, err := abi.JSON(strings.NewReader(rawAbi))
 	require.NoError(t, err)
 
-	originalTaskStruct := sdktypes.GenericInputTask[common.Address]{
+	originalTaskStruct := sdktypes.Task[common.Address]{
 		InputValue:                common.HexToAddress("0x01"),
 		TaskCreatedBlock:          10,
 		QuorumNumbers:             []uint8{0},
 		QuorumThresholdPercentage: 100,
 	}
 
-	originalTaskResponseStruct := sdktypes.GenericOutputTaskResponse[bool]{
+	originalTaskResponseStruct := sdktypes.TaskResponse[bool]{
 		ReferenceTaskIndex: 0,
 		OutputValue:        true,
 	}
@@ -194,14 +194,14 @@ func TestNestedStructsAbi(t *testing.T) {
 	parsedAbi, err := abi.JSON(strings.NewReader(rawAbi))
 	require.NoError(t, err)
 
-	originalTaskStruct := sdktypes.GenericInputTask[Arg2]{
+	originalTaskStruct := sdktypes.Task[Arg2]{
 		InputValue:                Arg2{Arg1: Arg1{Arg0: Arg0{Data: []byte{64}}, Data: []byte{32}}, Data: []byte{16}},
 		TaskCreatedBlock:          10,
 		QuorumNumbers:             []uint8{0},
 		QuorumThresholdPercentage: 100,
 	}
 
-	originalTaskResponseStruct := sdktypes.GenericOutputTaskResponse[[]byte]{
+	originalTaskResponseStruct := sdktypes.TaskResponse[[]byte]{
 		ReferenceTaskIndex: 0,
 		OutputValue:        []byte{112},
 	}

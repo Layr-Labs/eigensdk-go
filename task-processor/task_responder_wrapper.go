@@ -23,7 +23,7 @@ type taskResponderContractWrapper[Input any, Output any] struct {
 	txMgr          txmgr.TxManager
 }
 
-func (tr taskResponderContractWrapper[Input, Output]) ProcessTaskResponse(taskResponse sdktypes.GenericOutputTaskResponse[Output]) (sdktypes.Bytes32, error) {
+func (tr taskResponderContractWrapper[Input, Output]) ProcessTaskResponse(taskResponse sdktypes.TaskResponse[Output]) (sdktypes.Bytes32, error) {
 	abiType, err := extractTypeFromAbi(tr.taskManagerAbi)
 	if err != nil {
 		return [32]byte{}, err
@@ -52,7 +52,7 @@ func extractTypeFromAbi(taskManagerAbi *abi.ABI) (abi.Type, error) {
 }
 
 func getDefaultHashFunction(taskResponseType abi.Type) sdktypes.TaskResponseHashFunction {
-	return func(taskResponse sdktypes.TaskResponse) (sdktypes.TaskResponseDigest, error) {
+	return func(taskResponse sdktypes.TaskResponseInterface) (sdktypes.TaskResponseDigest, error) {
 		arguments := abi.Arguments{
 			{
 				Type: taskResponseType,
@@ -91,8 +91,8 @@ func NewTaskResponderFromAbi[Input any, Output any](address common.Address, abi 
 }
 
 func (senderWrapper *taskResponderContractWrapper[Input, Output]) RespondToTask(
-	task sdktypes.GenericInputTask[Input],
-	taskResponse sdktypes.GenericOutputTaskResponse[Output],
+	task sdktypes.Task[Input],
+	taskResponse sdktypes.TaskResponse[Output],
 	nonSignersStakesAndSig sdktypes.NonSignerStakesAndSignature,
 ) error {
 	txOpts, err := senderWrapper.txMgr.GetNoSendTxOpts()

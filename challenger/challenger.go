@@ -15,7 +15,7 @@ import (
 )
 
 type ChallengerProcessor[Input any, Output any] interface {
-	ProcessNewTaskCreated(taskIndex uint32, task sdktypes.GenericInputTask[Input]) error
+	ProcessNewTaskCreated(taskIndex uint32, task sdktypes.Task[Input]) error
 	ProcessTaskResponded(taskIndex uint32, taskResponse sdktypes.TaskResponseData[Output]) error
 }
 

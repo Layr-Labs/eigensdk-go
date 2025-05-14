@@ -13,13 +13,13 @@ type IndexingChallengerProcessor[Input any, Output any] struct {
 	logger               logging.Logger
 	responseValidationFn ResponseValidationFunction[Input, Output]
 	challengerRaiser     ChallengeRaiser[Input, Output]
-	tasks                map[uint32]sdktypes.GenericInputTask[Input]
+	tasks                map[uint32]sdktypes.Task[Input]
 }
 
 type ResponseValidationFunction[Input any, Output any] func(taskIndex uint32, input Input, output Output) (bool, error)
 
 type ChallengeRaiser[Input any, Output any] interface {
-	RaiseChallenge(task sdktypes.GenericInputTask[Input], taskResponse sdktypes.GenericOutputTaskResponse[Output], TaskResponseMetadata sdktypes.GenericTaskResponseMetadata, NonSigningOperatorPubKeys []sdktypes.BN254G1Point) error
+	RaiseChallenge(task sdktypes.Task[Input], taskResponse sdktypes.TaskResponse[Output], TaskResponseMetadata sdktypes.TaskResponseMetadata, NonSigningOperatorPubKeys []sdktypes.BN254G1Point) error
 }
 
 func NewIndexingChallengerProcessor[Input any, Output any](
@@ -31,11 +31,11 @@ func NewIndexingChallengerProcessor[Input any, Output any](
 		logger:               logger,
 		responseValidationFn: responseValidationFn,
 		challengerRaiser:     challengerRaiser,
-		tasks:                make(map[uint32]sdktypes.GenericInputTask[Input]),
+		tasks:                make(map[uint32]sdktypes.Task[Input]),
 	}, nil
 }
 
-func (icp IndexingChallengerProcessor[Input, Output]) ProcessNewTaskCreated(newTaskIndex uint32, newTask sdktypes.GenericInputTask[Input]) error {
+func (icp IndexingChallengerProcessor[Input, Output]) ProcessNewTaskCreated(newTaskIndex uint32, newTask sdktypes.Task[Input]) error {
 	icp.tasks[newTaskIndex] = newTask
 
 	return nil

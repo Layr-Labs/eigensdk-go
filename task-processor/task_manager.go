@@ -5,5 +5,5 @@ import (
 )
 
 type TaskManagerContract[Input any, Output any] interface {
-	RespondToTask(task sdktypes.GenericInputTask[Input], taskResponse sdktypes.GenericOutputTaskResponse[Output], nonSignersStakesAndSig sdktypes.NonSignerStakesAndSignature) error
+	RespondToTask(task sdktypes.Task[Input], taskResponse sdktypes.TaskResponse[Output], nonSignersStakesAndSig sdktypes.NonSignerStakesAndSignature) error
 }

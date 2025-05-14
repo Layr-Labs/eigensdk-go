@@ -34,7 +34,7 @@ type Operator[Input any, Output any] struct {
 	taskResponseHashFn  TaskResponseHashFunction[Output]
 }
 
-type TaskResponseHashFunction[Output any] func(taskResponse sdktypes.GenericOutputTaskResponse[Output]) ([32]byte, error)
+type TaskResponseHashFunction[Output any] func(taskResponse sdktypes.TaskResponse[Output]) ([32]byte, error)
 
 func NewOperatorFromConfig[Input any, Output any](
 	c OperatorConfig,
@@ -171,7 +171,7 @@ func (o *Operator[Input, Output]) Start(ctx context.Context) error {
 // The TaskResponseHeader struct is the struct that is signed and sent to the contract as a task response.
 func (o *Operator[Input, Output]) processNewTaskCreatedLog(
 	log types.Log,
-) (*sdktypes.GenericOutputTaskResponse[Output], error) {
+) (*sdktypes.TaskResponse[Output], error) {
 	var newTaskCreatedLog sdktypes.NewTaskCreatedEvent[Input]
 
 	err := o.taskManagerAbi.UnpackIntoInterface(&newTaskCreatedLog, "NewTaskCreated", log.Data)
@@ -194,7 +194,7 @@ func (o *Operator[Input, Output]) processNewTaskCreatedLog(
 	if err != nil {
 		return nil, fmt.Errorf("error calculating task response: %w", err)
 	}
-	taskResponse := &sdktypes.GenericOutputTaskResponse[Output]{
+	taskResponse := &sdktypes.TaskResponse[Output]{
 		ReferenceTaskIndex: newTaskIndex,
 		OutputValue:        output,
 	}
@@ -202,7 +202,7 @@ func (o *Operator[Input, Output]) processNewTaskCreatedLog(
 }
 
 func (o *Operator[Input, Output]) signTaskResponse(
-	taskResponse *sdktypes.GenericOutputTaskResponse[Output],
+	taskResponse *sdktypes.TaskResponse[Output],
 ) (*sdkaggregator.SignedTaskResponse[Output], error) {
 	taskResponseDigest, err := o.taskResponseHashFn(*taskResponse)
 	if err != nil {
@@ -239,7 +239,7 @@ func extractTypeFromAbi(taskManagerAbi *abi.ABI) (abi.Type, error) {
 }
 
 func getDefaultHashFunction[Output any](taskResponseType abi.Type) TaskResponseHashFunction[Output] {
-	return func(taskResponse sdktypes.GenericOutputTaskResponse[Output]) ([32]byte, error) {
+	return func(taskResponse sdktypes.TaskResponse[Output]) ([32]byte, error) {
 		arguments := abi.Arguments{
 			{
 				Type: taskResponseType,

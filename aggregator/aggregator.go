@@ -66,7 +66,7 @@ func NewAggregator[Input any, Output any](
 	)
 
 	taskResponseHashFn := func(response any) (sdktypes.TaskResponseDigest, error) {
-		taskResponse, ok := response.(sdktypes.GenericOutputTaskResponse[Output])
+		taskResponse, ok := response.(sdktypes.TaskResponse[Output])
 		if !ok {
 			c.Logger.Error("task Response could not be converted to sdk aggregator's Task Response type")
 		}
