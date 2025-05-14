@@ -67,7 +67,7 @@ func main() {
 		return
 	}
 
-	challengerConfig := challenger.ChallengerConfig{
+	challengerConfig := challenger.Config{
 		Logger:         logger,
 		TaskManagerAbi: taskManagerAbi,
 		EthClient:      ethClient,

@@ -26,7 +26,7 @@ func main() {
 
 	// The values from this config are extracted from an incredible squaring config file:
 	// https://github.com/Layr-Labs/incredible-squaring-avs/blob/dev/config-files/operator.anvil.yaml
-	operatorConfig := sdkoperator.OperatorConfig{
+	operatorConfig := sdkoperator.Config{
 		OperatorAddress:               "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
 		OperatorStateRetrieverAddress: "0x4c5859f0f772848b2d91f1d83e2fe57935348029",
 		ServiceManagerAddress:         "0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154",

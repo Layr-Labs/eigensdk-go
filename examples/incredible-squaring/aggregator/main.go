@@ -47,7 +47,7 @@ func main() {
 		logger.Fatalf(err.Error())
 	}
 
-	cfg := aggregator.AggregatorConfig{
+	cfg := aggregator.Config{
 		RegistryCoordinatorAddress:    common.HexToAddress("0x7bc06c482dead17c0e297afbc32f6e63d3846650"),
 		OperatorStateRetrieverAddress: common.HexToAddress("0x4c5859f0f772848b2d91f1d83e2fe57935348029"),
 		ServiceManagerAddress:         common.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"),

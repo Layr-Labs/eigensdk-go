@@ -29,10 +29,10 @@ type TaskCreator[Input any] interface {
 type TaskResponder[Input any, Output any] interface {
 	// Saves the task response for a given task.
 	// Implementations usually submits to the on chain task manager contract the response to a task.
-	RespondToTask(task types.GenericInputTask[Input], taskResponse types.GenericOutputTaskResponse[Output], nonSignersStakesAndSig types.NonSignerStakesAndSignature) error
+	RespondToTask(task Task[Input], taskResponse TaskResponse[Output], nonSignersStakesAndSig types.NonSignerStakesAndSignature) error
 	// Hashes a generic task response, first encoding it on the task manager abi and then hashing the encoded response.
 	// Returns the 32 byte digest or an error in case the hashing process fails
-	HashTaskResponse(taskResponse types.GenericOutputTaskResponse[Output]) (types.TaskResponseDigest, error)
+	HashTaskResponse(taskResponse TaskResponse[Output]) (types.TaskResponseDigest, error)
 }
 
 // Interface for raising challenges for responded tasks.
@@ -41,5 +41,5 @@ type TaskResponder[Input any, Output any] interface {
 type ChallengeRaiser[Input any, Output any] interface {
 	// Raises a challenge for a responded task.
 	// Implementations usually sends the challenge to the on chain task manager contract.
-	RaiseChallenge(task types.GenericInputTask[Input], taskResponse types.GenericOutputTaskResponse[Output], TaskResponseMetadata types.GenericTaskResponseMetadata, NonSigningOperatorPubKeys []types.BN254G1Point) error
+	RaiseChallenge(task Task[Input], taskResponse TaskResponse[Output], TaskResponseMetadata types.TaskResponseMetadata, NonSigningOperatorPubKeys []types.BN254G1Point) error
 }

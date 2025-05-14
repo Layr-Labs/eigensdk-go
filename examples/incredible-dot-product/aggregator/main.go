@@ -51,7 +51,7 @@ func main() {
 		return
 	}
 
-	aggConfig := aggregator.AggregatorConfig{
+	aggConfig := aggregator.Config{
 		Logger:             logger,
 		TaskManagerAbi:     taskManagerAbi,
 		TaskResponseHashFn: nil,
