@@ -49,6 +49,9 @@ contract AwesomeVaultTaskManager is
     // mapping of task indices to hash of abi.encode(taskResponse, taskResponseMetadata)
     mapping(uint32 => bytes32) public allTaskResponses;
 
+    // mapping of task indices to state roots
+    mapping(uint32 => bytes32) public allStateRoots;
+
     mapping(uint32 => bool) public taskSuccesfullyChallenged;
 
     address public aggregator;
@@ -163,6 +166,7 @@ contract AwesomeVaultTaskManager is
         // updating the storage with task responsea
         allTaskResponses[taskResponse.referenceTaskIndex] =
             keccak256(abi.encode(taskResponse, taskResponseMetadata));
+        allStateRoots[taskResponse.referenceTaskIndex] = taskResponse.result;
 
         // emitting event
         emit TaskResponded(taskResponse, taskResponseMetadata);
@@ -176,7 +180,8 @@ contract AwesomeVaultTaskManager is
         Task calldata task,
         TaskResponse calldata taskResponse,
         TaskResponseMetadata calldata taskResponseMetadata,
-        BN254.G1Point[] memory pubkeysOfNonSigningOperators
+        BN254.G1Point[] memory pubkeysOfNonSigningOperators,
+        TaskInput[] calldata prevStateLeaves
     ) external {
         uint32 referenceTaskIndex = taskResponse.referenceTaskIndex;
 
@@ -201,8 +206,15 @@ contract AwesomeVaultTaskManager is
         );
 
         // logic for checking whether challenge is valid or not
-        // TODO: submit proof that shows the response is incorrect
-        bool isResponseCorrect = false;
+        bytes32 prevStateRoot = hashState(prevStateLeaves);
+        require(
+            prevStateRoot == allStateRoots[referenceTaskIndex - 1],
+            "The state root of the previous task does not match the one recorded in the contract"
+        );
+
+        bytes32 stateRoot = hashStateWithInsertion(prevStateLeaves, task.input);
+
+        bool isResponseCorrect = stateRoot == taskResponse.result;
 
         // if response was correct, no slashing happens so we return
         if (isResponseCorrect == true) {
@@ -283,11 +295,99 @@ contract AwesomeVaultTaskManager is
 
         // the task response has been challenged successfully
         taskSuccesfullyChallenged[referenceTaskIndex] = true;
+        allStateRoots[referenceTaskIndex] = stateRoot;
 
         emit TaskChallengedSuccessfully(referenceTaskIndex, msg.sender);
     }
 
     function getTaskResponseWindowBlock() external view returns (uint32) {
         return TASK_RESPONSE_WINDOW_BLOCK;
+    }
+
+    function hashState(
+        TaskInput[] calldata stateLeaves
+    ) internal pure returns (bytes32) {
+        bytes32[] memory nodes = new bytes32[](stateLeaves.length);
+        for (uint256 i = 0; i < stateLeaves.length; i++) {
+            nodes[i] = keccak256(abi.encode(stateLeaves[i]));
+        }
+        hashHashedLeaves(nodes);
+        return nodes[0];
+    }
+
+    function hashStateWithInsertion(
+        TaskInput[] calldata stateLeaves,
+        TaskInput calldata stateLeafToInsert
+    ) internal pure returns (bytes32) {
+        bytes32[] memory nodes = new bytes32[](stateLeaves.length + 1);
+        bool inserted = false;
+        uint256 insertIndex = 0;
+        for (uint256 i = 0; i < stateLeaves.length; i++) {
+            if (!inserted) {
+                int256 cmp = stringCompare(stateLeaves[i].key, stateLeafToInsert.key);
+                if (cmp >= 0) {
+                    inserted = true;
+                    nodes[insertIndex] = keccak256(abi.encode(stateLeafToInsert));
+                    insertIndex++;
+                    // If the keys are equal, we need to skip the current leaf
+                    // to avoid duplicates in the tree.
+                    if (cmp == 0) {
+                        continue;
+                    }
+                }
+            }
+            nodes[insertIndex] = keccak256(abi.encode(stateLeaves[i]));
+            insertIndex++;
+        }
+        if (!inserted) {
+            nodes[insertIndex] = keccak256(abi.encode(stateLeafToInsert));
+        }
+        hashHashedLeaves(nodes);
+        return nodes[0];
+    }
+
+    function hashHashedLeaves(
+        bytes32[] memory nodes
+    ) internal pure returns (bytes32) {
+        uint256 numberOfNodes = nodes.length;
+        while (numberOfNodes > 1) {
+            for (uint256 i = 0; i < numberOfNodes; i++) {
+                bytes32 leftNode = nodes[i * 2];
+                if (i * 2 + 1 < numberOfNodes) {
+                    nodes[i] = hashNodes(leftNode, nodes[i * 2 + 1]);
+                } else {
+                    nodes[i] = hashNodes(leftNode, leftNode);
+                }
+            }
+            numberOfNodes = (numberOfNodes + 1) / 2;
+        }
+        return nodes[0];
+    }
+
+    function hashNodes(bytes32 left, bytes32 right) internal pure returns (bytes32) {
+        if (left <= right) {
+            return keccak256(abi.encode(left, right));
+        } else {
+            return keccak256(abi.encode(right, left));
+        }
+    }
+
+    function stringCompare(string calldata a, string calldata b) internal pure returns (int256) {
+        bytes memory aBytes = bytes(a);
+        bytes memory bBytes = bytes(b);
+        uint256 minLength = aBytes.length < bBytes.length ? aBytes.length : bBytes.length;
+        for (uint256 i = 0; i < minLength; i++) {
+            if (aBytes[i] < bBytes[i]) {
+                return -1;
+            } else if (aBytes[i] > bBytes[i]) {
+                return 1;
+            }
+        }
+        if (aBytes.length < bBytes.length) {
+            return -1;
+        } else if (aBytes.length > bBytes.length) {
+            return 1;
+        }
+        return 0;
     }
 }
