@@ -27,52 +27,52 @@ import (
 	"github.com/ethereum/go-ethereum/event"
 )
 
-func RegisterOperatorOnStartup(logger logging.Logger) error {
-	operatorAddr := common.HexToAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")
-	allocationManagerAddr := common.HexToAddress("0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6")
-	avsAddress := common.HexToAddress("0xcd8a1c3ba11cf5ecfa6267617243239504a98d90")
-	registryCoordinatorAddr := common.HexToAddress("0xfd471836031dc5108809d173a067e8486b9047a3")
-	strategyAddr := common.HexToAddress("0x2b961e3959b79326a8e7f64ef0d2d825707669b5")
-	ethHttpUrl := "http://localhost:8545"
+func RegisterOperatorOnStartup(c RegistrationConfig) error {
+	// operatorAddr := common.HexToAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")
+	// allocationManagerAddr := common.HexToAddress("0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6")
+	// avsAddress := common.HexToAddress("0xcd8a1c3ba11cf5ecfa6267617243239504a98d90")
+	// registryCoordinatorAddr := common.HexToAddress("0xfd471836031dc5108809d173a067e8486b9047a3")
+	// strategyAddr := common.HexToAddress("0x2b961e3959b79326a8e7f64ef0d2d825707669b5")
+	// ethHttpUrl := "http://localhost:8545"
 
-	delegationManagerAddress := common.HexToAddress("0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0")
-	rewardsCoordinatorAddress := common.HexToAddress("0xa51c1fc2f0d1a1b8494ed1fe312d7c3a78ed91c0")
-	permissionControllerAddress := common.HexToAddress("0x59b670e9fa9d0a427751af201d676719a970857b")
+	// delegationManagerAddress := common.HexToAddress("0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0")
+	// rewardsCoordinatorAddress := common.HexToAddress("0xa51c1fc2f0d1a1b8494ed1fe312d7c3a78ed91c0")
+	// permissionControllerAddress := common.HexToAddress("0x59b670e9fa9d0a427751af201d676719a970857b")
 
-	ecdsaKeyStorePath := "keys/test.ecdsa.key.json"
-	blsKeyStorePath := "keys/test.bls.key.json"
-	stringMintAmount := "1000000000000000000000"
+	// ecdsaKeyStorePath := "keys/test.ecdsa.key.json"
+	// blsKeyStorePath := "keys/test.bls.key.json"
+	// stringMintAmount := "1000000000000000000000"
 
-	allocatableMagnitude := uint64(1000000000000000)
-	operatorSetId := uint32(0)
+	// allocatableMagnitude := uint64(1000000000000000)
+	// operatorSetId := uint32(0)
 
-	ethRpcClient, err := ethclient.Dial(ethHttpUrl)
+	ethRpcClient, err := ethclient.Dial(c.EthHttpUrl)
 	if err != nil {
-		logger.Errorf("Cannot create http ethclient", "err", err)
+		c.Logger.Errorf("Cannot create http ethclient", "err", err)
 		return err
 	}
 
 	elcontractsConfig := elcontracts.Config{
-		DelegationManagerAddress:    delegationManagerAddress,
-		RewardsCoordinatorAddress:   rewardsCoordinatorAddress,
-		PermissionControllerAddress: permissionControllerAddress,
+		DelegationManagerAddress:    c.DelegationManagerAddress,
+		RewardsCoordinatorAddress:   c.RewardsCoordinatorAddress,
+		PermissionControllerAddress: c.PermissionControllerAddress,
 	}
 
 	rpcCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	chainid, err := ethRpcClient.ChainID(rpcCtx)
 	if err != nil {
-		logger.Error("Cannot get chain id", "err", err)
+		c.Logger.Error("Cannot get chain id", "err", err)
 		return err
 	}
 
 	ecdsaKeyPassword, ok := os.LookupEnv("OPERATOR_ECDSA_KEY_PASSWORD")
 	if !ok {
-		logger.Warnf("OPERATOR_ECDSA_KEY_PASSWORD env var not set. using empty string")
+		c.Logger.Warnf("OPERATOR_ECDSA_KEY_PASSWORD env var not set. using empty string")
 	}
 
 	operatorEcdsaPrivateKey, err := ecdsa.ReadKey(
-		ecdsaKeyStorePath,
+		c.EcdsaKeyStorePath,
 		ecdsaKeyPassword,
 	)
 	if err != nil {
@@ -83,93 +83,91 @@ func RegisterOperatorOnStartup(logger logging.Logger) error {
 		PrivateKey: operatorEcdsaPrivateKey,
 	}, chainid)
 	if err != nil {
-		logger.Fatalf(err.Error())
+		c.Logger.Fatalf(err.Error())
 	}
 
-	pkWallet, err := wallet.NewPrivateKeyWallet(ethRpcClient, signerV2, senderAddr, logger)
+	pkWallet, err := wallet.NewPrivateKeyWallet(ethRpcClient, signerV2, senderAddr, c.Logger)
 	if err != nil {
 		return err
 	}
 
-	txMgr := txmgr.NewSimpleTxManager(pkWallet, ethRpcClient, logger, senderAddr)
+	txMgr := txmgr.NewSimpleTxManager(pkWallet, ethRpcClient, c.Logger, senderAddr)
 
 	err = RegisterOperatorWithEigenlayer(
-		operatorAddr,
+		c.OperatorAddr,
 		elcontractsConfig,
 		ethRpcClient,
-		logger,
+		c.Logger,
 		txMgr,
 	)
 	if err != nil {
-		logger.Fatalf("Failed to register operator with EigenLayer on startup: %v", err.Error())
+		c.Logger.Fatalf("Failed to register operator with EigenLayer on startup: %v", err.Error())
 	}
 
-	amount := new(big.Int)
-	amount.SetString(stringMintAmount, 10)
 	err = DepositIntoStrategyForOperator(
-		logger,
+		c.Logger,
 		elcontractsConfig,
 		ethRpcClient,
-		strategyAddr,
+		c.StrategyAddr,
 		txMgr,
-		operatorAddr,
-		amount,
+		c.OperatorAddr,
+		c.AmountToMint,
 	)
 	if err != nil {
-		logger.Fatalf("Failed to deposit into strategy for operator on startup: %v", err.Error())
+		c.Logger.Fatalf("Failed to deposit into strategy for operator on startup: %v", err.Error())
 	}
 
 	blsKeyPassword, ok := os.LookupEnv("OPERATOR_BLS_KEY_PASSWORD")
 	if !ok {
-		logger.Warnf("OPERATOR_BLS_KEY_PASSWORD env var not set. using empty string")
+		c.Logger.Warnf("OPERATOR_BLS_KEY_PASSWORD env var not set. using empty string")
 	}
-	blsKeyPair, err := bls.ReadPrivateKeyFromFile(blsKeyStorePath, blsKeyPassword)
+	blsKeyPair, err := bls.ReadPrivateKeyFromFile(c.BlsKeyStorePath, blsKeyPassword)
 	if err != nil {
-		logger.Errorf("Cannot parse bls private key", "err", err)
+		c.Logger.Errorf("Cannot parse bls private key", "err", err)
 		return err
 	}
 
 	err = RegisterForOperatorSets(
-		operatorAddr,
-		logger,
+		c.OperatorAddr,
+		c.Logger,
 		elcontractsConfig,
 		ethRpcClient,
 		txMgr,
-		registryCoordinatorAddr,
-		avsAddress,
-		[]uint32{operatorSetId},
+		c.RegistryCoordinatorAddr,
+		c.AvsAddress,
+		[]uint32{c.OperatorSetId},
 		*blsKeyPair,
 		"",
 	)
 	if err != nil {
-		logger.Fatalf("Failed to register operator for operator sets on startup: %v", err.Error())
+		c.Logger.Fatalf("Failed to register operator for operator sets on startup: %v", err.Error())
 	}
 
 	err = SetAllocationDelay(
-		logger,
-		operatorAddr,
+		c.Logger,
+		c.OperatorAddr,
 		ethRpcClient,
-		allocationManagerAddr,
+		c.AllocationManagerAddr,
 		txMgr,
 		0,
 	)
 	if err != nil {
-		logger.Fatalf("Failed to set allocation delay: %v", err.Error())
+		c.Logger.Fatalf("Failed to set allocation delay: %v", err.Error())
 	}
 
 	err = modifyAllocations(
-		operatorAddr,
-		allocationManagerAddr,
-		avsAddress,
-		[]common.Address{strategyAddr},
-		[]uint64{allocatableMagnitude},
-		ethHttpUrl,
+		c.OperatorAddr,
+		c.AllocationManagerAddr,
+		c.AvsAddress,
+		[]common.Address{c.StrategyAddr},
+		[]uint64{c.AllocatableMagnitude},
+		c.EthHttpUrl,
 		txMgr,
-		operatorSetId,
-		logger,
+		c.OperatorSetId,
+		c.Logger,
 	)
 	if err != nil {
-		logger.Fatalf("Failed to set modify allocations: %v", err.Error())
+		c.Logger.Fatalf("Failed to set modify allocations: %v", err.Error())
 	}
 
 	return nil
