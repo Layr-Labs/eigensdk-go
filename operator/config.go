@@ -26,5 +26,4 @@ type Config struct {
 }
 
 type RegistrationConfig struct {
-	
 }

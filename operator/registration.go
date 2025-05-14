@@ -27,11 +27,10 @@ import (
 	"github.com/ethereum/go-ethereum/event"
 )
 
-
 func RegisterOperatorOnStartup(logger logging.Logger) error {
 	operatorAddr := common.HexToAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")
 	allocationManagerAddr := common.HexToAddress("0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6")
-	serviceManagerAddr := common.HexToAddress("0xcd8a1c3ba11cf5ecfa6267617243239504a98d90")
+	avsAddress := common.HexToAddress("0xcd8a1c3ba11cf5ecfa6267617243239504a98d90")
 	registryCoordinatorAddr := common.HexToAddress("0xfd471836031dc5108809d173a067e8486b9047a3")
 	strategyAddr := common.HexToAddress("0x2b961e3959b79326a8e7f64ef0d2d825707669b5")
 	ethHttpUrl := "http://localhost:8545"
@@ -54,8 +53,8 @@ func RegisterOperatorOnStartup(logger logging.Logger) error {
 	}
 
 	elcontractsConfig := elcontracts.Config{
-		DelegationManagerAddress: delegationManagerAddress,
-		RewardsCoordinatorAddress: rewardsCoordinatorAddress,
+		DelegationManagerAddress:    delegationManagerAddress,
+		RewardsCoordinatorAddress:   rewardsCoordinatorAddress,
 		PermissionControllerAddress: permissionControllerAddress,
 	}
 
@@ -137,7 +136,7 @@ func RegisterOperatorOnStartup(logger logging.Logger) error {
 		ethRpcClient,
 		txMgr,
 		registryCoordinatorAddr,
-		serviceManagerAddr,
+		avsAddress,
 		[]uint32{operatorSetId},
 		*blsKeyPair,
 		"",
@@ -161,7 +160,7 @@ func RegisterOperatorOnStartup(logger logging.Logger) error {
 	err = modifyAllocations(
 		operatorAddr,
 		allocationManagerAddr,
-		serviceManagerAddr,
+		avsAddress,
 		[]common.Address{strategyAddr},
 		[]uint64{allocatableMagnitude},
 		ethHttpUrl,
@@ -175,8 +174,6 @@ func RegisterOperatorOnStartup(logger logging.Logger) error {
 
 	return nil
 }
-
-
 
 // The idea is to have a util function that just registers an operator for an operator set if the avs needs it
 func RegisterOperatorWithEigenlayer(
@@ -215,7 +212,7 @@ func RegisterForOperatorSets(
 	ethClient *ethclient.Client,
 	txMgr txmgr.TxManager,
 	registryCoordinatorAddr common.Address,
-	serviceManagerAddr common.Address,
+	avsAddress common.Address,
 	operatorSetsIds []uint32,
 	blsKeyPair bls.KeyPair,
 	socket string,
@@ -228,7 +225,7 @@ func RegisterForOperatorSets(
 	// Register operator for operator sets
 	registrationRequest := elcontracts.RegistrationRequest{
 		OperatorAddress: operatorAddr,
-		AVSAddress:      serviceManagerAddr,
+		AVSAddress:      avsAddress,
 		OperatorSetIds:  operatorSetsIds,
 		WaitForReceipt:  true,
 		BlsKeyPair:      &blsKeyPair,
@@ -348,7 +345,7 @@ func DepositIntoStrategyForOperator(
 func modifyAllocations(
 	operatorAddr common.Address,
 	allocationManagerAddr common.Address,
-	serviceManagerAddr common.Address,
+	avsAddress common.Address,
 	strategies []common.Address,
 	newMagnitudes []uint64,
 	httpUrl string,
@@ -361,7 +358,7 @@ func modifyAllocations(
 	ethRpcClient, _ := ethclient.Dial(httpUrl)
 	waitForReceipt := true
 	allocationManagerContract, _ := allocationmanager.NewContractAllocationManager(allocationManagerAddr, ethRpcClient)
-	operatorSet := allocationmanager.OperatorSet{Avs: serviceManagerAddr, Id: id}
+	operatorSet := allocationmanager.OperatorSet{Avs: avsAddress, Id: id}
 	var allocations []allocationmanager.IAllocationManagerTypesAllocateParams
 	allocations_1 := allocationmanager.IAllocationManagerTypesAllocateParams{
 		OperatorSet:   operatorSet,
