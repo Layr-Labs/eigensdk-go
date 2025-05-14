@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
+	taskmanager "github.com/Layr-Labs/eigensdk-go/task-processor/task-manager"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -15,7 +16,7 @@ type TaskManagerTaskContract[Input any] interface {
 	CreateNewTask(opts *bind.TransactOpts, input Input, quorumThresholdPercentage uint32, quorumNumbers []byte) (*gethtypes.Transaction, error)
 }
 
-var _ TaskCreator[any] = (*taskCreatorContractWrapper[any])(nil)
+var _ taskmanager.TaskCreator[any] = (*taskCreatorContractWrapper[any])(nil)
 
 type taskCreatorContractWrapper[Input any] struct {
 	contract TaskManagerTaskContract[Input]
@@ -36,7 +37,7 @@ func (tm taskManagerAbiContract[Input]) CreateNewTask(opts *bind.TransactOpts, i
 
 // Creates a TaskCreator from an address and ABI.
 // Returns an error in case the ABI is not compatible.
-func NewTaskCreatorFromAbi[Input any](address common.Address, abi abi.ABI, txMgr txmgr.TxManager, httpClient bind.ContractBackend) (TaskCreator[Input], error) {
+func NewTaskCreatorFromAbi[Input any](address common.Address, abi abi.ABI, txMgr txmgr.TxManager, httpClient bind.ContractBackend) (taskmanager.TaskCreator[Input], error) {
 	boundContract := bind.NewBoundContract(address, abi, httpClient, httpClient, httpClient)
 	// TODO: check if the ABI is compatible
 	contract := taskManagerAbiContract[Input]{boundContract}
@@ -44,7 +45,7 @@ func NewTaskCreatorFromAbi[Input any](address common.Address, abi abi.ABI, txMgr
 }
 
 // Creates a TaskCreator from a contract implementing the given interface.
-func NewTaskCreatorFromContract[Input any](contract TaskManagerTaskContract[Input], txMgr txmgr.TxManager) TaskCreator[Input] {
+func NewTaskCreatorFromContract[Input any](contract TaskManagerTaskContract[Input], txMgr txmgr.TxManager) taskmanager.TaskCreator[Input] {
 	return &taskCreatorContractWrapper[Input]{contract, txMgr}
 }
 
