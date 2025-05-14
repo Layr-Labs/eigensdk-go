@@ -351,7 +351,8 @@ contract AwesomeVaultTaskManager is
     ) internal pure returns (bytes32) {
         uint256 numberOfNodes = nodes.length;
         while (numberOfNodes > 1) {
-            for (uint256 i = 0; i < numberOfNodes; i++) {
+            uint256 newNumberOfNodes = (numberOfNodes + 1) / 2;
+            for (uint256 i = 0; i < newNumberOfNodes; i++) {
                 bytes32 leftNode = nodes[i * 2];
                 if (i * 2 + 1 < numberOfNodes) {
                     nodes[i] = hashNodes(leftNode, nodes[i * 2 + 1]);
@@ -359,7 +360,7 @@ contract AwesomeVaultTaskManager is
                     nodes[i] = hashNodes(leftNode, leftNode);
                 }
             }
-            numberOfNodes = (numberOfNodes + 1) / 2;
+            numberOfNodes = newNumberOfNodes;
         }
         return nodes[0];
     }
