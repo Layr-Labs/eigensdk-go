@@ -1,4 +1,4 @@
-package taskprocessor
+package taskmanager
 
 import (
 	"context"
@@ -13,9 +13,9 @@ import (
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
 )
 
-var _ TaskManagerContract[any, any] = (*taskManagerContractWrapper[any, any])(nil)
+var _ TaskManagerContract[any, any] = (*TaskManagerContractWrapper[any, any])(nil)
 
-type taskManagerContractWrapper[Input any, Output any] struct {
+type TaskManagerContractWrapper[Input any, Output any] struct {
 	taskManagerAbi *abi.ABI
 	contract       taskManagerAbiContract[Input, Output]
 	txMgr          txmgr.TxManager
@@ -43,10 +43,10 @@ func NewTaskManagerContractFromAbi[Input any, Output any](address common.Address
 	boundContract := bind.NewBoundContract(address, *abi, httpClient, httpClient, httpClient)
 	// TODO: check if the ABI is compatible
 	contract := taskManagerAbiContract[Input, Output]{boundContract}
-	return &taskManagerContractWrapper[Input, Output]{abi, contract, txMgr}, nil
+	return &TaskManagerContractWrapper[Input, Output]{abi, contract, txMgr}, nil
 }
 
-func (senderWrapper *taskManagerContractWrapper[Input, Output]) RaiseChallenge(
+func (senderWrapper *TaskManagerContractWrapper[Input, Output]) RaiseChallenge(
 	task sdktypes.GenericInputTask[Input],
 	taskResponse sdktypes.GenericOutputTaskResponse[Output],
 	TaskResponseMetadata sdktypes.GenericTaskResponseMetadata,
@@ -79,7 +79,7 @@ func (senderWrapper *taskManagerContractWrapper[Input, Output]) RaiseChallenge(
 	return nil
 }
 
-func (senderWrapper *taskManagerContractWrapper[Input, Output]) CreateNewTask(ctx context.Context, input Input) error {
+func (senderWrapper *TaskManagerContractWrapper[Input, Output]) CreateNewTask(ctx context.Context, input Input) error {
 	var quorumThresholdPercentage uint32 = 100
 	var quorumNumbers []uint8 = []uint8{0}
 
@@ -103,7 +103,7 @@ func (senderWrapper *taskManagerContractWrapper[Input, Output]) CreateNewTask(ct
 	return nil
 }
 
-func (senderWrapper *taskManagerContractWrapper[Input, Output]) RespondToTask(
+func (senderWrapper *TaskManagerContractWrapper[Input, Output]) RespondToTask(
 	task sdktypes.GenericInputTask[Input],
 	taskResponse sdktypes.GenericOutputTaskResponse[Output],
 	nonSignersStakesAndSig sdktypes.NonSignerStakesAndSignature,
@@ -135,7 +135,7 @@ func (senderWrapper *taskManagerContractWrapper[Input, Output]) RespondToTask(
 	return nil
 }
 
-func (tr taskManagerContractWrapper[Input, Output]) ProcessTaskResponse(taskResponse sdktypes.GenericOutputTaskResponse[Output]) (sdktypes.Bytes32, error) {
+func (tr TaskManagerContractWrapper[Input, Output]) ProcessTaskResponse(taskResponse sdktypes.GenericOutputTaskResponse[Output]) (sdktypes.Bytes32, error) {
 	abiType, err := internalutils.ExtractTypeFromAbi(tr.taskManagerAbi)
 	if err != nil {
 		return [32]byte{}, err

@@ -5,6 +5,7 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	internalutils "github.com/Layr-Labs/eigensdk-go/internal/utils"
+	taskmanager "github.com/Layr-Labs/eigensdk-go/task-processor/task-manager"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -13,7 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-var _ TaskResponder[any, any] = (*taskResponderContractWrapper[any, any])(nil)
+var _ taskmanager.TaskResponder[any, any] = (*taskResponderContractWrapper[any, any])(nil)
 
 type taskResponderContractWrapper[Input any, Output any] struct {
 	taskManagerAbi *abi.ABI
@@ -31,9 +32,17 @@ func (tr taskResponderContractWrapper[Input, Output]) ProcessTaskResponse(taskRe
 	return hashFn(taskResponse)
 }
 
+type taskManagerAbiContract[Input any, Output any] struct {
+	contract *bind.BoundContract
+}
+
+func (tm taskManagerAbiContract[Input, Output]) RespondToTask(opts *bind.TransactOpts, task any, taskResponse any, nonSignerStakesAndSignature any) (*types.Transaction, error) {
+	return tm.contract.Transact(opts, "respondToTask", task, taskResponse, nonSignerStakesAndSignature)
+}
+
 // Creates a TaskResponder from an address and ABI.
 // Returns an error in case the ABI is not compatible.
-func NewTaskResponderFromAbi[Input any, Output any](address common.Address, abi *abi.ABI, txMgr txmgr.TxManager, httpClient bind.ContractBackend) (TaskResponder[Input, Output], error) {
+func NewTaskResponderFromAbi[Input any, Output any](address common.Address, abi *abi.ABI, txMgr txmgr.TxManager, httpClient bind.ContractBackend) (taskmanager.TaskResponder[Input, Output], error) {
 	boundContract := bind.NewBoundContract(address, *abi, httpClient, httpClient, httpClient)
 	// TODO: check if the ABI is compatible
 	contract := taskManagerAbiContract[Input, Output]{boundContract}

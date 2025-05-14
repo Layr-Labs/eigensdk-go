@@ -8,6 +8,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	blsagg "github.com/Layr-Labs/eigensdk-go/services/bls_aggregation"
+	taskmanager "github.com/Layr-Labs/eigensdk-go/task-processor/task-manager"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 )
@@ -16,14 +17,9 @@ type IndexingTaskProcessor[Input any, Output any] struct {
 	tasks   map[sdktypes.TaskIndex]sdktypes.GenericInputTask[Input]
 	tasksMu sync.RWMutex
 
-	taskResponder TaskResponder[Input, Output]
+	taskResponder taskmanager.TaskResponder[Input, Output]
 
 	logger logging.Logger
-}
-
-type TaskResponder[Input any, Output any] interface {
-	RespondToTask(task sdktypes.GenericInputTask[Input], taskResponse sdktypes.GenericOutputTaskResponse[Output], nonSignersStakesAndSig sdktypes.NonSignerStakesAndSignature) error
-	ProcessTaskResponse(taskResponse sdktypes.GenericOutputTaskResponse[Output]) (sdktypes.TaskResponseDigest, error)
 }
 
 const (
@@ -35,7 +31,7 @@ const (
 
 func NewIndexingTaskProcessor[Input any, Output any](
 	logger logging.Logger,
-	taskResponder TaskResponder[Input, Output],
+	taskResponder taskmanager.TaskResponder[Input, Output],
 ) (*IndexingTaskProcessor[Input, Output], error) {
 	return &IndexingTaskProcessor[Input, Output]{
 		tasks:         make(map[sdktypes.TaskIndex]sdktypes.GenericInputTask[Input]),

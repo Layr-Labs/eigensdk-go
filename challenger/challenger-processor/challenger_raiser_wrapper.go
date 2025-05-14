@@ -5,6 +5,7 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	internalutils "github.com/Layr-Labs/eigensdk-go/internal/utils"
+	taskmanager "github.com/Layr-Labs/eigensdk-go/task-processor/task-manager"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -13,7 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-var _ ChallengeRaiser[any, any] = (*challengerRaiserContractWrapper[any, any])(nil)
+var _ taskmanager.ChallengeRaiser[any, any] = (*challengerRaiserContractWrapper[any, any])(nil)
 
 type challengerRaiserContractWrapper[Input any, Output any] struct {
 	taskManagerAbi *abi.ABI
@@ -31,7 +32,7 @@ func (tm taskManagerAbiContract[Input, Output]) RaiseChallenge(opts *bind.Transa
 
 // Creates a ChallengerRaiser from an address and ABI.
 // Returns an error in case the ABI is not compatible.
-func NewChallengeRaiserFromAbi[Input any, Output any](address common.Address, abi *abi.ABI, txMgr txmgr.TxManager, httpClient bind.ContractBackend) (ChallengeRaiser[Input, Output], error) {
+func NewChallengeRaiserFromAbi[Input any, Output any](address common.Address, abi *abi.ABI, txMgr txmgr.TxManager, httpClient bind.ContractBackend) (taskmanager.ChallengeRaiser[Input, Output], error) {
 	boundContract := bind.NewBoundContract(address, *abi, httpClient, httpClient, httpClient)
 	// TODO: check if the ABI is compatible
 	contract := taskManagerAbiContract[Input, Output]{boundContract}

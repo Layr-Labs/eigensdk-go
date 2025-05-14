@@ -5,6 +5,7 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/operator"
+	taskmanager "github.com/Layr-Labs/eigensdk-go/task-processor/task-manager"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 )
@@ -12,20 +13,16 @@ import (
 type IndexingChallengerProcessor[Input any, Output any] struct {
 	logger               logging.Logger
 	responseValidationFn ResponseValidationFunction[Input, Output]
-	challengerRaiser     ChallengeRaiser[Input, Output]
+	challengerRaiser     taskmanager.ChallengeRaiser[Input, Output]
 	tasks                map[uint32]sdktypes.GenericInputTask[Input]
 }
 
 type ResponseValidationFunction[Input any, Output any] func(taskIndex uint32, input Input, output Output) (bool, error)
 
-type ChallengeRaiser[Input any, Output any] interface {
-	RaiseChallenge(task sdktypes.GenericInputTask[Input], taskResponse sdktypes.GenericOutputTaskResponse[Output], TaskResponseMetadata sdktypes.GenericTaskResponseMetadata, NonSigningOperatorPubKeys []sdktypes.BN254G1Point) error
-}
-
 func NewIndexingChallengerProcessor[Input any, Output any](
 	logger logging.Logger,
 	responseValidationFn ResponseValidationFunction[Input, Output],
-	challengerRaiser ChallengeRaiser[Input, Output],
+	challengerRaiser taskmanager.ChallengeRaiser[Input, Output],
 ) (IndexingChallengerProcessor[Input, Output], error) {
 	return IndexingChallengerProcessor[Input, Output]{
 		logger:               logger,
