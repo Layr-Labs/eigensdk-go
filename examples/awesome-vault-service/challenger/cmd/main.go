@@ -2,19 +2,15 @@ package main
 
 import (
 	"context"
-	"slices"
-	"strings"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/challenger"
-	challengerprocessor "github.com/Layr-Labs/eigensdk-go/challenger/challenger-processor"
+	examplechallenger "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/challenger"
 	"github.com/Layr-Labs/eigensdk-go/logging"
-	"github.com/Layr-Labs/eigensdk-go/utils"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/common"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/contracts/bindings/AwesomeVaultTaskManager"
 )
 
@@ -53,38 +49,8 @@ func main() {
 		return
 	}
 
-	challengerRaiser, err := challengerprocessor.NewChallengeRaiserFromAbi[examplecommon.TaskInput, [32]byte](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
-	if err != nil {
-		logger.Errorf("Failed to create challenger raiser: %w", err)
-		return
-	}
-
-	cmpFn := func(vault examplecommon.TaskInput, key string) int {
-		return strings.Compare(vault.Key, key)
-	}
-
-	vaults := make([]examplecommon.TaskInput, 0)
-
-	computeFn := func(taskIndex uint32, input examplecommon.TaskInput) ([32]byte, error) {
-		index, wasFound := slices.BinarySearchFunc(vaults, input.Key, cmpFn)
-		if wasFound {
-			vaults[index].Value = input.Value
-		} else {
-			vaults = slices.Insert(vaults, index, input)
-		}
-		return examplecommon.ComputeVaultsRoot(vaults), nil
-	}
-
-	vaultSetValidation := func(taskIndex uint32, taskInput examplecommon.TaskInput, expectedOutput [32]byte) (bool, error) {
-		result, err := computeFn(taskIndex, taskInput)
-		if err != nil {
-			return false, utils.WrapError("failed to set in the vault", err)
-		}
-
-		return result != expectedOutput, nil
-	}
-
-	challengerProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, vaultSetValidation, challengerRaiser)
+	delegationManagerAddr := gethcommon.HexToAddress("0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0")
+	challengerVerifier, err := examplechallenger.NewChallengeVerifier(logger, taskManagerAddr, *ethClient, txMgr, delegationManagerAddr)
 	if err != nil {
 		logger.Errorf("Failed to create challenger verifier: %w", err)
 		return
@@ -96,7 +62,7 @@ func main() {
 		EthClient:      ethClient,
 		EthWsUrl:       "ws://localhost:8545",
 	}
-	challenger, err := challenger.NewChallenger(challengerConfig, challengerProcessor)
+	challenger, err := challenger.NewChallenger(challengerConfig, challengerVerifier)
 	if err != nil {
 		logger.Errorf("Failed to create challenger: %w", err)
 		return

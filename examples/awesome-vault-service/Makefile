@@ -44,7 +44,7 @@ start-operator: ##
 		2>&1 | zap-pretty
 
 start-challenger: ## 
-	go run challenger/main.go --config config-files/challenger.yaml \
+	go run challenger/cmd/main.go --config config-files/challenger.yaml \
 		--awesome-vault-deployment ${DEPLOYMENT_FILE} \
 		--core-deployment ${CORE_DEPLOYMENT_FILE} \
 		--ecdsa-private-key ${CHALLENGER_ECDSA_PRIV_KEY} \

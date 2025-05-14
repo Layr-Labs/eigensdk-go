@@ -7,6 +7,7 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/operator"
+	"github.com/ethereum/go-ethereum/crypto"
 
 	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/common"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/contracts/bindings/AwesomeVaultTaskManager"
@@ -51,15 +52,29 @@ func main() {
 		logger.Fatalf("Failed to register operator on startup: %v", err.Error())
 	}
 
-	vaultServiceResponseCalc := NewVaultServiceResponseCalculator()
+	cmpFn := func(vault examplecommon.TaskInput, key string) int {
+		return strings.Compare(vault.Key, key)
+	}
 
-	possibleFailureCalculator, err := operator.NewFailingResponseCalculator(vaultServiceResponseCalc, 50, [32]byte{0})
+	vaults := make([]examplecommon.TaskInput, 0)
+
+	computeFn := func(taskIndex uint32, input examplecommon.TaskInput) ([32]byte, error) {
+		index, wasFound := slices.BinarySearchFunc(vaults, input.Key, cmpFn)
+		if wasFound {
+			vaults[index].Value = input.Value
+		} else {
+			vaults = slices.Insert(vaults, index, input)
+		}
+		return computeVaultsRoot(vaults), nil
+	}
+
+	possibleFailureFunction, err := operator.ComputeWithFailures(computeFn, failingVaultSet, 50)
 	if err != nil {
 		logger.Fatalf("Failed to create the possible failure function: %v", err.Error())
 	}
 
 	// Setting the TaskResponseHashFn parameter in nil because I'm using the abi default encoding function
-	operator, err := operator.NewOperatorFromConfig(operatorConfig, possibleFailureCalculator, nil)
+	operator, err := operator.NewOperatorFromConfig(operatorConfig, possibleFailureFunction, nil)
 	if err != nil {
 		logger.Fatalf("Failed to create operator: %w", err)
 	}
@@ -70,28 +85,36 @@ func main() {
 	}
 }
 
-type VaultServiceResponseCalculator struct {
-	vaults []examplecommon.TaskInput
+func failingVaultSet(taskIndex uint32, input examplecommon.TaskInput) ([32]byte, error) {
+	return [32]byte{0}, nil
 }
 
-func NewVaultServiceResponseCalculator() *VaultServiceResponseCalculator {
-	vaults := make([]examplecommon.TaskInput, 0)
-
-	return &VaultServiceResponseCalculator{
-		vaults: vaults,
+func computeVaultsRoot(vaults []examplecommon.TaskInput) [32]byte {
+	leaves := make([][32]byte, len(vaults))
+	for i, vault := range vaults {
+		leaves[i] = hashVault(vault)
 	}
+	for len(leaves) > 1 {
+		halfLength := (len(leaves) + 1) / 2
+		for i := range halfLength {
+			rightIdx := i*2 + 1
+			if rightIdx >= len(leaves) {
+				rightIdx = i * 2
+			}
+			leaves[i] = hashNodes(leaves[i*2], leaves[rightIdx])
+		}
+		leaves = leaves[:halfLength]
+	}
+	return leaves[0]
 }
 
-func (vsrc *VaultServiceResponseCalculator) ComputeResponse(taskIndex uint32, input examplecommon.TaskInput) ([32]byte, error) {
-	cmpFn := func(vault examplecommon.TaskInput, key string) int {
-		return strings.Compare(vault.Key, key)
-	}
-	index, wasFound := slices.BinarySearchFunc(vsrc.vaults, input.Key, cmpFn)
-	if wasFound {
-		vsrc.vaults[index].Value = input.Value
-	} else {
-		vsrc.vaults = slices.Insert(vsrc.vaults, index, input)
-	}
+func hashVault(input examplecommon.TaskInput) [32]byte {
+	return crypto.Keccak256Hash([]byte(input.Key + input.Value))
+}
 
-	return examplecommon.ComputeVaultsRoot(vsrc.vaults), nil
+func hashNodes(leftNode [32]byte, rightNode [32]byte) [32]byte {
+	if slices.Compare(leftNode[:], rightNode[:]) > 0 {
+		leftNode, rightNode = rightNode, leftNode
+	}
+	return crypto.Keccak256Hash(leftNode[:], rightNode[:])
 }

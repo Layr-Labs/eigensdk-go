@@ -32,13 +32,13 @@ type Aggregator[Input any, Output any] struct {
 
 	taskManagerAbi *abi.ABI
 
-	taskProcessor taskprocessor.TaskProcessor[Input, Output]
+	indexingTaskProcessor taskprocessor.TaskProcessor[Input, Output]
 }
 
 // NewAggregator creates a new Aggregator with the provided config.
 func NewAggregator[Input any, Output any](
 	c AggregatorConfig,
-	taskProcessor taskprocessor.TaskProcessor[Input, Output],
+	indexingTaskProcessor taskprocessor.TaskProcessor[Input, Output],
 ) (*Aggregator[Input, Output], error) {
 	chainioConfig := sdkclients.BuildAllConfig{
 		EthHttpUrl:                 c.EthHttpUrl,
@@ -71,7 +71,7 @@ func NewAggregator[Input any, Output any](
 			c.Logger.Error("task Response could not be converted to sdk aggregator's Task Response type")
 		}
 
-		return taskProcessor.ProcessTaskResponse(taskResponse)
+		return indexingTaskProcessor.ProcessTaskResponse(taskResponse)
 	}
 
 	avsRegistryService := avsregistryservice.NewAvsRegistryServiceChainCaller(clients.AvsRegistryChainReader, operatorPubkeysService, c.Logger)
@@ -100,7 +100,7 @@ func NewAggregator[Input any, Output any](
 		blsAggregationService: blsAggregationService,
 		newTaskCreatedLogs:    newTaskCreatedLogs,
 		taskManagerAbi:        c.TaskManagerAbi,
-		taskProcessor:         taskProcessor,
+		indexingTaskProcessor: indexingTaskProcessor,
 	}, nil
 }
 
@@ -115,12 +115,12 @@ func (agg *Aggregator[Input, Output]) Start(ctx context.Context) error {
 			return nil
 		case blsAggServiceResp := <-agg.blsAggregationService.GetResponseChannel():
 			agg.logger.Info("Received response from blsAggregationService", "blsAggServiceResp", blsAggServiceResp)
-			err := agg.processAggregatedResponse(blsAggServiceResp)
+			err := agg.processAggregatedResponse(context.Background(), blsAggServiceResp)
 			if err != nil {
 				continue
 			}
 		case log := <-agg.newTaskCreatedLogs:
-			metadata, err := agg.processNewTask(log)
+			metadata, err := agg.processNewTask(context.Background(), log)
 			if err != nil {
 				agg.logger.Fatal("Error processing the task", "err", err)
 			}
@@ -131,7 +131,7 @@ func (agg *Aggregator[Input, Output]) Start(ctx context.Context) error {
 	}
 }
 
-func (agg *Aggregator[Input, Output]) processNewTask(log types.Log) (blsagg.TaskMetadata, error) {
+func (agg *Aggregator[Input, Output]) processNewTask(ctx context.Context, log types.Log) (blsagg.TaskMetadata, error) {
 	var newTaskCreatedLog sdktypes.NewTaskCreatedEvent[Input]
 
 	err := agg.taskManagerAbi.UnpackIntoInterface(&newTaskCreatedLog, "NewTaskCreated", log.Data)
@@ -146,7 +146,7 @@ func (agg *Aggregator[Input, Output]) processNewTask(log types.Log) (blsagg.Task
 
 	newTask := newTaskCreatedLog.Task
 
-	metadata, err := agg.taskProcessor.ProcessNewTask(newTaskIndex, newTask)
+	metadata, err := agg.indexingTaskProcessor.ProcessNewTask(newTaskIndex, newTask)
 	if err != nil {
 		return blsagg.TaskMetadata{}, err
 	}
@@ -155,13 +155,14 @@ func (agg *Aggregator[Input, Output]) processNewTask(log types.Log) (blsagg.Task
 }
 
 func (agg *Aggregator[Input, Output]) processAggregatedResponse(
+	ctx context.Context,
 	response blsagg.BlsAggregationServiceResponse,
 ) error {
 	if response.Err != nil {
 		return utils.WrapError("BlsAggregationServiceResponse contains an error", response.Err)
 	}
 
-	err := agg.taskProcessor.ProcessAggregatedResponse(response)
+	err := agg.indexingTaskProcessor.ProcessAggregatedResponse(response)
 	if err != nil {
 		return utils.WrapError("Aggregator failed to respond to task", err)
 	}
