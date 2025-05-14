@@ -16,10 +16,12 @@ import (
 var _ TaskManager[any, any] = (*taskManagerContractWrapper[any, any])(nil)
 
 type taskManagerContractWrapper[Input any, Output any] struct {
-	taskManagerAbi *abi.ABI
-	contract       taskManagerAbiContract[Input, Output]
-	txMgr          txmgr.TxManager
-	hashFunction   sdktypes.TaskResponseHashFunction
+	taskManagerAbi  *abi.ABI
+	contract        taskManagerAbiContract[Input, Output]
+	txMgr           txmgr.TxManager
+	hashFunction    sdktypes.TaskResponseHashFunction
+	inputFieldName  string
+	outputFieldName string
 }
 
 type taskManagerAbiContract[Input any, Output any] struct {
@@ -49,9 +51,12 @@ func NewTaskManagerFromAbi[Input any, Output any](address common.Address, abi *a
 	}
 	hashFn := internalutils.GetDefaultHashFunction(abiType)
 
+	inputFieldName := internalutils.CapitalizeFieldName(abi.Methods["respondToTask"].Inputs[0].Type.TupleRawNames[0])
+	outputFieldName := internalutils.CapitalizeFieldName(abi.Methods["respondToTask"].Inputs[1].Type.TupleRawNames[1])
+
 	// TODO: check if the ABI is compatible
 	contract := taskManagerAbiContract[Input, Output]{boundContract}
-	return &taskManagerContractWrapper[Input, Output]{abi, contract, txMgr, hashFn}, nil
+	return &taskManagerContractWrapper[Input, Output]{abi, contract, txMgr, hashFn, inputFieldName, outputFieldName}, nil
 }
 
 func (senderWrapper *taskManagerContractWrapper[Input, Output]) RaiseChallenge(
@@ -65,11 +70,8 @@ func (senderWrapper *taskManagerContractWrapper[Input, Output]) RaiseChallenge(
 		return utils.WrapError("Error getting tx opts", err)
 	}
 
-	inputFieldName := internalutils.CapitalizeFieldName(senderWrapper.taskManagerAbi.Methods["respondToTask"].Inputs[0].Type.TupleRawNames[0])
-	outputFieldName := internalutils.CapitalizeFieldName(senderWrapper.taskManagerAbi.Methods["respondToTask"].Inputs[1].Type.TupleRawNames[1])
-
-	newTaskStruct := internalutils.CopyStructAndChangeFieldName(task, "InputValue", inputFieldName)
-	newTaskResponseStruct := internalutils.CopyStructAndChangeFieldName(taskResponse, "OutputValue", outputFieldName)
+	newTaskStruct := internalutils.CopyStructAndChangeFieldName(task, "InputValue", senderWrapper.inputFieldName)
+	newTaskResponseStruct := internalutils.CopyStructAndChangeFieldName(taskResponse, "OutputValue", senderWrapper.outputFieldName)
 
 	tx, err := senderWrapper.contract.RaiseChallenge(txOpts, newTaskStruct, newTaskResponseStruct, TaskResponseMetadata, NonSigningOperatorPubKeys)
 	if err != nil {
@@ -121,11 +123,8 @@ func (senderWrapper *taskManagerContractWrapper[Input, Output]) RespondToTask(
 		return utils.WrapError("Error getting tx opts", err)
 	}
 
-	inputFieldName := internalutils.CapitalizeFieldName(senderWrapper.taskManagerAbi.Methods["respondToTask"].Inputs[0].Type.TupleRawNames[0])
-	outputFieldName := internalutils.CapitalizeFieldName(senderWrapper.taskManagerAbi.Methods["respondToTask"].Inputs[1].Type.TupleRawNames[1])
-
-	newTaskStruct := internalutils.CopyStructAndChangeFieldName(task, "InputValue", inputFieldName)
-	newTaskResponseStruct := internalutils.CopyStructAndChangeFieldName(taskResponse, "OutputValue", outputFieldName)
+	newTaskStruct := internalutils.CopyStructAndChangeFieldName(task, "InputValue", senderWrapper.inputFieldName)
+	newTaskResponseStruct := internalutils.CopyStructAndChangeFieldName(taskResponse, "OutputValue", senderWrapper.outputFieldName)
 
 	tx, err := senderWrapper.contract.RespondToTask(txOpts, newTaskStruct, newTaskResponseStruct, nonSignersStakesAndSig)
 	if err != nil {
