@@ -7,12 +7,11 @@ import (
 )
 
 type TaskManagerContract[Input any, Output any] interface {
-	CreateNewTask(ctx context.Context, input Input) error
+	TaskCreator[Input]
 
-	RespondToTask(task types.GenericInputTask[Input], taskResponse types.GenericOutputTaskResponse[Output], nonSignersStakesAndSig types.NonSignerStakesAndSignature) error
-	ProcessTaskResponse(taskResponse types.GenericOutputTaskResponse[Output]) (types.TaskResponseDigest, error)
+	TaskResponder[Input, Output]
 
-	RaiseChallenge(task types.GenericInputTask[Input], taskResponse types.GenericOutputTaskResponse[Output], TaskResponseMetadata types.GenericTaskResponseMetadata, NonSigningOperatorPubKeys []types.BN254G1Point) error
+	ChallengeRaiser[Input, Output]
 }
 
 // Interface for creating new tasks.
