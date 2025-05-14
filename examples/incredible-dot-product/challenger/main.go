@@ -9,13 +9,14 @@ import (
 	challengerprocessor "github.com/Layr-Labs/eigensdk-go/challenger/challenger-processor"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/operator"
+	taskmanager "github.com/Layr-Labs/eigensdk-go/task-processor/task-manager"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	common "github.com/Layr-Labs/eigensdk-go/examples/common"
 	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/common"
-	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
+	idptaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
 )
 
 func main() {
@@ -25,7 +26,7 @@ func main() {
 		return
 	}
 
-	taskManagerAbi, err := taskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
+	taskManagerAbi, err := idptaskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
 	if err != nil {
 		logger.Errorf("Failed to get task manager abi: %w", err)
 		return
@@ -53,7 +54,7 @@ func main() {
 		return
 	}
 
-	challengerRaiser, err := challengerprocessor.NewChallengeRaiserFromAbi[examplecommon.DotProductInput, *big.Int](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
+	challengerRaiser, err := taskmanager.NewTaskManagerContractFromAbi[examplecommon.DotProductInput, *big.Int](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
 	if err != nil {
 		logger.Errorf("Failed to create challenger raiser: %w", err)
 		return

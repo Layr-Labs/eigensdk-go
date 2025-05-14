@@ -8,13 +8,14 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/logging"
+	taskmanager "github.com/Layr-Labs/eigensdk-go/task-processor/task-manager"
 	taskspammer "github.com/Layr-Labs/eigensdk-go/task-spammer"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/common"
-	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
+	idptaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
 )
 
 func main() {
@@ -24,7 +25,7 @@ func main() {
 		return
 	}
 
-	taskManagerAbi, err := taskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
+	taskManagerAbi, err := idptaskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
 	if err != nil {
 		logger.Errorf("Failed to get task manager abi: %w", err)
 		return
@@ -52,7 +53,7 @@ func main() {
 		return
 	}
 
-	taskCreator, err := taskspammer.NewTaskCreatorFromAbi[examplecommon.DotProductInput](taskManagerAddr, *taskManagerAbi, txMgr, ethClient)
+	taskCreator, err := taskmanager.NewTaskManagerContractFromAbi[examplecommon.DotProductInput, *big.Int](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
 	if err != nil {
 		logger.Errorf("Failed to create Task Creator: %w", err)
 		return

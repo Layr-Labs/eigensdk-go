@@ -9,6 +9,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/bindings/taskManager"
 	"github.com/Layr-Labs/eigensdk-go/logging"
+	taskmanager "github.com/Layr-Labs/eigensdk-go/task-processor/task-manager"
 	taskspammer "github.com/Layr-Labs/eigensdk-go/task-spammer"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -48,7 +49,7 @@ func main() {
 		return
 	}
 
-	taskCreator, err := taskspammer.NewTaskCreatorFromAbi[*big.Int](taskManagerAddress, *abi, txMgr, ethHttpClient)
+	taskCreator, err := taskmanager.NewTaskManagerContractFromAbi[*big.Int, *big.Int](taskManagerAddress, abi, txMgr, ethHttpClient)
 	if err != nil {
 		return
 	}

@@ -9,6 +9,7 @@ import (
 	challengerprocessor "github.com/Layr-Labs/eigensdk-go/challenger/challenger-processor"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/operator"
+	taskmanager "github.com/Layr-Labs/eigensdk-go/task-processor/task-manager"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -56,7 +57,7 @@ func main() {
 		return
 	}
 
-	challengerRaiser, err := challengerprocessor.NewChallengeRaiserFromAbi[*big.Int, *big.Int](
+	challengerRaiser, err := taskmanager.NewTaskManagerContractFromAbi[*big.Int, *big.Int](
 		gethcommon.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3"),
 		taskManagerAbi,
 		txMgr,
