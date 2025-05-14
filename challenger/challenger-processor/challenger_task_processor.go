@@ -60,6 +60,8 @@ func (icp IndexingChallengerProcessor[Input, Output]) ProcessTaskResponded(taskI
 		}
 	}
 
+	delete(icp.tasks, taskIndex)
+
 	return nil
 }
 
