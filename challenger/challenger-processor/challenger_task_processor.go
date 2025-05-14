@@ -38,22 +38,22 @@ func (icp IndexingChallengerProcessor[Input, Output]) ProcessNewTaskCreated(newT
 	return nil
 }
 
-func (icp IndexingChallengerProcessor[Input, Output]) ProcessTaskResponded(taskIndex uint32, taskResponse sdktypes.TaskResponseData[Output]) error {
+func (icp IndexingChallengerProcessor[Input, Output]) ProcessTaskResponded(taskIndex uint32, taskResponse taskmanager.TaskResponse[Output], taskResponseMetadata sdktypes.TaskResponseMetadata, nonSigningOperatorPubKeys []sdktypes.BN254G1Point) error {
 	task, found := icp.tasks[taskIndex]
 	if !found {
 		return fmt.Errorf("could not find the task for the received task index")
 	}
 
-	isResponseCorrect, err := icp.responseValidationFn(taskIndex, task.InputValue, taskResponse.TaskResponse.OutputValue)
+	isResponseCorrect, err := icp.responseValidationFn(taskIndex, task.InputValue, taskResponse.OutputValue)
 	if err != nil {
 		icp.logger.Errorf("Failure while validating response. Err: %w", err)
 		return err
 	}
 
 	if !isResponseCorrect {
-		icp.logger.Infof("Response was not correct, input was %v and output was %v", task.InputValue, taskResponse.TaskResponse.OutputValue)
+		icp.logger.Infof("Response was not correct, input was %v and output was %v", task.InputValue, taskResponse.OutputValue)
 
-		err = icp.challengerRaiser.RaiseChallenge(task, taskResponse.TaskResponse, taskResponse.TaskResponseMetadata, taskResponse.NonSigningOperatorPubKeys)
+		err = icp.challengerRaiser.RaiseChallenge(task, taskResponse, taskResponseMetadata, nonSigningOperatorPubKeys)
 		if err != nil {
 			icp.logger.Errorf("Failure while raising challenge to on-chain contract. Err: %w", err)
 			return err

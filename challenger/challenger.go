@@ -17,7 +17,7 @@ import (
 
 type ChallengerProcessor[Input any, Output any] interface {
 	ProcessNewTaskCreated(taskIndex uint32, task taskmanager.Task[Input]) error
-	ProcessTaskResponded(taskIndex uint32, taskResponse sdktypes.TaskResponseData[Output]) error
+	ProcessTaskResponded(taskIndex uint32, taskResponse taskmanager.TaskResponse[Output], taskResponseMetadata sdktypes.TaskResponseMetadata, nonSigningOperatorPubKeys []sdktypes.BN254G1Point) error
 }
 
 type Challenger[Input any, Output any] struct {
@@ -125,13 +125,13 @@ func (c *Challenger[Input, Output]) processTaskRespondedLog(
 
 	// get the inputs necessary for raising a challenge
 	nonSigningOperatorPubKeys := c.getNonSigningOperatorPubKeys(log.TxHash)
-	taskResponseData := sdktypes.TaskResponseData[Output]{
-		TaskResponse:              taskRespondedLog.TaskResponse,
-		TaskResponseMetadata:      taskRespondedLog.TaskResponseMetadata,
-		NonSigningOperatorPubKeys: nonSigningOperatorPubKeys,
-	}
 
-	err = c.challengerProcessor.ProcessTaskResponded(taskIndex, taskResponseData)
+	err = c.challengerProcessor.ProcessTaskResponded(
+		taskIndex,
+		taskRespondedLog.TaskResponse,
+		taskRespondedLog.TaskResponseMetadata,
+		nonSigningOperatorPubKeys,
+	)
 	if err != nil {
 		return fmt.Errorf("error verifying the challenge: %w", err)
 	}
