@@ -2,13 +2,12 @@ package main
 
 import (
 	"context"
-	"math/big"
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/operator"
 
-	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/common"
-	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
+	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/common"
+	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/contracts/bindings/AwesomeVaultTaskManager"
 )
 
 func main() {
@@ -18,7 +17,7 @@ func main() {
 		return
 	}
 
-	taskManagerAbi, err := taskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
+	taskManagerAbi, err := taskmanager.ContractAwesomeVaultTaskManagerMetaData.GetAbi()
 	if err != nil {
 		logger.Errorf("Failed to get task manager abi: %w", err)
 		return
@@ -50,9 +49,9 @@ func main() {
 		logger.Fatalf("Failed to register operator on startup: %v", err.Error())
 	}
 
-	responseCalculator := operator.NewFunctionResponseCalculator(examplecommon.DotProduct)
+	vaultServiceResponseCalc := examplecommon.NewVaultServiceResponseCalculator()
 
-	possibleFailureCalculator, err := operator.NewFailingResponseCalculator(responseCalculator, 50, big.NewInt(31234213443))
+	possibleFailureCalculator, err := operator.NewFailingResponseCalculator(vaultServiceResponseCalc, 35, [32]byte{0})
 	if err != nil {
 		logger.Fatalf("Failed to create the possible failure function: %v", err.Error())
 	}

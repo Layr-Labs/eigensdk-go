@@ -3,19 +3,18 @@ package main
 import (
 	"context"
 	"iter"
-	"math/big"
+	"strconv"
 	"time"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/logging"
-	taskmanager "github.com/Layr-Labs/eigensdk-go/task-processor/task-manager"
 	taskspammer "github.com/Layr-Labs/eigensdk-go/task-spammer"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/common"
-	idptaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
+	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/common"
+	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/contracts/bindings/AwesomeVaultTaskManager"
 )
 
 func main() {
@@ -25,7 +24,7 @@ func main() {
 		return
 	}
 
-	taskManagerAbi, err := idptaskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
+	taskManagerAbi, err := taskmanager.ContractAwesomeVaultTaskManagerMetaData.GetAbi()
 	if err != nil {
 		logger.Errorf("Failed to get task manager abi: %w", err)
 		return
@@ -53,7 +52,7 @@ func main() {
 		return
 	}
 
-	taskCreator, err := taskmanager.NewTaskManagerContractFromAbi[examplecommon.DotProductInput, *big.Int](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
+	taskCreator, err := taskspammer.NewTaskCreatorFromAbi[examplecommon.TaskInput](taskManagerAddr, *taskManagerAbi, txMgr, ethClient)
 	if err != nil {
 		logger.Errorf("Failed to create Task Creator: %w", err)
 		return
@@ -83,22 +82,16 @@ func main() {
 // Returns an iterator for the sequence 1, 2, 3, ...
 // Inspired on the one from examples/incredible-squaring/task-spammer/task_spammer_use_example.go
 // Returns [1, 2, ..., n]
-func LinearRangeSequence() iter.Seq[examplecommon.DotProductInput] {
-	n := big.NewInt(1)
-	return func(yield func(examplecommon.DotProductInput) bool) {
+func LinearRangeSequence() iter.Seq[examplecommon.TaskInput] {
+	keys := []string{"foo", "bar", "baz"}
+	n := 1
+	return func(yield func(examplecommon.TaskInput) bool) {
 		for {
-			length := int(n.Int64())
-			x := make([]*big.Int, length)
-			y := make([]*big.Int, length)
-			for i := 0; i < length; i++ {
-				v := big.NewInt(int64(i + 1))
-				x[i] = v
-				y[i] = v
-			}
-			if !yield(examplecommon.DotProductInput{X: x, Y: y}) {
+			input := examplecommon.TaskInput{Key: keys[n%len(keys)], Value: strconv.Itoa(n)}
+			if !yield(input) {
 				break
 			}
-			n.Add(n, big.NewInt(1))
+			n++
 		}
 	}
 }

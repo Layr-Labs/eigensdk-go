@@ -20,10 +20,10 @@ type ChallengerProcessor[Input any, Output any] interface {
 }
 
 type Challenger[Input any, Output any] struct {
-	logger             logging.Logger
-	challengeVerifier  ChallengerProcessor[Input, Output]
-	taskResponseChan   chan types.Log
-	newTaskCreatedChan chan types.Log
+	logger              logging.Logger
+	challengerProcessor ChallengerProcessor[Input, Output]
+	taskResponseChan    chan types.Log
+	newTaskCreatedChan  chan types.Log
 
 	taskManagerAbi *abi.ABI
 
@@ -32,7 +32,7 @@ type Challenger[Input any, Output any] struct {
 
 func NewChallenger[Input any, Output any](
 	c ChallengerConfig,
-	challengeVerifier ChallengerProcessor[Input, Output],
+	challengerProcessor ChallengerProcessor[Input, Output],
 ) (*Challenger[Input, Output], error) {
 	client, err := ethclient.Dial(c.EthWsUrl)
 	if err != nil {
@@ -61,12 +61,12 @@ func NewChallenger[Input any, Output any](
 	}
 
 	return &Challenger[Input, Output]{
-		logger:             c.Logger,
-		challengeVerifier:  challengeVerifier,
-		newTaskCreatedChan: newTaskCreatedLogs,
-		taskResponseChan:   taskRespondedLogs,
-		taskManagerAbi:     c.TaskManagerAbi,
-		ethClient:          c.EthClient,
+		logger:              c.Logger,
+		challengerProcessor: challengerProcessor,
+		newTaskCreatedChan:  newTaskCreatedLogs,
+		taskResponseChan:    taskRespondedLogs,
+		taskManagerAbi:      c.TaskManagerAbi,
+		ethClient:           c.EthClient,
 	}, nil
 }
 
@@ -102,7 +102,7 @@ func (c *Challenger[Input, Output]) processNewTaskCreatedLog(log types.Log) erro
 
 	newTaskIndex := uint32(new(big.Int).SetBytes(log.Topics[1].Bytes()).Uint64())
 
-	err = c.challengeVerifier.ProcessNewTaskCreated(newTaskIndex, newTaskCreatedLog.Task)
+	err = c.challengerProcessor.ProcessNewTaskCreated(newTaskIndex, newTaskCreatedLog.Task)
 	if err != nil {
 		return fmt.Errorf("error processing new task created: %w", err)
 	}
@@ -130,7 +130,7 @@ func (c *Challenger[Input, Output]) processTaskRespondedLog(
 		NonSigningOperatorPubKeys: nonSigningOperatorPubKeys,
 	}
 
-	err = c.challengeVerifier.ProcessTaskResponded(taskIndex, taskResponseData)
+	err = c.challengerProcessor.ProcessTaskResponded(taskIndex, taskResponseData)
 	if err != nil {
 		return fmt.Errorf("error verifying the challenge: %w", err)
 	}
