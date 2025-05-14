@@ -404,6 +404,8 @@ contract AwesomeVaultTaskManager is
     function _hashLeaf(
         TaskInput calldata stateLeaf
     ) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(stateLeaf.key, stateLeaf.value));
+        bytes32 hashedKey = keccak256(abi.encodePacked(stateLeaf.key));
+        bytes32 hashedValue = keccak256(abi.encodePacked(stateLeaf.value));
+        return keccak256(abi.encodePacked(hashedKey, hashedValue));
     }
 }
