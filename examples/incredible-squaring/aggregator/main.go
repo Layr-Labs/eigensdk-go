@@ -5,10 +5,10 @@ import (
 	"math/big"
 
 	"github.com/Layr-Labs/eigensdk-go/aggregator"
+	taskprocessor "github.com/Layr-Labs/eigensdk-go/aggregator/task-processor"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
-	taskprocessor "github.com/Layr-Labs/eigensdk-go/task-processor"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
