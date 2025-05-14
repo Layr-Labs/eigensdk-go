@@ -6,7 +6,7 @@ import (
 	"math/big"
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
-	taskmanager "github.com/Layr-Labs/eigensdk-go/task-processor/task-manager"
+	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"

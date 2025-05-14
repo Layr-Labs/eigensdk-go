@@ -5,7 +5,7 @@ import (
 	"iter"
 	"time"
 
-	taskmanager "github.com/Layr-Labs/eigensdk-go/task-processor/task-manager"
+	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
 )
 
 type TaskSpammer[Input any] struct {

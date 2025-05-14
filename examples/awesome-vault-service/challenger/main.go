@@ -7,14 +7,12 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/challenger"
 	challengerprocessor "github.com/Layr-Labs/eigensdk-go/challenger/challenger-processor"
 	"github.com/Layr-Labs/eigensdk-go/logging"
-	taskmanager "github.com/Layr-Labs/eigensdk-go/task-processor/task-manager"
+	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-
-	tmcontract "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/contracts/bindings/AwesomeVaultTaskManager"
 
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 
@@ -93,7 +91,7 @@ func main() {
 }
 
 type ChallengeRaiser struct {
-	taskManager *tmcontract.ContractAwesomeVaultTaskManager
+	taskManager *avtaskmanager.ContractAwesomeVaultTaskManager
 	txMgr       txmgr.TxManager
 	verifier    *examplecommon.VaultServiceResponseCalculator
 }
@@ -101,7 +99,7 @@ type ChallengeRaiser struct {
 var _ taskmanager.ChallengeRaiser[examplecommon.TaskInput, [32]byte] = (*ChallengeRaiser)(nil)
 
 func NewChallengeRaiser(address gethcommon.Address, ethClient *ethclient.Client, txMgr txmgr.TxManager, verifier *examplecommon.VaultServiceResponseCalculator) (*ChallengeRaiser, error) {
-	tm, err := tmcontract.NewContractAwesomeVaultTaskManager(address, ethClient)
+	tm, err := avtaskmanager.NewContractAwesomeVaultTaskManager(address, ethClient)
 	if err != nil {
 		return nil, err
 	}
@@ -118,27 +116,27 @@ func (cr *ChallengeRaiser) RaiseChallenge(task taskmanager.Task[examplecommon.Ta
 	if err != nil {
 		return utils.WrapError("Error getting tx opts", err)
 	}
-	taskInput := tmcontract.IAwesomeVaultTaskManagerTaskInput{
+	taskInput := avtaskmanager.IAwesomeVaultTaskManagerTaskInput{
 		Key:   task.InputValue.Key,
 		Value: task.InputValue.Value,
 	}
-	contractTask := tmcontract.IAwesomeVaultTaskManagerTask{
+	contractTask := avtaskmanager.IAwesomeVaultTaskManagerTask{
 		Input:                     taskInput,
 		TaskCreatedBlock:          task.TaskCreatedBlock,
 		QuorumNumbers:             task.QuorumNumbers,
 		QuorumThresholdPercentage: task.QuorumThresholdPercentage,
 	}
-	contractTaskResponse := tmcontract.IAwesomeVaultTaskManagerTaskResponse{
+	contractTaskResponse := avtaskmanager.IAwesomeVaultTaskManagerTaskResponse{
 		ReferenceTaskIndex: taskResponse.ReferenceTaskIndex,
 		Result:             taskResponse.OutputValue,
 	}
-	contractTaskResponseMetadata := tmcontract.IAwesomeVaultTaskManagerTaskResponseMetadata{
+	contractTaskResponseMetadata := avtaskmanager.IAwesomeVaultTaskManagerTaskResponseMetadata{
 		TaskRespondedBlock: taskResponseMetadata.TaskRespondedBlock,
 		HashOfNonSigners:   taskResponseMetadata.HashOfNonSigners,
 	}
-	contractNonSigningOperatorPubKeys := make([]tmcontract.BN254G1Point, len(nonSigningOperatorPubKeys))
+	contractNonSigningOperatorPubKeys := make([]avtaskmanager.BN254G1Point, len(nonSigningOperatorPubKeys))
 	for i, pubKey := range nonSigningOperatorPubKeys {
-		contractNonSigningOperatorPubKeys[i] = tmcontract.BN254G1Point{
+		contractNonSigningOperatorPubKeys[i] = avtaskmanager.BN254G1Point{
 			X: pubKey.X,
 			Y: pubKey.Y,
 		}
@@ -147,9 +145,9 @@ func (cr *ChallengeRaiser) RaiseChallenge(task taskmanager.Task[examplecommon.Ta
 	if err != nil {
 		return utils.WrapError("Error getting previous state", err)
 	}
-	contractOldLeaves := make([]tmcontract.IAwesomeVaultTaskManagerTaskInput, len(oldLeaves))
+	contractOldLeaves := make([]avtaskmanager.IAwesomeVaultTaskManagerTaskInput, len(oldLeaves))
 	for i, leaf := range oldLeaves {
-		contractOldLeaves[i] = tmcontract.IAwesomeVaultTaskManagerTaskInput{
+		contractOldLeaves[i] = avtaskmanager.IAwesomeVaultTaskManagerTaskInput{
 			Key:   leaf.Key,
 			Value: leaf.Value,
 		}

@@ -8,7 +8,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	blsagg "github.com/Layr-Labs/eigensdk-go/services/bls_aggregation"
-	taskmanager "github.com/Layr-Labs/eigensdk-go/task-processor/task-manager"
+	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 )
