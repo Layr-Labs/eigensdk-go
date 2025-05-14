@@ -42,15 +42,15 @@ func (vsrc *VaultServiceResponseCalculator) GetPreviousState(lastInput TaskInput
 	cmpFn := func(vault TaskInput, key string) int {
 		return strings.Compare(vault.Key, key)
 	}
-	index, wasFound := slices.BinarySearchFunc(vsrc.vaults, lastInput.Key, cmpFn)
+	index, wasFound := slices.BinarySearchFunc(oldLeaves, lastInput.Key, cmpFn)
 	if !wasFound {
 		return nil, fmt.Errorf("key %s not found", lastInput.Key)
 	}
 
 	if vsrc.oldValue != nil {
-		vsrc.vaults[index].Value = *vsrc.oldValue
+		oldLeaves[index].Value = *vsrc.oldValue
 	} else {
-		vsrc.vaults = slices.Delete(vsrc.vaults, index, index+1)
+		oldLeaves = slices.Delete(oldLeaves, index, index+1)[:len(oldLeaves)-1]
 	}
 
 	return oldLeaves, nil
