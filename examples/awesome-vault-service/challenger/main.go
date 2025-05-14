@@ -7,9 +7,13 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/challenger"
 	challengerprocessor "github.com/Layr-Labs/eigensdk-go/challenger/challenger-processor"
 	"github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 	gethcommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+
+	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 
 	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/common"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/contracts/bindings/AwesomeVaultTaskManager"
@@ -50,7 +54,7 @@ func main() {
 		return
 	}
 
-	challengerRaiser, err := challengerprocessor.NewChallengeRaiserFromAbi[examplecommon.TaskInput, [32]byte](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
+	challengeRaiser, err := NewChallengeRaiser(taskManagerAddr, ethClient, txMgr)
 	if err != nil {
 		logger.Errorf("Failed to create challenger raiser: %w", err)
 		return
@@ -60,7 +64,7 @@ func main() {
 
 	vaultSetValidation := challengerprocessor.ResponseValidationFunctionFromResponseCalculator(vaultServiceResponseCalc, func(a, b [32]byte) bool { return a == b })
 
-	challengerProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, vaultSetValidation, challengerRaiser)
+	challengerProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, vaultSetValidation, challengeRaiser)
 	if err != nil {
 		logger.Errorf("Failed to create challenger verifier: %w", err)
 		return
@@ -83,4 +87,67 @@ func main() {
 		logger.Errorf("Failure while running challenger: %w", err)
 		return
 	}
+}
+
+type ChallengeRaiser struct {
+	taskManager *taskmanager.ContractAwesomeVaultTaskManager
+	txMgr       txmgr.TxManager
+}
+
+var _ challengerprocessor.ChallengeRaiser[examplecommon.TaskInput, [32]byte] = (*ChallengeRaiser)(nil)
+
+func NewChallengeRaiser(address gethcommon.Address, ethClient *ethclient.Client, txMgr txmgr.TxManager) (*ChallengeRaiser, error) {
+	tm, err := taskmanager.NewContractAwesomeVaultTaskManager(address, ethClient)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ChallengeRaiser{
+		taskManager: tm,
+		txMgr:       txMgr,
+	}, nil
+}
+
+func (cr *ChallengeRaiser) RaiseChallenge(task sdktypes.GenericInputTask[examplecommon.TaskInput], taskResponse sdktypes.GenericOutputTaskResponse[[32]byte], taskResponseMetadata sdktypes.GenericTaskResponseMetadata, nonSigningOperatorPubKeys []sdktypes.BN254G1Point) error {
+	txOpts, err := cr.txMgr.GetNoSendTxOpts()
+	if err != nil {
+		return utils.WrapError("Error getting tx opts", err)
+	}
+	taskInput := taskmanager.IAwesomeVaultTaskManagerTaskInput{
+		Key:   task.InputValue.Key,
+		Value: task.InputValue.Value,
+	}
+	contractTask := taskmanager.IAwesomeVaultTaskManagerTask{
+		Input:                     taskInput,
+		TaskCreatedBlock:          task.TaskCreatedBlock,
+		QuorumNumbers:             task.QuorumNumbers,
+		QuorumThresholdPercentage: task.QuorumThresholdPercentage,
+	}
+	contractTaskResponse := taskmanager.IAwesomeVaultTaskManagerTaskResponse{
+		ReferenceTaskIndex: taskResponse.ReferenceTaskIndex,
+		Result:             taskResponse.OutputValue,
+	}
+	contractTaskResponseMetadata := taskmanager.IAwesomeVaultTaskManagerTaskResponseMetadata{
+		TaskRespondedBlock: taskResponseMetadata.TaskRespondedBlock,
+		HashOfNonSigners:   taskResponseMetadata.HashOfNonSigners,
+	}
+	contractNonSigningOperatorPubKeys := make([]taskmanager.BN254G1Point, len(nonSigningOperatorPubKeys))
+	for i, pubKey := range nonSigningOperatorPubKeys {
+		contractNonSigningOperatorPubKeys[i] = taskmanager.BN254G1Point{
+			X: pubKey.X,
+			Y: pubKey.Y,
+		}
+	}
+	tx, err := cr.taskManager.RaiseAndResolveChallenge(txOpts, contractTask, contractTaskResponse, contractTaskResponseMetadata, contractNonSigningOperatorPubKeys)
+	if err != nil {
+		return utils.WrapError("Error raising challenge", err)
+	}
+	receipt, err := cr.txMgr.Send(context.Background(), tx, true)
+	if err != nil {
+		return utils.WrapError("Error submitting RaiseChallenge tx", err)
+	}
+	if receipt.Status != types.ReceiptStatusSuccessful {
+		return utils.WrapError("RaiseChallenge tx reverted", nil)
+	}
+	return nil
 }

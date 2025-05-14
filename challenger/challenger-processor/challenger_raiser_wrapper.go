@@ -65,7 +65,7 @@ func (challengerRaiser *challengerRaiserContractWrapper[Input, Output]) RaiseCha
 		return utils.WrapError("Error submitting RaiseChallenge tx", err)
 	}
 	if receipt.Status != types.ReceiptStatusSuccessful {
-		return utils.WrapError("RaiseChallenge tx failed", nil)
+		return utils.WrapError("RaiseChallenge tx reverted", nil)
 	}
 
 	return nil
