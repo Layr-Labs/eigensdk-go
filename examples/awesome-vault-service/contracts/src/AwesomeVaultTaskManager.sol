@@ -319,7 +319,7 @@ contract AwesomeVaultTaskManager is
         for (uint256 i = 0; i < stateLeaves.length; i++) {
             nodes[i] = keccak256(abi.encode(stateLeaves[i]));
         }
-        hashHashedLeaves(nodes);
+        hashHashedLeaves(nodes, nodes.length);
         return nodes[0];
     }
 
@@ -349,15 +349,16 @@ contract AwesomeVaultTaskManager is
         }
         if (!inserted) {
             nodes[insertIndex] = keccak256(abi.encode(stateLeafToInsert));
+            insertIndex++;
         }
-        hashHashedLeaves(nodes);
+        hashHashedLeaves(nodes, insertIndex);
         return nodes[0];
     }
 
     function hashHashedLeaves(
-        bytes32[] memory nodes
+        bytes32[] memory nodes,
+        uint256 numberOfNodes
     ) internal pure returns (bytes32) {
-        uint256 numberOfNodes = nodes.length;
         while (numberOfNodes > 1) {
             uint256 newNumberOfNodes = (numberOfNodes + 1) / 2;
             for (uint256 i = 0; i < newNumberOfNodes; i++) {
