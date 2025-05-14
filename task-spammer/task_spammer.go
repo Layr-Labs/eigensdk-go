@@ -44,7 +44,7 @@ func (taskGen *TaskSpammer[Input]) Start(ctx context.Context, inputGen iter.Seq[
 			logger.Info("Task Spammer finished sending tasks")
 			return nil
 		}
-		err := taskGen.taskCreator.CreateNewTask(ctx, value)
+		err := taskGen.taskCreator.CreateNewTask(ctx, value, taskGen.config.QuorumThresholdPercentage, taskGen.config.QuorumNumbers)
 		if err != nil {
 			logger.Error("Task Spammer failed to send new task", "err", err)
 			return err

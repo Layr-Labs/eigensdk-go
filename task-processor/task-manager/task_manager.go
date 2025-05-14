@@ -20,7 +20,7 @@ type TaskManager[Input any, Output any] interface {
 type TaskCreator[Input any] interface {
 	// Creates a new task with the given input.
 	// Implementations usually send a transaction to a smart contract.
-	CreateNewTask(ctx context.Context, input Input) error
+	CreateNewTask(ctx context.Context, input Input, quorumThresholdPercentage uint32, quorumNumbers []uint8) error
 }
 
 // Interface for responding new tasks.

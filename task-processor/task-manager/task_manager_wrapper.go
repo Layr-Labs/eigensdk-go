@@ -89,10 +89,7 @@ func (senderWrapper *taskManagerContractWrapper[Input, Output]) RaiseChallenge(
 	return nil
 }
 
-func (senderWrapper *taskManagerContractWrapper[Input, Output]) CreateNewTask(ctx context.Context, input Input) error {
-	var quorumThresholdPercentage uint32 = 100
-	var quorumNumbers []uint8 = []uint8{0}
-
+func (senderWrapper *taskManagerContractWrapper[Input, Output]) CreateNewTask(ctx context.Context, input Input, quorumThresholdPercentage uint32, quorumNumbers []uint8) error {
 	txOpts, err := senderWrapper.txMgr.GetNoSendTxOpts()
 	if err != nil {
 		return utils.WrapError("Error getting tx opts", err)
