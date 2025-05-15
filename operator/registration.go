@@ -330,7 +330,7 @@ func modifyAllocations(
 	newMagnitudes []uint64,
 	httpUrl string,
 	txMgr txmgr.TxManager,
-	id uint32,
+	operatorSetsIds []uint32,
 	logger logging.Logger,
 ) error {
 	txOpts, _ := txMgr.GetNoSendTxOpts()
@@ -338,14 +338,18 @@ func modifyAllocations(
 	ethRpcClient, _ := ethclient.Dial(httpUrl)
 	waitForReceipt := true
 	allocationManagerContract, _ := allocationmanager.NewContractAllocationManager(allocationManagerAddr, ethRpcClient)
-	operatorSet := allocationmanager.OperatorSet{Avs: avsAddress, Id: id}
-	var allocations []allocationmanager.IAllocationManagerTypesAllocateParams
-	allocations_1 := allocationmanager.IAllocationManagerTypesAllocateParams{
-		OperatorSet:   operatorSet,
-		Strategies:    strategies,
-		NewMagnitudes: newMagnitudes,
+
+	allocations := []allocationmanager.IAllocationManagerTypesAllocateParams{}
+	for _, setId := range operatorSetsIds {
+		operatorSet := allocationmanager.OperatorSet{Avs: avsAddress, Id: setId}
+		newAllocation := allocationmanager.IAllocationManagerTypesAllocateParams{
+			OperatorSet:   operatorSet,
+			Strategies:    strategies,
+			NewMagnitudes: newMagnitudes,
+		}
+		allocations = append(allocations, newAllocation)
 	}
-	allocations = append(allocations, allocations_1)
+
 	tx, err := allocationManagerContract.ModifyAllocations(txOpts, operatorAddr, allocations)
 	if err != nil {
 		return err
