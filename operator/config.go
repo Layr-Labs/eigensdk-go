@@ -35,7 +35,7 @@ type RegistrationConfig struct {
 	AllocationManagerAddr   common.Address
 	AvsAddress              common.Address
 	RegistryCoordinatorAddr common.Address
-	StrategyAddr            common.Address
+	StrategyAddrs           []common.Address
 
 	DelegationManagerAddress    common.Address
 	RewardsCoordinatorAddress   common.Address
@@ -46,8 +46,8 @@ type RegistrationConfig struct {
 	EcdsaKeyStorePath string
 	BlsKeyStorePath   string
 
-	AmountToMint         *big.Int
-	AllocatableMagnitude uint64
+	AmountToMint          *big.Int
+	AllocatableMagnitudes []uint64
 
 	OperatorSetIds []uint32
 }

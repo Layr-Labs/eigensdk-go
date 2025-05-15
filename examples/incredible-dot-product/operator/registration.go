@@ -19,7 +19,7 @@ func RegisterOperatorOnStartup(logger logging.Logger) error {
 		AllocationManagerAddr:   common.HexToAddress("0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6"),
 		AvsAddress:              common.HexToAddress("0xcd8a1c3ba11cf5ecfa6267617243239504a98d90"),
 		RegistryCoordinatorAddr: common.HexToAddress("0xfd471836031dc5108809d173a067e8486b9047a3"),
-		StrategyAddr:            common.HexToAddress("0x2b961e3959b79326a8e7f64ef0d2d825707669b5"),
+		StrategyAddrs:           []common.Address{common.HexToAddress("0x2b961e3959b79326a8e7f64ef0d2d825707669b5")},
 
 		DelegationManagerAddress:    common.HexToAddress("0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0"),
 		RewardsCoordinatorAddress:   common.HexToAddress("0xa51c1fc2f0d1a1b8494ed1fe312d7c3a78ed91c0"),
@@ -30,8 +30,8 @@ func RegisterOperatorOnStartup(logger logging.Logger) error {
 		EcdsaKeyStorePath: "keys/test.ecdsa.key.json",
 		BlsKeyStorePath:   "keys/test.bls.key.json",
 
-		AmountToMint:         amount,
-		AllocatableMagnitude: 1000000000000000,
+		AmountToMint:          amount,
+		AllocatableMagnitudes: []uint64{1000000000000000},
 
 		OperatorSetIds: []uint32{0},
 	}
