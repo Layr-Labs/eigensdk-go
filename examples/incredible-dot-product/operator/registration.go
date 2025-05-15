@@ -13,8 +13,6 @@ func RegisterOperatorOnStartup(logger logging.Logger) error {
 	amount.SetString("1000000000000000000000", 10)
 
 	registrationConfig := sdkoperator.RegistrationConfig{
-		Logger: logger,
-
 		OperatorAddr:            common.HexToAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"),
 		AllocationManagerAddr:   common.HexToAddress("0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6"),
 		AvsAddress:              common.HexToAddress("0xcd8a1c3ba11cf5ecfa6267617243239504a98d90"),
@@ -36,7 +34,7 @@ func RegisterOperatorOnStartup(logger logging.Logger) error {
 		OperatorSetId: 0,
 	}
 
-	err := sdkoperator.RegisterOperatorOnStartup(registrationConfig)
+	err := sdkoperator.RegisterOperatorOnStartup(registrationConfig, logger)
 	if err != nil {
 		logger.Errorf("Failed to register operator on startup: %w", err)
 		return err
