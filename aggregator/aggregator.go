@@ -39,7 +39,9 @@ type Aggregator[Input any, Output any] struct {
 // NewAggregator creates a new Aggregator with the provided config.
 func NewAggregator[Input any, Output any](
 	c Config,
+	logger logging.Logger,
 	taskProcessor taskprocessor.TaskProcessor[Input, Output],
+	taskManagerAbi *abi.ABI,
 ) (*Aggregator[Input, Output], error) {
 	chainioConfig := sdkclients.BuildAllConfig{
 		EthHttpUrl:                 c.EthHttpUrl,
@@ -51,9 +53,9 @@ func NewAggregator[Input any, Output any](
 		DontUseAllocationManager:   true,
 	}
 
-	clients, err := sdkclients.BuildAll(chainioConfig, c.EcdsaPrivateKey, c.Logger)
+	clients, err := sdkclients.BuildAll(chainioConfig, c.EcdsaPrivateKey, logger)
 	if err != nil {
-		c.Logger.Errorf("Cannot create sdk clients. Err: %w", err)
+		logger.Errorf("Cannot create sdk clients. Err: %w", err)
 		return nil, err
 	}
 
@@ -63,27 +65,27 @@ func NewAggregator[Input any, Output any](
 		clients.AvsRegistryChainReader,
 		nil,
 		oprsinfoserv.Opts{},
-		c.Logger,
+		logger,
 	)
 
 	taskResponseHashFn := func(response any) (sdktypes.TaskResponseDigest, error) {
 		taskResponse, ok := response.(taskmanager.TaskResponse[Output])
 		if !ok {
-			c.Logger.Error("task Response could not be converted to sdk aggregator's Task Response type")
+			logger.Error("task Response could not be converted to sdk aggregator's Task Response type")
 		}
 
 		return taskProcessor.ProcessTaskResponse(taskResponse)
 	}
 
-	avsRegistryService := avsregistryservice.NewAvsRegistryServiceChainCaller(clients.AvsRegistryChainReader, operatorPubkeysService, c.Logger)
-	blsAggregationService := blsagg.NewBlsAggregatorService(avsRegistryService, taskResponseHashFn, c.Logger)
+	avsRegistryService := avsregistryservice.NewAvsRegistryServiceChainCaller(clients.AvsRegistryChainReader, operatorPubkeysService, logger)
+	blsAggregationService := blsagg.NewBlsAggregatorService(avsRegistryService, taskResponseHashFn, logger)
 
 	client, err := ethclient.Dial(c.EthWsUrl)
 	if err != nil {
-		c.Logger.Fatal("error connecting to web socket", "err", err)
+		logger.Fatal("error connecting to web socket", "err", err)
 	}
 
-	newTaskCreatedEventHash := c.TaskManagerAbi.Events["NewTaskCreated"].ID
+	newTaskCreatedEventHash := taskManagerAbi.Events["NewTaskCreated"].ID
 	query := ethereum.FilterQuery{
 		Addresses: []common.Address{},
 		Topics:    [][]common.Hash{{newTaskCreatedEventHash}},
@@ -92,15 +94,15 @@ func NewAggregator[Input any, Output any](
 	newTaskCreatedLogs := make(chan types.Log)
 	_, err = client.SubscribeFilterLogs(context.Background(), query, newTaskCreatedLogs)
 	if err != nil {
-		c.Logger.Fatal("error subscribing to newTaskCreated events", "err", err)
+		logger.Fatal("error subscribing to newTaskCreated events", "err", err)
 	}
 
 	return &Aggregator[Input, Output]{
-		logger:                c.Logger,
+		logger:                logger,
 		serverIpPortAddr:      c.AggregatorServerIpPortAddr,
 		blsAggregationService: blsAggregationService,
 		newTaskCreatedLogs:    newTaskCreatedLogs,
-		taskManagerAbi:        c.TaskManagerAbi,
+		taskManagerAbi:        taskManagerAbi,
 		taskProcessor:         taskProcessor,
 	}, nil
 }

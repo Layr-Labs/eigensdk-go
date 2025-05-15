@@ -3,27 +3,17 @@ package aggregator
 import (
 	"crypto/ecdsa"
 
-	"github.com/Layr-Labs/eigensdk-go/logging"
-	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 type Config struct {
-	EthHttpUrl                 string
-	EthWsUrl                   string
-	AggregatorServerIpPortAddr string
+	EthHttpUrl                 string `toml:"eth_http_url"`
+	EthWsUrl                   string `toml:"eth_ws_url"`
+	AggregatorServerIpPortAddr string `toml:"aggregator_server_ip_port"`
 
-	RegistryCoordinatorAddress    common.Address
-	OperatorStateRetrieverAddress common.Address
-	ServiceManagerAddress         common.Address
+	RegistryCoordinatorAddress    common.Address `toml:"registry_coordinator_address"`
+	OperatorStateRetrieverAddress common.Address `toml:"operator_state_retriever_address"`
+	ServiceManagerAddress         common.Address `toml:"service_manager_address"`
 
-	EthHttpClient   *ethclient.Client
-	Logger          logging.Logger
 	EcdsaPrivateKey *ecdsa.PrivateKey
-
-	TaskResponseHashFn sdktypes.TaskResponseHashFunction
-
-	TaskManagerAbi *abi.ABI
 }

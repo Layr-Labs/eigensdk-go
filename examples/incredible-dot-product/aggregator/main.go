@@ -20,16 +20,9 @@ import (
 )
 
 type Config struct {
-	EthHttpUrl string `toml:"eth_http_url"`
-	EthWsUrl   string `toml:"eth_ws_url"`
+	SdkConfig aggregator.Config `toml:"sdk"`
 
-	AggregatorPrivateKey   string `toml:"aggregator_private_key"`
-	AggregatorServerIPPort string `toml:"aggregator_server_ip_port"`
-
-	RegistryCoordinatorAddress    string `toml:"registry_coordinator_address"`
-	OperatorStateRetrieverAddress string `toml:"operator_state_retriever_address"`
-	ServiceManagerAddress         string `toml:"service_manager_address"`
-	TaskManagerAddress            string `toml:"task_manager_address"`
+	TaskManagerAddress     string `toml:"task_manager_address"`
 }
 
 func GetConfigFromPath(path string) (*Config, error) {
@@ -65,13 +58,17 @@ func main() {
 		return
 	}
 
-	ethClient, err := ethclient.Dial(config.EthHttpUrl)
+	ethClient, err := ethclient.Dial(config.SdkConfig.EthHttpUrl)
 	if err != nil {
 		logger.Errorf("Failed to dial ethclient: %w", err)
 		return
 	}
 
-	ecdsaPrivateKey, err := crypto.HexToECDSA(config.AggregatorPrivateKey)
+	// Depends on the aggregatorPrivateKey passed to TaskManager.initialize
+	// To change it, modify aggregator_addr in
+	// examples/incredible-dot-product/contracts/config/avs/incredible_dot_product_config.json
+	aggregatorPrivateKey := "2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6"
+	ecdsaPrivateKey, err := crypto.HexToECDSA(aggregatorPrivateKey)
 	if err != nil {
 		logger.Errorf("Failed to create ecdsa private key: %w", err)
 		return
@@ -84,19 +81,14 @@ func main() {
 	}
 
 	aggConfig := aggregator.Config{
-		Logger:             logger,
-		TaskManagerAbi:     taskManagerAbi,
-		TaskResponseHashFn: nil,
+		EthHttpUrl:                 config.SdkConfig.EthHttpUrl,
+		EthWsUrl:                   config.SdkConfig.EthWsUrl,
+		AggregatorServerIpPortAddr: config.SdkConfig.AggregatorServerIpPortAddr,
 
-		EthHttpUrl:                 config.EthHttpUrl,
-		EthWsUrl:                   config.EthWsUrl,
-		AggregatorServerIpPortAddr: config.AggregatorServerIPPort,
+		RegistryCoordinatorAddress:    config.SdkConfig.RegistryCoordinatorAddress,
+		OperatorStateRetrieverAddress: config.SdkConfig.OperatorStateRetrieverAddress,
+		ServiceManagerAddress:         config.SdkConfig.ServiceManagerAddress,
 
-		RegistryCoordinatorAddress:    gethcommon.HexToAddress(config.RegistryCoordinatorAddress),
-		OperatorStateRetrieverAddress: gethcommon.HexToAddress(config.OperatorStateRetrieverAddress),
-		ServiceManagerAddress:         gethcommon.HexToAddress(config.ServiceManagerAddress),
-
-		EthHttpClient:   ethClient,
 		EcdsaPrivateKey: ecdsaPrivateKey,
 	}
 
@@ -113,7 +105,7 @@ func main() {
 		return
 	}
 
-	aggregator, err := aggregator.NewAggregator(aggConfig, taskProcessor)
+	aggregator, err := aggregator.NewAggregator(aggConfig, logger, taskProcessor, taskManagerAbi)
 	if err != nil {
 		logger.Errorf("Failed to create aggregator: %w", err)
 		return
