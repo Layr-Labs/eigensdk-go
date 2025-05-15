@@ -46,7 +46,7 @@ func main() {
 		logger.Errorf("Failed to create ecdsa private key: %w", err)
 		return
 	}
-	
+
 	txMgr, err := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethClient, ecdsaPrivateKey)
 	if err != nil {
 		logger.Errorf("Failed to create tx manager from private key: %w", err)
