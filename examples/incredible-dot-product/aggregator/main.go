@@ -76,17 +76,8 @@ func main() {
 		return
 	}
 
-	aggConfig := aggregator.Config{
-		EthHttpUrl:                 config.EthHttpUrl,
-		EthWsUrl:                   config.EthWsUrl,
-		AggregatorServerIpPortAddr: config.AggregatorServerIpPortAddr,
-
-		RegistryCoordinatorAddress:    config.RegistryCoordinatorAddress,
-		OperatorStateRetrieverAddress: config.OperatorStateRetrieverAddress,
-		ServiceManagerAddress:         config.ServiceManagerAddress,
-
-		EcdsaPrivateKey: ecdsaPrivateKey,
-	}
+	aggConfig := config.Config
+	aggConfig.EcdsaPrivateKey = ecdsaPrivateKey
 
 	taskManagerAddr := gethcommon.HexToAddress(config.TaskManagerAddress)
 	taskResponder, err := taskmanager.NewTaskManagerFromAbi[examplecommon.DotProductInput, *big.Int](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
