@@ -32,11 +32,7 @@ func GetConfigFromPath(path string) (*Config, error) {
 		return nil, err
 	}
 	err = tree.Unmarshal(config)
-	if err != nil {
-		return nil, err
-	}
-
-	return config, nil
+	return config, err
 }
 
 func main() {
