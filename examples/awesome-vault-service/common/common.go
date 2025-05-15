@@ -3,8 +3,17 @@ package examplecommon
 import (
 	"slices"
 
+	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
+	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
+
+func NewAwesomeVaultTaskManager(address common.Address, abi *abi.ABI, txMgr txmgr.TxManager, httpClient bind.ContractBackend) (taskmanager.TaskManager[TaskInput, [32]byte, []TaskInput], error) {
+	return taskmanager.NewTaskManagerFromAbi[TaskInput, [32]byte, []TaskInput](address, abi, txMgr, httpClient)
+}
 
 type TaskInput struct {
 	Key   string
@@ -14,7 +23,7 @@ type TaskInput struct {
 func ComputeVaultsRoot(vaults []TaskInput) [32]byte {
 	leaves := make([][32]byte, len(vaults))
 	for i, vault := range vaults {
-		leaves[i] = hashVault(vault)
+		leaves[i] = hashLeaf(vault)
 	}
 	for len(leaves) > 1 {
 		halfLength := (len(leaves) + 1) / 2
@@ -30,8 +39,10 @@ func ComputeVaultsRoot(vaults []TaskInput) [32]byte {
 	return leaves[0]
 }
 
-func hashVault(input TaskInput) [32]byte {
-	return crypto.Keccak256Hash([]byte(input.Key + input.Value))
+func hashLeaf(input TaskInput) [32]byte {
+	hashedKey := crypto.Keccak256Hash([]byte(input.Key))
+	hashedValue := crypto.Keccak256Hash([]byte(input.Value))
+	return crypto.Keccak256Hash(hashedKey.Bytes(), hashedValue.Bytes())
 }
 
 func hashNodes(leftNode [32]byte, rightNode [32]byte) [32]byte {

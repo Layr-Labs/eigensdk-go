@@ -57,14 +57,14 @@ func main() {
 		return
 	}
 
-	challengerRaiser, err := taskmanager.NewTaskManagerFromAbi[*big.Int, *big.Int](
+	challengerRaiser, err := taskmanager.NewTaskManagerFromAbi[*big.Int, *big.Int, any](
 		gethcommon.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3"),
 		taskManagerAbi,
 		txMgr,
 		ethHttpClient,
 	)
 	if err != nil {
-		logger.Errorf("Failed to create challenger raiser: %v", err)
+		logger.Errorf("Failed to create challenge raiser: %v", err)
 		return
 	}
 

@@ -49,7 +49,10 @@ contract AwesomeVaultTaskManager is
     // mapping of task indices to hash of abi.encode(taskResponse, taskResponseMetadata)
     mapping(uint32 => bytes32) public allTaskResponses;
 
-    mapping(uint32 => bool) public taskSuccesfullyChallenged;
+    // mapping of task indices to state roots
+    mapping(uint32 => bytes32) public allStateRoots;
+
+    mapping(uint32 => bool) public taskSuccessfullyChallenged;
 
     address public aggregator;
     address public generator;
@@ -163,6 +166,7 @@ contract AwesomeVaultTaskManager is
         // updating the storage with task responsea
         allTaskResponses[taskResponse.referenceTaskIndex] =
             keccak256(abi.encode(taskResponse, taskResponseMetadata));
+        allStateRoots[taskResponse.referenceTaskIndex] = taskResponse.result;
 
         // emitting event
         emit TaskResponded(taskResponse, taskResponseMetadata);
@@ -176,7 +180,8 @@ contract AwesomeVaultTaskManager is
         Task calldata task,
         TaskResponse calldata taskResponse,
         TaskResponseMetadata calldata taskResponseMetadata,
-        BN254.G1Point[] memory pubkeysOfNonSigningOperators
+        BN254.G1Point[] memory pubkeysOfNonSigningOperators,
+        TaskInput[] calldata prevStateLeaves
     ) external {
         uint32 referenceTaskIndex = taskResponse.referenceTaskIndex;
 
@@ -190,7 +195,7 @@ contract AwesomeVaultTaskManager is
             "Task response does not match the one recorded in the contract"
         );
         require(
-            taskSuccesfullyChallenged[referenceTaskIndex] == false,
+            taskSuccessfullyChallenged[referenceTaskIndex] == false,
             "The response to this task has already been challenged successfully."
         );
 
@@ -201,8 +206,20 @@ contract AwesomeVaultTaskManager is
         );
 
         // logic for checking whether challenge is valid or not
-        // TODO: submit proof that shows the response is incorrect
-        bool isResponseCorrect = false;
+        bytes32 prevStateRoot = bytes32(0);
+        // if the task is the first task, then we set the prevStateRoot to 0
+        if (referenceTaskIndex > 0) {
+            prevStateRoot = allStateRoots[referenceTaskIndex - 1];
+        }
+
+        require(
+            hashState(prevStateLeaves) == prevStateRoot,
+            "The state root of the previous task does not match the one recorded in the contract"
+        );
+
+        bytes32 stateRoot = hashStateWithInsertion(prevStateLeaves, task.input);
+
+        bool isResponseCorrect = stateRoot == taskResponse.result;
 
         // if response was correct, no slashing happens so we return
         if (isResponseCorrect == true) {
@@ -282,12 +299,113 @@ contract AwesomeVaultTaskManager is
         }
 
         // the task response has been challenged successfully
-        taskSuccesfullyChallenged[referenceTaskIndex] = true;
+        taskSuccessfullyChallenged[referenceTaskIndex] = true;
+        allStateRoots[referenceTaskIndex] = stateRoot;
 
         emit TaskChallengedSuccessfully(referenceTaskIndex, msg.sender);
     }
 
     function getTaskResponseWindowBlock() external view returns (uint32) {
         return TASK_RESPONSE_WINDOW_BLOCK;
+    }
+
+    function hashState(
+        TaskInput[] calldata stateLeaves
+    ) internal pure returns (bytes32) {
+        if (stateLeaves.length == 0) {
+            return bytes32(0);
+        }
+        bytes32[] memory nodes = new bytes32[](stateLeaves.length);
+        for (uint256 i = 0; i < stateLeaves.length; i++) {
+            nodes[i] = _hashLeaf(stateLeaves[i]);
+        }
+        hashHashedLeaves(nodes, nodes.length);
+        return nodes[0];
+    }
+
+    function hashStateWithInsertion(
+        TaskInput[] calldata stateLeaves,
+        TaskInput calldata stateLeafToInsert
+    ) internal pure returns (bytes32) {
+        bytes32[] memory nodes = new bytes32[](stateLeaves.length + 1);
+        bool inserted = false;
+        uint256 insertIndex = 0;
+        for (uint256 i = 0; i < stateLeaves.length; i++) {
+            if (!inserted) {
+                int256 cmp = _stringCompare(stateLeaves[i].key, stateLeafToInsert.key);
+                if (cmp >= 0) {
+                    inserted = true;
+                    nodes[insertIndex] = _hashLeaf(stateLeafToInsert);
+                    insertIndex++;
+                    // If the keys are equal, we need to skip the current leaf
+                    // to avoid duplicates in the tree.
+                    if (cmp == 0) {
+                        continue;
+                    }
+                }
+            }
+            nodes[insertIndex] = _hashLeaf(stateLeaves[i]);
+            insertIndex++;
+        }
+        if (!inserted) {
+            nodes[insertIndex] = _hashLeaf(stateLeafToInsert);
+            insertIndex++;
+        }
+        hashHashedLeaves(nodes, insertIndex);
+        return nodes[0];
+    }
+
+    function hashHashedLeaves(
+        bytes32[] memory nodes,
+        uint256 numberOfNodes
+    ) internal pure returns (bytes32) {
+        while (numberOfNodes > 1) {
+            uint256 newNumberOfNodes = (numberOfNodes + 1) / 2;
+            for (uint256 i = 0; i < newNumberOfNodes; i++) {
+                bytes32 leftNode = nodes[i * 2];
+                if (i * 2 + 1 < numberOfNodes) {
+                    nodes[i] = _hashNodes(leftNode, nodes[i * 2 + 1]);
+                } else {
+                    nodes[i] = _hashNodes(leftNode, leftNode);
+                }
+            }
+            numberOfNodes = newNumberOfNodes;
+        }
+        return nodes[0];
+    }
+
+    function _hashNodes(bytes32 left, bytes32 right) internal pure returns (bytes32) {
+        if (left <= right) {
+            return keccak256(abi.encodePacked(left, right));
+        } else {
+            return keccak256(abi.encodePacked(right, left));
+        }
+    }
+
+    function _stringCompare(string calldata a, string calldata b) internal pure returns (int256) {
+        bytes memory aBytes = bytes(a);
+        bytes memory bBytes = bytes(b);
+        uint256 minLength = aBytes.length < bBytes.length ? aBytes.length : bBytes.length;
+        for (uint256 i = 0; i < minLength; i++) {
+            if (aBytes[i] < bBytes[i]) {
+                return -1;
+            } else if (aBytes[i] > bBytes[i]) {
+                return 1;
+            }
+        }
+        if (aBytes.length < bBytes.length) {
+            return -1;
+        } else if (aBytes.length > bBytes.length) {
+            return 1;
+        }
+        return 0;
+    }
+
+    function _hashLeaf(
+        TaskInput calldata stateLeaf
+    ) internal pure returns (bytes32) {
+        bytes32 hashedKey = keccak256(abi.encodePacked(stateLeaf.key));
+        bytes32 hashedValue = keccak256(abi.encodePacked(stateLeaf.value));
+        return keccak256(abi.encodePacked(hashedKey, hashedValue));
     }
 }

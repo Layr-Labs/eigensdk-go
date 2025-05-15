@@ -7,7 +7,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/challenger"
 	challengerprocessor "github.com/Layr-Labs/eigensdk-go/challenger/challenger-processor"
 	"github.com/Layr-Labs/eigensdk-go/logging"
-	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -51,17 +51,17 @@ func main() {
 		return
 	}
 
-	challengerRaiser, err := taskmanager.NewTaskManagerFromAbi[examplecommon.TaskInput, [32]byte](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
+	vaultServiceResponseCalc := examplecommon.NewVaultServiceResponseCalculator()
+
+	challengeRaiser, err := examplecommon.NewAwesomeVaultTaskManager(taskManagerAddr, taskManagerAbi, txMgr, ethClient)
 	if err != nil {
-		logger.Errorf("Failed to create challenger raiser: %w", err)
+		logger.Errorf("Failed to create challenge raiser: %v", err)
 		return
 	}
 
-	vaultServiceResponseCalc := examplecommon.NewVaultServiceResponseCalculator()
+	vaultSetValidationWithProof := getProofGeneratingVerifier(vaultServiceResponseCalc)
 
-	vaultSetValidation := challengerprocessor.ResponseValidationFunctionFromResponseCalculator(vaultServiceResponseCalc, func(a, b [32]byte) bool { return a == b })
-
-	challengerProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, vaultSetValidation, challengerRaiser)
+	challengerProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, vaultSetValidationWithProof, challengeRaiser)
 	if err != nil {
 		logger.Errorf("Failed to create challenger verifier: %w", err)
 		return
@@ -83,5 +83,25 @@ func main() {
 	if err != nil {
 		logger.Errorf("Failure while running challenger: %w", err)
 		return
+	}
+}
+
+func getProofGeneratingVerifier(vaultServiceResponseCalc *examplecommon.VaultServiceResponseCalculator) challengerprocessor.ResponseValidationFunction[examplecommon.TaskInput, [32]byte, []examplecommon.TaskInput] {
+	vaultSetValidation := challengerprocessor.ResponseValidationFunctionFromResponseCalculator(vaultServiceResponseCalc, func(a, b [32]byte) bool { return a == b })
+
+	return func(taskIndex uint32, input examplecommon.TaskInput, output [32]byte) (bool, []examplecommon.TaskInput, error) {
+		var proof []examplecommon.TaskInput
+		shouldRaise, _, err := vaultSetValidation(taskIndex, input, output)
+		if err != nil {
+			return shouldRaise, proof, err
+		}
+		if shouldRaise {
+			oldLeaves, err := vaultServiceResponseCalc.GetPreviousState(input)
+			if err != nil {
+				return false, nil, utils.WrapError("Error getting previous state", err)
+			}
+			proof = oldLeaves
+		}
+		return shouldRaise, proof, nil
 	}
 }

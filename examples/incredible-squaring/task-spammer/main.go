@@ -49,7 +49,7 @@ func main() {
 		return
 	}
 
-	taskCreator, err := taskmanager.NewTaskManagerFromAbi[*big.Int, *big.Int](taskManagerAddress, abi, txMgr, ethHttpClient)
+	taskCreator, err := taskmanager.NewTaskManagerFromAbi[*big.Int, *big.Int, any](taskManagerAddress, abi, txMgr, ethHttpClient)
 	if err != nil {
 		return
 	}

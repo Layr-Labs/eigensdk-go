@@ -70,7 +70,8 @@ interface IAwesomeVaultTaskManager {
         Task calldata task,
         TaskResponse calldata taskResponse,
         TaskResponseMetadata calldata taskResponseMetadata,
-        BN254.G1Point[] memory pubkeysOfNonSigningOperators
+        BN254.G1Point[] memory pubkeysOfNonSigningOperators,
+        TaskInput[] calldata prevStateLeaves
     ) external;
 
     /// @notice Returns the TASK_RESPONSE_WINDOW_BLOCK
