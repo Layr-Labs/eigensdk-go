@@ -1,0 +1,29 @@
+eth_http_url = "http://localhost:8545"
+eth_ws_url = "ws://localhost:8545"
+
+operator_address = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+
+aggregator_server_ip_port = "localhost:8090"
+
+bls_key_path = "keys/test.bls.key.json"
+
+registry_coordinator_address = "0xfd471836031dc5108809d173a067e8486b9047a3"
+operator_state_retriever_address = "0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"
+service_manager_address = "0xcd8a1c3ba11cf5ecfa6267617243239504a98d90"
+
+[registration]
+register_on_startup = true
+allocation_manager_address = "0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6"
+avs_address = "0xcd8a1c3ba11cf5ecfa6267617243239504a98d90"
+registry_coordinator_address = "0xfd471836031dc5108809d173a067e8486b9047a3"
+strategy_address = "0x2b961e3959b79326a8e7f64ef0d2d825707669b5"
+
+delegation_manager_address = "0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0"
+rewards_coordinator_address = "0xa51c1fc2f0d1a1b8494ed1fe312d7c3a78ed91c0"
+permission_controller_address = "0x59b670e9fa9d0a427751af201d676719a970857b"
+
+ecdsa_key_path = "keys/test.ecdsa.key.json"
+
+amount_to_mint = "1000000000000000000000"
+allocatable_magnitudes = [1000000000000000]
+operator_set_ids = [0]
