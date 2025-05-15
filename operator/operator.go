@@ -66,12 +66,20 @@ func NewOperatorFromConfig[Input any, Output any](
 		return nil, err
 	}
 	if !operatorIsRegistered {
-		// We bubble the error all the way up instead of using logger.Fatal because logger.Fatal prints a huge stack
-		// trace that hides the actual error message. This error msg is more explicit and doesn't require showing a
-		// stack trace to the user.
-		return nil, fmt.Errorf(
-			"operator is not registered. Registering operator using the operator-cli before starting operator",
-		)
+		if c.RegistrationCfg.RegisterOnStartup {
+			err = RegisterOperatorOnStartup(c.RegistrationCfg, c.Logger)
+			if err != nil {
+				c.Logger.Errorf("Failure while registering operator on startup: %w", err)
+				return nil, err
+			}
+		} else {
+			// We bubble the error all the way up instead of using logger.Fatal because logger.Fatal prints a huge stack
+			// trace that hides the actual error message. This error msg is more explicit and doesn't require showing a
+			// stack trace to the user.
+			return nil, fmt.Errorf(
+				"Operator is not registered and register on startup flag is false, try registering operator using the operator-cli before starting operator",
+			)
+		}
 	}
 
 	operatorId, err := avsReader.GetOperatorId(&bind.CallOpts{}, common.HexToAddress(c.OperatorAddress))

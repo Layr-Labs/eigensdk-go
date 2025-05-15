@@ -27,10 +27,10 @@ import (
 	"github.com/ethereum/go-ethereum/event"
 )
 
-func RegisterOperatorOnStartup(c RegistrationConfig) error {
+func RegisterOperatorOnStartup(c RegistrationConfig, logger logging.Logger) error {
 	ethRpcClient, err := ethclient.Dial(c.EthRpcUrl)
 	if err != nil {
-		c.Logger.Errorf("Cannot create http ethclient", "err", err)
+		logger.Errorf("Cannot create http ethclient", "err", err)
 		return err
 	}
 
@@ -44,13 +44,13 @@ func RegisterOperatorOnStartup(c RegistrationConfig) error {
 	defer cancel()
 	chainid, err := ethRpcClient.ChainID(rpcCtx)
 	if err != nil {
-		c.Logger.Error("Cannot get chain id", "err", err)
+		logger.Error("Cannot get chain id", "err", err)
 		return err
 	}
 
 	ecdsaKeyPassword, ok := os.LookupEnv("OPERATOR_ECDSA_KEY_PASSWORD")
 	if !ok {
-		c.Logger.Warnf("OPERATOR_ECDSA_KEY_PASSWORD env var not set. using empty string")
+		logger.Warnf("OPERATOR_ECDSA_KEY_PASSWORD env var not set. using empty string")
 	}
 
 	operatorEcdsaPrivateKey, err := ecdsa.ReadKey(
@@ -65,29 +65,29 @@ func RegisterOperatorOnStartup(c RegistrationConfig) error {
 		PrivateKey: operatorEcdsaPrivateKey,
 	}, chainid)
 	if err != nil {
-		c.Logger.Fatalf(err.Error())
+		logger.Fatalf(err.Error())
 	}
 
-	pkWallet, err := wallet.NewPrivateKeyWallet(ethRpcClient, signerV2, senderAddr, c.Logger)
+	pkWallet, err := wallet.NewPrivateKeyWallet(ethRpcClient, signerV2, senderAddr, logger)
 	if err != nil {
 		return err
 	}
 
-	txMgr := txmgr.NewSimpleTxManager(pkWallet, ethRpcClient, c.Logger, senderAddr)
+	txMgr := txmgr.NewSimpleTxManager(pkWallet, ethRpcClient, logger, senderAddr)
 
 	err = RegisterOperatorWithEigenlayer(
 		c.OperatorAddr,
 		elcontractsConfig,
 		ethRpcClient,
-		c.Logger,
+		logger,
 		txMgr,
 	)
 	if err != nil {
-		c.Logger.Fatalf("Failed to register operator with EigenLayer on startup: %v", err.Error())
+		logger.Fatalf("Failed to register operator with EigenLayer on startup: %v", err.Error())
 	}
 
 	err = DepositIntoStrategyForOperator(
-		c.Logger,
+		logger,
 		elcontractsConfig,
 		ethRpcClient,
 		c.StrategyAddrs,
@@ -96,22 +96,22 @@ func RegisterOperatorOnStartup(c RegistrationConfig) error {
 		c.AmountToMint,
 	)
 	if err != nil {
-		c.Logger.Fatalf("Failed to deposit into strategy for operator on startup: %v", err.Error())
+		logger.Fatalf("Failed to deposit into strategy for operator on startup: %v", err.Error())
 	}
 
 	blsKeyPassword, ok := os.LookupEnv("OPERATOR_BLS_KEY_PASSWORD")
 	if !ok {
-		c.Logger.Warnf("OPERATOR_BLS_KEY_PASSWORD env var not set. using empty string")
+		logger.Warnf("OPERATOR_BLS_KEY_PASSWORD env var not set. using empty string")
 	}
 	blsKeyPair, err := bls.ReadPrivateKeyFromFile(c.BlsKeyStorePath, blsKeyPassword)
 	if err != nil {
-		c.Logger.Errorf("Cannot parse bls private key", "err", err)
+		logger.Errorf("Cannot parse bls private key", "err", err)
 		return err
 	}
 
 	err = RegisterForOperatorSets(
 		c.OperatorAddr,
-		c.Logger,
+		logger,
 		elcontractsConfig,
 		ethRpcClient,
 		txMgr,
@@ -122,11 +122,11 @@ func RegisterOperatorOnStartup(c RegistrationConfig) error {
 		"",
 	)
 	if err != nil {
-		c.Logger.Fatalf("Failed to register operator for operator sets on startup: %v", err.Error())
+		logger.Fatalf("Failed to register operator for operator sets on startup: %v", err.Error())
 	}
 
 	err = SetAllocationDelay(
-		c.Logger,
+		logger,
 		c.OperatorAddr,
 		ethRpcClient,
 		c.AllocationManagerAddr,
@@ -134,7 +134,7 @@ func RegisterOperatorOnStartup(c RegistrationConfig) error {
 		0,
 	)
 	if err != nil {
-		c.Logger.Fatalf("Failed to set allocation delay: %v", err.Error())
+		logger.Fatalf("Failed to set allocation delay: %v", err.Error())
 	}
 
 	err = modifyAllocations(
@@ -146,10 +146,10 @@ func RegisterOperatorOnStartup(c RegistrationConfig) error {
 		c.EthRpcUrl,
 		txMgr,
 		c.OperatorSetIds,
-		c.Logger,
+		logger,
 	)
 	if err != nil {
-		c.Logger.Fatalf("Failed to set modify allocations: %v", err.Error())
+		logger.Fatalf("Failed to set modify allocations: %v", err.Error())
 	}
 
 	return nil
