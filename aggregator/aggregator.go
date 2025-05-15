@@ -118,6 +118,7 @@ func (agg *Aggregator[Input, Output]) Start(ctx context.Context) error {
 			agg.logger.Info("Received response from blsAggregationService", "blsAggServiceResp", blsAggServiceResp)
 			err := agg.processAggregatedResponse(blsAggServiceResp)
 			if err != nil {
+				agg.logger.Errorf("Failed to process aggregated response: %w", err)
 				continue
 			}
 		case log := <-agg.newTaskCreatedLogs:
