@@ -16,12 +16,39 @@ import (
 
 	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/common"
 	idptaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
+	gotoml "github.com/pelletier/go-toml"
 )
+
+type Config struct {
+	EthHttpUrl            string `toml:"eth_http_url"`
+	TaskSpammerPrivateKey string `toml:"task_spammer_private_key"`
+	TaskManagerAddress    string `toml:"task_manager_address"`
+}
+
+func GetConfigFromPath(path string) (*Config, error) {
+	config := &Config{}
+	tree, err := gotoml.LoadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	err = tree.Unmarshal(config)
+	if err != nil {
+		return nil, err
+	}
+
+	return config, nil
+}
 
 func main() {
 	logger, err := logging.NewZapLogger(logging.Production)
 	if err != nil {
 		println("Failure creating logger")
+		return
+	}
+
+	config, err := GetConfigFromPath("config/task_spammer_config.toml")
+	if err != nil {
+		logger.Errorf("Failed to read config file: %w", err)
 		return
 	}
 
@@ -31,16 +58,15 @@ func main() {
 		return
 	}
 
-	ethHttpUrl := "http://localhost:8545"
-	ethClient, err := ethclient.Dial(ethHttpUrl)
+	ethClient, err := ethclient.Dial(config.EthHttpUrl)
 	if err != nil {
 		logger.Errorf("Failed to dial ethclient: %w", err)
 		return
 	}
 
-	taskManagerAddr := common.HexToAddress("0x7bc06c482dead17c0e297afbc32f6e63d3846650")
+	taskManagerAddr := common.HexToAddress(config.TaskManagerAddress)
 
-	taskSpammerPrivateKey := "4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356"
+	taskSpammerPrivateKey := config.TaskSpammerPrivateKey
 	ecdsaPrivateKey, err := crypto.HexToECDSA(taskSpammerPrivateKey)
 	if err != nil {
 		logger.Errorf("Failed to create ecdsa private key: %w", err)

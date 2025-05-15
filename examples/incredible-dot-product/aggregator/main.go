@@ -16,12 +16,46 @@ import (
 	idptaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
 
 	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/common"
+	gotoml "github.com/pelletier/go-toml"
 )
+
+type Config struct {
+	EthHttpUrl string `toml:"eth_http_url"`
+	EthWsUrl   string `toml:"eth_ws_url"`
+
+	AggregatorPrivateKey   string `toml:"aggregator_private_key"`
+	AggregatorServerIPPort string `toml:"aggregator_server_ip_port"`
+
+	RegistryCoordinatorAddress    string `toml:"registry_coordinator_address"`
+	OperatorStateRetrieverAddress string `toml:"operator_state_retriever_address"`
+	ServiceManagerAddress         string `toml:"service_manager_address"`
+	TaskManagerAddress            string `toml:"task_manager_address"`
+}
+
+func GetConfigFromPath(path string) (*Config, error) {
+	config := &Config{}
+	tree, err := gotoml.LoadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	err = tree.Unmarshal(config)
+	if err != nil {
+		return nil, err
+	}
+
+	return config, nil
+}
 
 func main() {
 	logger, err := logging.NewZapLogger(logging.Production)
 	if err != nil {
 		println("Failure creating logger")
+		return
+	}
+
+	config, err := GetConfigFromPath("config/aggregator_config.toml")
+	if err != nil {
+		logger.Errorf("Failed to read config file: %w", err)
 		return
 	}
 
@@ -31,15 +65,13 @@ func main() {
 		return
 	}
 
-	ethHttpUrl := "http://localhost:8545"
-	ethClient, err := ethclient.Dial(ethHttpUrl)
+	ethClient, err := ethclient.Dial(config.EthHttpUrl)
 	if err != nil {
 		logger.Errorf("Failed to dial ethclient: %w", err)
 		return
 	}
 
-	aggregatorPrivateKey := "2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6"
-	ecdsaPrivateKey, err := crypto.HexToECDSA(aggregatorPrivateKey)
+	ecdsaPrivateKey, err := crypto.HexToECDSA(config.AggregatorPrivateKey)
 	if err != nil {
 		logger.Errorf("Failed to create ecdsa private key: %w", err)
 		return
@@ -56,19 +88,19 @@ func main() {
 		TaskManagerAbi:     taskManagerAbi,
 		TaskResponseHashFn: nil,
 
-		EthHttpUrl:                 ethHttpUrl,
-		EthWsUrl:                   "ws://localhost:8545",
-		AggregatorServerIpPortAddr: "localhost:8090",
+		EthHttpUrl:                 config.EthHttpUrl,
+		EthWsUrl:                   config.EthWsUrl,
+		AggregatorServerIpPortAddr: config.AggregatorServerIPPort,
 
-		RegistryCoordinatorAddress:    gethcommon.HexToAddress("0xfd471836031dc5108809d173a067e8486b9047a3"),
-		OperatorStateRetrieverAddress: gethcommon.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"),
-		ServiceManagerAddress:         gethcommon.HexToAddress("0xcd8a1c3ba11cf5ecfa6267617243239504a98d90"),
+		RegistryCoordinatorAddress:    gethcommon.HexToAddress(config.RegistryCoordinatorAddress),
+		OperatorStateRetrieverAddress: gethcommon.HexToAddress(config.OperatorStateRetrieverAddress),
+		ServiceManagerAddress:         gethcommon.HexToAddress(config.ServiceManagerAddress),
 
 		EthHttpClient:   ethClient,
 		EcdsaPrivateKey: ecdsaPrivateKey,
 	}
 
-	taskManagerAddr := gethcommon.HexToAddress("0x7bc06c482dead17c0e297afbc32f6e63d3846650")
+	taskManagerAddr := gethcommon.HexToAddress(config.TaskManagerAddress)
 	taskResponder, err := taskmanager.NewTaskManagerFromAbi[examplecommon.DotProductInput, *big.Int](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
 	if err != nil {
 		logger.Errorf("Failed to create Task Responder: %w", err)
