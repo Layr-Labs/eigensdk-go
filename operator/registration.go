@@ -28,7 +28,7 @@ import (
 )
 
 func RegisterOperatorOnStartup(c RegistrationConfig, logger logging.Logger) error {
-	ethRpcClient, err := ethclient.Dial(c.EthHttpUrl)
+	ethRpcClient, err := ethclient.Dial(c.EthRpcUrl)
 	if err != nil {
 		logger.Errorf("Cannot create http ethclient", "err", err)
 		return err
@@ -90,7 +90,7 @@ func RegisterOperatorOnStartup(c RegistrationConfig, logger logging.Logger) erro
 		logger,
 		elcontractsConfig,
 		ethRpcClient,
-		c.StrategyAddr,
+		c.StrategyAddrs,
 		txMgr,
 		c.OperatorAddr,
 		c.AmountToMint,
@@ -117,7 +117,7 @@ func RegisterOperatorOnStartup(c RegistrationConfig, logger logging.Logger) erro
 		txMgr,
 		c.RegistryCoordinatorAddr,
 		c.AvsAddress,
-		[]uint32{c.OperatorSetId},
+		c.OperatorSetIds,
 		*blsKeyPair,
 		"",
 	)
@@ -141,11 +141,11 @@ func RegisterOperatorOnStartup(c RegistrationConfig, logger logging.Logger) erro
 		c.OperatorAddr,
 		c.AllocationManagerAddr,
 		c.AvsAddress,
-		[]common.Address{c.StrategyAddr},
-		[]uint64{c.AllocatableMagnitude},
-		c.EthHttpUrl,
+		c.StrategyAddrs,
+		c.AllocatableMagnitudes,
+		c.EthRpcUrl,
 		txMgr,
-		c.OperatorSetId,
+		c.OperatorSetIds,
 		logger,
 	)
 	if err != nil {
@@ -261,7 +261,7 @@ func DepositIntoStrategyForOperator(
 	logger logging.Logger,
 	elcontractsConfig elcontracts.Config,
 	ethClient *ethclient.Client,
-	strategyAddr common.Address,
+	strategyAddrs []common.Address,
 	txMgr txmgr.TxManager,
 	operatorAddr common.Address,
 	amount *big.Int,
@@ -284,39 +284,41 @@ func DepositIntoStrategyForOperator(
 		return err
 	}
 
-	_, tokenAddr, err := elReader.GetStrategyAndUnderlyingToken(context.Background(), strategyAddr)
-	if err != nil {
-		logger.Error("Failed to fetch strategy contract", "err", err)
-		return err
-	}
-	logger.Info(tokenAddr.String())
+	for _, strategyAddr := range strategyAddrs {
+		_, tokenAddr, err := elReader.GetStrategyAndUnderlyingToken(context.Background(), strategyAddr)
+		if err != nil {
+			logger.Error("Failed to fetch strategy contract", "err", err)
+			return err
+		}
+		logger.Info(tokenAddr.String())
 
-	contractErc20Mock, err := erc20mock.NewContractMockERC20(tokenAddr, ethClient)
-	if err != nil {
-		logger.Error("Failed to fetch ERC20Mock contract", "err", err)
-		return err
-	}
-	txOpts, err := txMgr.GetNoSendTxOpts()
-	if err != nil {
-		logger.Errorf("Error in GetNoSendTxOpts")
-		return err
-	}
+		contractErc20Mock, err := erc20mock.NewContractMockERC20(tokenAddr, ethClient)
+		if err != nil {
+			logger.Error("Failed to fetch ERC20Mock contract", "err", err)
+			return err
+		}
+		txOpts, err := txMgr.GetNoSendTxOpts()
+		if err != nil {
+			logger.Errorf("Error in GetNoSendTxOpts")
+			return err
+		}
 
-	tx, err := contractErc20Mock.Mint(txOpts, operatorAddr, amount)
-	if err != nil {
-		logger.Errorf("Error assembling Mint tx")
-		return err
-	}
-	_, err = txMgr.Send(context.Background(), tx, true)
-	if err != nil {
-		logger.Errorf("Error submitting Mint tx")
-		return err
-	}
+		tx, err := contractErc20Mock.Mint(txOpts, operatorAddr, amount)
+		if err != nil {
+			logger.Errorf("Error assembling Mint tx")
+			return err
+		}
+		_, err = txMgr.Send(context.Background(), tx, true)
+		if err != nil {
+			logger.Errorf("Error submitting Mint tx")
+			return err
+		}
 
-	_, err = elWriter.DepositERC20IntoStrategy(context.Background(), strategyAddr, amount, true)
-	if err != nil {
-		logger.Errorf("Error depositing into strategy", "err", err)
-		return err
+		_, err = elWriter.DepositERC20IntoStrategy(context.Background(), strategyAddr, amount, true)
+		if err != nil {
+			logger.Errorf("Error depositing into strategy", "err", err)
+			return err
+		}
 	}
 
 	return nil
@@ -330,7 +332,7 @@ func modifyAllocations(
 	newMagnitudes []uint64,
 	httpUrl string,
 	txMgr txmgr.TxManager,
-	id uint32,
+	operatorSetsIds []uint32,
 	logger logging.Logger,
 ) error {
 	txOpts, _ := txMgr.GetNoSendTxOpts()
@@ -338,14 +340,18 @@ func modifyAllocations(
 	ethRpcClient, _ := ethclient.Dial(httpUrl)
 	waitForReceipt := true
 	allocationManagerContract, _ := allocationmanager.NewContractAllocationManager(allocationManagerAddr, ethRpcClient)
-	operatorSet := allocationmanager.OperatorSet{Avs: avsAddress, Id: id}
-	var allocations []allocationmanager.IAllocationManagerTypesAllocateParams
-	allocations_1 := allocationmanager.IAllocationManagerTypesAllocateParams{
-		OperatorSet:   operatorSet,
-		Strategies:    strategies,
-		NewMagnitudes: newMagnitudes,
+
+	allocations := []allocationmanager.IAllocationManagerTypesAllocateParams{}
+	for _, setId := range operatorSetsIds {
+		operatorSet := allocationmanager.OperatorSet{Avs: avsAddress, Id: setId}
+		newAllocation := allocationmanager.IAllocationManagerTypesAllocateParams{
+			OperatorSet:   operatorSet,
+			Strategies:    strategies,
+			NewMagnitudes: newMagnitudes,
+		}
+		allocations = append(allocations, newAllocation)
 	}
-	allocations = append(allocations, allocations_1)
+
 	tx, err := allocationManagerContract.ModifyAllocations(txOpts, operatorAddr, allocations)
 	if err != nil {
 		return err

@@ -35,19 +35,19 @@ type RegistrationConfig struct {
 	AllocationManagerAddr   common.Address
 	AvsAddress              common.Address
 	RegistryCoordinatorAddr common.Address
-	StrategyAddr            common.Address
+	StrategyAddrs           []common.Address
 
 	DelegationManagerAddress    common.Address
 	RewardsCoordinatorAddress   common.Address
 	PermissionControllerAddress common.Address
 
-	EthHttpUrl string
+	EthRpcUrl string
 
 	EcdsaKeyStorePath string
 	BlsKeyStorePath   string
 
-	AmountToMint         *big.Int
-	AllocatableMagnitude uint64
+	AmountToMint          *big.Int
+	AllocatableMagnitudes []uint64
 
-	OperatorSetId uint32
+	OperatorSetIds []uint32
 }
