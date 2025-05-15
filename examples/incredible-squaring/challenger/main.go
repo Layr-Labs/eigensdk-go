@@ -64,7 +64,7 @@ func main() {
 		ethHttpClient,
 	)
 	if err != nil {
-		logger.Errorf("Failed to create challenger raiser: %v", err)
+		logger.Errorf("Failed to create challenge raiser: %v", err)
 		return
 	}
 

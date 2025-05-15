@@ -11,8 +11,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-func NewAwesomeVaultTaskManager(address common.Address, abi *abi.ABI, txMgr txmgr.TxManager, httpClient bind.ContractBackend) (taskmanager.TaskManager[TaskInput, [32]byte, [][32]byte], error) {
-	return taskmanager.NewTaskManagerFromAbi[TaskInput, [32]byte, [][32]byte](address, abi, txMgr, httpClient)
+func NewAwesomeVaultTaskManager(address common.Address, abi *abi.ABI, txMgr txmgr.TxManager, httpClient bind.ContractBackend) (taskmanager.TaskManager[TaskInput, [32]byte, []TaskInput], error) {
+	return taskmanager.NewTaskManagerFromAbi[TaskInput, [32]byte, []TaskInput](address, abi, txMgr, httpClient)
 }
 
 type TaskInput struct {

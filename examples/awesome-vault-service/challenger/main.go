@@ -7,14 +7,10 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/challenger"
 	challengerprocessor "github.com/Layr-Labs/eigensdk-go/challenger/challenger-processor"
 	"github.com/Layr-Labs/eigensdk-go/logging"
-	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 	gethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-
-	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 
 	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/common"
 	avtaskmanager "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/contracts/bindings/AwesomeVaultTaskManager"
@@ -57,15 +53,15 @@ func main() {
 
 	vaultServiceResponseCalc := examplecommon.NewVaultServiceResponseCalculator()
 
-	challengeRaiser, err := NewChallengeRaiser(taskManagerAddr, ethClient, txMgr, vaultServiceResponseCalc)
+	challengeRaiser, err := examplecommon.NewAwesomeVaultTaskManager(taskManagerAddr, taskManagerAbi, txMgr, ethClient)
 	if err != nil {
-		logger.Errorf("Failed to create challenger raiser: %w", err)
+		logger.Errorf("Failed to create challenge raiser: %v", err)
 		return
 	}
 
-	vaultSetValidation := challengerprocessor.ResponseValidationFunctionFromResponseCalculator(vaultServiceResponseCalc, func(a, b [32]byte) bool { return a == b })
+	vaultSetValidationWithProof := getProofGeneratingVerifier(vaultServiceResponseCalc)
 
-	challengerProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, vaultSetValidation, challengeRaiser)
+	challengerProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, vaultSetValidationWithProof, challengeRaiser)
 	if err != nil {
 		logger.Errorf("Failed to create challenger verifier: %w", err)
 		return
@@ -90,78 +86,22 @@ func main() {
 	}
 }
 
-type ChallengeRaiser struct {
-	taskManager *avtaskmanager.ContractAwesomeVaultTaskManager
-	txMgr       txmgr.TxManager
-	verifier    *examplecommon.VaultServiceResponseCalculator
-}
+func getProofGeneratingVerifier(vaultServiceResponseCalc *examplecommon.VaultServiceResponseCalculator) challengerprocessor.ResponseValidationFunction[examplecommon.TaskInput, [32]byte, []examplecommon.TaskInput] {
+	vaultSetValidation := challengerprocessor.ResponseValidationFunctionFromResponseCalculator(vaultServiceResponseCalc, func(a, b [32]byte) bool { return a == b })
 
-var _ taskmanager.ChallengeRaiser[examplecommon.TaskInput, [32]byte, [][32]byte] = (*ChallengeRaiser)(nil)
-
-func NewChallengeRaiser(address gethcommon.Address, ethClient *ethclient.Client, txMgr txmgr.TxManager, verifier *examplecommon.VaultServiceResponseCalculator) (*ChallengeRaiser, error) {
-	tm, err := avtaskmanager.NewContractAwesomeVaultTaskManager(address, ethClient)
-	if err != nil {
-		return nil, err
-	}
-
-	return &ChallengeRaiser{
-		taskManager: tm,
-		txMgr:       txMgr,
-		verifier:    verifier,
-	}, nil
-}
-
-func (cr *ChallengeRaiser) RaiseChallenge(task taskmanager.Task[examplecommon.TaskInput], taskResponse taskmanager.TaskResponse[[32]byte], taskResponseMetadata sdktypes.TaskResponseMetadata, nonSigningOperatorPubKeys []sdktypes.BN254G1Point) error {
-	txOpts, err := cr.txMgr.GetNoSendTxOpts()
-	if err != nil {
-		return utils.WrapError("Error getting tx opts", err)
-	}
-	taskInput := avtaskmanager.IAwesomeVaultTaskManagerTaskInput{
-		Key:   task.InputValue.Key,
-		Value: task.InputValue.Value,
-	}
-	contractTask := avtaskmanager.IAwesomeVaultTaskManagerTask{
-		Input:                     taskInput,
-		TaskCreatedBlock:          task.TaskCreatedBlock,
-		QuorumNumbers:             task.QuorumNumbers,
-		QuorumThresholdPercentage: task.QuorumThresholdPercentage,
-	}
-	contractTaskResponse := avtaskmanager.IAwesomeVaultTaskManagerTaskResponse{
-		ReferenceTaskIndex: taskResponse.ReferenceTaskIndex,
-		Result:             taskResponse.OutputValue,
-	}
-	contractTaskResponseMetadata := avtaskmanager.IAwesomeVaultTaskManagerTaskResponseMetadata{
-		TaskRespondedBlock: taskResponseMetadata.TaskRespondedBlock,
-		HashOfNonSigners:   taskResponseMetadata.HashOfNonSigners,
-	}
-	contractNonSigningOperatorPubKeys := make([]avtaskmanager.BN254G1Point, len(nonSigningOperatorPubKeys))
-	for i, pubKey := range nonSigningOperatorPubKeys {
-		contractNonSigningOperatorPubKeys[i] = avtaskmanager.BN254G1Point{
-			X: pubKey.X,
-			Y: pubKey.Y,
+	return func(taskIndex uint32, input examplecommon.TaskInput, output [32]byte) (bool, []examplecommon.TaskInput, error) {
+		var proof []examplecommon.TaskInput
+		shouldRaise, _, err := vaultSetValidation(taskIndex, input, output)
+		if err != nil {
+			return shouldRaise, proof, err
 		}
-	}
-	oldLeaves, err := cr.verifier.GetPreviousState(task.InputValue)
-	if err != nil {
-		return utils.WrapError("Error getting previous state", err)
-	}
-	contractOldLeaves := make([]avtaskmanager.IAwesomeVaultTaskManagerTaskInput, len(oldLeaves))
-	for i, leaf := range oldLeaves {
-		contractOldLeaves[i] = avtaskmanager.IAwesomeVaultTaskManagerTaskInput{
-			Key:   leaf.Key,
-			Value: leaf.Value,
+		if shouldRaise {
+			oldLeaves, err := vaultServiceResponseCalc.GetPreviousState(input)
+			if err != nil {
+				return false, nil, utils.WrapError("Error getting previous state", err)
+			}
+			proof = oldLeaves
 		}
+		return shouldRaise, proof, nil
 	}
-	tx, err := cr.taskManager.RaiseAndResolveChallenge(txOpts, contractTask, contractTaskResponse, contractTaskResponseMetadata, contractNonSigningOperatorPubKeys, contractOldLeaves)
-	if err != nil {
-		return utils.WrapError("Error raising challenge", err)
-	}
-	receipt, err := cr.txMgr.Send(context.Background(), tx, true)
-	if err != nil {
-		return utils.WrapError("Error submitting RaiseChallenge tx", err)
-	}
-	if receipt.Status != types.ReceiptStatusSuccessful {
-		return utils.WrapError("RaiseChallenge tx reverted", nil)
-	}
-	return nil
 }
