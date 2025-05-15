@@ -13,36 +13,40 @@ import (
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
 )
 
-var _ TaskManager[any, any] = (*taskManagerContractWrapper[any, any])(nil)
+var _ TaskManager[any, any, any] = (*taskManagerContractWrapper[any, any, any])(nil)
 
-type taskManagerContractWrapper[Input any, Output any] struct {
+type taskManagerContractWrapper[Input any, Output any, Proof any] struct {
 	taskManagerAbi  *abi.ABI
-	contract        taskManagerAbiContract[Input, Output]
+	contract        taskManagerAbiContract[Input, Output, Proof]
 	txMgr           txmgr.TxManager
 	hashFunction    sdktypes.TaskResponseHashFunction
 	inputFieldName  string
 	outputFieldName string
 }
 
-type taskManagerAbiContract[Input any, Output any] struct {
+type taskManagerAbiContract[Input any, Output any, Proof any] struct {
 	contract *bind.BoundContract
 }
 
-func (tm taskManagerAbiContract[Input, Output]) RaiseChallenge(opts *bind.TransactOpts, task any, taskResponse any, taskResponseMetadata any, nonSigningOperatorPubKeys any) (*gethtypes.Transaction, error) {
-	return tm.contract.Transact(opts, "raiseAndResolveChallenge", task, taskResponse, taskResponseMetadata, nonSigningOperatorPubKeys)
+func (tm taskManagerAbiContract[Input, Output, Proof]) RaiseChallenge(opts *bind.TransactOpts, task any, taskResponse any, taskResponseMetadata any, nonSigningOperatorPubKeys any, proof any) (*gethtypes.Transaction, error) {
+	if proof == nil {
+		return tm.contract.Transact(opts, "raiseAndResolveChallenge", task, taskResponse, taskResponseMetadata, nonSigningOperatorPubKeys)
+	} else {
+		return tm.contract.Transact(opts, "raiseAndResolveChallenge", task, taskResponse, taskResponseMetadata, nonSigningOperatorPubKeys, proof)
+	}
 }
 
-func (tm taskManagerAbiContract[Input, Output]) RespondToTask(opts *bind.TransactOpts, task any, taskResponse any, nonSignerStakesAndSignature any) (*gethtypes.Transaction, error) {
+func (tm taskManagerAbiContract[Input, Output, Proof]) RespondToTask(opts *bind.TransactOpts, task any, taskResponse any, nonSignerStakesAndSignature any) (*gethtypes.Transaction, error) {
 	return tm.contract.Transact(opts, "respondToTask", task, taskResponse, nonSignerStakesAndSignature)
 }
 
-func (tm taskManagerAbiContract[Input, Output]) CreateNewTask(opts *bind.TransactOpts, input Input, quorumThresholdPercentage uint32, quorumNumbers []byte) (*gethtypes.Transaction, error) {
+func (tm taskManagerAbiContract[Input, Output, Proof]) CreateNewTask(opts *bind.TransactOpts, input Input, quorumThresholdPercentage uint32, quorumNumbers []byte) (*gethtypes.Transaction, error) {
 	return tm.contract.Transact(opts, "createNewTask", input, quorumThresholdPercentage, quorumNumbers)
 }
 
 // Creates a taskManager wrapper from an address and ABI.
 // Returns an error in case the ABI is not compatible.
-func NewTaskManagerFromAbi[Input any, Output any](address common.Address, abi *abi.ABI, txMgr txmgr.TxManager, httpClient bind.ContractBackend) (TaskManager[Input, Output], error) {
+func NewTaskManagerFromAbi[Input any, Output any, Proof any](address common.Address, abi *abi.ABI, txMgr txmgr.TxManager, httpClient bind.ContractBackend) (TaskManager[Input, Output, Proof], error) {
 	boundContract := bind.NewBoundContract(address, *abi, httpClient, httpClient, httpClient)
 
 	abiType, err := internalutils.ExtractTypeFromAbi(abi)
@@ -55,15 +59,16 @@ func NewTaskManagerFromAbi[Input any, Output any](address common.Address, abi *a
 	outputFieldName := internalutils.CapitalizeFieldName(abi.Methods["respondToTask"].Inputs[1].Type.TupleRawNames[1])
 
 	// TODO: check if the ABI is compatible
-	contract := taskManagerAbiContract[Input, Output]{boundContract}
-	return &taskManagerContractWrapper[Input, Output]{abi, contract, txMgr, hashFn, inputFieldName, outputFieldName}, nil
+	contract := taskManagerAbiContract[Input, Output, Proof]{boundContract}
+	return &taskManagerContractWrapper[Input, Output, Proof]{abi, contract, txMgr, hashFn, inputFieldName, outputFieldName}, nil
 }
 
-func (senderWrapper *taskManagerContractWrapper[Input, Output]) RaiseChallenge(
+func (senderWrapper *taskManagerContractWrapper[Input, Output, Proof]) RaiseChallenge(
 	task Task[Input],
 	taskResponse TaskResponse[Output],
-	TaskResponseMetadata sdktypes.TaskResponseMetadata,
-	NonSigningOperatorPubKeys []sdktypes.BN254G1Point,
+	taskResponseMetadata sdktypes.TaskResponseMetadata,
+	nonSigningOperatorPubKeys []sdktypes.BN254G1Point,
+	proof Proof,
 ) error {
 	txOpts, err := senderWrapper.txMgr.GetNoSendTxOpts()
 	if err != nil {
@@ -73,7 +78,7 @@ func (senderWrapper *taskManagerContractWrapper[Input, Output]) RaiseChallenge(
 	newTaskStruct := internalutils.CopyStructAndChangeFieldName(task, "InputValue", senderWrapper.inputFieldName)
 	newTaskResponseStruct := internalutils.CopyStructAndChangeFieldName(taskResponse, "OutputValue", senderWrapper.outputFieldName)
 
-	tx, err := senderWrapper.contract.RaiseChallenge(txOpts, newTaskStruct, newTaskResponseStruct, TaskResponseMetadata, NonSigningOperatorPubKeys)
+	tx, err := senderWrapper.contract.RaiseChallenge(txOpts, newTaskStruct, newTaskResponseStruct, taskResponseMetadata, nonSigningOperatorPubKeys, proof)
 	if err != nil {
 		return utils.WrapError("Error assembling RaiseChallenge tx", err)
 	}
@@ -89,7 +94,7 @@ func (senderWrapper *taskManagerContractWrapper[Input, Output]) RaiseChallenge(
 	return nil
 }
 
-func (senderWrapper *taskManagerContractWrapper[Input, Output]) CreateNewTask(ctx context.Context, input Input, quorumThresholdPercentage uint32, quorumNumbers []uint8) error {
+func (senderWrapper *taskManagerContractWrapper[Input, Output, Proof]) CreateNewTask(ctx context.Context, input Input, quorumThresholdPercentage uint32, quorumNumbers []uint8) error {
 	txOpts, err := senderWrapper.txMgr.GetNoSendTxOpts()
 	if err != nil {
 		return utils.WrapError("Error getting tx opts", err)
@@ -110,7 +115,7 @@ func (senderWrapper *taskManagerContractWrapper[Input, Output]) CreateNewTask(ct
 	return nil
 }
 
-func (senderWrapper *taskManagerContractWrapper[Input, Output]) RespondToTask(
+func (senderWrapper *taskManagerContractWrapper[Input, Output, Proof]) RespondToTask(
 	task Task[Input],
 	taskResponse TaskResponse[Output],
 	nonSignersStakesAndSig sdktypes.NonSignerStakesAndSignature,
@@ -139,6 +144,6 @@ func (senderWrapper *taskManagerContractWrapper[Input, Output]) RespondToTask(
 	return nil
 }
 
-func (tr taskManagerContractWrapper[Input, Output]) HashTaskResponse(taskResponse TaskResponse[Output]) (sdktypes.Bytes32, error) {
+func (tr taskManagerContractWrapper[Input, Output, Proof]) HashTaskResponse(taskResponse TaskResponse[Output]) (sdktypes.Bytes32, error) {
 	return tr.hashFunction(taskResponse)
 }

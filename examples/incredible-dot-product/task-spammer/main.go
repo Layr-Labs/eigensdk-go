@@ -53,7 +53,7 @@ func main() {
 		return
 	}
 
-	taskCreator, err := taskmanager.NewTaskManagerFromAbi[examplecommon.DotProductInput, *big.Int](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
+	taskCreator, err := taskmanager.NewTaskManagerFromAbi[examplecommon.DotProductInput, *big.Int, any](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
 	if err != nil {
 		logger.Errorf("Failed to create Task Creator: %w", err)
 		return

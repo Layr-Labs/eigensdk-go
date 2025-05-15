@@ -6,12 +6,12 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/types"
 )
 
-type TaskManager[Input any, Output any] interface {
+type TaskManager[Input any, Output any, Proof any] interface {
 	TaskCreator[Input]
 
 	TaskResponder[Input, Output]
 
-	ChallengeRaiser[Input, Output]
+	ChallengeRaiser[Input, Output, Proof]
 }
 
 // Interface for creating new tasks.
@@ -38,8 +38,8 @@ type TaskResponder[Input any, Output any] interface {
 // Interface for raising challenges for responded tasks.
 //
 // Interface is generic over the task input and output types.
-type ChallengeRaiser[Input any, Output any] interface {
+type ChallengeRaiser[Input any, Output any, Proof any] interface {
 	// Raises a challenge for a responded task.
 	// Implementations usually sends the challenge to the on chain task manager contract.
-	RaiseChallenge(task Task[Input], taskResponse TaskResponse[Output], taskResponseMetadata types.TaskResponseMetadata, nonSigningOperatorPubKeys []types.BN254G1Point) error
+	RaiseChallenge(task Task[Input], taskResponse TaskResponse[Output], taskResponseMetadata types.TaskResponseMetadata, nonSigningOperatorPubKeys []types.BN254G1Point, proof Proof) error
 }

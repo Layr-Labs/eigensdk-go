@@ -3,8 +3,17 @@ package examplecommon
 import (
 	"slices"
 
+	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
+	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
+
+func NewAwesomeVaultTaskManager(address common.Address, abi *abi.ABI, txMgr txmgr.TxManager, httpClient bind.ContractBackend) (taskmanager.TaskManager[TaskInput, [32]byte, [][32]byte], error) {
+	return taskmanager.NewTaskManagerFromAbi[TaskInput, [32]byte, [][32]byte](address, abi, txMgr, httpClient)
+}
 
 type TaskInput struct {
 	Key   string

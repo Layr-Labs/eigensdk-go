@@ -96,7 +96,7 @@ type ChallengeRaiser struct {
 	verifier    *examplecommon.VaultServiceResponseCalculator
 }
 
-var _ taskmanager.ChallengeRaiser[examplecommon.TaskInput, [32]byte] = (*ChallengeRaiser)(nil)
+var _ taskmanager.ChallengeRaiser[examplecommon.TaskInput, [32]byte, [][32]byte] = (*ChallengeRaiser)(nil)
 
 func NewChallengeRaiser(address gethcommon.Address, ethClient *ethclient.Client, txMgr txmgr.TxManager, verifier *examplecommon.VaultServiceResponseCalculator) (*ChallengeRaiser, error) {
 	tm, err := avtaskmanager.NewContractAwesomeVaultTaskManager(address, ethClient)

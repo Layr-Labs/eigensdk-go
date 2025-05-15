@@ -62,7 +62,7 @@ func main() {
 
 	taskManagerAddr := common.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3")
 
-	taskResponder, err := taskmanager.NewTaskManagerFromAbi[*big.Int, *big.Int](
+	taskResponder, err := taskmanager.NewTaskManagerFromAbi[*big.Int, *big.Int, any](
 		taskManagerAddr,
 		taskManagerAbi,
 		txMgr,
