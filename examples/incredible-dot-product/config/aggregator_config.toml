@@ -1,4 +1,3 @@
-
 task_manager_address = "0x7bc06c482dead17c0e297afbc32f6e63d3846650"
 
 eth_http_url = "http://localhost:8545"

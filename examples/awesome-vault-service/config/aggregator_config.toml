@@ -1,10 +1,10 @@
+task_manager_address = "0x7bc06c482dead17c0e297afbc32f6e63d3846650"
+
 eth_http_url = "http://localhost:8545"
 eth_ws_url = "ws://localhost:8545"
 
-aggregator_private_key = "2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6"
 aggregator_server_ip_port = "localhost:8090"
 
 registry_coordinator_address = "0xfd471836031dc5108809d173a067e8486b9047a3"
 operator_state_retriever_address = "0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"
 service_manager_address = "0xcd8a1c3ba11cf5ecfa6267617243239504a98d90"
-task_manager_address = "0x7bc06c482dead17c0e297afbc32f6e63d3846650"

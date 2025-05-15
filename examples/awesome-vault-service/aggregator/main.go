@@ -20,16 +20,9 @@ import (
 )
 
 type Config struct {
-	EthHttpUrl string `toml:"eth_http_url"`
-	EthWsUrl   string `toml:"eth_ws_url"`
+	aggregator.Config
 
-	AggregatorPrivateKey   string `toml:"aggregator_private_key"`
-	AggregatorServerIPPort string `toml:"aggregator_server_ip_port"`
-
-	RegistryCoordinatorAddress    string `toml:"registry_coordinator_address"`
-	OperatorStateRetrieverAddress string `toml:"operator_state_retriever_address"`
-	ServiceManagerAddress         string `toml:"service_manager_address"`
-	TaskManagerAddress            string `toml:"task_manager_address"`
+	TaskManagerAddress string `toml:"task_manager_address"`
 }
 
 func GetConfigFromPath(path string) (*Config, error) {
@@ -71,7 +64,11 @@ func main() {
 		return
 	}
 
-	ecdsaPrivateKey, err := crypto.HexToECDSA(config.AggregatorPrivateKey)
+	// Depends on the aggregatorPrivateKey passed to TaskManager.initialize
+	// To change it, modify aggregator_addr in
+	// examples/awesome-vault-service/contracts/config/avs/incredible_dot_product_config.json
+	aggregatorPrivateKey := "2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6"
+	ecdsaPrivateKey, err := crypto.HexToECDSA(aggregatorPrivateKey)
 	if err != nil {
 		logger.Errorf("Failed to create ecdsa private key: %w", err)
 		return
@@ -86,11 +83,11 @@ func main() {
 	aggConfig := aggregator.Config{
 		EthHttpUrl:                 config.EthHttpUrl,
 		EthWsUrl:                   config.EthWsUrl,
-		AggregatorServerIpPortAddr: config.AggregatorServerIPPort,
+		AggregatorServerIpPortAddr: config.AggregatorServerIpPortAddr,
 
-		RegistryCoordinatorAddress:    gethcommon.HexToAddress(config.RegistryCoordinatorAddress),
-		OperatorStateRetrieverAddress: gethcommon.HexToAddress(config.OperatorStateRetrieverAddress),
-		ServiceManagerAddress:         gethcommon.HexToAddress(config.ServiceManagerAddress),
+		RegistryCoordinatorAddress:    config.RegistryCoordinatorAddress,
+		OperatorStateRetrieverAddress: config.OperatorStateRetrieverAddress,
+		ServiceManagerAddress:         config.ServiceManagerAddress,
 
 		EcdsaPrivateKey: ecdsaPrivateKey,
 	}
