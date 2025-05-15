@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"os"
 
 	"github.com/Layr-Labs/eigensdk-go/aggregator"
 	taskprocessor "github.com/Layr-Labs/eigensdk-go/aggregator/task-processor"
@@ -16,7 +17,7 @@ import (
 
 	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/common"
 
-	"github.com/pelletier/go-toml"
+	"github.com/pelletier/go-toml/v2"
 )
 
 type Config struct {
@@ -26,12 +27,13 @@ type Config struct {
 }
 
 func GetConfigFromPath(path string) (*Config, error) {
-	config := &Config{}
-	tree, err := toml.LoadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	err = tree.Unmarshal(config)
+
+	config := &Config{}
+	err = toml.Unmarshal(data, config)
 	return config, err
 }
 

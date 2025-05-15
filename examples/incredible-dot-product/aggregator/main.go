@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"math/big"
+	"os"
 
 	"github.com/Layr-Labs/eigensdk-go/aggregator"
 	taskprocessor "github.com/Layr-Labs/eigensdk-go/aggregator/task-processor"
@@ -16,7 +17,7 @@ import (
 	idptaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
 
 	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/common"
-	"github.com/pelletier/go-toml"
+	"github.com/pelletier/go-toml/v2"
 )
 
 type Config struct {
@@ -26,12 +27,13 @@ type Config struct {
 }
 
 func GetConfigFromPath(path string) (*Config, error) {
-	config := &Config{}
-	tree, err := toml.LoadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	err = tree.Unmarshal(config)
+
+	config := &Config{}
+	err = toml.Unmarshal(data, config)
 	return config, err
 }
 
