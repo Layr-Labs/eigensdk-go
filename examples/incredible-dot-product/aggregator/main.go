@@ -20,9 +20,9 @@ import (
 )
 
 type Config struct {
-	SdkConfig aggregator.Config `toml:"sdk"`
+	aggregator.Config
 
-	TaskManagerAddress     string `toml:"task_manager_address"`
+	TaskManagerAddress string `toml:"task_manager_address"`
 }
 
 func GetConfigFromPath(path string) (*Config, error) {
@@ -58,7 +58,7 @@ func main() {
 		return
 	}
 
-	ethClient, err := ethclient.Dial(config.SdkConfig.EthHttpUrl)
+	ethClient, err := ethclient.Dial(config.EthHttpUrl)
 	if err != nil {
 		logger.Errorf("Failed to dial ethclient: %w", err)
 		return
@@ -81,13 +81,13 @@ func main() {
 	}
 
 	aggConfig := aggregator.Config{
-		EthHttpUrl:                 config.SdkConfig.EthHttpUrl,
-		EthWsUrl:                   config.SdkConfig.EthWsUrl,
-		AggregatorServerIpPortAddr: config.SdkConfig.AggregatorServerIpPortAddr,
+		EthHttpUrl:                 config.EthHttpUrl,
+		EthWsUrl:                   config.EthWsUrl,
+		AggregatorServerIpPortAddr: config.AggregatorServerIpPortAddr,
 
-		RegistryCoordinatorAddress:    config.SdkConfig.RegistryCoordinatorAddress,
-		OperatorStateRetrieverAddress: config.SdkConfig.OperatorStateRetrieverAddress,
-		ServiceManagerAddress:         config.SdkConfig.ServiceManagerAddress,
+		RegistryCoordinatorAddress:    config.RegistryCoordinatorAddress,
+		OperatorStateRetrieverAddress: config.OperatorStateRetrieverAddress,
+		ServiceManagerAddress:         config.ServiceManagerAddress,
 
 		EcdsaPrivateKey: ecdsaPrivateKey,
 	}
