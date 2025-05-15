@@ -16,39 +16,12 @@ import (
 
 	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/common"
 	idptaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
-	"github.com/pelletier/go-toml"
 )
-
-type Config struct {
-	EthHttpUrl            string `toml:"eth_http_url"`
-	TaskSpammerPrivateKey string `toml:"task_spammer_private_key"`
-	TaskManagerAddress    string `toml:"task_manager_address"`
-}
-
-func GetConfigFromPath(path string) (*Config, error) {
-	config := &Config{}
-	tree, err := toml.LoadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	err = tree.Unmarshal(config)
-	if err != nil {
-		return nil, err
-	}
-
-	return config, nil
-}
 
 func main() {
 	logger, err := logging.NewZapLogger(logging.Production)
 	if err != nil {
 		println("Failure creating logger")
-		return
-	}
-
-	config, err := GetConfigFromPath("config/task_spammer_config.toml")
-	if err != nil {
-		logger.Errorf("Failed to read config file: %w", err)
 		return
 	}
 
@@ -58,33 +31,31 @@ func main() {
 		return
 	}
 
-	ethClient, err := ethclient.Dial(config.EthHttpUrl)
+	ethHttpUrl := "http://localhost:8545"
+	ethClient, err := ethclient.Dial(ethHttpUrl)
 	if err != nil {
 		logger.Errorf("Failed to dial ethclient: %w", err)
 		return
 	}
 
-	taskManagerAddr := common.HexToAddress(config.TaskManagerAddress)
+	taskManagerAddr := common.HexToAddress("0x7bc06c482dead17c0e297afbc32f6e63d3846650")
 
-	taskSpammerPrivateKey := config.TaskSpammerPrivateKey
+	taskSpammerPrivateKey := "4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356"
 	ecdsaPrivateKey, err := crypto.HexToECDSA(taskSpammerPrivateKey)
 	if err != nil {
 		logger.Errorf("Failed to create ecdsa private key: %w", err)
 		return
 	}
-
 	txMgr, err := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethClient, ecdsaPrivateKey)
 	if err != nil {
 		logger.Errorf("Failed to create tx manager from private key: %w", err)
 		return
 	}
-
 	taskCreator, err := taskmanager.NewTaskManagerFromAbi[examplecommon.DotProductInput, *big.Int](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
 	if err != nil {
 		logger.Errorf("Failed to create Task Creator: %w", err)
 		return
 	}
-
 	taskSpammerConfig := taskspammer.Config{
 		Logger:                    logger,
 		TimeBetweenTasks:          10 * time.Second,
@@ -96,9 +67,7 @@ func main() {
 		logger.Errorf("Failed to create Task Spammer: %w", err)
 		return
 	}
-
 	seq := LinearRangeSequence()
-
 	err = taskSpammer.Start(context.Background(), seq)
 	if err != nil {
 		logger.Errorf("Failure while running Task Spammer: %w", err)

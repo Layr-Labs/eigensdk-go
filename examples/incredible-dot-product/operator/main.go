@@ -10,63 +10,12 @@ import (
 
 	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/common"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
-	"github.com/pelletier/go-toml"
 )
-
-type Config struct {
-	EthHttpUrl string `toml:"eth_http_url"`
-	EthWsUrl   string `toml:"eth_ws_url"`
-
-	OperatorAddress        string `toml:"operator_address"`
-	AggregatorServerIPPort string `toml:"aggregator_server_ip_port"`
-
-	BlsKeyPath string `toml:"bls_key_path"`
-
-	RegistryCoordinatorAddress    string `toml:"registry_coordinator_address"`
-	OperatorStateRetrieverAddress string `toml:"operator_state_retriever_address"`
-	ServiceManagerAddress         string `toml:"service_manager_address"`
-
-	Registration struct {
-		RegisterOnStartup        bool   `toml:"register_on_startup"`
-		AllocationManagerAddress string `toml:"allocation_manager_address"`
-		StrategyAddress          string `toml:"strategy_address"`
-
-		DelegationManagerAddress    string `toml:"delegation_manager_address"`
-		RewardsCoordinatorAddress   string `toml:"rewards_coordinator_address"`
-		PermissionControllerAddress string `toml:"permission_controller_address"`
-
-		EcdsaKeyPath string `toml:"ecdsa_key_path"`
-
-		AmountToMint          string   `toml:"amount_to_mint"`
-		AllocatableMagnitudes []uint64 `toml:"allocatable_magnitudes"`
-		OperatorSetIds        []uint32 `toml:"operator_set_ids"`
-	} `toml:"registration"`
-}
-
-func GetConfigFromPath(path string) (*Config, error) {
-	config := &Config{}
-	tree, err := toml.LoadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	err = tree.Unmarshal(config)
-	if err != nil {
-		return nil, err
-	}
-
-	return config, nil
-}
 
 func main() {
 	logger, err := logging.NewZapLogger(logging.Production)
 	if err != nil {
 		println("Failure creating logger")
-		return
-	}
-
-	config, err := GetConfigFromPath("config/operator_config.toml")
-	if err != nil {
-		logger.Errorf("Failed to read config file: %w", err)
 		return
 	}
 
@@ -76,64 +25,65 @@ func main() {
 		return
 	}
 
+	ethHttpUrl := "http://localhost:8545"
+
+	operatorAddr := "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+
 	amount := new(big.Int)
-	amount.SetString(config.Registration.AmountToMint, 10)
+	amount.SetString("1000000000000000000000", 10)
 	registrationConfig := operator.RegistrationConfig{
 		RegisterOnStartup: true,
 
-		OperatorAddr:            common.HexToAddress(config.OperatorAddress),
-		AllocationManagerAddr:   common.HexToAddress(config.Registration.AllocationManagerAddress),
-		AvsAddress:              common.HexToAddress(config.ServiceManagerAddress),
-		RegistryCoordinatorAddr: common.HexToAddress(config.RegistryCoordinatorAddress),
-		StrategyAddrs:           []common.Address{common.HexToAddress(config.Registration.StrategyAddress)},
+		OperatorAddr:            common.HexToAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"),
+		AllocationManagerAddr:   common.HexToAddress("0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6"),
+		AvsAddress:              common.HexToAddress("0xcd8a1c3ba11cf5ecfa6267617243239504a98d90"),
+		RegistryCoordinatorAddr: common.HexToAddress("0xfd471836031dc5108809d173a067e8486b9047a3"),
+		StrategyAddrs:           []common.Address{common.HexToAddress("0x2b961e3959b79326a8e7f64ef0d2d825707669b5")},
 
-		DelegationManagerAddress:    common.HexToAddress(config.Registration.DelegationManagerAddress),
-		RewardsCoordinatorAddress:   common.HexToAddress(config.Registration.RewardsCoordinatorAddress),
-		PermissionControllerAddress: common.HexToAddress(config.Registration.PermissionControllerAddress),
+		DelegationManagerAddress:    common.HexToAddress("0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0"),
+		RewardsCoordinatorAddress:   common.HexToAddress("0xa51c1fc2f0d1a1b8494ed1fe312d7c3a78ed91c0"),
+		PermissionControllerAddress: common.HexToAddress("0x59b670e9fa9d0a427751af201d676719a970857b"),
 
-		EthRpcUrl: config.EthHttpUrl,
+		EthRpcUrl: "http://localhost:8545",
 
-		EcdsaKeyStorePath: config.Registration.EcdsaKeyPath,
-		BlsKeyStorePath:   config.BlsKeyPath,
+		EcdsaKeyStorePath: "keys/test.ecdsa.key.json",
+		BlsKeyStorePath:   "keys/test.bls.key.json",
 
 		AmountToMint:          amount,
-		AllocatableMagnitudes: config.Registration.AllocatableMagnitudes,
+		AllocatableMagnitudes: []uint64{1000000000000000},
 
-		OperatorSetIds: config.Registration.OperatorSetIds,
+		OperatorSetIds: []uint32{0},
 	}
 
 	operatorConfig := operator.Config{
 		Logger:         logger,
 		TaskManagerAbi: taskManagerAbi,
 
-		OperatorAddress: config.OperatorAddress,
+		OperatorAddress: operatorAddr,
 
-		AVSRegistryCoordinatorAddress: config.RegistryCoordinatorAddress,
-		OperatorStateRetrieverAddress: config.OperatorStateRetrieverAddress,
-		ServiceManagerAddress:         config.ServiceManagerAddress,
+		AVSRegistryCoordinatorAddress: "0xfd471836031dc5108809d173a067e8486b9047a3",
+		OperatorStateRetrieverAddress: "0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154",
+		ServiceManagerAddress:         "0xcd8a1c3ba11cf5ecfa6267617243239504a98d90",
 
-		EthWsUrl:                      config.EthWsUrl,
-		EthRpcUrl:                     config.EthHttpUrl,
-		AggregatorServerIpPortAddress: config.AggregatorServerIPPort,
+		EthWsUrl:                      "ws://localhost:8545",
+		EthRpcUrl:                     ethHttpUrl,
+		AggregatorServerIpPortAddress: "localhost:8090",
 
-		BlsPrivateKeyStorePath: config.BlsKeyPath,
+		BlsPrivateKeyStorePath: "keys/test.bls.key.json",
 
 		RegistrationCfg: registrationConfig,
 	}
 
 	responseCalculator := operator.NewFunctionResponseCalculator(examplecommon.DotProduct)
-
 	possibleFailureCalculator, err := operator.NewFailingResponseCalculator(responseCalculator, 50, big.NewInt(31234213443))
 	if err != nil {
 		logger.Fatalf("Failed to create the possible failure function: %v", err.Error())
 	}
-
 	// Setting the TaskResponseHashFn parameter in nil because I'm using the abi default encoding function
 	operator, err := operator.NewOperatorFromConfig(operatorConfig, possibleFailureCalculator, nil)
 	if err != nil {
 		logger.Fatalf("Failed to create operator: %w", err)
 	}
-
 	err = operator.Start(context.Background())
 	if err != nil {
 		logger.Fatalf("Failure while running operator: %w", err)
