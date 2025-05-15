@@ -261,7 +261,7 @@ func DepositIntoStrategyForOperator(
 	logger logging.Logger,
 	elcontractsConfig elcontracts.Config,
 	ethClient *ethclient.Client,
-	strategyAddr common.Address,
+	strategyAddrs []common.Address,
 	txMgr txmgr.TxManager,
 	operatorAddr common.Address,
 	amount *big.Int,
@@ -284,39 +284,41 @@ func DepositIntoStrategyForOperator(
 		return err
 	}
 
-	_, tokenAddr, err := elReader.GetStrategyAndUnderlyingToken(context.Background(), strategyAddr)
-	if err != nil {
-		logger.Error("Failed to fetch strategy contract", "err", err)
-		return err
-	}
-	logger.Info(tokenAddr.String())
+	for _, strategyAddr := range strategyAddrs {
+		_, tokenAddr, err := elReader.GetStrategyAndUnderlyingToken(context.Background(), strategyAddr)
+		if err != nil {
+			logger.Error("Failed to fetch strategy contract", "err", err)
+			return err
+		}
+		logger.Info(tokenAddr.String())
 
-	contractErc20Mock, err := erc20mock.NewContractMockERC20(tokenAddr, ethClient)
-	if err != nil {
-		logger.Error("Failed to fetch ERC20Mock contract", "err", err)
-		return err
-	}
-	txOpts, err := txMgr.GetNoSendTxOpts()
-	if err != nil {
-		logger.Errorf("Error in GetNoSendTxOpts")
-		return err
-	}
+		contractErc20Mock, err := erc20mock.NewContractMockERC20(tokenAddr, ethClient)
+		if err != nil {
+			logger.Error("Failed to fetch ERC20Mock contract", "err", err)
+			return err
+		}
+		txOpts, err := txMgr.GetNoSendTxOpts()
+		if err != nil {
+			logger.Errorf("Error in GetNoSendTxOpts")
+			return err
+		}
 
-	tx, err := contractErc20Mock.Mint(txOpts, operatorAddr, amount)
-	if err != nil {
-		logger.Errorf("Error assembling Mint tx")
-		return err
-	}
-	_, err = txMgr.Send(context.Background(), tx, true)
-	if err != nil {
-		logger.Errorf("Error submitting Mint tx")
-		return err
-	}
+		tx, err := contractErc20Mock.Mint(txOpts, operatorAddr, amount)
+		if err != nil {
+			logger.Errorf("Error assembling Mint tx")
+			return err
+		}
+		_, err = txMgr.Send(context.Background(), tx, true)
+		if err != nil {
+			logger.Errorf("Error submitting Mint tx")
+			return err
+		}
 
-	_, err = elWriter.DepositERC20IntoStrategy(context.Background(), strategyAddr, amount, true)
-	if err != nil {
-		logger.Errorf("Error depositing into strategy", "err", err)
-		return err
+		_, err = elWriter.DepositERC20IntoStrategy(context.Background(), strategyAddr, amount, true)
+		if err != nil {
+			logger.Errorf("Error depositing into strategy", "err", err)
+			return err
+		}
 	}
 
 	return nil
