@@ -117,7 +117,7 @@ func RegisterOperatorOnStartup(c RegistrationConfig) error {
 		txMgr,
 		c.RegistryCoordinatorAddr,
 		c.AvsAddress,
-		[]uint32{c.OperatorSetId},
+		c.OperatorSetIds,
 		*blsKeyPair,
 		"",
 	)
@@ -145,7 +145,7 @@ func RegisterOperatorOnStartup(c RegistrationConfig) error {
 		[]uint64{c.AllocatableMagnitude},
 		c.EthHttpUrl,
 		txMgr,
-		c.OperatorSetId,
+		c.OperatorSetIds,
 		c.Logger,
 	)
 	if err != nil {

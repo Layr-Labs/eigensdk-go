@@ -49,5 +49,5 @@ type RegistrationConfig struct {
 	AmountToMint         *big.Int
 	AllocatableMagnitude uint64
 
-	OperatorSetId uint32
+	OperatorSetIds []uint32
 }

@@ -33,7 +33,7 @@ func RegisterOperatorOnStartup(logger logging.Logger) error {
 		AmountToMint:         amount,
 		AllocatableMagnitude: 1000000000000000,
 
-		OperatorSetId: 0,
+		OperatorSetIds: []uint32{0},
 	}
 
 	err := sdkoperator.RegisterOperatorOnStartup(registrationConfig)
