@@ -28,24 +28,6 @@ import (
 )
 
 func RegisterOperatorOnStartup(c RegistrationConfig) error {
-	// operatorAddr := common.HexToAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266")
-	// allocationManagerAddr := common.HexToAddress("0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6")
-	// avsAddress := common.HexToAddress("0xcd8a1c3ba11cf5ecfa6267617243239504a98d90")
-	// registryCoordinatorAddr := common.HexToAddress("0xfd471836031dc5108809d173a067e8486b9047a3")
-	// strategyAddr := common.HexToAddress("0x2b961e3959b79326a8e7f64ef0d2d825707669b5")
-	// ethHttpUrl := "http://localhost:8545"
-
-	// delegationManagerAddress := common.HexToAddress("0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0")
-	// rewardsCoordinatorAddress := common.HexToAddress("0xa51c1fc2f0d1a1b8494ed1fe312d7c3a78ed91c0")
-	// permissionControllerAddress := common.HexToAddress("0x59b670e9fa9d0a427751af201d676719a970857b")
-
-	// ecdsaKeyStorePath := "keys/test.ecdsa.key.json"
-	// blsKeyStorePath := "keys/test.bls.key.json"
-	// stringMintAmount := "1000000000000000000000"
-
-	// allocatableMagnitude := uint64(1000000000000000)
-	// operatorSetId := uint32(0)
-
 	ethRpcClient, err := ethclient.Dial(c.EthHttpUrl)
 	if err != nil {
 		c.Logger.Errorf("Cannot create http ethclient", "err", err)
