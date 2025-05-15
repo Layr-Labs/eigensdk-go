@@ -17,7 +17,7 @@ import (
 	common "github.com/Layr-Labs/eigensdk-go/examples/common"
 	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/common"
 	idptaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
-	gotoml "github.com/pelletier/go-toml"
+	"github.com/pelletier/go-toml"
 )
 
 type Config struct {
@@ -31,7 +31,7 @@ type Config struct {
 
 func GetConfigFromPath(path string) (*Config, error) {
 	config := &Config{}
-	tree, err := gotoml.LoadFile(path)
+	tree, err := toml.LoadFile(path)
 	if err != nil {
 		return nil, err
 	}
