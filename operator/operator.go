@@ -68,8 +68,10 @@ func NewOperatorFromConfig[Input any, Output any](
 	if !operatorIsRegistered {
 		if c.RegistrationCfg.RegisterOnStartup {
 			err = RegisterOperatorOnStartup(c.RegistrationCfg, c.Logger)
-			c.Logger.Errorf("Failure while registering operator on startup: %w", err)
-			return nil, err
+			if err != nil {
+				c.Logger.Errorf("Failure while registering operator on startup: %w", err)
+				return nil, err
+			}
 		} else {
 			// We bubble the error all the way up instead of using logger.Fatal because logger.Fatal prints a huge stack
 			// trace that hides the actual error message. This error msg is more explicit and doesn't require showing a
