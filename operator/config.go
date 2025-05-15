@@ -26,6 +26,8 @@ type Config struct {
 
 	Logger         logging.Logger
 	TaskManagerAbi *abi.ABI
+
+	RegistrationCfg RegistrationConfig
 }
 
 type RegistrationConfig struct {
