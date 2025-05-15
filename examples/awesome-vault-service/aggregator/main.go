@@ -84,10 +84,6 @@ func main() {
 	}
 
 	aggConfig := aggregator.Config{
-		Logger:             logger,
-		TaskManagerAbi:     taskManagerAbi,
-		TaskResponseHashFn: nil,
-
 		EthHttpUrl:                 config.EthHttpUrl,
 		EthWsUrl:                   config.EthWsUrl,
 		AggregatorServerIpPortAddr: config.AggregatorServerIPPort,
@@ -96,7 +92,6 @@ func main() {
 		OperatorStateRetrieverAddress: gethcommon.HexToAddress(config.OperatorStateRetrieverAddress),
 		ServiceManagerAddress:         gethcommon.HexToAddress(config.ServiceManagerAddress),
 
-		EthHttpClient:   ethClient,
 		EcdsaPrivateKey: ecdsaPrivateKey,
 	}
 
@@ -113,7 +108,7 @@ func main() {
 		return
 	}
 
-	aggregator, err := aggregator.NewAggregator(aggConfig, taskProcessor)
+	aggregator, err := aggregator.NewAggregator(aggConfig, logger, taskProcessor, taskManagerAbi)
 	if err != nil {
 		logger.Errorf("Failed to create aggregator: %w", err)
 		return
