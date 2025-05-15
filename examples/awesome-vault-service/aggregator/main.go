@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"os"
 
 	"github.com/Layr-Labs/eigensdk-go/aggregator"
 	taskprocessor "github.com/Layr-Labs/eigensdk-go/aggregator/task-processor"
@@ -15,12 +16,37 @@ import (
 	avtaskmanager "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/contracts/bindings/AwesomeVaultTaskManager"
 
 	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/common"
+
+	"github.com/pelletier/go-toml/v2"
 )
+
+type Config struct {
+	aggregator.Config
+
+	TaskManagerAddress string `toml:"task_manager_address"`
+}
+
+func GetConfigFromPath(path string) (*Config, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	config := &Config{}
+	err = toml.Unmarshal(data, config)
+	return config, err
+}
 
 func main() {
 	logger, err := logging.NewZapLogger(logging.Production)
 	if err != nil {
 		println("Failure creating logger")
+		return
+	}
+
+	config, err := GetConfigFromPath("config/aggregator_config.toml")
+	if err != nil {
+		logger.Errorf("Failed to read config file: %w", err)
 		return
 	}
 
@@ -30,13 +56,15 @@ func main() {
 		return
 	}
 
-	ethHttpUrl := "http://localhost:8545"
-	ethClient, err := ethclient.Dial(ethHttpUrl)
+	ethClient, err := ethclient.Dial(config.EthHttpUrl)
 	if err != nil {
 		logger.Errorf("Failed to dial ethclient: %w", err)
 		return
 	}
 
+	// Depends on the aggregatorPrivateKey passed to TaskManager.initialize
+	// To change it, modify aggregator_addr in
+	// examples/awesome-vault-service/contracts/config/avs/incredible_dot_product_config.json
 	aggregatorPrivateKey := "2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6"
 	ecdsaPrivateKey, err := crypto.HexToECDSA(aggregatorPrivateKey)
 	if err != nil {
@@ -50,24 +78,10 @@ func main() {
 		return
 	}
 
-	aggConfig := aggregator.Config{
-		Logger:             logger,
-		TaskManagerAbi:     taskManagerAbi,
-		TaskResponseHashFn: nil,
+	aggConfig := config.Config
+	aggConfig.EcdsaPrivateKey = ecdsaPrivateKey
 
-		EthHttpUrl:                 ethHttpUrl,
-		EthWsUrl:                   "ws://localhost:8545",
-		AggregatorServerIpPortAddr: "localhost:8090",
-
-		RegistryCoordinatorAddress:    gethcommon.HexToAddress("0xfd471836031dc5108809d173a067e8486b9047a3"),
-		OperatorStateRetrieverAddress: gethcommon.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"),
-		ServiceManagerAddress:         gethcommon.HexToAddress("0xcd8a1c3ba11cf5ecfa6267617243239504a98d90"),
-
-		EthHttpClient:   ethClient,
-		EcdsaPrivateKey: ecdsaPrivateKey,
-	}
-
-	taskManagerAddr := gethcommon.HexToAddress("0x7bc06c482dead17c0e297afbc32f6e63d3846650")
+	taskManagerAddr := gethcommon.HexToAddress(config.TaskManagerAddress)
 	taskResponder, err := taskmanager.NewTaskManagerFromAbi[examplecommon.TaskInput, [32]byte](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
 	if err != nil {
 		logger.Errorf("Failed to create Task Responder: %w", err)
@@ -80,7 +94,7 @@ func main() {
 		return
 	}
 
-	aggregator, err := aggregator.NewAggregator(aggConfig, taskProcessor)
+	aggregator, err := aggregator.NewAggregator(aggConfig, logger, taskProcessor, taskManagerAbi)
 	if err != nil {
 		logger.Errorf("Failed to create aggregator: %w", err)
 		return
