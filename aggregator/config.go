@@ -15,5 +15,7 @@ type Config struct {
 	OperatorStateRetrieverAddress common.Address `toml:"operator_state_retriever_address"`
 	ServiceManagerAddress         common.Address `toml:"service_manager_address"`
 
+	// TODO: This field can't be parsed from config files, we should add some way to parse it.
+	// Maybe we should implement a wrapper using https://pkg.go.dev/encoding#TextUnmarshaler.
 	EcdsaPrivateKey *ecdsa.PrivateKey
 }
