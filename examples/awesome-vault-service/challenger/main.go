@@ -44,23 +44,29 @@ func main() {
 		logger.Errorf("Failed to create ecdsa private key: %w", err)
 		return
 	}
+
 	txMgr, err := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethClient, ecdsaPrivateKey)
 	if err != nil {
 		logger.Errorf("Failed to create tx manager from private key: %w", err)
 		return
 	}
+
 	challengerRaiser, err := taskmanager.NewTaskManagerFromAbi[examplecommon.TaskInput, [32]byte](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
 	if err != nil {
 		logger.Errorf("Failed to create challenger raiser: %w", err)
 		return
 	}
+
 	vaultServiceResponseCalc := examplecommon.NewVaultServiceResponseCalculator()
+
 	vaultSetValidation := challengerprocessor.ResponseValidationFunctionFromResponseCalculator(vaultServiceResponseCalc, func(a, b [32]byte) bool { return a == b })
+
 	challengerProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, vaultSetValidation, challengerRaiser)
 	if err != nil {
 		logger.Errorf("Failed to create challenger verifier: %w", err)
 		return
 	}
+
 	challengerConfig := challenger.Config{
 		Logger:         logger,
 		TaskManagerAbi: taskManagerAbi,
@@ -72,6 +78,7 @@ func main() {
 		logger.Errorf("Failed to create challenger: %w", err)
 		return
 	}
+
 	err = challenger.Start(context.Background())
 	if err != nil {
 		logger.Errorf("Failure while running challenger: %w", err)

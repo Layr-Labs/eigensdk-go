@@ -7,15 +7,16 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/challenger"
 	challengerprocessor "github.com/Layr-Labs/eigensdk-go/challenger/challenger-processor"
-	common "github.com/Layr-Labs/eigensdk-go/examples/common"
-	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/common"
-	idptaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/operator"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+
+	common "github.com/Layr-Labs/eigensdk-go/examples/common"
+	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/common"
+	idptaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
 )
 
 func main() {
@@ -46,11 +47,13 @@ func main() {
 		logger.Errorf("Failed to create ecdsa private key: %w", err)
 		return
 	}
+
 	txMgr, err := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethClient, ecdsaPrivateKey)
 	if err != nil {
 		logger.Errorf("Failed to create tx manager from private key: %w", err)
 		return
 	}
+
 	challengerRaiser, err := taskmanager.NewTaskManagerFromAbi[examplecommon.DotProductInput, *big.Int](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
 	if err != nil {
 		logger.Errorf("Failed to create challenger raiser: %w", err)
@@ -63,6 +66,7 @@ func main() {
 		logger.Errorf("Failed to create challenger verifier: %w", err)
 		return
 	}
+
 	challengerConfig := challenger.Config{
 		Logger:         logger,
 		TaskManagerAbi: taskManagerAbi,
@@ -74,6 +78,7 @@ func main() {
 		logger.Errorf("Failed to create challenger: %w", err)
 		return
 	}
+
 	err = challenger.Start(context.Background())
 	if err != nil {
 		logger.Errorf("Failure while running challenger: %w", err)

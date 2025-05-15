@@ -75,15 +75,18 @@ func main() {
 	}
 
 	responseCalculator := operator.NewFunctionResponseCalculator(examplecommon.DotProduct)
+
 	possibleFailureCalculator, err := operator.NewFailingResponseCalculator(responseCalculator, 50, big.NewInt(31234213443))
 	if err != nil {
 		logger.Fatalf("Failed to create the possible failure function: %v", err.Error())
 	}
+
 	// Setting the TaskResponseHashFn parameter in nil because I'm using the abi default encoding function
 	operator, err := operator.NewOperatorFromConfig(operatorConfig, possibleFailureCalculator, nil)
 	if err != nil {
 		logger.Fatalf("Failed to create operator: %w", err)
 	}
+
 	err = operator.Start(context.Background())
 	if err != nil {
 		logger.Fatalf("Failure while running operator: %w", err)

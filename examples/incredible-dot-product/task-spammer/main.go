@@ -46,16 +46,19 @@ func main() {
 		logger.Errorf("Failed to create ecdsa private key: %w", err)
 		return
 	}
+	
 	txMgr, err := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethClient, ecdsaPrivateKey)
 	if err != nil {
 		logger.Errorf("Failed to create tx manager from private key: %w", err)
 		return
 	}
+
 	taskCreator, err := taskmanager.NewTaskManagerFromAbi[examplecommon.DotProductInput, *big.Int](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
 	if err != nil {
 		logger.Errorf("Failed to create Task Creator: %w", err)
 		return
 	}
+
 	taskSpammerConfig := taskspammer.Config{
 		Logger:                    logger,
 		TimeBetweenTasks:          10 * time.Second,
@@ -67,7 +70,9 @@ func main() {
 		logger.Errorf("Failed to create Task Spammer: %w", err)
 		return
 	}
+
 	seq := LinearRangeSequence()
+
 	err = taskSpammer.Start(context.Background(), seq)
 	if err != nil {
 		logger.Errorf("Failure while running Task Spammer: %w", err)
