@@ -25,7 +25,7 @@ func RegisterOperatorOnStartup(logger logging.Logger) error {
 		RewardsCoordinatorAddress:   common.HexToAddress("0xa51c1fc2f0d1a1b8494ed1fe312d7c3a78ed91c0"),
 		PermissionControllerAddress: common.HexToAddress("0x59b670e9fa9d0a427751af201d676719a970857b"),
 
-		EthHttpUrl: "http://localhost:8545",
+		EthRpcUrl: "http://localhost:8545",
 
 		EcdsaKeyStorePath: "keys/test.ecdsa.key.json",
 		BlsKeyStorePath:   "keys/test.bls.key.json",

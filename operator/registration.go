@@ -28,7 +28,7 @@ import (
 )
 
 func RegisterOperatorOnStartup(c RegistrationConfig) error {
-	ethRpcClient, err := ethclient.Dial(c.EthHttpUrl)
+	ethRpcClient, err := ethclient.Dial(c.EthRpcUrl)
 	if err != nil {
 		c.Logger.Errorf("Cannot create http ethclient", "err", err)
 		return err
@@ -143,7 +143,7 @@ func RegisterOperatorOnStartup(c RegistrationConfig) error {
 		c.AvsAddress,
 		[]common.Address{c.StrategyAddr},
 		[]uint64{c.AllocatableMagnitude},
-		c.EthHttpUrl,
+		c.EthRpcUrl,
 		txMgr,
 		c.OperatorSetIds,
 		c.Logger,

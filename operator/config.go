@@ -41,7 +41,7 @@ type RegistrationConfig struct {
 	RewardsCoordinatorAddress   common.Address
 	PermissionControllerAddress common.Address
 
-	EthHttpUrl string
+	EthRpcUrl string
 
 	EcdsaKeyStorePath string
 	BlsKeyStorePath   string
