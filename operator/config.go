@@ -22,8 +22,6 @@ type Config struct {
 	BlsPrivateKeyStorePath        string
 	AggregatorServerIpPortAddress string
 
-	RegisterOnStartup bool
-
 	Logger         logging.Logger
 	TaskManagerAbi *abi.ABI
 
@@ -31,7 +29,7 @@ type Config struct {
 }
 
 type RegistrationConfig struct {
-	Logger logging.Logger
+	RegisterOnStartup bool
 
 	OperatorAddr            common.Address
 	AllocationManagerAddr   common.Address
