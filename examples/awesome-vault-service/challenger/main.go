@@ -53,7 +53,6 @@ func main() {
 		return
 	}
 
-
 	taskManagerAbi, err := avtaskmanager.ContractAwesomeVaultTaskManagerMetaData.GetAbi()
 	if err != nil {
 		logger.Errorf("Failed to get task manager abi: %w", err)
