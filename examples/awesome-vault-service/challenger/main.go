@@ -21,9 +21,9 @@ type Config struct {
 	EthHttpUrl string `toml:"eth_http_url"`
 	EthWsUrl   string `toml:"eth_ws_url"`
 
-	ChallengerPrivateKey   string `toml:"challenger_private_key"`
+	ChallengerPrivateKey string `toml:"challenger_private_key"`
 
-	TaskManagerAddress            string `toml:"task_manager_address"`
+	TaskManagerAddress string `toml:"task_manager_address"`
 }
 
 func GetConfigFromPath(path string) (*Config, error) {

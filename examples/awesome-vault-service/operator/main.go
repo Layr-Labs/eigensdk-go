@@ -17,25 +17,25 @@ type Config struct {
 	EthHttpUrl string `toml:"eth_http_url"`
 	EthWsUrl   string `toml:"eth_ws_url"`
 
-	OperatorAddress       string `toml:"operator_address"`
-	AggregatorServerIPPort  string `toml:"aggregator_server_ip_port"`
+	OperatorAddress        string `toml:"operator_address"`
+	AggregatorServerIPPort string `toml:"aggregator_server_ip_port"`
 
-	BlsKeyPath   string `toml:"bls_key_path"`
+	BlsKeyPath string `toml:"bls_key_path"`
 
 	RegistryCoordinatorAddress    string `toml:"registry_coordinator_address"`
-	OperatorStateRetrieverAddress    string `toml:"operator_state_retriever_address"`
-	ServiceManagerAddress            string `toml:"service_manager_address"`
+	OperatorStateRetrieverAddress string `toml:"operator_state_retriever_address"`
+	ServiceManagerAddress         string `toml:"service_manager_address"`
 
 	Registration struct {
-		RegisterOnStartup          bool     `toml:"register_on_startup"`
-		AllocationManagerAddress   string   `toml:"allocation_manager_address"`
+		RegisterOnStartup        bool   `toml:"register_on_startup"`
+		AllocationManagerAddress string `toml:"allocation_manager_address"`
 		StrategyAddress          string `toml:"strategy_address"`
 
-		DelegationManagerAddress    string   `toml:"delegation_manager_address"`
-		RewardsCoordinatorAddress   string   `toml:"rewards_coordinator_address"`
-		PermissionControllerAddress string   `toml:"permission_controller_address"`
+		DelegationManagerAddress    string `toml:"delegation_manager_address"`
+		RewardsCoordinatorAddress   string `toml:"rewards_coordinator_address"`
+		PermissionControllerAddress string `toml:"permission_controller_address"`
 
-		EcdsaKeyPath string   `toml:"ecdsa_key_path"`
+		EcdsaKeyPath string `toml:"ecdsa_key_path"`
 
 		AmountToMint          string   `toml:"amount_to_mint"`
 		AllocatableMagnitudes []uint64 `toml:"allocatable_magnitudes"`

@@ -20,9 +20,9 @@ import (
 )
 
 type Config struct {
-	EthHttpUrl string `toml:"eth_http_url"`
-	TaskSpammerPrivateKey   string `toml:"task_spammer_private_key"`
-	TaskManagerAddress      string `toml:"task_manager_address"`
+	EthHttpUrl            string `toml:"eth_http_url"`
+	TaskSpammerPrivateKey string `toml:"task_spammer_private_key"`
+	TaskManagerAddress    string `toml:"task_manager_address"`
 }
 
 func GetConfigFromPath(path string) (*Config, error) {
