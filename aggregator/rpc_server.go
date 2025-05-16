@@ -11,6 +11,8 @@ import (
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 )
 
+// When starting the server, the aggregator start listening at the address specified by config the calls to
+// the ProcessSignedTaskResponse method
 func (agg *Aggregator[Input, Output]) startServer(ctx context.Context) {
 	err := rpc.RegisterName("Aggregator", agg)
 	if err != nil {
