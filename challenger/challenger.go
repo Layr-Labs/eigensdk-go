@@ -23,6 +23,12 @@ type ChallengerProcessor[Input any, Output any] interface {
 	ProcessTaskResponded(taskIndex uint32, taskResponse taskmanager.TaskResponse[Output], taskResponseMetadata sdktypes.TaskResponseMetadata, nonSigningOperatorPubKeys []sdktypes.BN254G1Point) error
 }
 
+// The challenger is the entity responsible of validating the task responsed submitted by the BLS aggregation
+// service and emited by the Task Manager on-chain contract in the TaskResponded event. To do that will need
+// To listen to new task created events (to register the new tasks) and task responded events (to validate
+// those task responses).
+// Most of these things are delegated to the Challenger Processor interface, that process challenges and
+// communicates with the on-chain task manager contract when raising a challenge.
 type Challenger[Input any, Output any] struct {
 	logger logging.Logger
 

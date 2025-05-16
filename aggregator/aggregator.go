@@ -22,6 +22,13 @@ import (
 	oprsinfoserv "github.com/Layr-Labs/eigensdk-go/services/operatorsinfo"
 )
 
+// The aggregator is the entity responsible of communicating with the BLS aggregation service. This includes:
+//   - Listening to new task created events, initializing new tasks at the BLS aggregation service for them.
+//   - Receiving responses to tasks from the operators, and sending them to the BLS aggregation service.
+//   - Receiving the aggregated responses from the BLS aggregation service, and sending them to the Task Manager
+//
+// Most of these things are delegated to the Task Processor interface, that process tasks and communicates with
+// the on-chain task manager contract.
 type Aggregator[Input any, Output any] struct {
 	logger logging.Logger
 
