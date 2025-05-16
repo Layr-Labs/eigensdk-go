@@ -4,6 +4,32 @@ This example is a basic proposal of AVS, being input and output type a big int, 
 
 ## Structure
 
+### Types
+
+The task type of the solidity contract is the following:
+
+``` solidity
+    struct Task {
+        uint256 numberToBeSquared;
+        uint32 taskCreatedBlock;
+        bytes quorumNumbers;
+        uint32 quorumThresholdPercentage;
+    }
+```
+
+We can see the input is an uint256 representing the number to be squared.
+
+The task response type is:
+
+``` solidity
+    struct TaskResponse {
+        uint32 referenceTaskIndex;
+        uint256 numberSquared;
+    }
+```
+
+The numberSquared field represents the result of the squaring operation with the received number to square.
+
 ### Business logic in the entities
 
 - Aggregator: The aggregator does not have much business logic, since the task processor implementation lies in the Indexing Task Processor one, which can be seen as the default. If wanted to create your task processor, you can base it on the ITP implementation, and change what you need.

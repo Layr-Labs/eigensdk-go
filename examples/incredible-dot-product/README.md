@@ -4,7 +4,7 @@ This example proposes a more complex AVS than the proposed on incredible aquarin
 
 ## Structure
 
-## Types
+### Types
 
 The task type of the solidity contract is the following:
 
@@ -33,7 +33,7 @@ The task response type is:
     }
 ```
 
-The result the result of the dot product operation between the two received points.
+The result field represents the result of the dot product operation between the two received points.
 
 ### Business logic in the entities
 
