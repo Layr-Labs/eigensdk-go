@@ -9,7 +9,6 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
-	"github.com/Layr-Labs/eigensdk-go/testutils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -30,7 +29,7 @@ func main() {
 		return
 	}
 
-	ecdsaPrivateKey, err := crypto.HexToECDSA(testutils.ANVIL_FIRST_PRIVATE_KEY)
+	ecdsaPrivateKey, err := crypto.HexToECDSA("2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6")
 	if err != nil {
 		logger.Errorf("Cannot parse ecdsa private key", "err", err)
 		return
