@@ -8,10 +8,10 @@ import (
 
 type Config struct {
 	// The url exposed by the anvil node to call the contract methods
-	EthHttpUrl                 string `toml:"eth_http_url"`
+	EthHttpUrl string `toml:"eth_http_url"`
 
 	// The url exposed by the anvil node to listen to the contract events
-	EthWsUrl                   string `toml:"eth_ws_url"`
+	EthWsUrl string `toml:"eth_ws_url"`
 
 	// The address where the aggregator will listen for rpc calls from the operators
 	AggregatorServerIpPortAddr string `toml:"aggregator_server_ip_port"`
