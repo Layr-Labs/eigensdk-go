@@ -22,7 +22,7 @@ The task type of the solidity contract is the following:
     }
 ```
 
-The input is the pair of points X and Y, both represented by an uint256 array.
+The input is the pair of vectors X and Y, both represented by an uint256 array.
 
 The task response type is:
 
