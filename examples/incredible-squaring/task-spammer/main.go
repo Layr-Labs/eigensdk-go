@@ -23,7 +23,7 @@ func main() {
 	}
 
 	// This pk should be related to the address passed to TaskManager as task_spammer_addr when initialized
-	taskSpammerPk := "0x4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356"
+	taskSpammerPk := "2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6"
 
 	ethHttpUrl := "http://localhost:8545"
 	ethHttpClient, err := ethclient.Dial(ethHttpUrl)
