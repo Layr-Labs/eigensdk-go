@@ -24,13 +24,17 @@ import (
 
 type Aggregator[Input any, Output any] struct {
 	logger           logging.Logger
+
+	// The port exposed by the aggregator to listen to operator task responses
 	serverIpPortAddr string
 
-	// aggregation related fields
+	// bls aggregation service
 	blsAggregationService blsagg.BlsAggregationService
-	//taskProcessor         TaskProcessor[Input]
+
+	// channel that receives new task created event logs
 	newTaskCreatedLogs chan types.Log
 
+	// Abi of the task manager contract
 	taskManagerAbi *abi.ABI
 
 	taskProcessor taskprocessor.TaskProcessor[Input, Output]
