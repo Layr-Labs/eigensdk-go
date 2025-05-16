@@ -24,6 +24,16 @@ We support following modules right now.
 * [ChainIO](./chainio)
 * [Services](./services)
 
+## AVS use examples
+
+This SDK has three AVS use examples:
+
+* [Incredible Squaring](https://github.com/Layr-Labs/eigensdk-go/tree/v2-dev-2/examples/incredible-squaring)
+* [Incredible Dot Product](https://github.com/Layr-Labs/eigensdk-go/tree/v2-dev-2/examples/incredible-dot-product)
+* [Awesome Vault Service](https://github.com/Layr-Labs/eigensdk-go/tree/v2-dev-2/examples/awesome-vault-service)
+
+These are examples of the code needed to create an AVS from scratch, and all them include the contracts needed to execute them, with further instructions in their respective readme files.
+
 ## Development
 
 Clone the repo
