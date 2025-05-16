@@ -39,4 +39,43 @@ The numberSquared field represents the result of the squaring operation with the
 
 ## How to run
 
-This example cannot be run since does not have the contracts included, but you can see this example running on the updated-v2-dev-1 branch of [this fork](https://github.com/Layr-Labs/incredible-squaring-avs), which is up to date with the v2-dev-1 branch.
+This simple session illustrates the basic flow of the AVS:
+
+Start anvil in a separate terminal:
+
+```bash
+anvil
+```
+
+Deploy contracts, set UAM permissions, and create a quorum in a single command:
+
+```bash
+make deploy-all
+```
+
+Start the aggregator:
+
+```bash
+make start-aggregator
+```
+
+Start the operator:
+
+```bash
+make start-operator
+```
+
+By default, the `start-operator` command will also register the operator. To disable this, set `RegisterOperatorOnStartup` to false in the operator main.
+
+The operator will produce invalid results often, because the function passed to it has a failure probability. These failures result in slashing once they're challenged.
+To see this in action, start the challenger with:
+
+```bash
+make start-challenger
+```
+
+To start the cycle, start the task spammer:
+
+``` bash
+make start-task-spammer
+```
