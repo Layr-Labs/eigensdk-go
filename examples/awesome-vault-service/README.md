@@ -37,13 +37,13 @@ The `result` field represents the root hash of the stored Merkle tree.
 
 ### Specific business logic
 
-For computing the response, the challenger and operator use the ComputeResponse method of the VaultServiceResponseCalculator. You can see the specific implementation in `examples/awesome-vault-service/common/response_calculator.go`.
+The challenger and operator use the `VaultServiceResponseCalculator.ComputeResponse()` method for computing responses. You can see the specific implementation in `examples/awesome-vault-service/common/response_calculator.go`.
 
-The method inserts the key-value pair into the vaults array, that represents the Merkle tree. Then, computes the tre root hash, and returns it as the task response value.
+The method inserts the key-value pair into the vaults array representing the Merkle tree. Then, computes the tree root hash and returns it as the task response value.
 
 We decided to create a response calculator struct because in cases like this, where the operator should keep a state to respond to tasks, the struct allows us to save that state in the struct attributes.
 
-To create the sequence that passes input values to the task spammer, we use the sequence generator in the task manager main (in `examples/awesome-vault-service/task-spammer/main.go`), that creates a sequence that on each iterarion advances on 1 and gives as input a fixed key-pair defined from the iteration number.
+To create the sequence that passes input values to the task spammer, we use the sequence generator in the task manager main (in `examples/awesome-vault-service/task-spammer/main.go`), that creates a sequence that on each iteration advances on 1 and gives as input a fixed key-pair defined from the iteration number.
 
 ## How to run
 

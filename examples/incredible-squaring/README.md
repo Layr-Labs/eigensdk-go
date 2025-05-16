@@ -32,11 +32,11 @@ The `numberSquared` field represents the result of the squaring operation with t
 
 ### Specific business logic
 
-For computing the response, the challenger and operator use the ComputeResponse method of the Squaring ResponseCalculator. This Squaring response calculator is made with the builder provided by the SDK for non-state-saving calculators, that receives a function to calculate the logic.
+The challenger and operator use the `SquaringResponseCalculator.ComputeResponse()` method for computing responses.  This Squaring response calculator is made with the SDK-provided builder for non-state-saving calculators, which receives a function for calculating the logic.
 
-In the specific case of the squaring the function receives an input of an uint256, and performs the squaring of it, returning the result.
+In the specific case of squaring, the function receives an input of an uint256, and performs the squaring of it, returning the result.
 
-To create the sequence that passes input values to the task spammer, we use the sequence generator in the task manager main (in `examples/incredible-squaring/task-spammer/main.go`), that creates a sequence that on each iterarion advances on 1 and gives as input the iteration number.
+To create the sequence that passes input values to the task spammer, we use the sequence generator in the task manager main (in `examples/incredible-squaring/task-spammer/main.go`) which creates a sequence that advances on 1 and gives the iteration number as input on each iteration.
 
 ## How to run
 
