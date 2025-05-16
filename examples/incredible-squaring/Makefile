@@ -27,12 +27,9 @@ bindings: ## generates contract bindings
 ____OFFCHAIN_SOFTWARE___: ## 
 start-aggregator: ## 
 	go run aggregator/main.go 2>&1 | zap-pretty
-		
 
 start-operator: ## 
 	go run ./operator 2>&1 | zap-pretty
-	# --config config-files/operator.anvil.yaml \
-	# 	2>&1 | zap-pretty
 
 start-challenger: ## 
 	go run challenger/main.go 2>&1 | zap-pretty
