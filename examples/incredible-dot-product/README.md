@@ -4,6 +4,37 @@ This example proposes a more complex AVS than the proposed on incredible aquarin
 
 ## Structure
 
+## Types
+
+The task type of the solidity contract is the following:
+
+``` solidity
+    struct DotProductInput {
+        uint256[] X;
+        uint256[] Y;
+    }
+
+    struct Task {
+        DotProductInput pointsToMultiply;
+        uint32 taskCreatedBlock;
+        bytes quorumNumbers;
+        uint32 quorumThresholdPercentage;
+    }
+```
+
+We can see the input is the pair of points X and Y, both represented by an uint256 array.
+
+The task response type is:
+
+``` solidity
+    struct TaskResponse {
+        uint32 referenceTaskIndex;
+        uint256 result;
+    }
+```
+
+The result the result of the dot product operation between the two received points.
+
 ### Business logic in the entities
 
 - Aggregator: The aggregator does not have much business logic, since the task processor implementation lies in the Indexing Task Processor one, which can be seen as the default. If wanted to create your task processor, you can base it on the ITP implementation, and change what you need.
