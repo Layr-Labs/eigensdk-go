@@ -7,8 +7,15 @@ import (
 )
 
 type Config struct {
-	EthWsUrl       string
-	Logger         logging.Logger
+	// The url exposed by the anvil node to listen to the contract events
+	EthWsUrl string
+
+	// The logger where the loggs will appear
+	Logger logging.Logger
+
+	// The abi of the task manager contract
 	TaskManagerAbi *abi.ABI
-	EthClient      *ethclient.Client
+
+	// The client used to communicate with the anvil node
+	EthClient *ethclient.Client
 }

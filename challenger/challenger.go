@@ -15,22 +15,33 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
+// The Challenger processor is the responsible for processing the challenges
 type ChallengerProcessor[Input any, Output any] interface {
+	// Processes new tasks, returns an error in case of failure
 	ProcessNewTaskCreated(taskIndex uint32, task taskmanager.Task[Input]) error
+	// Processes task responses, returns an error in case of failure
 	ProcessTaskResponded(taskIndex uint32, taskResponse taskmanager.TaskResponse[Output], taskResponseMetadata sdktypes.TaskResponseMetadata, nonSigningOperatorPubKeys []sdktypes.BN254G1Point) error
 }
 
 type Challenger[Input any, Output any] struct {
-	logger              logging.Logger
-	challengerProcessor ChallengerProcessor[Input, Output]
-	taskResponseChan    chan types.Log
-	newTaskCreatedChan  chan types.Log
+	logger logging.Logger
 
+	// The responsible for processing the challenges
+	challengerProcessor ChallengerProcessor[Input, Output]
+
+	// channel that receives task responded event logs
+	taskResponseChan chan types.Log
+	// channel that receives new task created event logs
+	newTaskCreatedChan chan types.Log
+
+	// The abi of the task manager contract
 	taskManagerAbi *abi.ABI
 
+	// The client used to communicate with the anvil node
 	ethClient *ethclient.Client
 }
 
+// NewChallenger creates a new Aggregator with the provided config and a challenger processor.
 func NewChallenger[Input any, Output any](
 	c Config,
 	challengerProcessor ChallengerProcessor[Input, Output],
@@ -71,6 +82,11 @@ func NewChallenger[Input any, Output any](
 	}, nil
 }
 
+// Start method runs the main loop of the Challenger. This loop has 2 main events:
+//   - Receive a task responded event: In this case the challenger will process that event, saving the
+//     task index
+//   - Receive a new task created event log: In this case the challenger processes that event, and in case
+//     the response is wrong, a challenge will be raised
 func (c *Challenger[Input, Output]) Start(ctx context.Context) error {
 	c.logger.Info("Starting Challenger.")
 
@@ -93,6 +109,8 @@ func (c *Challenger[Input, Output]) Start(ctx context.Context) error {
 
 }
 
+// When processing a new task created log, the aggregator unpacks the log data into the new task created event and
+// sends it to the challenger processor
 func (c *Challenger[Input, Output]) processNewTaskCreatedLog(log types.Log) error {
 	var newTaskCreatedLog taskmanager.NewTaskCreatedEvent[Input]
 
@@ -111,6 +129,8 @@ func (c *Challenger[Input, Output]) processNewTaskCreatedLog(log types.Log) erro
 	return nil
 }
 
+// When processing a task responded log, the challenger unpacks the log data into the task responded event and
+// checks if it has to raise a challenge delegating it to the challenger processor
 func (c *Challenger[Input, Output]) processTaskRespondedLog(
 	log types.Log,
 ) error {
@@ -139,6 +159,7 @@ func (c *Challenger[Input, Output]) processTaskRespondedLog(
 	return nil
 }
 
+// Gets the non signing operator public keys from the transaction hash received from the log
 func (c *Challenger[Input, Output]) getNonSigningOperatorPubKeys(
 	transactionHash common.Hash,
 ) []sdktypes.BN254G1Point {
