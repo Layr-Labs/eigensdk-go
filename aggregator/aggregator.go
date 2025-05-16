@@ -40,7 +40,7 @@ type Aggregator[Input any, Output any] struct {
 	taskProcessor taskprocessor.TaskProcessor[Input, Output]
 }
 
-// NewAggregator creates a new Aggregator with the provided config.
+// NewAggregator creates a new Aggregator with the provided config, a logger, a task processor and the task manager contract's ABI.
 func NewAggregator[Input any, Output any](
 	c Config,
 	logger logging.Logger,
@@ -111,6 +111,11 @@ func NewAggregator[Input any, Output any](
 	}, nil
 }
 
+// Start method runs the main loop of the Aggregator. This loop has 2 main events:
+//   - Get a response from the BLS aggregation service: In this case the response is processed and sent to
+//     the Task Manager on-chain contract.
+//   - Receive a new task created event log: In this case the aggregator processes that event, and sends to
+// 	   the bls aggregation service the new task created metadata.
 func (agg *Aggregator[Input, Output]) Start(ctx context.Context) error {
 	agg.logger.Info("Starting aggregator.")
 	agg.logger.Info("Starting aggregator rpc server.")
@@ -139,6 +144,8 @@ func (agg *Aggregator[Input, Output]) Start(ctx context.Context) error {
 	}
 }
 
+// When processing a new task event, the aggregator unpacks the log data into the new task created event and
+// sends it to the task processor
 func (agg *Aggregator[Input, Output]) processNewTask(log types.Log) (blsagg.TaskMetadata, error) {
 	var newTaskCreatedLog taskmanager.NewTaskCreatedEvent[Input]
 
@@ -162,6 +169,7 @@ func (agg *Aggregator[Input, Output]) processNewTask(log types.Log) (blsagg.Task
 	return metadata, nil
 }
 
+// When processing an aggregated response, the aggregator delegates the processing to the task processor
 func (agg *Aggregator[Input, Output]) processAggregatedResponse(
 	response blsagg.BlsAggregationServiceResponse,
 ) error {
