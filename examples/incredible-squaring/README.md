@@ -1,6 +1,6 @@
 # Incredible Squaring example
 
-This example is a basic proposal of AVS, where the input and output type are uint256 values, representing the number to be squared and the number squared. In this sense, the task for the operators to complete is squaring the received number, and returning the result of the operation as the response value submitted to the Task Manager on-chain contract.
+This example is a basic proposal of AVS, where the input and output type are `uint256` values, representing the number to be squared and the number squared. In this sense, the task for the operators to complete is squaring the received number, and returning the result of the operation as the response value submitted to the Task Manager on-chain contract.
 
 ## Structure
 
@@ -17,7 +17,7 @@ The task type of the solidity contract is the following:
  }
 ```
 
-The input is an uint256 representing the number to be squared.
+The input is an `uint256` representing the number to be squared.
 
 The task response type is:
 
