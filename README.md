@@ -38,7 +38,7 @@ These are examples of the code needed to create an AVS from scratch. All include
 
 * Aggregator: The aggregator does not have much business logic, since the task processor implementation lies in the Indexing Task Processor implementation, which can be seen as the default one. If wanted to create your task processor, you can base it on the ITP implementation, and change what you need.
 * Challenger: The challenger business logic lies in Task response validation. To validate the response, the challenger first calculates the response with the same function as the operator and then compares it with the received response, raising a challenge if they differ.
-* Operator: The operator responds to tasks using the VaultServiceResponseCalculator struct, which has a ComputeResponse method (satisfying the ResponseCalculator interface).
+* Operator: The operator responds to tasks using the ResponseCalculator struct corresponding to the task to complete, which has a ComputeResponse method (satisfying the ResponseCalculator interface).
 * Task spammer: The task spammer logic lies in the sequence that generates the numbers pulled by the spammer at the SDK level.
 
 ## Development
