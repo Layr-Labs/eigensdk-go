@@ -43,6 +43,8 @@ The method inserts the key-value pair into the vaults array representing the Mer
 
 We decided to create a response calculator struct because in cases like this, where the operator should keep a state to respond to tasks, the struct allows us to save that state in the struct attributes.
 
+For response validation, there should be an additional check to verify that the operator has uploaded the key-value pair, but for that, proof telling the operator has set the value should be added to the challenge cycle.
+
 To create the sequence that passes input values to the task spammer, we use the sequence generator in the task manager main (in `examples/awesome-vault-service/task-spammer/main.go`), that creates a sequence that on each iteration advances on 1 and gives as input a fixed key-pair defined from the iteration number.
 
 ## How to run
