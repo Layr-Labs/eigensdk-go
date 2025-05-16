@@ -33,7 +33,7 @@ The task response type is:
     }
 ```
 
-The result field represents the root hash of the stored Merkle tree.
+The `result` field represents the root hash of the stored Merkle tree.
 
 ### Business logic in entities
 

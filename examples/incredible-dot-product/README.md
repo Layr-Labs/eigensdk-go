@@ -33,7 +33,7 @@ The task response type is:
     }
 ```
 
-The result field represents the result of the dot product operation between the two received points.
+The `result` field represents the result of the dot product operation between the two received points.
 
 ### Business logic in the entities
 

@@ -28,7 +28,7 @@ The task response type is:
  }
 ```
 
-The number squared field represents the result of the squaring operation with the received number to square.
+The `numberSquared` field represents the result of the squaring operation with the received number to square.
 
 ### Business logic in the entities
 
