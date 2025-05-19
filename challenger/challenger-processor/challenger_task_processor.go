@@ -10,15 +10,21 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
+// The Indexing Challenger Processor is a generic implementation provided by the SDK
 type IndexingChallengerProcessor[Input any, Output any] struct {
-	logger               logging.Logger
+	logger logging.Logger
+
+	// This function validates the task response submitted by the operators
 	responseValidationFn ResponseValidationFunction[Input, Output]
-	challengerRaiser     taskmanager.ChallengeRaiser[Input, Output]
-	tasks                map[uint32]taskmanager.Task[Input]
+
+	// The challenger raiser is responsible for communicating with the `TaskManager` contract to raise challenges
+	challengerRaiser taskmanager.ChallengeRaiser[Input, Output]
+	tasks            map[uint32]taskmanager.Task[Input]
 }
 
 type ResponseValidationFunction[Input any, Output any] func(taskIndex uint32, input Input, output Output) (bool, error)
 
+// Creates an Indexing Challenger Processor from a logger, a response validation function and a challenger raiser.
 func NewIndexingChallengerProcessor[Input any, Output any](
 	logger logging.Logger,
 	responseValidationFn ResponseValidationFunction[Input, Output],
@@ -32,12 +38,15 @@ func NewIndexingChallengerProcessor[Input any, Output any](
 	}, nil
 }
 
+// Processes a new task created event by saving the task in the tasks map
 func (icp IndexingChallengerProcessor[Input, Output]) ProcessNewTaskCreated(newTaskIndex uint32, newTask taskmanager.Task[Input]) error {
 	icp.tasks[newTaskIndex] = newTask
 
 	return nil
 }
 
+// Processes a task responded event, by validating the received task response and raising a
+// challenge to the tak manager contract if needed
 func (icp IndexingChallengerProcessor[Input, Output]) ProcessTaskResponded(taskIndex uint32, taskResponse taskmanager.TaskResponse[Output], taskResponseMetadata sdktypes.TaskResponseMetadata, nonSigningOperatorPubKeys []sdktypes.BN254G1Point) error {
 	task, found := icp.tasks[taskIndex]
 	if !found {

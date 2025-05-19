@@ -22,21 +22,32 @@ import (
 	oprsinfoserv "github.com/Layr-Labs/eigensdk-go/services/operatorsinfo"
 )
 
+// The aggregator is responsible for aggregating signed task responses from operators and posting them on chain. This includes:
+//   - Listening to new task created events.
+//   - Receiving signed responses from the operators.
+//   - Sending the aggregated responses to the `TaskManager` contract
+//
+// Most of these things are delegated to the `TaskProcessor` interface, that processes
+// tasks and communicates with the on-chain `TaskManager` contract.
 type Aggregator[Input any, Output any] struct {
-	logger           logging.Logger
+	logger logging.Logger
+
+	// IP address and port where the aggregator will listen to operator task responses
 	serverIpPortAddr string
 
-	// aggregation related fields
+	// BLS aggregation service
 	blsAggregationService blsagg.BlsAggregationService
-	//taskProcessor         TaskProcessor[Input]
+
+	// Channel for receiving new task created event logs
 	newTaskCreatedLogs chan types.Log
 
+	// ABI of the task manager contract
 	taskManagerAbi *abi.ABI
 
 	taskProcessor taskprocessor.TaskProcessor[Input, Output]
 }
 
-// NewAggregator creates a new Aggregator with the provided config.
+// NewAggregator creates a new Aggregator with the provided config, a logger, a task processor and the task manager contract's ABI.
 func NewAggregator[Input any, Output any](
 	c Config,
 	logger logging.Logger,
@@ -107,6 +118,13 @@ func NewAggregator[Input any, Output any](
 	}, nil
 }
 
+// Starts running the Aggregator. This should be called only one time per Aggregator.
+//
+// The main loop of the Aggregator has 2 main events:
+//   - Get a response from the BLS aggregation service: In this case the response is processed and sent to
+//     the Task Manager on-chain contract.
+//   - Receive a new task created event log: In this case the aggregator processes that event, and sends to
+//     the bls aggregation service the new task created metadata.
 func (agg *Aggregator[Input, Output]) Start(ctx context.Context) error {
 	agg.logger.Info("Starting aggregator.")
 	agg.logger.Info("Starting aggregator rpc server.")
@@ -135,6 +153,8 @@ func (agg *Aggregator[Input, Output]) Start(ctx context.Context) error {
 	}
 }
 
+// When processing a new task event, the aggregator unpacks the log data into the new task created event and
+// sends it to the task processor
 func (agg *Aggregator[Input, Output]) processNewTask(log types.Log) (blsagg.TaskMetadata, error) {
 	var newTaskCreatedLog taskmanager.NewTaskCreatedEvent[Input]
 
@@ -158,6 +178,7 @@ func (agg *Aggregator[Input, Output]) processNewTask(log types.Log) (blsagg.Task
 	return metadata, nil
 }
 
+// When processing an aggregated response, the aggregator delegates the processing to the task processor
 func (agg *Aggregator[Input, Output]) processAggregatedResponse(
 	response blsagg.BlsAggregationServiceResponse,
 ) error {

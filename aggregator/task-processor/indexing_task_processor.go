@@ -13,10 +13,13 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
+// The Indexing Task Processor is a generic implementation provided by the SDK that
+// satisfies the `TaskProcessor` interface expected by the `Aggregator`
 type IndexingTaskProcessor[Input any, Output any] struct {
 	tasks   map[sdktypes.TaskIndex]taskmanager.Task[Input]
 	tasksMu sync.RWMutex
 
+	// The task responder is the way the processor has to communicate with the task manager contract
 	taskResponder taskmanager.TaskResponder[Input, Output]
 
 	logger logging.Logger
@@ -29,6 +32,7 @@ const (
 	blockTimeSeconds         = 12 * time.Second
 )
 
+// Creates an Indexing Task Processor from a logger and a task responder.
 func NewIndexingTaskProcessor[Input any, Output any](
 	logger logging.Logger,
 	taskResponder taskmanager.TaskResponder[Input, Output],
@@ -40,6 +44,8 @@ func NewIndexingTaskProcessor[Input any, Output any](
 	}, nil
 }
 
+// Processes a new task, saving it in the tasks map and creating the metadata for the BLS aggregation
+// service, which it returns
 func (itp *IndexingTaskProcessor[Input, Output]) ProcessNewTask(
 	taskIndex sdktypes.TaskIndex,
 	task taskmanager.Task[Input],
@@ -74,10 +80,13 @@ func (itp *IndexingTaskProcessor[Input, Output]) ProcessNewTask(
 	return metadata, nil
 }
 
+// Processes a Task response, delegating the hashing of the response to the Task responder.
 func (itp *IndexingTaskProcessor[Input, Output]) ProcessTaskResponse(taskResponse taskmanager.TaskResponse[Output]) ([32]byte, error) {
 	return itp.taskResponder.HashTaskResponse(taskResponse)
 }
 
+// Processes an aggregated response, creating the required types and sending them to the on-chain Task Manager contract. After
+// sending the response, deletes the completed task from the tasks map.
 func (itp *IndexingTaskProcessor[Input, Output]) ProcessAggregatedResponse(response blsagg.BlsAggregationServiceResponse) error {
 	itp.tasksMu.RLock()
 	task := itp.tasks[response.TaskIndex]
