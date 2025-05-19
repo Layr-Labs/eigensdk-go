@@ -36,24 +36,24 @@ The Task Spammer uses a builder pattern and follows this workflow:
     - `QuorumNumbers`: The quorum numbers
 
       ```go
-          taskSpammerConfig := taskspammer.Config{
-            Logger:                     logger,
-            TimeBetweenTasks:           10 * time.Second,
-            QuorumThresholdPercentage:  100,
-            QuorumNumbers:              []uint8{0},
-          }
+        taskSpammerConfig := taskspammer.Config{
+          Logger:                     logger,
+          TimeBetweenTasks:           10 * time.Second,
+          QuorumThresholdPercentage:  100,
+          QuorumNumbers:              []uint8{0},
+        }
       ```
 
 3. **Build the Task Spammer**: Use the `NewTaskSpammer` function to build the task spammer
 
     ```go
-        taskSpammer, _ := taskspammer.NewTaskSpammer(taskCreator, taskSpammerConfig)
+      taskSpammer, _ := taskspammer.NewTaskSpammer(taskCreator, taskSpammerConfig)
     ```
 
 4. **Create the iterator**: Define an iterator that creates appropriate input values for your specific AVS
    - The input values will be passed to the `CreateNewTask` function on the `TaskSpammer` struct
 
-    ```go
+      ```go
         func NewNumberToSquareSequence() iter.Seq[*big.Int] {
           acc := big.NewInt(1)
           delta := big.NewInt(1)
@@ -67,25 +67,25 @@ The Task Spammer uses a builder pattern and follows this workflow:
           }
         }
         inputGen := NewNumberToSquareSequence()
-    ```
+      ```
 
 5. **Create the Task Spammer**: Create the task spammer using the `NewTaskSpammer` function
 
     ```go
-        taskSpammer, _ := taskspammer.NewTaskSpammer(taskCreator, taskSpammerConfig)
+      taskSpammer, _ := taskspammer.NewTaskSpammer(taskCreator, taskSpammerConfig)
     ```
 
 6. **Start the Task Spammer**: Call the `Start` method to start the task spammer
 
     ```go
-        taskSpammer.Start(context.Background(), inputGen)
+      taskSpammer.Start(context.Background(), inputGen)
     ```
 
 ## Examples
 
-Here's how to build a Task Spammer based on the examples:
+Here are some examples of operators that are already implemented:
 
-- [Incredible Squaring](https://github.com/Layr-Labs/eigensdk-rs/blob/v2-dev-1/examples/incredible-squaring/src/bin/task_spammer.rs)
-- [Incredible Dot Product](https://github.com/Layr-Labs/eigensdk-rs/blob/v2-dev-1/examples/incredible-dot-product/src/bin/task-spammer.rs)
-- [Awesome Vault Service](https://github.com/Layr-Labs/eigensdk-rs/blob/v2-dev-1/examples/awesome-vault-service/src/bin/task-spammer.rs)
+- [Incredible Squaring](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-1/examples/incredible-squaring/task-spammer/main.go)
+- [Incredible Dot Product](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-1/examples/incredible-dot-product/task-spammer/main.go)
+- [Awesome Vault Service](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-1/examples/awesome-vault-service/task-spammer/main.go)
 
