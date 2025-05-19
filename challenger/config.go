@@ -7,7 +7,7 @@ import (
 )
 
 type Config struct {
-	// The url exposed by the anvil node to listen to the contract events
+	// Ethereum WebSocket RPC URL to use for subscribing to on-chain events
 	EthWsUrl string
 
 	// The logger where the loggs will appear

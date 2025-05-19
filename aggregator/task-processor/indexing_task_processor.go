@@ -14,7 +14,7 @@ import (
 )
 
 // The Indexing Task Processor is a generic implementation provided by the SDK that
-// satisfies the task processor interface
+// satisfies the `TaskProcessor` interface expected by the `Aggregator`
 type IndexingTaskProcessor[Input any, Output any] struct {
 	tasks   map[sdktypes.TaskIndex]taskmanager.Task[Input]
 	tasksMu sync.RWMutex
@@ -45,7 +45,7 @@ func NewIndexingTaskProcessor[Input any, Output any](
 }
 
 // Processes a new task, saving it in the tasks map and creating the metadata for the BLS aggregation
-// service, which returns
+// service, which it returns
 func (itp *IndexingTaskProcessor[Input, Output]) ProcessNewTask(
 	taskIndex sdktypes.TaskIndex,
 	task taskmanager.Task[Input],

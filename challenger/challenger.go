@@ -15,7 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-// The Challenger processor is the responsible for processing the challenges
+// The Challenger processor is responsible for processing the challenges
 type ChallengerProcessor[Input any, Output any] interface {
 	// Processes new tasks, returns an error in case of failure
 	ProcessNewTaskCreated(taskIndex uint32, task taskmanager.Task[Input]) error
