@@ -83,9 +83,9 @@ The Task Spammer uses a builder pattern and follows this workflow:
 
 ## Examples
 
-Here are some examples of operators that are already implemented:
+Here are some examples of task spammer implementations:
 
 - [Incredible Squaring](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-1/examples/incredible-squaring/task-spammer/main.go)
-- [Incredible Dot Product](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-1/examples/incredible-dot-product/task-spammer/main.go)
+- [Incredible Dot Product](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-1/examples/incredible-dot-product/taskc-spammer/main.go)
 - [Awesome Vault Service](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-1/examples/awesome-vault-service/task-spammer/main.go)
 
