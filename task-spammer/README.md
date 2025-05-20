@@ -69,13 +69,7 @@ The Task Spammer uses a builder pattern and follows this workflow:
         inputGen := NewNumberToSquareSequence()
       ```
 
-5. **Create the Task Spammer**: Create the task spammer using the `NewTaskSpammer` function
-
-    ```go
-      taskSpammer, _ := taskspammer.NewTaskSpammer(taskCreator, taskSpammerConfig)
-    ```
-
-6. **Start the Task Spammer**: Call the `Start` method to start the task spammer
+5. **Start the Task Spammer**: Call the `Start` method to start the task spammer
 
     ```go
       taskSpammer.Start(context.Background(), inputGen)
