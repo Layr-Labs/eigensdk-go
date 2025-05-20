@@ -58,7 +58,7 @@ func NewOperatorFromConfig[Input any, Output any](
 	responseCalculator ResponseCalculator[Input, Output],
 	taskResponseHashFn TaskResponseHashFunction[Output],
 ) (*Operator[Input, Output], error) {
-	avs_config := avsregistry.Config{
+	avsConfig := avsregistry.Config{
 		RegistryCoordinatorAddress:    common.HexToAddress(c.AVSRegistryCoordinatorAddress),
 		OperatorStateRetrieverAddress: common.HexToAddress(c.OperatorStateRetrieverAddress),
 		ServiceManagerAddress:         common.HexToAddress(c.ServiceManagerAddress),
@@ -69,7 +69,7 @@ func NewOperatorFromConfig[Input any, Output any](
 		return nil, utils.WrapError("Failed to create Eth Http client", err)
 	}
 
-	avsReader, err := avsregistry.NewReaderFromConfig(avs_config, ethHttpClient, c.Logger)
+	avsReader, err := avsregistry.NewReaderFromConfig(avsConfig, ethHttpClient, c.Logger)
 	if err != nil {
 		c.Logger.Error("Cannot create AvsReader", "err", err)
 		return nil, err
