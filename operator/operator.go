@@ -24,8 +24,8 @@ import (
 )
 
 // The operator responds to tasks created by the task manager, and sends the task responses to
-// the BLS aggregation service via rpc Aggregator. To do this, receives a function to calculate
-// the task response and another to calculate the task response hash.
+// the aggregator via rpc. To do this, receives a function to calculate the task response and
+// another to calculate the task response hash.
 type Operator[Input any, Output any] struct {
 	logger logging.Logger
 
