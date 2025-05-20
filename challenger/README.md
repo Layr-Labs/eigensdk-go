@@ -38,32 +38,32 @@ The Challenger operates through a well-defined workflow:
    - `TaskManagerAbi`: The ABI of the task manager
    - `EthClient`: The Ethereum client
 
-   ```go
-      ethHttpUrl := "http://localhost:8545"
-      ethHttpClient, _ := ethclient.Dial(ethHttpUrl)
-    
-      cfg := challenger.Config{
-        EthWsUrl:       "ws://localhost:8545",
-        Logger:         logger,
-        TaskManagerAbi: taskManagerAbi,
-        EthClient:      ethHttpClient,
-      }
-   ```
+      ```go
+        ethHttpUrl := "http://localhost:8545"
+        ethHttpClient, _ := ethclient.Dial(ethHttpUrl)
+      
+        cfg := challenger.Config{
+          EthWsUrl:       "ws://localhost:8545",
+          Logger:         logger,
+          TaskManagerAbi: taskManagerAbi,
+          EthClient:      ethHttpClient,
+        }
+      ```
 
 3. **Task Manager**: Create a `TaskManager` to interact with the user defined task manager contract.
    - This will be in charge of raising challenges.
 
-   ```go
-   	  ecdsaPrivateKey, _ := crypto.HexToECDSA(testutils.ANVIL_FIRST_PRIVATE_KEY)
-      txMgr, _ := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethHttpClient, ecdsaPrivateKey)
-
-      challengerRaiser, err := taskmanager.NewTaskManagerFromAbi[*big.Int, *big.Int](
-        taskManagerAddress,
-        taskManagerAbi,
-        txMgr,
-        ethHttpClient,
-      )
-   ```
+      ```go
+        ecdsaPrivateKey, _ := crypto.HexToECDSA(testutils.ANVIL_FIRST_PRIVATE_KEY)
+        txMgr, _ := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethHttpClient, ecdsaPrivateKey)
+  
+        challengerRaiser, err := taskmanager.NewTaskManagerFromAbi[*big.Int, *big.Int](
+          taskManagerAddress,
+          taskManagerAbi,
+          txMgr,
+          ethHttpClient,
+        )
+      ```
 
 4. **Task Verification Logic**: Define a function that computes the expected result for a task, which will be used to verify operator responses
    - This would be the logic to compute a new task.
@@ -79,19 +79,19 @@ The Challenger operates through a well-defined workflow:
    - `NewFunctionResponseCalculator`: Create a response calculator from your computation function.
 
       ```go
-          calculator := operator.NewFunctionResponseCalculator(square)
+        calculator := operator.NewFunctionResponseCalculator(square)
       ```
 
 6. **Verifier**: Create a verifier from the response calculator.
    - This will be in charge of computing the response of a task and will use a user-defined function to compare the computed response with the operator's response.
 
       ```go
-          // BigIntEqual receives two *big.Int and returns whether they are equal
-          func BigIntEqual(a, b *big.Int) bool {
-            return a.Cmp(b) == 0
-          }
+        // BigIntEqual receives two *big.Int and returns whether they are equal
+        func BigIntEqual(a, b *big.Int) bool {
+          return a.Cmp(b) == 0
+        }
 
-          validation := challengerprocessor.ResponseValidationFunctionFromResponseCalculator(calculator, BigIntEqual)
+        validation := challengerprocessor.ResponseValidationFunctionFromResponseCalculator(calculator, BigIntEqual)
       ```
 
 7. **Challenger Task Processor**: Create a [`ChallengerTaskProcessor`] interface implementation.
@@ -99,22 +99,19 @@ The Challenger operates through a well-defined workflow:
     - We provide a standard [`IndexingChallengerProcessor`] struct that can be used as a starting point.
 
       ```go
-          indexingTaskProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, validation, challengerRaiser)
+        indexingTaskProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, validation, challengerRaiser)
       ```
 
 8. **Challenger**: Create a [`Challenger`] from the [`Config`] and the [`ChallengerTaskProcessor`].
 
     ```go
-        challenger, _ := challenger.NewChallenger(
-          cfg,
-          indexingTaskProcessor,
-        )
+      challenger, _ := challenger.NewChallenger(cfg, indexingTaskProcessor)
     ```
 
 9.  **Start the Challenger**: Start the challenger.
 
     ```go
-        challenger.Start(context.Background())
+      challenger.Start(context.Background())
     ```
 
 
