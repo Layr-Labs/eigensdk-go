@@ -23,29 +23,47 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
+// The operator responds to tasks created by the task manager, and sends the task responses to
+// the aggregator via rpc. To do this, receives a function to calculate the task response and
+// another to calculate the task response hash.
 type Operator[Input any, Output any] struct {
-	logger              logging.Logger
-	operatorId          sdktypes.OperatorId
+	logger logging.Logger
+
+	// The operator ID, used to sign the task responses
+	operatorId sdktypes.OperatorId
+
+	// The aggregator RPC client is responsible of the communication with the Aggregator
 	aggregatorRpcClient AggregatorRpcClienter[Output]
-	EthWsUrl            string
-	blsKeypair          *bls.KeyPair
-	newTaskCreatedLogs  chan types.Log
-	taskManagerAbi      *abi.ABI
-	responseCalculator  ResponseCalculator[Input, Output]
-	taskResponseHashFn  TaskResponseHashFunction[Output]
+
+	// The BLS key pair used to sign the task responses
+	blsKeypair *bls.KeyPair
+
+	// channel that receives new task created event logs
+	newTaskCreatedLogs chan types.Log
+
+	// The ABI of the task manager contract
+	taskManagerAbi *abi.ABI
+
+	// The function used to calculate the response for the received tasks
+	responseCalculator ResponseCalculator[Input, Output]
+	// The function used to hash the task responses
+	taskResponseHashFn TaskResponseHashFunction[Output]
 }
 
+// The function used to hash the task responses, receiving the generic sdk task response and returning the digest
 type TaskResponseHashFunction[Output any] func(taskResponse taskmanager.TaskResponse[Output]) ([32]byte, error)
 
+// NewOperatorFromConfig creates a new Operator with the provided config and the functions to calculate and hashing the response.
 func NewOperatorFromConfig[Input any, Output any](
 	c Config,
 	responseCalculator ResponseCalculator[Input, Output],
 	taskResponseHashFn TaskResponseHashFunction[Output],
 ) (*Operator[Input, Output], error) {
-	avs_config := avsregistry.Config{
-		RegistryCoordinatorAddress:    common.HexToAddress(c.AVSRegistryCoordinatorAddress),
-		OperatorStateRetrieverAddress: common.HexToAddress(c.OperatorStateRetrieverAddress),
-		ServiceManagerAddress:         common.HexToAddress(c.ServiceManagerAddress),
+	// Note: here we only assign the registry coordinator address because is the only address we use
+	// when we use the AVS registry reader. If you want to do more things with avs registry reader,
+	// you should add those addresses to the operator config and assign them here.
+	avsConfig := avsregistry.Config{
+		RegistryCoordinatorAddress: common.HexToAddress(c.AVSRegistryCoordinatorAddress),
 	}
 
 	ethHttpClient, err := ethclient.Dial(c.EthRpcUrl)
@@ -53,13 +71,14 @@ func NewOperatorFromConfig[Input any, Output any](
 		return nil, utils.WrapError("Failed to create Eth Http client", err)
 	}
 
-	avsReader, err := avsregistry.NewReaderFromConfig(avs_config, ethHttpClient, c.Logger)
+	avsReader, err := avsregistry.NewReaderFromConfig(avsConfig, ethHttpClient, c.Logger)
 	if err != nil {
 		c.Logger.Error("Cannot create AvsReader", "err", err)
 		return nil, err
 	}
 
-	// Check if operator was registered, return error if not
+	// Check if operator was registered, if its not registered and register on startup flag is not set, then will fail.
+	// If its not registered and should be registered on startup, make the registration.
 	operatorIsRegistered, err := avsReader.IsOperatorRegistered(&bind.CallOpts{}, common.HexToAddress(c.OperatorAddress))
 	if err != nil {
 		c.Logger.Error("Error checking if operator is registered", "err", err)
@@ -152,6 +171,8 @@ func NewOperatorFromConfig[Input any, Output any](
 	return operator, nil
 }
 
+// The start function executes the main loop for the operator, that basically listens to new task created events
+// and respond to those tasks, signs them and sends them to the aggregator via aggregator RPC client.
 func (o *Operator[Input, Output]) Start(ctx context.Context) error {
 	o.logger.Info("Starting operator.")
 
@@ -210,6 +231,8 @@ func (o *Operator[Input, Output]) processNewTaskCreatedLog(
 	return taskResponse, nil
 }
 
+// Receives a task response and signs it with the task response hash function, the BLS signature
+// and the operator ID.
 func (o *Operator[Input, Output]) signTaskResponse(
 	taskResponse *taskmanager.TaskResponse[Output],
 ) (*sdkaggregator.SignedTaskResponse[Output], error) {
@@ -229,6 +252,8 @@ func (o *Operator[Input, Output]) signTaskResponse(
 	return signedTaskResponse, nil
 }
 
+// Receives an ABI and returns the ABI type for the AVS output value, or an error in case of failure
+// The idea is, instead of receiving the type as parameter, read it from the received ABI
 func extractTypeFromAbi(taskManagerAbi *abi.ABI) (abi.Type, error) {
 	taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
 		{
@@ -236,7 +261,7 @@ func extractTypeFromAbi(taskManagerAbi *abi.ABI) (abi.Type, error) {
 			Type: "uint32",
 		},
 		{
-			Name: "OutputValue", // Left because abi does not support purely anonymous or underscored fields
+			Name: "OutputValue", // Left because ABI does not support purely anonymous or underscored fields
 			Type: taskManagerAbi.Events["TaskResponded"].Inputs[0].Type.TupleElems[1].String(),
 		},
 	})
@@ -247,6 +272,8 @@ func extractTypeFromAbi(taskManagerAbi *abi.ABI) (abi.Type, error) {
 	return taskResponseType, nil
 }
 
+// Receives an ABI type and returns a generic task response hash function that uses that type and returns
+// the hash of the response encoded on the value
 func getDefaultHashFunction[Output any](taskResponseType abi.Type) TaskResponseHashFunction[Output] {
 	return func(taskResponse taskmanager.TaskResponse[Output]) ([32]byte, error) {
 		arguments := abi.Arguments{

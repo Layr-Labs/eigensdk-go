@@ -10,13 +10,19 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/logging"
 )
 
+// The aggregator RPC client is the designed to send the operator signed task responses to the
+// aggregator RPC server, which will redirect those responses to the BLS aggregation service.
 type AggregatorRpcClienter[Output any] interface {
+	// Sends a signed task response to the Aggregator RPC server via RPC communication.
 	SendSignedTaskResponseToAggregator(signedTaskResponse *sdkaggregator.SignedTaskResponse[Output])
 }
 
 type AggregatorRpcClient[Output any] struct {
-	rpcClient            *rpc.Client
-	logger               logging.Logger
+	// The RPC client to communicate with the aggregator
+	rpcClient *rpc.Client
+	logger    logging.Logger
+
+	// IP address and port where the aggregator will listen to operator task responses
 	aggregatorIpPortAddr string
 }
 
@@ -32,6 +38,7 @@ func NewAggregatorRpcClient[Output any](
 	}, nil
 }
 
+// Dials to the address specified on the building where the aggregator RPC server will listen to RPC connections
 func (c *AggregatorRpcClient[Output]) dialAggregatorRpcClient() error {
 	client, err := rpc.DialHTTP("tcp", c.aggregatorIpPortAddr)
 	if err != nil {

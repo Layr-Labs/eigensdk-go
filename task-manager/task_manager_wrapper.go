@@ -15,11 +15,22 @@ import (
 
 var _ TaskManager[any, any] = (*taskManagerContractWrapper[any, any])(nil)
 
+// The task manager contract wrapper is a simple implementation of the Task manager interface.
+// It absorbs the complexity of the communication with the contract using the generic types.
 type taskManagerContractWrapper[Input any, Output any] struct {
-	taskManagerAbi  *abi.ABI
-	contract        taskManagerAbiContract[Input, Output]
-	txMgr           txmgr.TxManager
-	hashFunction    sdktypes.TaskResponseHashFunction
+	// The ABI of the contract to be called
+	taskManagerAbi *abi.ABI
+
+	// The wrapper of the bound contract which create the tx for the contract
+	contract taskManagerAbiContract[Input, Output]
+
+	// The txMgr which will send the transactions to the contract
+	txMgr txmgr.TxManager
+
+	// The function to hash the task response
+	hashFunction sdktypes.TaskResponseHashFunction
+
+	// The input and output names of the non-generic input and output values on the received ABI
 	inputFieldName  string
 	outputFieldName string
 }

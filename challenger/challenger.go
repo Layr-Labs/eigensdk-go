@@ -40,7 +40,7 @@ type Challenger[Input any, Output any] struct {
 	// channel that receives new task created event logs
 	newTaskCreatedChan chan types.Log
 
-	// The abi of the task manager contract
+	// The ABI of the task manager contract
 	taskManagerAbi *abi.ABI
 
 	// The client used to communicate with the anvil node
@@ -190,7 +190,7 @@ func (c *Challenger[Input, Output]) getNonSigningOperatorPubKeys(
 		c.logger.Error("Error unpacking calldata", "err", err)
 	}
 
-	// Note: this implies the abi of the Task Manager contract implemented by the AVS should respect this values, or it
+	// Note: this implies the ABI of the Task Manager contract implemented by the AVS should respect this values, or it
 	// wont work. Other solution is to receive this as parameter, but it looks more difficult than only replace this.
 	nonSignerStakesAndSignatureInput := inputs[2].(struct {
 		NonSignerQuorumBitmapIndices []uint32 "json:\"nonSignerQuorumBitmapIndices\""
