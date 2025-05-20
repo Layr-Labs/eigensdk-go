@@ -64,7 +64,7 @@ The Operator functions through the following flow:
           }
       ```
 
-1. **Processing Logic**: Implement the computation function that processes task inputs and produces outputs
+3. **Processing Logic**: Implement the computation function that processes task inputs and produces outputs
    - This function will be called when the operator receives a `"NewTaskCreated"` event.
 
       ```go
@@ -75,7 +75,7 @@ The Operator functions through the following flow:
         }
       ```
 
-2. **Response Calculator**: To abstract your computation into the operator, we provide a `ResponseCalculator` interface with a standar `functionResponseCalculator` struct. This struct implements the interface and a helper method for turning your function into `functionResponseCalculator`:
+4. **Response Calculator**: To abstract your computation into the operator, we provide a `ResponseCalculator` interface with a standar `functionResponseCalculator` struct. This struct implements the interface and a helper method for turning your function into `functionResponseCalculator`:
    - `NewFunctionResponseCalculator`: Create a response calculator from your computation function.
 
       ```go
@@ -84,13 +84,13 @@ The Operator functions through the following flow:
 
    - In case you need to save state in the operator, you can use your own struct implementing the `ResponseCalculator` interface.
 
-3. **Failing Response Calculator**: If you want to test what happens when the operator responds incorrectly to a task and see how slashing works, you can wrap your logic with `NewFailingResponseCalculator` method to inject failures and a given failure rate. **Use this for testing purposes only.**
+5. **Failing Response Calculator**: If you want to test what happens when the operator responds incorrectly to a task and see how slashing works, you can wrap your logic with `NewFailingResponseCalculator` method to inject failures and a given failure rate. **Use this for testing purposes only.**
     
     ```go
         logic, err := operator.NewFailingResponseCalculator(calculator, 50, big.NewInt(0))
     ```
 
-4. **Run the operator**: Initialize the `Operator` with the configuration and the processing logic. Then start the operator.
+6. **Run the operator**: Initialize the `Operator` with the configuration and the processing logic. Then start the operator.
 
     ```go
         operator, err := operator.NewOperatorFromConfig(operatorConfig, logic, nil)
