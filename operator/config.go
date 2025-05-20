@@ -29,6 +29,7 @@ type Config struct {
 	// The address where the aggregator will listen for rpc calls from the operators
 	AggregatorServerIpPortAddress string
 
+	// The logger where the loggs will appear
 	Logger logging.Logger
 
 	// The abi of the task manager contract
