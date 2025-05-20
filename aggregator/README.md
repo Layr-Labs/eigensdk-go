@@ -10,20 +10,20 @@ The Aggregator operates through three main asynchronous processes:
 
 1. **RPC Server Process**:
 
-- Runs a RPC-based server that listens for incoming operator responses
-- When an operator submits a signed task response, the Aggregator forwards the signature to the BLS aggregation service.
+    - Runs a RPC-based server that listens for incoming operator responses
+    - When an operator submits a signed task response, the Aggregator forwards the signature to the BLS aggregation service.
 
 2. **Task Monitoring Process**:
 
-- Subscribes to blockchain events for new tasks
-- When a new task is detected, it creates a task metadata record
-- Sends the task metadata to the BLS Aggregation Service to begin signature collection
+    - Subscribes to blockchain events for new tasks
+    - When a new task is detected, it creates a task metadata record
+    - Sends the task metadata to the BLS Aggregation Service to begin signature collection
 
 3. **Aggregation Process**:
 
-- Listens for aggregated results from the BLS aggregation service
-- When enough signatures are collected (meeting the quorum threshold), processes the result
-- Submits the aggregated signature along with information about non-signing operators to the blockchain
+    - Listens for aggregated results from the BLS aggregation service
+    - When enough signatures are collected (meeting the quorum threshold), processes the result
+    - Submits the aggregated signature along with information about non-signing operators to the blockchain
 
 This flow ensures tasks are initialized, signatures collected, and the final response confirmed and forwarded to the AVS logic.
 
