@@ -60,7 +60,6 @@ func NewOperatorFromConfig[Input any, Output any](
 ) (*Operator[Input, Output], error) {
 	avsConfig := avsregistry.Config{
 		RegistryCoordinatorAddress: common.HexToAddress(c.AVSRegistryCoordinatorAddress),
-		ServiceManagerAddress:      common.HexToAddress(c.ServiceManagerAddress),
 	}
 
 	ethHttpClient, err := ethclient.Dial(c.EthRpcUrl)

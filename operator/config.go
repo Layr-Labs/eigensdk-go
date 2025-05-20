@@ -13,7 +13,6 @@ type Config struct {
 	OperatorAddress string
 
 	// These addresses are used to initialize the avs registry chain reader
-	ServiceManagerAddress         string
 	AVSRegistryCoordinatorAddress string
 
 	// Ethereum HTTP RPC URL to use for interacting with on-chain contracts
