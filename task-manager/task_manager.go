@@ -6,6 +6,8 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/types"
 )
 
+// The TaskManager interface can be used to communicate with the TaskManager on-chain contract.
+// It implements the methods of the individual generic interfaces used to communicate with the contract.
 type TaskManager[Input any, Output any] interface {
 	TaskCreator[Input]
 
