@@ -17,10 +17,10 @@ type Config struct {
 	ServiceManagerAddress         string
 	AVSRegistryCoordinatorAddress string
 
-	// The url exposed by the anvil node to call the contract methods
+	// Ethereum HTTP RPC URL to use for interacting with on-chain contracts
 	EthRpcUrl string
 
-	// The url exposed by the anvil node to listen to the contract events
+	// Ethereum WebSocket RPC URL to use for subscribing to on-chain events
 	EthWsUrl string
 
 	// The path to the location of the bls private key on local storage
