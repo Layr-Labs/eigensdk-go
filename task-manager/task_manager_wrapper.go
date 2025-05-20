@@ -19,16 +19,16 @@ var _ TaskManager[any, any] = (*taskManagerContractWrapper[any, any])(nil)
 // It absorbs the complexity of the communication with the contract using the generic types.
 type taskManagerContractWrapper[Input any, Output any] struct {
 	// The abi of the contract to be called
-	taskManagerAbi  *abi.ABI
+	taskManagerAbi *abi.ABI
 
 	// The wrapper of the bound contract which create the tx for the contract
-	contract        taskManagerAbiContract[Input, Output]
+	contract taskManagerAbiContract[Input, Output]
 
 	// The txMgr which will send the transactions to the contract
-	txMgr           txmgr.TxManager
+	txMgr txmgr.TxManager
 
 	// The function to hash the task response
-	hashFunction    sdktypes.TaskResponseHashFunction
+	hashFunction sdktypes.TaskResponseHashFunction
 
 	// The input and output names of the non-generic input and output values on the received ABI
 	inputFieldName  string
