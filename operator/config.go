@@ -32,7 +32,7 @@ type Config struct {
 	// The logger where the loggs will appear
 	Logger logging.Logger
 
-	// The abi of the task manager contract
+	// The ABI of the task manager contract
 	TaskManagerAbi *abi.ABI
 
 	// The config used to register an operator

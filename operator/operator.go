@@ -41,7 +41,7 @@ type Operator[Input any, Output any] struct {
 	// channel that receives new task created event logs
 	newTaskCreatedLogs chan types.Log
 
-	// The abi of the task manager contract
+	// The ABI of the task manager contract
 	taskManagerAbi *abi.ABI
 
 	// The function used to calculate the response for the received tasks
@@ -250,7 +250,7 @@ func (o *Operator[Input, Output]) signTaskResponse(
 	return signedTaskResponse, nil
 }
 
-// Receives an ABI and returns the abi type for the AVS output value, or an error in case of failure
+// Receives an ABI and returns the ABI type for the AVS output value, or an error in case of failure
 // The idea is, instead of receiving the type as parameter, read it from the received ABI
 func extractTypeFromAbi(taskManagerAbi *abi.ABI) (abi.Type, error) {
 	taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
@@ -259,7 +259,7 @@ func extractTypeFromAbi(taskManagerAbi *abi.ABI) (abi.Type, error) {
 			Type: "uint32",
 		},
 		{
-			Name: "OutputValue", // Left because abi does not support purely anonymous or underscored fields
+			Name: "OutputValue", // Left because ABI does not support purely anonymous or underscored fields
 			Type: taskManagerAbi.Events["TaskResponded"].Inputs[0].Type.TupleElems[1].String(),
 		},
 	})
@@ -270,7 +270,7 @@ func extractTypeFromAbi(taskManagerAbi *abi.ABI) (abi.Type, error) {
 	return taskResponseType, nil
 }
 
-// Receives an abi type and returns a generic task response hash function that uses that type and returns
+// Receives an ABI type and returns a generic task response hash function that uses that type and returns
 // the hash of the response encoded on the value
 func getDefaultHashFunction[Output any](taskResponseType abi.Type) TaskResponseHashFunction[Output] {
 	return func(taskResponse taskmanager.TaskResponse[Output]) ([32]byte, error) {
