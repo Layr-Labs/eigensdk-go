@@ -59,6 +59,9 @@ func NewOperatorFromConfig[Input any, Output any](
 	responseCalculator ResponseCalculator[Input, Output],
 	taskResponseHashFn TaskResponseHashFunction[Output],
 ) (*Operator[Input, Output], error) {
+	// Note: here we only assign the registry coordinator address because is the only address we use
+	// when we use the AVS registry reader. If you want to do more things with avs registry reader,
+	// you should add those addresses to the operator config and assign them here.
 	avsConfig := avsregistry.Config{
 		RegistryCoordinatorAddress: common.HexToAddress(c.AVSRegistryCoordinatorAddress),
 	}
