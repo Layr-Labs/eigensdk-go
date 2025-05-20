@@ -14,10 +14,10 @@ import (
 type IndexingChallengerProcessor[Input any, Output any] struct {
 	logger logging.Logger
 
-	// This function validates the task response, probably re-executing the task
+	// This function validates the task response submitted by the operators
 	responseValidationFn ResponseValidationFunction[Input, Output]
 
-	// The challenger raiser is the responsible of communicating with the Task Manager contract to raise challenges
+	// The challenger raiser is responsible for communicating with the `TaskManager` contract to raise challenges
 	challengerRaiser taskmanager.ChallengeRaiser[Input, Output]
 	tasks            map[uint32]taskmanager.Task[Input]
 }

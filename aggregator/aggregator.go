@@ -22,26 +22,26 @@ import (
 	oprsinfoserv "github.com/Layr-Labs/eigensdk-go/services/operatorsinfo"
 )
 
-// The aggregator is the entity responsible of communicating with the BLS aggregation service. This includes:
-//   - Listening to new task created events, initializing new tasks at the BLS aggregation service for them.
-//   - Receiving responses to tasks from the operators, and sending them to the BLS aggregation service.
-//   - Receiving the aggregated responses from the BLS aggregation service, and sending them to the Task Manager
+// The aggregator is responsible for aggregating signed task responses from operators and posting them on chain. This includes:
+//   - Listening to new task created events.
+//   - Receiving signed responses from the operators.
+//   - Sending the aggregated responses to the `TaskManager` contract
 //
-// Most of these things are delegated to the Task Processor interface, that process tasks and communicates with
-// the on-chain task manager contract.
+// Most of these things are delegated to the `TaskProcessor` interface, that processes
+// tasks and communicates with the on-chain `TaskManager` contract.
 type Aggregator[Input any, Output any] struct {
 	logger logging.Logger
 
-	// The port exposed by the aggregator to listen to operator task responses
+	// IP address and port where the aggregator will listen to operator task responses
 	serverIpPortAddr string
 
-	// bls aggregation service
+	// BLS aggregation service
 	blsAggregationService blsagg.BlsAggregationService
 
-	// channel that receives new task created event logs
+	// Channel for receiving new task created event logs
 	newTaskCreatedLogs chan types.Log
 
-	// Abi of the task manager contract
+	// ABI of the task manager contract
 	taskManagerAbi *abi.ABI
 
 	taskProcessor taskprocessor.TaskProcessor[Input, Output]
@@ -118,7 +118,9 @@ func NewAggregator[Input any, Output any](
 	}, nil
 }
 
-// Start method runs the main loop of the Aggregator. This loop has 2 main events:
+// Starts running the Aggregator. This should be called only one time per Aggregator.
+//
+// The main loop of the Aggregator has 2 main events:
 //   - Get a response from the BLS aggregation service: In this case the response is processed and sent to
 //     the Task Manager on-chain contract.
 //   - Receive a new task created event log: In this case the aggregator processes that event, and sends to
