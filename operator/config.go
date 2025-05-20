@@ -29,7 +29,7 @@ type Config struct {
 	// IP address and port where the aggregator will listen to operator task responses
 	AggregatorServerIpPortAddress string
 
-	// The logger where the loggs will appear
+	// The logger to use when logging
 	Logger logging.Logger
 
 	// The ABI of the task manager contract
