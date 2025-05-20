@@ -59,9 +59,8 @@ func NewOperatorFromConfig[Input any, Output any](
 	taskResponseHashFn TaskResponseHashFunction[Output],
 ) (*Operator[Input, Output], error) {
 	avsConfig := avsregistry.Config{
-		RegistryCoordinatorAddress:    common.HexToAddress(c.AVSRegistryCoordinatorAddress),
-		OperatorStateRetrieverAddress: common.HexToAddress(c.OperatorStateRetrieverAddress),
-		ServiceManagerAddress:         common.HexToAddress(c.ServiceManagerAddress),
+		RegistryCoordinatorAddress: common.HexToAddress(c.AVSRegistryCoordinatorAddress),
+		ServiceManagerAddress:      common.HexToAddress(c.ServiceManagerAddress),
 	}
 
 	ethHttpClient, err := ethclient.Dial(c.EthRpcUrl)
