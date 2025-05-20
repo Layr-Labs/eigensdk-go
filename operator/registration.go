@@ -267,7 +267,7 @@ func SetAllocationDelay(
 }
 
 // This function deposits into the token of the received strategies in an amount received as parameter.
-// To do this needs the strategyManager address and the addresses of the strategies for the operator 
+// To do this needs the strategyManager address and the addresses of the strategies for the operator
 // to be deposited.
 func DepositIntoStrategyForOperator(
 	logger logging.Logger,
