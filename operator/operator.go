@@ -35,7 +35,7 @@ type Operator[Input any, Output any] struct {
 	// The aggregator RPC client is responsible of the communication with the Aggregator
 	aggregatorRpcClient AggregatorRpcClienter[Output]
 
-	// The bls key pair used to sign the task responses
+	// The BLS key pair used to sign the task responses
 	blsKeypair *bls.KeyPair
 
 	// channel that receives new task created event logs

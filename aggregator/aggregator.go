@@ -124,7 +124,7 @@ func NewAggregator[Input any, Output any](
 //   - Get a response from the BLS aggregation service: In this case the response is processed and sent to
 //     the Task Manager on-chain contract.
 //   - Receive a new task created event log: In this case the aggregator processes that event, and sends to
-//     the bls aggregation service the new task created metadata.
+//     the BLS aggregation service the new task created metadata.
 func (agg *Aggregator[Input, Output]) Start(ctx context.Context) error {
 	agg.logger.Info("Starting aggregator.")
 	agg.logger.Info("Starting aggregator rpc server.")
