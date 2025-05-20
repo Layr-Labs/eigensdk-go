@@ -23,20 +23,36 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
+// The operator responds to tasks created by the task manager, and sends the task responses to
+// the BLS aggregation service via rpc Aggregator. To do this, receives a function to calculate
+// the task response and another to calculate the task response hash.
 type Operator[Input any, Output any] struct {
-	logger              logging.Logger
-	operatorId          sdktypes.OperatorId
+	logger logging.Logger
+
+	// The operator ID, used to sign the task responses
+	operatorId sdktypes.OperatorId
+
+	// The aggregator RPC client is responsible of the communication with the Aggregator
 	aggregatorRpcClient AggregatorRpcClienter[Output]
-	EthWsUrl            string
-	blsKeypair          *bls.KeyPair
-	newTaskCreatedLogs  chan types.Log
-	taskManagerAbi      *abi.ABI
-	responseCalculator  ResponseCalculator[Input, Output]
-	taskResponseHashFn  TaskResponseHashFunction[Output]
+
+	// The bls key pair used to sign the task responses
+	blsKeypair *bls.KeyPair
+
+	// channel that receives new task created event logs
+	newTaskCreatedLogs chan types.Log
+
+	// The abi of the task manager contract
+	taskManagerAbi *abi.ABI
+
+	// The function used to calculate the response for the received tasks
+	responseCalculator ResponseCalculator[Input, Output]
+	// The function used to hash the task responses
+	taskResponseHashFn TaskResponseHashFunction[Output]
 }
 
 type TaskResponseHashFunction[Output any] func(taskResponse taskmanager.TaskResponse[Output]) ([32]byte, error)
 
+// NewOperatorFromConfig creates a new Operator with the provided config and the functions to calculate and hashing the response.
 func NewOperatorFromConfig[Input any, Output any](
 	c Config,
 	responseCalculator ResponseCalculator[Input, Output],
@@ -59,7 +75,8 @@ func NewOperatorFromConfig[Input any, Output any](
 		return nil, err
 	}
 
-	// Check if operator was registered, return error if not
+	// Check if operator was registered, if its not registered and register on startup flag is not set, then will fail.
+	// If its not registered and should be registered on startup, make the registration.
 	operatorIsRegistered, err := avsReader.IsOperatorRegistered(&bind.CallOpts{}, common.HexToAddress(c.OperatorAddress))
 	if err != nil {
 		c.Logger.Error("Error checking if operator is registered", "err", err)
@@ -152,6 +169,8 @@ func NewOperatorFromConfig[Input any, Output any](
 	return operator, nil
 }
 
+// The start function executes the main loop for the operator, that basically listens to new task created events
+// and respond to those tasks, signs them and sends them to the aggregator via aggregator RPC client.
 func (o *Operator[Input, Output]) Start(ctx context.Context) error {
 	o.logger.Info("Starting operator.")
 
@@ -210,6 +229,8 @@ func (o *Operator[Input, Output]) processNewTaskCreatedLog(
 	return taskResponse, nil
 }
 
+// Receives a task response and signs it with the task response hash function, the BLS signature
+// and the operator ID.
 func (o *Operator[Input, Output]) signTaskResponse(
 	taskResponse *taskmanager.TaskResponse[Output],
 ) (*sdkaggregator.SignedTaskResponse[Output], error) {
@@ -229,6 +250,8 @@ func (o *Operator[Input, Output]) signTaskResponse(
 	return signedTaskResponse, nil
 }
 
+// Receives an ABI and returns the abi type for the AVS output value, or an error in case of failure
+// The idea is, instead of receiving the type as parameter, read it from the received ABI
 func extractTypeFromAbi(taskManagerAbi *abi.ABI) (abi.Type, error) {
 	taskResponseType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
 		{
@@ -247,6 +270,8 @@ func extractTypeFromAbi(taskManagerAbi *abi.ABI) (abi.Type, error) {
 	return taskResponseType, nil
 }
 
+// Receives an abi type and returns a generic task response hash function that uses that type and returns
+// the hash of the response encoded on the value
 func getDefaultHashFunction[Output any](taskResponseType abi.Type) TaskResponseHashFunction[Output] {
 	return func(taskResponse taskmanager.TaskResponse[Output]) ([32]byte, error) {
 		arguments := abi.Arguments{
