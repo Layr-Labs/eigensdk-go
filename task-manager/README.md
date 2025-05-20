@@ -98,3 +98,29 @@ Once those are in place, you have to define the AVS Input/Output and create the 
         return
     }
 ```
+
+## Related types
+
+### Task
+
+The [`Task`] struct is a wrapper of the Task struct from the user's TaskManagerContract binding with a generic input type.
+
+``` go
+    type Task[Input any] struct {
+        InputValue                Input
+        TaskCreatedBlock          uint32
+        QuorumNumbers             []byte
+        QuorumThresholdPercentage uint32
+    }
+```
+
+### Task Response
+
+The [`TaskResponse`] struct is a wrapper of the TaskResponse struct from the user's TaskManagerContract binding with a generic output type.
+
+``` go
+    type TaskResponse[Output any] struct {
+        ReferenceTaskIndex uint32
+        OutputValue        Output
+    }
+```
