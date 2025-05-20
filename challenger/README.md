@@ -32,8 +32,40 @@ The Challenger operates through a well-defined workflow:
       taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
    ```
 
+2. **Challenger Configuration**: Create a `challenger.Config` struct with the following fields:
+   - `EthWsUrl`: The URL of the Ethereum websocket
+   - `Logger`: The logger
+   - `TaskManagerAbi`: The ABI of the task manager
+   - `EthClient`: The Ethereum client
 
-2. **Task Verification Logic**: Define a function that computes the expected result for a task, which will be used to verify operator responses
+   ```go
+      ethHttpUrl := "http://localhost:8545"
+      ethHttpClient, _ := ethclient.Dial(ethHttpUrl)
+    
+      cfg := challenger.Config{
+        EthWsUrl:       "ws://localhost:8545",
+        Logger:         logger,
+        TaskManagerAbi: taskManagerAbi,
+        EthClient:      ethHttpClient,
+      }
+   ```
+
+3. **Task Manager**: Create a `TaskManager` to interact with the user defined task manager contract.
+   - This will be in charge of raising challenges.
+
+   ```go
+   	  ecdsaPrivateKey, _ := crypto.HexToECDSA(testutils.ANVIL_FIRST_PRIVATE_KEY)
+      txMgr, _ := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethHttpClient, ecdsaPrivateKey)
+
+      challengerRaiser, err := taskmanager.NewTaskManagerFromAbi[*big.Int, *big.Int](
+        taskManagerAddress,
+        taskManagerAbi,
+        txMgr,
+        ethHttpClient,
+      )
+   ```
+
+4. **Task Verification Logic**: Define a function that computes the expected result for a task, which will be used to verify operator responses
    - This would be the logic to compute a new task.
 
       ```go
@@ -43,14 +75,14 @@ The Challenger operates through a well-defined workflow:
         }
       ```
 
-4. **Response Calculator**: To abstract your computation into the challenger, we provide a `ResponseCalculator` interface with a standar `functionResponseCalculator` struct. This struct implements the interface and a helper method for turning your function into `functionResponseCalculator`:
+5. **Response Calculator**: To abstract your computation into the challenger, we provide a `ResponseCalculator` interface with a standar `functionResponseCalculator` struct. This struct implements the interface and a helper method for turning your function into `functionResponseCalculator`:
    - `NewFunctionResponseCalculator`: Create a response calculator from your computation function.
 
       ```go
           calculator := operator.NewFunctionResponseCalculator(square)
       ```
 
-5. **Verifier**: Create a verifier from the response calculator.
+6. **Verifier**: Create a verifier from the response calculator.
    - This will be in charge of computing the response of a task and will use a user-defined function to compare the computed response with the operator's response.
 
       ```go
@@ -62,7 +94,7 @@ The Challenger operates through a well-defined workflow:
           validation := challengerprocessor.ResponseValidationFunctionFromResponseCalculator(calculator, BigIntEqual)
       ```
 
-6. **Challenger Task Processor**: Create a [`ChallengerTaskProcessor`] interface implementation.
+7. **Challenger Task Processor**: Create a [`ChallengerTaskProcessor`] interface implementation.
     - This will be in charge of processing the task and the response.
     - We provide a standard [`IndexingChallengerProcessor`] struct that can be used as a starting point.
 
@@ -70,7 +102,7 @@ The Challenger operates through a well-defined workflow:
           indexingTaskProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, validation, challengerRaiser)
       ```
 
-7. **Challenger**: Create a [`Challenger`] from the [`Config`] and the [`ChallengerTaskProcessor`].
+8. **Challenger**: Create a [`Challenger`] from the [`Config`] and the [`ChallengerTaskProcessor`].
 
     ```go
         challenger, _ := challenger.NewChallenger(
@@ -79,7 +111,7 @@ The Challenger operates through a well-defined workflow:
         )
     ```
 
-8. **Start the Challenger**: Start the challenger.
+9.  **Start the Challenger**: Start the challenger.
 
     ```go
         challenger.Start(context.Background())
