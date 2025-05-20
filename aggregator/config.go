@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+// Aggregator configuration struct
 type Config struct {
 	// Ethereum HTTP RPC URL to use for interacting with on-chain contracts
 	EthHttpUrl string `toml:"eth_http_url"`

@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+// Operator configuration struct
 type Config struct {
 	// The address for the operator
 	OperatorAddress string
