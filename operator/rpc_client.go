@@ -22,7 +22,7 @@ type AggregatorRpcClient[Output any] struct {
 	rpcClient *rpc.Client
 	logger    logging.Logger
 
-	// The address where the operator signed task responses will be sent
+	// IP address and port where the aggregator will listen to operator task responses
 	aggregatorIpPortAddr string
 }
 

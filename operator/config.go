@@ -26,7 +26,7 @@ type Config struct {
 	// The path to the location of the bls private key on local storage
 	BlsPrivateKeyStorePath string
 
-	// The address where the aggregator will listen for rpc calls from the operators
+	// IP address and port where the aggregator will listen to operator task responses
 	AggregatorServerIpPortAddress string
 
 	// The logger where the loggs will appear
