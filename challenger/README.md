@@ -44,7 +44,7 @@ The Challenger operates through a well-defined workflow:
         }
       ```
 
-2. **Task Verification Logic**: Define a function that computes the response for a task and compares it with the operator's response.
+2. **Task Verification Logic**: Define a function that verifies the response for a task, returning `true` for valid tasks.
 
     ```go
       func isValidSquare(taskIndex uint32, numberToSquare, numberSquared *big.Int) (bool, error) {
