@@ -112,7 +112,7 @@ Here are some examples of challenger implementations:
 
 ## How to implement a custom Challenger Processor
 
-To implement a custom Challenger Processor, you must implement the `ChallengerProcessor` interface, which defines two methods:
+To implement a custom Challenger Processor, you must implement the `ChallengerProcessor` interface:
 
 ```go
   type ChallengerProcessor[Input any, Output any] interface {
@@ -121,15 +121,16 @@ To implement a custom Challenger Processor, you must implement the `ChallengerPr
   }
 ```
 
-- `ProcessNewTaskCreated`: Invoked when a new task is emitted by the contract. This method should store the task to be used later during response validation.
-- `ProcessTaskResponded`: Invoked when a task response is received. This method verifies the operator’s response and raises a challenge for invalid responses.
+This interface has two methods, which we explain in the next sections. Refer to the [`IndexingChallengerProcessor`](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-2/challenger/challenger-processor/challenger_task_processor.go) implementation for an example of how to implement a custom Challenger Processor.
 
-The main responsibility of `ProcessNewTaskCreated` is to store the task (e.g., in a map, in a database, etc.), so that when a response arrives, you can retrieve the corresponding input.
+### `ProcessNewTaskCreated`
 
-We consider `ProcessTaskResponded` the important function. It should:
+Invoked when a new task is emitted by the contract. `ProcessNewTaskCreated` is commonly used to store the task (e.g., in a map, in a database, etc.), so that when a response arrives, you can retrieve the corresponding input.
 
-1. Retrieve the original task using the index.
-2. Compare the input of the task with the operator’s response. You will receive the operator's response from the event.
-3. Raise a challenge through the `TaskManager` if the responses differ.
+### `ProcessTaskResponded`
 
-Refer to the [`IndexingChallengerProcessor`](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-2/challenger/challenger-processor/challenger_task_processor.go) implementation for an example of how to implement a custom Challenger Processor.
+Invoked when a task response is received. This method should verify the operator’s response and raise a challenge for invalid responses. Step by step, this method:
+
+1. Retrieves the original task using the index.
+2. Verifies the operator’s response against the task's input.
+3. Raises a challenge through the `TaskManager` if the responses differ.
