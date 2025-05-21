@@ -97,7 +97,8 @@ This flow ensures tasks are initialized, signatures collected, and the final res
 4. **Task Processor Definition**: Create a struct implementing the `TaskProcessor` interface:
 
     - This is a interface that contains user-defined logic to handle new tasks, signed responses, and the final aggregated result.
-    - We provide a standard `IndexingTaskProcessor` implementation that can be used as is for most cases. Its builder, `NewIndexingTaskProcessor` from `taskprocessor` package, receives a logger to put the logs and the task responder created below.
+    - We provide a standard `IndexingTaskProcessor` implementation that can be used as is for most cases.
+    - You can create it usig the `NewIndexingTaskProcessor` builder from `taskprocessor` package.
 
     ``` go
         taskProcessor, err := taskprocessor.NewIndexingTaskProcessor(logger, taskResponder)
