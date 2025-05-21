@@ -79,7 +79,6 @@ func main() {
 	}
 
 	aggConfig := config.Config
-	aggConfig.EcdsaPrivateKey = ecdsaPrivateKey
 
 	taskManagerAddr := gethcommon.HexToAddress(config.TaskManagerAddress)
 	taskResponder, err := taskmanager.NewTaskManagerFromAbi[examplecommon.DotProductInput, *big.Int](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
