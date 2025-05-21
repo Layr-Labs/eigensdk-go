@@ -55,7 +55,7 @@ The Challenger operates through a well-defined workflow:
 
     - There is another approach where you can use the logic from the operator to compute the task. To do this, you can wrap the logic into a `ResponseCalculator` implementation. Then you can use `ResponseValidationFunctionFromResponseCalculator`, which will be in charge of computing the response of a task and will use a user-defined function to compare the computed response with the operator's response.
 
-3. **Provide a Challenger Processor**: Provide a struct implementing the `ChallengerProcessor` interface. This interface contains user-defined logic to process new tasks and task responses. We provide a standard `IndexingChallengerProcessor` implementation that can be used as is for most cases, you can create it using the `NewIndexingChallengerProcessor` constructor from `challengerprocessor` package:
+3. **Provide a Challenger Processor**: Provide a struct implementing the `ChallengerProcessor` interface. This interface contains user-defined logic to process new tasks and task responses. We provide a standard `IndexingChallengerProcessor` implementation that can be used as-is for most cases, you can create it using the `NewIndexingChallengerProcessor` constructor from `challengerprocessor` package:
 
     1. Instantiate an Ethereum client and a transaction manager for the `ChallengerProcessor`:
 
