@@ -16,7 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	sdkclients "github.com/Layr-Labs/eigensdk-go/chainio/clients"
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
 	avsregistryservice "github.com/Layr-Labs/eigensdk-go/services/avsregistry"
 	blsagg "github.com/Layr-Labs/eigensdk-go/services/bls_aggregation"
 	oprsinfoserv "github.com/Layr-Labs/eigensdk-go/services/operatorsinfo"
@@ -54,26 +54,35 @@ func NewAggregator[Input any, Output any](
 	taskProcessor taskprocessor.TaskProcessor[Input, Output],
 	taskManagerAbi *abi.ABI,
 ) (*Aggregator[Input, Output], error) {
-	chainioConfig := sdkclients.BuildAllConfig{
-		EthHttpUrl:                 c.EthHttpUrl,
-		EthWsUrl:                   c.EthWsUrl,
-		RegistryCoordinatorAddr:    c.RegistryCoordinatorAddress.String(),
-		OperatorStateRetrieverAddr: c.OperatorStateRetrieverAddress.String(),
-		AvsName:                    "Aggregator",
-		PromMetricsIpPortAddress:   ":9090",
-		DontUseAllocationManager:   true,
+	avsRegistryConfig := avsregistry.Config{
+		RegistryCoordinatorAddress:    c.RegistryCoordinatorAddress,
+		OperatorStateRetrieverAddress: c.OperatorStateRetrieverAddress,
 	}
 
-	clients, err := sdkclients.BuildAll(chainioConfig, c.EcdsaPrivateKey, logger)
+	wsClient, err := ethclient.Dial(c.EthWsUrl)
 	if err != nil {
-		logger.Errorf("Cannot create sdk clients. Err: %w", err)
-		return nil, err
+		logger.Fatal("error connecting to web socket", "err", err)
+	}
+
+	avsRegistrySubscriber, err := avsregistry.NewSubscriberFromConfig(avsRegistryConfig, wsClient, logger)
+	if err != nil {
+		logger.Fatal("Failed to create avs registry subscriber", "err", err)
+	}
+
+	httpClient, err := ethclient.Dial(c.EthHttpUrl)
+	if err != nil {
+		logger.Fatal("error connecting to http client", "err", err)
+	}
+
+	avsRegistryReader, err := avsregistry.NewReaderFromConfig(avsRegistryConfig, httpClient, logger)
+	if err != nil {
+		logger.Fatal("Failed to create avs registry reader", "err", err)
 	}
 
 	operatorPubkeysService := oprsinfoserv.NewOperatorsInfoServiceInMemory(
 		context.Background(),
-		clients.AvsRegistryChainSubscriber,
-		clients.AvsRegistryChainReader,
+		avsRegistrySubscriber,
+		avsRegistryReader,
 		nil,
 		oprsinfoserv.Opts{},
 		logger,
@@ -88,13 +97,8 @@ func NewAggregator[Input any, Output any](
 		return taskProcessor.ProcessTaskResponse(taskResponse)
 	}
 
-	avsRegistryService := avsregistryservice.NewAvsRegistryServiceChainCaller(clients.AvsRegistryChainReader, operatorPubkeysService, logger)
+	avsRegistryService := avsregistryservice.NewAvsRegistryServiceChainCaller(avsRegistryReader, operatorPubkeysService, logger)
 	blsAggregationService := blsagg.NewBlsAggregatorService(avsRegistryService, taskResponseHashFn, logger)
-
-	client, err := ethclient.Dial(c.EthWsUrl)
-	if err != nil {
-		logger.Fatal("error connecting to web socket", "err", err)
-	}
 
 	newTaskCreatedEventHash := taskManagerAbi.Events["NewTaskCreated"].ID
 	query := ethereum.FilterQuery{
@@ -103,7 +107,7 @@ func NewAggregator[Input any, Output any](
 	}
 
 	newTaskCreatedLogs := make(chan types.Log)
-	_, err = client.SubscribeFilterLogs(context.Background(), query, newTaskCreatedLogs)
+	_, err = wsClient.SubscribeFilterLogs(context.Background(), query, newTaskCreatedLogs)
 	if err != nil {
 		logger.Fatal("error subscribing to newTaskCreated events", "err", err)
 	}
@@ -124,7 +128,7 @@ func NewAggregator[Input any, Output any](
 //   - Get a response from the BLS aggregation service: In this case the response is processed and sent to
 //     the Task Manager on-chain contract.
 //   - Receive a new task created event log: In this case the aggregator processes that event, and sends to
-//     the bls aggregation service the new task created metadata.
+//     the BLS aggregation service the new task created metadata.
 func (agg *Aggregator[Input, Output]) Start(ctx context.Context) error {
 	agg.logger.Info("Starting aggregator.")
 	agg.logger.Info("Starting aggregator rpc server.")

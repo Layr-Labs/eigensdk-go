@@ -6,6 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
+// Challenger configuration struct
 type Config struct {
 	// Ethereum WebSocket RPC URL to use for subscribing to on-chain events
 	EthWsUrl string
@@ -13,7 +14,7 @@ type Config struct {
 	// The logger where the loggs will appear
 	Logger logging.Logger
 
-	// The abi of the task manager contract
+	// The ABI of the task manager contract
 	TaskManagerAbi *abi.ABI
 
 	// The client used to communicate with the anvil node

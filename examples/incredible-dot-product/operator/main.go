@@ -62,8 +62,6 @@ func main() {
 		OperatorAddress: operatorAddr,
 
 		AVSRegistryCoordinatorAddress: "0xfd471836031dc5108809d173a067e8486b9047a3",
-		OperatorStateRetrieverAddress: "0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154",
-		ServiceManagerAddress:         "0xcd8a1c3ba11cf5ecfa6267617243239504a98d90",
 
 		EthWsUrl:                      "ws://localhost:8545",
 		EthRpcUrl:                     ethHttpUrl,

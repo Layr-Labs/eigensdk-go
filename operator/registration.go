@@ -27,6 +27,12 @@ import (
 	"github.com/ethereum/go-ethereum/event"
 )
 
+// This function performs startup operations for the operator, including:
+//   - Register the operator in Eigenlayer
+//   - Mint tokens for the operator in the received strategy
+//   - Register the operator in the received operator sets
+//   - Set the allocation delay as zero, to performs allocations immediatly
+//   - Initialize allocations for the operator sets
 func RegisterOperatorOnStartup(c RegistrationConfig, logger logging.Logger) error {
 	ethRpcClient, err := ethclient.Dial(c.EthRpcUrl)
 	if err != nil {
@@ -155,7 +161,8 @@ func RegisterOperatorOnStartup(c RegistrationConfig, logger logging.Logger) erro
 	return nil
 }
 
-// The idea is to have a util function that just registers an operator for an operator set if the avs needs it
+// This function registers the operator with Eigenlayer. To do this needs the delegationManager
+// address in the elcontracts config
 func RegisterOperatorWithEigenlayer(
 	operatorAddr common.Address,
 	elcontractsConfig elcontracts.Config,
@@ -163,8 +170,6 @@ func RegisterOperatorWithEigenlayer(
 	logger logging.Logger,
 	txMgr txmgr.TxManager,
 ) error {
-
-	// Register operator with EigenLayer
 	op := types.Operator{
 		Address:                   operatorAddr.String(),
 		DelegationApproverAddress: operatorAddr.String(),
@@ -185,6 +190,8 @@ func RegisterOperatorWithEigenlayer(
 	return nil
 }
 
+// This function registers the operator in the operator sets received as parameter. To do this needs the
+// allocationManager address in the elcontracts config and the registryCoordinator address.
 func RegisterForOperatorSets(
 	operatorAddr common.Address,
 	logger logging.Logger,
@@ -227,6 +234,8 @@ func RegisterForOperatorSets(
 	return nil
 }
 
+// This function sets the allocation delay for the operator to a value received as parameter (currently zero).
+// To do this needs the allocationManager address.
 func SetAllocationDelay(
 	logger logging.Logger,
 	operatorAddr common.Address,
@@ -257,6 +266,9 @@ func SetAllocationDelay(
 	return nil
 }
 
+// This function deposits into the token of the received strategies in an amount received as parameter.
+// To do this needs the strategyManager address and the addresses of the strategies for the operator
+// to be deposited.
 func DepositIntoStrategyForOperator(
 	logger logging.Logger,
 	elcontractsConfig elcontracts.Config,
@@ -324,6 +336,8 @@ func DepositIntoStrategyForOperator(
 	return nil
 }
 
+// This function initializes the allocations for the operator, setting the allocatable magnitude (the available to slash).
+// To do this needs the allocationManager address.
 func modifyAllocations(
 	operatorAddr common.Address,
 	allocationManagerAddr common.Address,

@@ -52,7 +52,7 @@ git clone https://github.com/Layr-Labs/eigensdk-go.git
 Initialize git submodules
 
 ``` bash
-git submodule update --init
+git submodule update --init --recursive
 ```
 
 Follow the [contribution guidelines](CONTRIBUTING.md) to contribute to eigensdk-go
