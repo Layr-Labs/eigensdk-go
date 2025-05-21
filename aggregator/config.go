@@ -20,7 +20,6 @@ type Config struct {
 	// These addresses are used to initialize the avs registry chain reader and subscriber
 	RegistryCoordinatorAddress    common.Address `toml:"registry_coordinator_address"`
 	OperatorStateRetrieverAddress common.Address `toml:"operator_state_retriever_address"`
-	ServiceManagerAddress         common.Address `toml:"service_manager_address"`
 
 	// The private key to use when signing transactions
 	// TODO: This field can't be parsed from config files, we should add some way to parse it.
