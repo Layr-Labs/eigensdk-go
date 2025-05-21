@@ -101,7 +101,7 @@ Here are some examples of aggregator implementations:
 
 ## How to create your Task Processor
 
-To create your Task Processor you have to declare a struct that satisfies the TaskProcessor interface:
+To create your Task Processor you have to declare a struct that satisfies the `TaskProcessor` interface:
 
 ``` go
     type TaskProcessor[Input any, Output any] interface {
@@ -111,12 +111,12 @@ To create your Task Processor you have to declare a struct that satisfies the Ta
  }
 ```
 
-If you want to see an example of TaskProcessor you can watch our IndexingTaskProcessor on `aggregator/task-processor/indexing_task_processor.go`.
+If you want to see an example of `TaskProcessor` you can watch our `IndexingTaskProcessor` on `aggregator/task-processor/indexing_task_processor.go`.
 
-The TaskProcessor interface has the following methods:
+The `TaskProcessor` interface has the following methods:
 
-- `ProcessNewTask` receives a task and a TaskIndex, processes the new task, and returns the metadata to be sent to the BLS aggregation service.
-- `ProcessTaskResponse` receives a task response and processes it, returning the hashed bytes of the response.
+- `ProcessNewTask` receives a `task` and a `TaskIndex`, processes the new task, and returns the metadata to be sent to the BLS aggregation service.
+- `ProcessTaskResponse` receives a `taskResponse` and processes it, returning the hashed bytes of the response.
 - `ProcessAggregatedResponse` receives an aggregated response and processes it, returning an error if the processing fails.
 
 Now we will suggest how to implement the interface methods, based on the implementation of the `IndexingTaskProcessor`.
