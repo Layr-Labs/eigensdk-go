@@ -14,7 +14,7 @@ type Config struct {
 	OperatorAddress string
 
 	// The registry coordinator address is used to create the AVS reader
-	AVSRegistryCoordinatorAddress string
+	RegistryCoordinatorAddress string
 
 	// Ethereum HTTP RPC URL to use for interacting with on-chain contracts
 	EthRpcUrl string
@@ -44,15 +44,11 @@ type RegistrationConfig struct {
 	// If set true, should register the operator on startup
 	RegisterOnStartup bool
 
-	// The address for the operator
-	OperatorAddr common.Address
-
 	// Used for setting the allogation delay to zero and initialize allocations
 	AllocationManagerAddr common.Address
 
 	// Used to register operator in operator sets and initialize allocations
-	AvsAddress              common.Address
-	RegistryCoordinatorAddr common.Address
+	AvsAddress common.Address
 
 	// Used to deposit into these strategies for operator and initialize allocations on these strategies
 	StrategyAddrs []common.Address
@@ -62,12 +58,8 @@ type RegistrationConfig struct {
 	RewardsCoordinatorAddress   common.Address
 	PermissionControllerAddress common.Address
 
-	// The url exposed by the anvil node to call the contract methods
-	EthRpcUrl string
-
-	// The path to the location of the bls and ecdsa private keys on local storage
+	// The path to the location of the ecdsa private key on local storage
 	EcdsaKeyStorePath string
-	BlsKeyStorePath   string
 
 	// The ammount to mint to the operator
 	AmountToMint *big.Int

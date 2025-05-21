@@ -63,7 +63,7 @@ func NewOperatorFromConfig[Input any, Output any](
 	// when we use the AVS registry reader. If you want to do more things with avs registry reader,
 	// you should add those addresses to the operator config and assign them here.
 	avsConfig := avsregistry.Config{
-		RegistryCoordinatorAddress: common.HexToAddress(c.AVSRegistryCoordinatorAddress),
+		RegistryCoordinatorAddress: common.HexToAddress(c.RegistryCoordinatorAddress),
 	}
 
 	ethHttpClient, err := ethclient.Dial(c.EthRpcUrl)
@@ -77,6 +77,16 @@ func NewOperatorFromConfig[Input any, Output any](
 		return nil, err
 	}
 
+	blsKeyPassword, ok := os.LookupEnv("OPERATOR_BLS_KEY_PASSWORD")
+	if !ok {
+		c.Logger.Warnf("OPERATOR_BLS_KEY_PASSWORD env var not set. using empty string")
+	}
+	blsKeyPair, err := bls.ReadPrivateKeyFromFile(c.BlsPrivateKeyStorePath, blsKeyPassword)
+	if err != nil {
+		c.Logger.Errorf("Cannot parse bls private key", "err", err)
+		return nil, err
+	}
+
 	// Check if operator was registered, if its not registered and register on startup flag is not set, then will fail.
 	// If its not registered and should be registered on startup, make the registration.
 	operatorIsRegistered, err := avsReader.IsOperatorRegistered(&bind.CallOpts{}, common.HexToAddress(c.OperatorAddress))
@@ -86,7 +96,14 @@ func NewOperatorFromConfig[Input any, Output any](
 	}
 	if !operatorIsRegistered {
 		if c.RegistrationCfg.RegisterOnStartup {
-			err = RegisterOperatorOnStartup(c.RegistrationCfg, c.Logger)
+			err = registerOperatorOnStartup(
+				c.RegistrationCfg,
+				c.Logger,
+				avsConfig.RegistryCoordinatorAddress,
+				common.HexToAddress(c.OperatorAddress),
+				ethHttpClient,
+				blsKeyPair,
+			)
 			if err != nil {
 				c.Logger.Errorf("Failure while registering operator on startup: %w", err)
 				return nil, err
@@ -110,16 +127,6 @@ func NewOperatorFromConfig[Input any, Output any](
 	aggregatorRpcClient, err := NewAggregatorRpcClient[Output](c.AggregatorServerIpPortAddress, c.Logger)
 	if err != nil {
 		c.Logger.Error("Cannot create AggregatorRpcClient. Is aggregator running?", "err", err)
-		return nil, err
-	}
-
-	blsKeyPassword, ok := os.LookupEnv("OPERATOR_BLS_KEY_PASSWORD")
-	if !ok {
-		c.Logger.Warnf("OPERATOR_BLS_KEY_PASSWORD env var not set. using empty string")
-	}
-	blsKeyPair, err := bls.ReadPrivateKeyFromFile(c.BlsPrivateKeyStorePath, blsKeyPassword)
-	if err != nil {
-		c.Logger.Errorf("Cannot parse bls private key", "err", err)
 		return nil, err
 	}
 

@@ -33,13 +33,14 @@ import (
 //   - Register the operator in the received operator sets
 //   - Set the allocation delay as zero, to performs allocations immediatly
 //   - Initialize allocations for the operator sets
-func RegisterOperatorOnStartup(c RegistrationConfig, logger logging.Logger) error {
-	ethRpcClient, err := ethclient.Dial(c.EthRpcUrl)
-	if err != nil {
-		logger.Errorf("Cannot create http ethclient", "err", err)
-		return err
-	}
-
+func registerOperatorOnStartup(
+	c RegistrationConfig,
+	logger logging.Logger,
+	registryCoordinatorAddr common.Address,
+	operatorAddress common.Address,
+	ethRpcClient *ethclient.Client,
+	blsKeyPair *bls.KeyPair,
+) error {
 	elcontractsConfig := elcontracts.Config{
 		DelegationManagerAddress:    c.DelegationManagerAddress,
 		RewardsCoordinatorAddress:   c.RewardsCoordinatorAddress,
@@ -82,7 +83,7 @@ func RegisterOperatorOnStartup(c RegistrationConfig, logger logging.Logger) erro
 	txMgr := txmgr.NewSimpleTxManager(pkWallet, ethRpcClient, logger, senderAddr)
 
 	err = RegisterOperatorWithEigenlayer(
-		c.OperatorAddr,
+		operatorAddress,
 		elcontractsConfig,
 		ethRpcClient,
 		logger,
@@ -98,30 +99,20 @@ func RegisterOperatorOnStartup(c RegistrationConfig, logger logging.Logger) erro
 		ethRpcClient,
 		c.StrategyAddrs,
 		txMgr,
-		c.OperatorAddr,
+		operatorAddress,
 		c.AmountToMint,
 	)
 	if err != nil {
 		logger.Fatalf("Failed to deposit into strategy for operator on startup: %v", err.Error())
 	}
 
-	blsKeyPassword, ok := os.LookupEnv("OPERATOR_BLS_KEY_PASSWORD")
-	if !ok {
-		logger.Warnf("OPERATOR_BLS_KEY_PASSWORD env var not set. using empty string")
-	}
-	blsKeyPair, err := bls.ReadPrivateKeyFromFile(c.BlsKeyStorePath, blsKeyPassword)
-	if err != nil {
-		logger.Errorf("Cannot parse bls private key", "err", err)
-		return err
-	}
-
 	err = RegisterForOperatorSets(
-		c.OperatorAddr,
+		operatorAddress,
 		logger,
 		elcontractsConfig,
 		ethRpcClient,
 		txMgr,
-		c.RegistryCoordinatorAddr,
+		registryCoordinatorAddr,
 		c.AvsAddress,
 		c.OperatorSetIds,
 		*blsKeyPair,
@@ -133,7 +124,7 @@ func RegisterOperatorOnStartup(c RegistrationConfig, logger logging.Logger) erro
 
 	err = SetAllocationDelay(
 		logger,
-		c.OperatorAddr,
+		operatorAddress,
 		ethRpcClient,
 		c.AllocationManagerAddr,
 		txMgr,
@@ -144,12 +135,12 @@ func RegisterOperatorOnStartup(c RegistrationConfig, logger logging.Logger) erro
 	}
 
 	err = modifyAllocations(
-		c.OperatorAddr,
+		operatorAddress,
 		c.AllocationManagerAddr,
 		c.AvsAddress,
 		c.StrategyAddrs,
 		c.AllocatableMagnitudes,
-		c.EthRpcUrl,
+		ethRpcClient,
 		txMgr,
 		c.OperatorSetIds,
 		logger,
@@ -344,14 +335,13 @@ func modifyAllocations(
 	avsAddress common.Address,
 	strategies []common.Address,
 	newMagnitudes []uint64,
-	httpUrl string,
+	ethRpcClient *ethclient.Client,
 	txMgr txmgr.TxManager,
 	operatorSetsIds []uint32,
 	logger logging.Logger,
 ) error {
 	txOpts, _ := txMgr.GetNoSendTxOpts()
 
-	ethRpcClient, _ := ethclient.Dial(httpUrl)
 	waitForReceipt := true
 	allocationManagerContract, _ := allocationmanager.NewContractAllocationManager(allocationManagerAddr, ethRpcClient)
 

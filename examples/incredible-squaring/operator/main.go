@@ -30,20 +30,15 @@ func main() {
 	registrationConfig := operator.RegistrationConfig{
 		RegisterOnStartup: true,
 
-		OperatorAddr:            common.HexToAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"),
-		AllocationManagerAddr:   common.HexToAddress("0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6"),
-		AvsAddress:              common.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"),
-		RegistryCoordinatorAddr: common.HexToAddress("0x7bc06c482dead17c0e297afbc32f6e63d3846650"),
-		StrategyAddrs:           []common.Address{common.HexToAddress("0x2b961e3959b79326a8e7f64ef0d2d825707669b5")},
+		AllocationManagerAddr: common.HexToAddress("0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6"),
+		AvsAddress:            common.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"),
+		StrategyAddrs:         []common.Address{common.HexToAddress("0x2b961e3959b79326a8e7f64ef0d2d825707669b5")},
 
 		DelegationManagerAddress:    common.HexToAddress("0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0"),
 		RewardsCoordinatorAddress:   common.HexToAddress("0xa51c1fc2f0d1a1b8494ed1fe312d7c3a78ed91c0"),
 		PermissionControllerAddress: common.HexToAddress("0x59b670e9fa9d0a427751af201d676719a970857b"),
 
-		EthRpcUrl: "http://localhost:8545",
-
 		EcdsaKeyStorePath: "keys/test.ecdsa.key.json",
-		BlsKeyStorePath:   "keys/test.bls.key.json",
 
 		AmountToMint:          amount,
 		AllocatableMagnitudes: []uint64{1000000000000000},
@@ -55,7 +50,7 @@ func main() {
 	// https://github.com/Layr-Labs/incredible-squaring-avs/blob/dev/config-files/operator.anvil.yaml
 	operatorConfig := operator.Config{
 		OperatorAddress:               "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-		AVSRegistryCoordinatorAddress: "0x7bc06c482dead17c0e297afbc32f6e63d3846650",
+		RegistryCoordinatorAddress:    "0x7bc06c482dead17c0e297afbc32f6e63d3846650",
 		EthRpcUrl:                     "http://localhost:8545",
 		EthWsUrl:                      "ws://localhost:8545",
 		BlsPrivateKeyStorePath:        "keys/test.bls.key.json",
