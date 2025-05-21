@@ -115,7 +115,7 @@ The `CreateNewTask` method sends the new task to the on-chain Task Manager contr
 
 ### Task Responder
 
-The task responder interface is used for sending aggregated responses to the on-chain Task Manager contract, and also processing the task responses.  The included methods are the following:
+The `TaskResponder` interface is used for sending aggregated responses to the on-chain Task Manager contract, and also processing the task responses. The included methods are the following:
 
 ``` go
     type TaskResponder[Input any, Output any] interface {
