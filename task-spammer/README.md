@@ -19,8 +19,7 @@ The Task Spammer uses a builder pattern and follows this workflow:
 ## How to Set Up a Task Spammer
 
 1. **Task Manager Definition**: Provide a struct that implements the `TaskManager` interface. Since `TaskManager` extends `TaskCreator`, this also means the struct implements the `CreateNewTask` method.
-    - You can use our standard implementation of `TaskManager` interface by calling `taskmanager.NewTaskManagerFromAbi`
-    - Specify the generic types `[Input, Output]` for your specific AVS
+    - You can use our standard implementation of `TaskManager` interface by calling `taskmanager.NewTaskManagerFromAbi`. For this, you need to specify the generic types `[Input, Output]` for your specific AVS. In this case, we use `[*big.Int, *big.Int]`.
 
       ```go
         txMgr, _ := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethHttpClient, ecdsaPrivateKey)
