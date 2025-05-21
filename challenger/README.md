@@ -76,15 +76,15 @@ The Challenger operates through a well-defined workflow:
 
     - There is another approach where you can use the logic from the operator to compute the task. To do this, you can wrap the logic into a `ResponseCalculator` implementation. Then you can use `ResponseValidationFunctionFromResponseCalculator`, which will be in charge of computing the response of a task and will use a user-defined function to compare the computed response with the operator's response.
 
-5. **Challenger Task Processor**: Create a [`ChallengerTaskProcessor`] interface implementation.
+5. **Challenger Task Processor**: Create a `ChallengerTaskProcessor` implementation.
     - This will be in charge of processing the task and the response.
-    - We provide a standard [`IndexingChallengerProcessor`] struct that can be used as a starting point.
+    - We provide a standard `IndexingChallengerProcessor` struct that can be used as a starting point.
 
       ```go
         indexingTaskProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, isValidSquare, challengerRaiser)
       ```
 
-6. **Challenger**: Create a [`Challenger`] from the [`Config`] and the [`ChallengerTaskProcessor`].
+6. **Challenger**: Create a `Challenger` from the `Config` and the `ChallengerTaskProcessor`.
 
     ```go
       challenger, _ := challenger.NewChallenger(cfg, indexingTaskProcessor)
