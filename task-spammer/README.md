@@ -11,17 +11,15 @@ The Task Spammer uses a builder pattern and follows this workflow:
 1. **Task Generation Logic**:
     - Uses an iterator to produce a sequence of task inputs
     - Each iterator value becomes the input for a new task
-    
+
 2. **Task Submission**:
     - Connects to a TaskManager contract
     - Calls `CreateNewTask` with the generated input
 
 ## How to Set Up a Task Spammer
 
-
-1. **Task Manager Definition**: Create a struct that implements the `TaskManager` interface. Since `TaskManager` extends `TaskCreator`, this also means our struct implements the `CreateNewTask` method.
-    - `Input` and `Output` types for your tasks
-    - Use the `taskmanager.NewTaskManagerFromAbi` method to build your `taskManagerContractWrapper`.
+1. **Task Manager Definition**: Provide a struct that implements the `TaskManager` interface. Since `TaskManager` extends `TaskCreator`, this also means the struct implements the `CreateNewTask` method.
+    - You can use our standard implementation of `TaskManager` interface by calling `taskmanager.NewTaskManagerFromAbi`.
 
       ```go
         txMgr, _ := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethHttpClient, ecdsaPrivateKey)
@@ -83,4 +81,3 @@ Here are some examples of task spammer implementations:
 - [Incredible Squaring](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-1/examples/incredible-squaring/task-spammer/main.go)
 - [Incredible Dot Product](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-1/examples/incredible-dot-product/taskc-spammer/main.go)
 - [Awesome Vault Service](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-1/examples/awesome-vault-service/task-spammer/main.go)
-
