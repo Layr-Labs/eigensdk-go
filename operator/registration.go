@@ -39,7 +39,7 @@ func registerOperatorOnStartup(
 	registryCoordinatorAddr common.Address,
 	operatorAddress common.Address,
 	ethRpcUrl string,
-	blsKeyStorePath string,
+	blsKeyPair *bls.KeyPair,
 ) error {
 	ethRpcClient, err := ethclient.Dial(ethRpcUrl)
 	if err != nil {
@@ -110,16 +110,6 @@ func registerOperatorOnStartup(
 	)
 	if err != nil {
 		logger.Fatalf("Failed to deposit into strategy for operator on startup: %v", err.Error())
-	}
-
-	blsKeyPassword, ok := os.LookupEnv("OPERATOR_BLS_KEY_PASSWORD")
-	if !ok {
-		logger.Warnf("OPERATOR_BLS_KEY_PASSWORD env var not set. using empty string")
-	}
-	blsKeyPair, err := bls.ReadPrivateKeyFromFile(blsKeyStorePath, blsKeyPassword)
-	if err != nil {
-		logger.Errorf("Cannot parse bls private key", "err", err)
-		return err
 	}
 
 	err = RegisterForOperatorSets(

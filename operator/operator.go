@@ -77,6 +77,16 @@ func NewOperatorFromConfig[Input any, Output any](
 		return nil, err
 	}
 
+	blsKeyPassword, ok := os.LookupEnv("OPERATOR_BLS_KEY_PASSWORD")
+	if !ok {
+		c.Logger.Warnf("OPERATOR_BLS_KEY_PASSWORD env var not set. using empty string")
+	}
+	blsKeyPair, err := bls.ReadPrivateKeyFromFile(c.BlsPrivateKeyStorePath, blsKeyPassword)
+	if err != nil {
+		c.Logger.Errorf("Cannot parse bls private key", "err", err)
+		return nil, err
+	}
+
 	// Check if operator was registered, if its not registered and register on startup flag is not set, then will fail.
 	// If its not registered and should be registered on startup, make the registration.
 	operatorIsRegistered, err := avsReader.IsOperatorRegistered(&bind.CallOpts{}, common.HexToAddress(c.OperatorAddress))
@@ -92,7 +102,7 @@ func NewOperatorFromConfig[Input any, Output any](
 				avsConfig.RegistryCoordinatorAddress,
 				common.HexToAddress(c.OperatorAddress),
 				c.EthRpcUrl,
-				c.BlsPrivateKeyStorePath,
+				blsKeyPair,
 			)
 			if err != nil {
 				c.Logger.Errorf("Failure while registering operator on startup: %w", err)
@@ -117,16 +127,6 @@ func NewOperatorFromConfig[Input any, Output any](
 	aggregatorRpcClient, err := NewAggregatorRpcClient[Output](c.AggregatorServerIpPortAddress, c.Logger)
 	if err != nil {
 		c.Logger.Error("Cannot create AggregatorRpcClient. Is aggregator running?", "err", err)
-		return nil, err
-	}
-
-	blsKeyPassword, ok := os.LookupEnv("OPERATOR_BLS_KEY_PASSWORD")
-	if !ok {
-		c.Logger.Warnf("OPERATOR_BLS_KEY_PASSWORD env var not set. using empty string")
-	}
-	blsKeyPair, err := bls.ReadPrivateKeyFromFile(c.BlsPrivateKeyStorePath, blsKeyPassword)
-	if err != nil {
-		c.Logger.Errorf("Cannot parse bls private key", "err", err)
 		return nil, err
 	}
 
