@@ -99,6 +99,45 @@ Once those are in place, you have to define the AVS Input/Output and create the 
     }
 ```
 
+## Individual interfaces
+
+### Task Creator
+
+The task creator interface is used to send new tasks to the on-chain Task Manager contract. The method included is the following:
+
+``` go
+    type TaskCreator[Input any] interface {
+        CreateNewTask(ctx context.Context, input Input, quorumThresholdPercentage uint32, quorumNumbers []uint8) error
+    }
+```
+
+The `CreateNewTask` method sends the new task to the Task Manager on-chain contract, receiving the generic input and other parameters related to the task creation, descripted in the Task Spammer readme file.
+
+### Task Responder
+
+The task responder interface is used for sending aggregated responses to the on-chain Task Manager contract, and also processing the task responses.  The included methods are the following:
+
+``` go
+    type TaskResponder[Input any, Output any] interface {
+        RespondToTask(task Task[Input], taskResponse TaskResponse[Output], nonSignersStakesAndSig types.NonSignerStakesAndSignature) error
+        HashTaskResponse(taskResponse TaskResponse[Output]) (types.TaskResponseDigest, error)
+    }
+```
+
+The `RespondToTask` method is used for sending the information related to the task response to the on-chain Task Manager contract. The `HashTaskResponse` method hashes the generic task response, first encoding it on the task manager ABI and then hashing the encoded response.
+
+### Challenger Raiser
+
+The challenger raiser is used for raising challenges to the on-chain Task Manager contract. The method in the interface is the following:
+
+``` go
+    type ChallengeRaiser[Input any, Output any] interface {
+        RaiseChallenge(task Task[Input], taskResponse TaskResponse[Output], TaskResponseMetadata types.TaskResponseMetadata, NonSigningOperatorPubKeys []types.BN254G1Point) error
+    }
+```
+
+The `RaiseChallenge` method is used for raising challenges for responded tasks to the on-chain Task Manager contract.
+
 ## Related types
 
 ### Task
