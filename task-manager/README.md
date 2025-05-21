@@ -111,7 +111,7 @@ The task creator interface is used to send new tasks to the on-chain Task Manage
     }
 ```
 
-The `CreateNewTask` method sends the new task to the Task Manager on-chain contract, receiving the generic input and other parameters related to the task creation, descripted in the Task Spammer readme file.
+The `CreateNewTask` method sends the new task to the on-chain Task Manager contract, receiving the generic input and other parameters related to the task creation, described in the Task Spammer README file.
 
 ### Task Responder
 
