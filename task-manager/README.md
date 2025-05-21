@@ -155,7 +155,7 @@ The `Task` struct is a wrapper of the Task struct from the user's TaskManagerCon
 
 ### Task Response
 
-The [`TaskResponse`] struct is a wrapper of the TaskResponse struct from the user's TaskManagerContract binding with a generic output type.
+The `TaskResponse` struct is a wrapper of the TaskResponse struct from the user's TaskManagerContract binding with a generic output type.
 
 ``` go
     type TaskResponse[Output any] struct {
