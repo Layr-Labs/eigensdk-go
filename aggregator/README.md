@@ -49,7 +49,7 @@ This flow ensures tasks are initialized, signatures collected, and the final res
             }
         ```
 
-2. **Provide a Task Processor**: Provide a struct implementing the `TaskProcessor` interface. This interface contains user-defined logic to handle new tasks, signed responses, and the final aggregated result. We provide a standard `IndexingTaskProcessor` implementation that can be used as is for most cases, you can create it usig the `NewIndexingTaskProcessor` builder from `taskprocessor` package:
+2. **Provide a Task Processor**: Provide a struct implementing the `TaskProcessor` interface. This interface contains user-defined logic to handle new tasks, signed responses, and the final aggregated result. We provide a standard `IndexingTaskProcessor` implementation that can be used as is for most cases, you can create it using the `NewIndexingTaskProcessor` constructor from `taskprocessor` package:
 
     1. Instantiate an ethereum client and a transaction manager for the task responder:
 
