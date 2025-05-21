@@ -33,7 +33,7 @@ import (
 //   - Register the operator in the received operator sets
 //   - Set the allocation delay as zero, to performs allocations immediatly
 //   - Initialize allocations for the operator sets
-func RegisterOperatorOnStartup(
+func registerOperatorOnStartup(
 	c RegistrationConfig,
 	logger logging.Logger,
 	registryCoordinatorAddr common.Address,

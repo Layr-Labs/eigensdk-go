@@ -86,7 +86,7 @@ func NewOperatorFromConfig[Input any, Output any](
 	}
 	if !operatorIsRegistered {
 		if c.RegistrationCfg.RegisterOnStartup {
-			err = RegisterOperatorOnStartup(
+			err = registerOperatorOnStartup(
 				c.RegistrationCfg,
 				c.Logger,
 				avsConfig.RegistryCoordinatorAddress,
