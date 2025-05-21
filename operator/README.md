@@ -46,7 +46,7 @@ The Operator functions through the following flow:
       - `AggregatorServerIpPortAddress`: The IP and port of the aggregator
       - `Logger`: The logger
       - `TaskManagerAbi`: The ABI of the task manager
-      - `RegistrationCfg`: The registration configuration
+      - `RegistrationCfg`: The registration configuration. If `RegistrationCfg.RegisterOnStartup` is `true`, the operator attempts to register itself to EigenLayer using the values provided here. To skip automatic registration, leave this field unset (or set `RegistrationCfg.RegisterOnStartup` to `false`), but note that this requires the operator to be already registered to EigenLayer.
 
       ```go
           operatorConfig := operator.Config{
