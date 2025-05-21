@@ -112,7 +112,7 @@ Here are some examples of challenger implementations:
 
 ## How to implement a custom Challenger Processor
 
-To implement a custom Challenger Processor, you must implement the ChallengerProcessor interface, which defines two methods:
+To implement a custom Challenger Processor, you must implement the `ChallengerProcessor` interface, which defines two methods:
 
 ```go
   type ChallengerProcessor[Input any, Output any] interface {
@@ -132,4 +132,4 @@ We consider `ProcessTaskResponded` the important function. It should:
 2. Compare the input of the task with the operator’s response. You will receive the operator's response from the event.
 3. Raise a challenge through the `TaskManager` if the responses differ.
 
-Refer to the `IndexingChallengerProcessor` implementation for an example of how to implement a custom Challenger Processor.
+Refer to the [`IndexingChallengerProcessor`](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-2/challenger/challenger-processor/challenger_task_processor.go) implementation for an example of how to implement a custom Challenger Processor.
