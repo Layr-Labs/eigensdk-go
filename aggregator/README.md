@@ -36,7 +36,8 @@ This flow ensures tasks are initialized, signatures collected, and the final res
     ```
 
 2. **Task Manager Definition**: Create a `taskManagerContractWrapper` struct that implements the `TaskManager` interface, which also embeds the `TaskResponder` interface.
-    - In the AVS examples we use a default task manager contract wrapper, that implements the interface, that can be created with the `NewTaskManagerFromAbi` function from `taskmanager` package, that creates a task manager contract wrapper from the task manager address and abi, a tx manager and an eth HTTP client.
+    - In the AVS examples, we use the standard `taskManagerContractWrapper` struct, which implements the required interface.
+    - You can create it using `NewTaskManagerFromAbi` from the `taskmanager` package.
 
     ``` go
         ethHttpUrl := "http://localhost:8545"
