@@ -35,7 +35,7 @@ This flow ensures tasks are initialized, signatures collected, and the final res
         taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
     ```
 
-2. **Task Manager Definition**: Create a `taskManagerContractWrapper` struct that implements the `TaskManager` interface, which already implements `TaskResponder` one.
+2. **Task Manager Definition**: Create a `taskManagerContractWrapper` struct that implements the `TaskManager` interface, which also embeds the `TaskResponder` interface.
     - In the AVS examples we use a default task manager contract wrapper, that implements the interface, that can be created with the `NewTaskManagerFromAbi` function from `taskmanager` package, that creates a task manager contract wrapper from the task manager address and abi, a tx manager and an eth HTTP client.
 
     ``` go
