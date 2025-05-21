@@ -22,7 +22,7 @@ The Operator functions through the following flow:
    - Creates a `SignedTaskResponse` containing the result, signature, and operator ID
 
 4. **Response Submission**:
-   - Sends the signed response to an Aggregator service through a RPC request.
+   - Sends the signed response to an Aggregator service through an RPC request.
 
 ## How to Set Up an Operator
 
