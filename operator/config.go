@@ -58,7 +58,7 @@ type RegistrationConfig struct {
 	RewardsCoordinatorAddress   common.Address
 	PermissionControllerAddress common.Address
 
-	// The path to the location of the ecdsa private keys on local storage
+	// The path to the location of the ecdsa private key on local storage
 	EcdsaKeyStorePath string
 
 	// The ammount to mint to the operator
