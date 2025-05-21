@@ -122,7 +122,7 @@ To implement a custom Challenger Processor, you must implement the `ChallengerPr
 ```
 
 - `ProcessNewTaskCreated`: Invoked when a new task is emitted by the contract. This method should store the task to be used later during response validation.
-- `ProcessTaskResponded`: Invoked when a task response is received. This method compares the operator’s response to the expected one and raises a challenge if they differ.
+- `ProcessTaskResponded`: Invoked when a task response is received. This method verifies the operator’s response and raises a challenge for invalid responses.
 
 The main responsibility of `ProcessNewTaskCreated` is to store the task (e.g., in a map, in a database, etc.), so that when a response arrives, you can retrieve the corresponding input.
 
