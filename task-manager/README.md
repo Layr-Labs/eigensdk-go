@@ -142,7 +142,7 @@ The `RaiseChallenge` method is used for raising challenges for responded tasks t
 
 ### Task
 
-The [`Task`] struct is a wrapper of the Task struct from the user's TaskManagerContract binding with a generic input type.
+The `Task` struct is a wrapper of the Task struct from the user's TaskManagerContract binding with a generic input type.
 
 ``` go
     type Task[Input any] struct {
