@@ -61,7 +61,7 @@ event NewTaskCreated(uint32 indexed taskIndex, Task task);
 event TaskResponded(TaskResponse taskResponse, TaskResponseMetadata taskResponseMetadata);
 ```
 
-Once those are in place, you have to define the AVS Input/Output and create the Implement [`TaskManagerDefs`] to choose your `Input`/`Output` and event selectors.
+Once those are in place, you have to define the AVS Input/Output and create the values that are going to be passed as parameter to the Task Manager builder:
 
 ``` go
     taskManagerAbi, err := avtaskmanager.ContractAwesomeVaultTaskManagerMetaData.GetAbi()
