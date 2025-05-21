@@ -128,7 +128,7 @@ The `RespondToTask` method is used for sending the information related to the ta
 
 ### Challenger Raiser
 
-The challenger raiser is used for raising challenges to the on-chain Task Manager contract. The method in the interface is the following:
+The `ChallengerRaiser` is used for raising challenges to the on-chain Task Manager contract. The method in the interface is the following:
 
 ``` go
     type ChallengeRaiser[Input any, Output any] interface {
