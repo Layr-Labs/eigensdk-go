@@ -26,13 +26,7 @@ The Challenger operates through a well-defined workflow:
 
 ## How to Set Up a Challenger
 
-1. **Task Manager ABI**: Get the ABI of the task manager from your bindings.
-
-   ```go
-      taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
-   ```
-
-2. **Challenger Configuration**: Create a `challenger.Config` struct with the following fields:
+1. **Challenger Configuration**: Create a `challenger.Config` struct with the following fields:
    - `EthWsUrl`: The URL of the Ethereum websocket
    - `Logger`: The logger
    - `TaskManagerAbi`: The ABI of the task manager
@@ -50,22 +44,7 @@ The Challenger operates through a well-defined workflow:
         }
       ```
 
-3. **Task Manager**: Create a `TaskManager` to interact with the user defined task manager contract.
-   - This will be in charge of raising challenges.
-
-      ```go
-        ecdsaPrivateKey, _ := crypto.HexToECDSA(testutils.ANVIL_FIRST_PRIVATE_KEY)
-        txMgr, _ := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethHttpClient, ecdsaPrivateKey)
-  
-        challengerRaiser, err := taskmanager.NewTaskManagerFromAbi[*big.Int, *big.Int](
-          taskManagerAddress,
-          taskManagerAbi,
-          txMgr,
-          ethHttpClient,
-        )
-      ```
-
-4. **Task Verification Logic**: Define a function that computes the response for a task and compares it with the operator's response.
+2. **Task Verification Logic**: Define a function that computes the response for a task and compares it with the operator's response.
 
     ```go
       func isValidSquare(taskIndex uint32, numberToSquare, numberSquared *big.Int) (bool, error) {
@@ -76,21 +55,47 @@ The Challenger operates through a well-defined workflow:
 
     - There is another approach where you can use the logic from the operator to compute the task. To do this, you can wrap the logic into a `ResponseCalculator` implementation. Then you can use `ResponseValidationFunctionFromResponseCalculator`, which will be in charge of computing the response of a task and will use a user-defined function to compare the computed response with the operator's response.
 
-5. **Challenger Task Processor**: Create a `ChallengerTaskProcessor` implementation.
-    - This will be in charge of processing the task and the response.
-    - We provide a standard `IndexingChallengerProcessor` struct that can be used as a starting point.
+3. **Provide a Task Processor**: Provide a struct implementing the `ChallengerProcessor` interface. This interface contains user-defined logic to process new tasks and task responses. We provide a standard `IndexingChallengerProcessor` implementation that can be used as is for most cases, you can create it using the `NewIndexingChallengerProcessor` constructor from `challengerprocessor` package:
 
-      ```go
-        indexingTaskProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, isValidSquare, challengerRaiser)
-      ```
+    1. Instantiate an Ethereum client and a transaction manager for the `ChallengerProcessor`:
 
-6. **Challenger**: Create a `Challenger` from the `Config` and the `ChallengerTaskProcessor`.
+        ``` go
+            ethHttpClient, err := ethclient.Dial("http://localhost:8545")
+
+            ecdsaPrivateKey, err := crypto.HexToECDSA("2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6")
+            txMgr, err := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethHttpClient, ecdsaPrivateKey)
+        ```
+
+    2. Get the `TaskManager` ABI from the contract binding:
+
+        ``` go
+            taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
+        ```
+    
+    3. Provide a struct that implements the `ChallengerRaiser` interface. That interface requires a method to raise an on-chain challenge when operator responses are incorrect. Here we provide a SDK implementation that satisfies the `ChallengerRaiser` interface, receiving the TaskManager address and ABI, a transaction manager and an Ethereum client:
+
+        ``` go
+            challengerRaiser, err := taskmanager.NewTaskManagerFromAbi[*big.Int, *big.Int](
+                taskManagerAddr,
+                taskManagerAbi,
+                txMgr,
+                ethHttpClient,
+            )
+        ```
+
+    4. Create the `NewIndexingChallengerProcessor` with the `ChallengerRaiser` created below:
+
+        ```go
+            indexingTaskProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, isValidSquare, challengerRaiser)
+        ```
+
+4. **Challenger**: Create a `Challenger` from the `Config` and the `ChallengerProcessor`.
 
     ```go
       challenger, _ := challenger.NewChallenger(cfg, indexingTaskProcessor)
     ```
 
-7.  **Start the Challenger**: Start the challenger.
+5.  **Start the Challenger**: Start the challenger.
 
     ```go
       challenger.Start(context.Background())
