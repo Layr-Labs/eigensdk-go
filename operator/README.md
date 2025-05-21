@@ -119,7 +119,7 @@ To create your Response Calculator you have to declare a struct that satisfies t
 ``` go
    type ResponseCalculator[Input any, Output any] interface {
       ComputeResponse(taskIndex uint32, input Input) (Output, error)
- }
+   }
 ```
 
 The `ResponseCalculator` interface has the `ComputeResponse` method, which computes the response of a task given its index and input, returning the output, or an error if the computation fails.
