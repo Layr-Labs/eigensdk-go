@@ -29,50 +29,7 @@ This flow ensures tasks are initialized, signatures collected, and the final res
 
 ## How to Set Up an Aggregator
 
-1. **Task Manager ABI**: Get the ABI of the task manager from your bindings.
-
-    ```go
-        taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
-    ```
-
-2. **Task Manager Definition**: Create a `taskManagerContractWrapper` struct that implements the `TaskManager` interface, which also embeds the `TaskResponder` interface.
-    - In the AVS examples, we use the standard `taskManagerContractWrapper` struct, which implements the required interface.
-    - You can create it using `NewTaskManagerFromAbi` from the `taskmanager` package.
-
-    ``` go
-        ethHttpUrl := "http://localhost:8545"
-        ethHttpClient, err := ethclient.Dial(ethHttpUrl)
-        if err != nil {
-            return
-        }
-
-        ecdsaPrivateKey, err := crypto.HexToECDSA("2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6")
-        if err != nil {
-            logger.Errorf("Cannot parse ecdsa private key", "err", err)
-            return
-        }
-
-        txMgr, err := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethHttpClient, ecdsaPrivateKey)
-        if err != nil {
-            logger.Errorf("Failed to create transaction manager", "err", err)
-            return
-        }
-
-        taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
-        if err != nil {
-            logger.Fatalf(err.Error())
-        }
-
-        taskResponder, err := taskmanager.NewTaskManagerFromAbi[*big.Int, *big.Int](
-            taskManagerAddr,
-            taskManagerAbi,
-            txMgr,
-            ethHttpClient,
-        )
-
-    ```
-
-3. **Create the aggregator configuration**: Create a `aggregator.Config` struct
+1. **Create the aggregator configuration**: Create a `aggregator.Config` struct
     - Config fields:
         - `RegistryCoordinatorAddress`: The address of the AVS registry coordinator
         - `OperatorStateRetrieverAddress`: The address of the operator state retriever
@@ -86,25 +43,47 @@ This flow ensures tasks are initialized, signatures collected, and the final res
             cfg := aggregator.Config{
                 RegistryCoordinatorAddress:    common.HexToAddress("0x7bc06c482dead17c0e297afbc32f6e63d3846650"),
                 OperatorStateRetrieverAddress: common.HexToAddress("0x4c5859f0f772848b2d91f1d83e2fe57935348029"),
-                ServiceManagerAddress:         common.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"),
                 EthHttpUrl:                    ethHttpUrl,
                 EthWsUrl:                      "ws://localhost:8545",
-                EcdsaPrivateKey:               ecdsaPrivateKey,
                 AggregatorServerIpPortAddr:    "localhost:8090",
             }
         ```
 
-4. **Task Processor Definition**: Create a struct implementing the `TaskProcessor` interface:
+2. **Provide a Task Processor**: Provide a struct implementing the `TaskProcessor` interface. This interface contains user-defined logic to handle new tasks, signed responses, and the final aggregated result. We provide a standard `IndexingTaskProcessor` implementation that can be used as is for most cases, you can create it usig the `NewIndexingTaskProcessor` builder from `taskprocessor` package:
 
-    - This is a interface that contains user-defined logic to handle new tasks, signed responses, and the final aggregated result.
-    - We provide a standard `IndexingTaskProcessor` implementation that can be used as is for most cases.
-    - You can create it usig the `NewIndexingTaskProcessor` builder from `taskprocessor` package.
+    1. Instantiate an ethereum client and a transaction manager for the task responder:
 
-    ``` go
-        taskProcessor, err := taskprocessor.NewIndexingTaskProcessor(logger, taskResponder)
-    ```
+        ``` go
+            ethHttpClient, err := ethclient.Dial("http://localhost:8545")
 
-5. **Run the aggregator**: Create an `Aggregator` with the config, a logger, the task processor created below and the task manager contract ABI, and then start it:
+            ecdsaPrivateKey, err := crypto.HexToECDSA("2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6")
+            txMgr, err := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethHttpClient, ecdsaPrivateKey)
+        ```
+
+    2. Get the `TaskManager` ABI from the contract binding:
+
+        ``` go
+            taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
+        ```
+
+    3. Provide a struct that implements the `TaskResponder` interface. That interface requires a method to send the aggregated task responses and another for hashing task responses. Here we provide an SDK implementation that satisfies the Task Responder interface, receiving the TaskManager address and ABI, a transaction manager and an ethereum client:
+
+        ``` go
+            taskResponder, err := taskmanager.NewTaskManagerFromAbi[*big.Int, *big.Int](
+                taskManagerAddr,
+                taskManagerAbi,
+                txMgr,
+                ethHttpClient,
+            )
+        ```
+
+    4. Create the `IndexingTaskProcessor` with the `TaskResponder` created below:
+
+        ```go
+            taskProcessor, err := taskprocessor.NewIndexingTaskProcessor(logger, taskResponder)
+        ```
+
+3. **Run the aggregator**: Instantiate an `Aggregator` with the config, a logger, the task processor created below and the task manager contract ABI, and then start it:
 
     ``` go
         agg, err := aggregator.NewAggregator(cfg, logger, taskProcessor, taskManagerAbi)
