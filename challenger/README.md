@@ -72,7 +72,7 @@ The Challenger operates through a well-defined workflow:
             taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
         ```
     
-    3. Provide a struct that implements the `ChallengerRaiser` interface. That interface requires a method to raise an on-chain challenge when operator responses are incorrect. Here we provide a SDK implementation that satisfies the `ChallengerRaiser` interface, receiving the TaskManager address and ABI, a transaction manager and an Ethereum client:
+    3. Provide a struct that implements the `ChallengeRaiser` interface. That interface requires a method to raise an on-chain challenge when operator responses are incorrect. Here we provide a SDK implementation that satisfies the `ChallengeRaiser` interface, receiving the TaskManager address and ABI, a transaction manager and an Ethereum client:
 
         ``` go
             challengerRaiser, err := taskmanager.NewTaskManagerFromAbi[*big.Int, *big.Int](
@@ -83,7 +83,7 @@ The Challenger operates through a well-defined workflow:
             )
         ```
 
-    4. Create the `NewIndexingChallengerProcessor` with the `ChallengerRaiser` created below:
+    4. Create the `NewIndexingChallengerProcessor` with the `ChallengeRaiser` created below:
 
         ```go
             indexingTaskProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, isValidSquare, challengerRaiser)
