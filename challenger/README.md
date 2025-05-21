@@ -55,7 +55,7 @@ The Challenger operates through a well-defined workflow:
 
     - There is another approach where you can use the logic from the operator to compute the task. To do this, you can wrap the logic into a `ResponseCalculator` implementation. Then you can use `ResponseValidationFunctionFromResponseCalculator`, which will be in charge of computing the response of a task and will use a user-defined function to compare the computed response with the operator's response.
 
-3. **Provide a Task Processor**: Provide a struct implementing the `ChallengerProcessor` interface. This interface contains user-defined logic to process new tasks and task responses. We provide a standard `IndexingChallengerProcessor` implementation that can be used as is for most cases, you can create it using the `NewIndexingChallengerProcessor` constructor from `challengerprocessor` package:
+3. **Provide a Challenger Processor**: Provide a struct implementing the `ChallengerProcessor` interface. This interface contains user-defined logic to process new tasks and task responses. We provide a standard `IndexingChallengerProcessor` implementation that can be used as is for most cases, you can create it using the `NewIndexingChallengerProcessor` constructor from `challengerprocessor` package:
 
     1. Instantiate an Ethereum client and a transaction manager for the `ChallengerProcessor`:
 
@@ -109,3 +109,27 @@ Here are some examples of challenger implementations:
 - [Incredible Squaring](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-1/examples/incredible-squaring/challenger/main.go)
 - [Incredible Dot Product](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-1/examples/incredible-dot-product/challenger/main.go)
 - [Awesome Vault Service](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-1/examples/awesome-vault-service/challenger/main.go)
+
+## How to implement a custom Challenger Processor
+
+To implement a custom Challenger Processor, you must implement the ChallengerProcessor interface, which defines two methods:
+
+```go
+  type ChallengerProcessor[Input any, Output any] interface {
+    ProcessNewTaskCreated(taskIndex uint32, task taskmanager.Task[Input]) error
+    ProcessTaskResponded(taskIndex uint32, taskResponse taskmanager.TaskResponse[Output], taskResponseMetadata sdktypes.TaskResponseMetadata, nonSigningOperatorPubKeys []sdktypes.BN254G1Point) error
+  }
+```
+
+- `ProcessNewTaskCreated`: Invoked when a new task is emitted by the contract. This method should store the task to be used later during response validation.
+- `ProcessTaskResponded`: Invoked when a task response is received. This method compares the operator’s response to the expected one and raises a challenge if they differ.
+
+The main responsibility of `ProcessNewTaskCreated` is to store the task (e.g., in a map, in a database, etc.), so that when a response arrives, you can retrieve the corresponding input.
+
+We consider `ProcessTaskResponded` the important function. It should:
+
+1. Retrieve the original task using the index.
+2. Compare the input of the task with the operator’s response. You will receive the operator's response from the event.
+3. Raise a challenge through the `TaskManager` if the responses differ.
+
+Refer to the `IndexingChallengerProcessor` implementation for an example of how to implement a custom Challenger Processor.
