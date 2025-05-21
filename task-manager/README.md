@@ -103,7 +103,7 @@ Once those are in place, you have to define the AVS Input/Output and create the 
 
 ### Task Creator
 
-The task creator interface is used to send new tasks to the on-chain Task Manager contract. The method included is the following:
+The `TaskCreator` interface is used to send new tasks to the on-chain Task Manager contract. The method included is the following:
 
 ``` go
     type TaskCreator[Input any] interface {
