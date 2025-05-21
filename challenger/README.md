@@ -65,50 +65,32 @@ The Challenger operates through a well-defined workflow:
         )
       ```
 
-4. **Task Verification Logic**: Define a function that computes the expected result for a task, which will be used to verify operator responses
-   - This would be the logic to compute a new task.
+4. **Task Verification Logic**: Define a function that computes the response for a task and compares it with the operator's response.
 
-      ```go
-        func square(taskIndex uint32, numberToSquare *big.Int) (*big.Int, error) {
-          numberSquared := big.NewInt(0).Exp(numberToSquare, big.NewInt(2), nil)
-          return numberSquared, nil
-        }
-      ```
+    ```go
+      func isValidSquare(taskIndex uint32, numberToSquare, numberSquared *big.Int) (bool, error) {
+          expectedNumberSquared := big.NewInt(0).Exp(numberToSquare, big.NewInt(2), nil)
+          return expectedNumberSquared.Cmp(numberSquared) == 0, nil
+      }
+    ```
 
-5. **Response Calculator**: To abstract your computation into the challenger, we provide a `ResponseCalculator` interface with a standar `functionResponseCalculator` struct. This struct implements the interface and a helper method for turning your function into `functionResponseCalculator`:
-   - `NewFunctionResponseCalculator`: Create a response calculator from your computation function.
+    - There is another approach where you can use the logic from the operator to compute the task. To do this, you can wrap the logic into a `ResponseCalculator` implementation. Then you can use `ResponseValidationFunctionFromResponseCalculator`, which will be in charge of computing the response of a task and will use a user-defined function to compare the computed response with the operator's response.
 
-      ```go
-        calculator := operator.NewFunctionResponseCalculator(square)
-      ```
-
-6. **Verifier**: Create a verifier from the response calculator.
-   - This will be in charge of computing the response of a task and will use a user-defined function to compare the computed response with the operator's response.
-
-      ```go
-        // BigIntEqual receives two *big.Int and returns whether they are equal
-        func BigIntEqual(a, b *big.Int) bool {
-          return a.Cmp(b) == 0
-        }
-
-        validation := challengerprocessor.ResponseValidationFunctionFromResponseCalculator(calculator, BigIntEqual)
-      ```
-
-7. **Challenger Task Processor**: Create a [`ChallengerTaskProcessor`] interface implementation.
+5. **Challenger Task Processor**: Create a [`ChallengerTaskProcessor`] interface implementation.
     - This will be in charge of processing the task and the response.
     - We provide a standard [`IndexingChallengerProcessor`] struct that can be used as a starting point.
 
       ```go
-        indexingTaskProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, validation, challengerRaiser)
+        indexingTaskProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, isValidSquare, challengerRaiser)
       ```
 
-8. **Challenger**: Create a [`Challenger`] from the [`Config`] and the [`ChallengerTaskProcessor`].
+6. **Challenger**: Create a [`Challenger`] from the [`Config`] and the [`ChallengerTaskProcessor`].
 
     ```go
       challenger, _ := challenger.NewChallenger(cfg, indexingTaskProcessor)
     ```
 
-9.  **Start the Challenger**: Start the challenger.
+7.  **Start the Challenger**: Start the challenger.
 
     ```go
       challenger.Start(context.Background())
