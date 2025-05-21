@@ -75,7 +75,7 @@ The Operator functions through the following flow:
         }
       ```
 
-4. **Response Calculator**: To abstract your computation into the operator, we provide a `ResponseCalculator` interface with a standar `functionResponseCalculator` struct. This struct implements the interface and a helper method for turning your function into `functionResponseCalculator`:
+4. **Response Calculator**: To abstract your computation into the operator, we provide a `ResponseCalculator` interface with a standard `functionResponseCalculator` struct. This struct implements the interface and a helper method for turning your function into `functionResponseCalculator`:
    - `NewFunctionResponseCalculator`: Create a response calculator from your computation function.
 
       ```go
