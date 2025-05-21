@@ -119,13 +119,13 @@ To create your Response Calculator you have to declare a struct that satisfies t
 ``` go
    type ResponseCalculator[Input any, Output any] interface {
       ComputeResponse(taskIndex uint32, input Input) (Output, error)
-   }
+ }
 ```
 
-The `ResponseCalculator` interface has the `ComputeResponse` method, that computes the response of a task given its index and input, returning the response, or an error if the computation fails.
+The `ResponseCalculator` interface has the `ComputeResponse` method, which computes the response of a task given its index and input, returning the output, or an error if the computation fails.
 
-If you don't need to save a state between the operator responses, then you can use the `NewFunctionResponseCalculator` function, provided by the SDK in the operator package, that receives a function that computes the result from an input returning an output (or an error if fails) and returns a `ResponseCalculator` that on every call to the `ComputeResponse` method will call the received function.
+If you don't need to save a state between the operator responses you can use the `NewFunctionResponseCalculator` function, provided by the SDK in the operator package, that receives a function that computes the result from an input returning an output (or an error if fails) and returns a `ResponseCalculator` that on every call to the `ComputeResponse` method will call the received function.
 
-If you need to save a state between the operator responses, then you will have to implement your own Response calculator following the interface shown above.
+If you need to save a state between the operator responses, then you should implement your Response calculator following the above interface.
 
-As a suggestion, you should place the calculation logic at the `ComputeResponse` method, and initialize on the new calculator type builder the necessary things for calculating the response.
+As a suggestion, you should place the calculation logic in the `ComputeResponse` method and initialize the necessary things for calculating the response on the new response calculator builder.
