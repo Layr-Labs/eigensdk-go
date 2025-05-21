@@ -19,7 +19,7 @@ The Task Spammer uses a builder pattern and follows this workflow:
 ## How to Set Up a Task Spammer
 
 
-1. **Task Manager Definition**: Create a `taskManagerContractWrapper` struct that implements the `TaskManager` interface. Since `TaskManager` extends `TaskCreator`, this also means `taskManagerContractWrapper` implements the `CreateNewTask` method.
+1. **Task Manager Definition**: Create a struct that implements the `TaskManager` interface. Since `TaskManager` extends `TaskCreator`, this also means our struct implements the `CreateNewTask` method.
     - `Input` and `Output` types for your tasks
     - Use the `taskmanager.NewTaskManagerFromAbi` method to build your `taskManagerContractWrapper`.
 
