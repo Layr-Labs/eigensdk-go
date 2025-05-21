@@ -101,7 +101,7 @@ func NewOperatorFromConfig[Input any, Output any](
 				c.Logger,
 				avsConfig.RegistryCoordinatorAddress,
 				common.HexToAddress(c.OperatorAddress),
-				c.EthRpcUrl,
+				ethHttpClient,
 				blsKeyPair,
 			)
 			if err != nil {

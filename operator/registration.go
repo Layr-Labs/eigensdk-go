@@ -38,15 +38,9 @@ func registerOperatorOnStartup(
 	logger logging.Logger,
 	registryCoordinatorAddr common.Address,
 	operatorAddress common.Address,
-	ethRpcUrl string,
+	ethRpcClient *ethclient.Client,
 	blsKeyPair *bls.KeyPair,
 ) error {
-	ethRpcClient, err := ethclient.Dial(ethRpcUrl)
-	if err != nil {
-		logger.Errorf("Cannot create http ethclient", "err", err)
-		return err
-	}
-
 	elcontractsConfig := elcontracts.Config{
 		DelegationManagerAddress:    c.DelegationManagerAddress,
 		RewardsCoordinatorAddress:   c.RewardsCoordinatorAddress,
@@ -146,7 +140,7 @@ func registerOperatorOnStartup(
 		c.AvsAddress,
 		c.StrategyAddrs,
 		c.AllocatableMagnitudes,
-		ethRpcUrl,
+		ethRpcClient,
 		txMgr,
 		c.OperatorSetIds,
 		logger,
@@ -341,14 +335,13 @@ func modifyAllocations(
 	avsAddress common.Address,
 	strategies []common.Address,
 	newMagnitudes []uint64,
-	httpUrl string,
+	ethRpcClient *ethclient.Client,
 	txMgr txmgr.TxManager,
 	operatorSetsIds []uint32,
 	logger logging.Logger,
 ) error {
 	txOpts, _ := txMgr.GetNoSendTxOpts()
 
-	ethRpcClient, _ := ethclient.Dial(httpUrl)
 	waitForReceipt := true
 	allocationManagerContract, _ := allocationmanager.NewContractAllocationManager(allocationManagerAddr, ethRpcClient)
 
