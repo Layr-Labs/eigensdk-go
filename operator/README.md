@@ -33,8 +33,6 @@ The Operator functions through the following flow:
    ```
 
 2. **Create the operator configuration**: Create a `operator.Config` struct
-    - By default, the operator attempts to register itself to EigenLayer using the values provided in the `operator.RegistrationConfig` struct. To skip automatic registration, leave the `RegistrationCfg` field unset, but make sure the operator is already registered to EigenLayer.
-
     - Config fields:
       - `OperatorAddress`: The address of the operator
       - `OperatorStateRetrieverAddress`: The address of the operator state retriever
