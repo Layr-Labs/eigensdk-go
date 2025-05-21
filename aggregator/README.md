@@ -99,27 +99,27 @@ Here are some examples of aggregator implementations:
 - [Incredible Dot Product](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-1/examples/incredible-dot-product/aggregator/main.go)
 - [Awesome Vault Service](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-1/examples/awesome-vault-service/aggregator/main.go)
 
-## How to create your own Task Processor
+## How to create your Task Processor
 
-To create your own Task Processor you have to declare a struct that satisfies the TaskProcessor interface:
+To create your Task Processor you have to declare a struct that satisfies the TaskProcessor interface:
 
 ``` go
     type TaskProcessor[Input any, Output any] interface {
         ProcessNewTask(taskIndex sdktypes.TaskIndex, task taskmanager.Task[Input]) (blsagg.TaskMetadata, error)
         ProcessTaskResponse(taskResponse taskmanager.TaskResponse[Output]) ([32]byte, error)
         ProcessAggregatedResponse(response blsagg.BlsAggregationServiceResponse) error
-    }
+ }
 ```
 
-If you want to see an example of TaskProcessor you can see our IndexingTaskProcessor on `aggregator/task-processor/indexing_task_processor.go`.
+If you want to see an example of TaskProcessor you can watch our IndexingTaskProcessor on `aggregator/task-processor/indexing_task_processor.go`.
 
 The TaskProcessor interface has the following methods:
 
-- `ProcessNewTask` receives a task and a TaskIndex, processes the new task and returns the metadata to be sent to the BLS aggregation service.
+- `ProcessNewTask` receives a task and a TaskIndex, processes the new task, and returns the metadata to be sent to the BLS aggregation service.
 - `ProcessTaskResponse` receives a task response and processes it, returning the hashed bytes of the response.
 - `ProcessAggregatedResponse` receives an aggregated response and processes it, returning an error if the processing fails.
 
-Now we are going to suggest how to implement the interface methods, based on the implementation of the `IndexingTaskProcessor`.
+Now we will suggest how to implement the interface methods, based on the implementation of the `IndexingTaskProcessor`.
 
 The `ProcessNewTask` method should:
 
@@ -136,5 +136,5 @@ The `ProcessTaskResponse` method should:
 The `ProcessAggregatedResponse` method should:
 
 1. Obtain the task from the task map with the task index.
-2. Process the BLS aggregated response, obtaining the non signer stakes and signature
-3. Send the task, task response and non signer stakes and signature to the on-chain `TaskManager` contract
+2. Process the BLS aggregated response, obtaining the nonsigner stakes and signature
+3. Send the task, task response, and nonsigner stakes and signature to the on-chain `TaskManager` contract
