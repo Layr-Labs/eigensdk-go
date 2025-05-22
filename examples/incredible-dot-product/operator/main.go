@@ -12,27 +12,25 @@ import (
 	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
 )
 
+// This is the main function for the operator in the incredible dot product example. The steps followed are
+// also explained in the operator module readme, which can be found at operator/README.md
 func main() {
-	// 1. Create the logger where all the logs will appear
+	// 0. Create the logger where all the logs will appear
 	logger, err := logging.NewZapLogger(logging.Production)
 	if err != nil {
 		println("Failure creating logger")
 		return
 	}
 
-	// 2. Get the ABI of the task manager contract's binding
+	// 1. Get the ABI of the task manager contract's binding
 	taskManagerAbi, err := taskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
 	if err != nil {
 		logger.Errorf("Failed to get task manager abi: %w", err)
 		return
 	}
 
-	// 3. Create the registration config, used to register an operator en startup. If you don't want to
+	// 2. Create the operator config, including the registration config. If you don't want to
 	// register your operator, you can leave the RegistrationCfg field of operator config empty
-	ethHttpUrl := "http://localhost:8545"
-
-	// 4. Create the config passed to the operator.
-	// The values from this config are extracted from an incredible squaring config file:
 	amount := new(big.Int)
 	amount.SetString("1000000000000000000000", 10)
 	registrationConfig := operator.RegistrationConfig{
@@ -63,7 +61,7 @@ func main() {
 		RegistryCoordinatorAddress: "0xfd471836031dc5108809d173a067e8486b9047a3",
 
 		EthWsUrl:                      "ws://localhost:8545",
-		EthRpcUrl:                     ethHttpUrl,
+		EthRpcUrl:                     "http://localhost:8545",
 		AggregatorServerIpPortAddress: "localhost:8090",
 
 		BlsPrivateKeyStorePath: "keys/test.bls.key.json",
@@ -71,25 +69,24 @@ func main() {
 		RegistrationCfg: registrationConfig,
 	}
 
-	// 5. Create the response calculator with the AVS calculation logic. Note that here we create a Response
-	// calculator with the NewFunctionResponseCalculator from the operator package. We also convert the
-	// calculator to a failing one, to test that challenges work as expected.
+	// 4. Create the response calculator with the AVS calculation logic. Note that here we create a
+	// Response calculator with the NewFunctionResponseCalculator from the operator package
 	responseCalculator := operator.NewFunctionResponseCalculator(examplecommon.DotProduct)
 
+	// 5. We convert the calculator to a failing one, to test that challenges work as expected.
 	possibleFailureCalculator, err := operator.NewFailingResponseCalculator(responseCalculator, 50, big.NewInt(31234213443))
 	if err != nil {
 		logger.Fatalf("Failed to create the possible failure function: %v", err.Error())
 	}
 
 	// 6. Build the operator, providing operator config, the response calculator and a task response hashing
-	// function. Note that we leave this last parameter as nil because we are using the default hashing
-	// function provided by the SDK
+	// function, and then start it.
+	// We leave this last parameter as nil because we are using the default hashing function provided by the SDK
 	operator, err := operator.NewOperatorFromConfig(operatorConfig, possibleFailureCalculator, nil)
 	if err != nil {
 		logger.Fatalf("Failed to create operator: %w", err)
 	}
 
-	// 7. Run the created operator
 	err = operator.Start(context.Background())
 	if err != nil {
 		logger.Fatalf("Failure while running operator: %w", err)
