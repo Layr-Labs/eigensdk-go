@@ -53,8 +53,8 @@ func main() {
 	}
 
 	// 5. Create the challenger raiser, which will raise the challenges to the on-chain TaskManager contract.
-	// Here we use an SDK implementation that satisfies the ChallengeRaiser interface, but you can create your own wrapper
-	// which implements the interface and provide it to the Indexing Task Processor.
+	// Here we use an SDK implementation that satisfies the ChallengeRaiser interface, but you can create your wrapper
+	// (which implements the interface) and provide it to the Indexing Task Processor.
 	// Note that in this step we define the input and output types that we are using on our AVS. In this case
 	// the TaskInput struct (a key-value pair) and 32 bytes.
 	challengeRaiser, err := taskmanager.NewTaskManagerFromAbi[examplecommon.TaskInput, [32]byte](
@@ -70,17 +70,17 @@ func main() {
 
 	// 6. Create the calculator and validation function with the AVS calculation logic. Note that here we create a
 	// custom Response calculator, declared on examples/awesome-vault-service/common/response_calculator.go. We
-	// decided to create a custom Response Calculator because we have to save state between task responses, so
-	// the NewFunctionResponseCalculator from the operator package wont be useful. You can see the implementation
-	// to view how simple is to build one for your AVS. With that calculator we create the validator with the
+	// decided to create a custom Response Calculator because we have to save the state between task responses, so
+	// the NewFunctionResponseCalculator from the operator package won't be useful. You can see the implementation
+	// to view how simple is to build one for your AVS. With that calculator, we create the validator with the
 	// ResponseValidationFunctionFromResponseCalculator builder from the challengerprocessor package.
 	vaultServiceResponseCalc := examplecommon.NewVaultServiceResponseCalculator()
 	vaultSetValidation := challengerprocessor.ResponseValidationFunctionFromResponseCalculator(vaultServiceResponseCalc, func(a, b [32]byte) bool { return a == b })
 
-	// 7. Create the Challenger Processor, which will manage the challenge raising in case the response is not
-	// correct. Here we use the IndexingChallengerProcessor, a generic implementation provided by the SDK that
-	// saves the tasks in a map and in case of receiving a wrong response delegates the raising of the
-	// challenges to the on-chain TaskManager contract.
+	// 7. Create the Challenger Processor, which will manage the challenge raising in case the response is different.
+	// Here we use the IndexingChallengerProcessor, a generic implementation provided by the SDK that saves the
+	// tasks in a map and in case of receiving a wrong response delegates the raising of the challenges to the
+	// on-chain TaskManager contract.
 	challengerProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, vaultSetValidation, challengeRaiser)
 	if err != nil {
 		logger.Errorf("Failed to create challenger processor: %v", err)

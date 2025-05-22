@@ -17,7 +17,7 @@ import (
 )
 
 func main() {
-	// 1. Create the logger where all the loggs will appear
+	// 1. Create the logger where all the logs will appear
 	logger, err := logging.NewZapLogger(logging.Production)
 	if err != nil {
 		return
@@ -50,8 +50,8 @@ func main() {
 	}
 
 	// 5. Create the task creator, which will create tasks and send them to the on-chain TaskManager contract.
-	// Here we use an SDK implementation that satisfies the TaskCreator interface, but you can create your own
-	// wrapper which implements the interface and provide it to the Indexing Task Processor.
+	// Here we use an SDK implementation that satisfies the TaskCreator interface, but you can create your
+	// wrapper that implements the interface and provide it to the Indexing Task Processor.
 	// Note that in this step we define the input and output types that we are using on our AVS. In this case
 	// the input and output are both big int numbers.
 	taskManagerAddress := common.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3")

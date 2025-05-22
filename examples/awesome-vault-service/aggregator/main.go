@@ -38,7 +38,7 @@ func GetConfigFromPath(path string) (*Config, error) {
 }
 
 func main() {
-	// 1. Create the logger where all the loggs will appear
+	// 1. Create the logger where all the logs will appear
 	logger, err := logging.NewZapLogger(logging.Production)
 	if err != nil {
 		println("Failure creating logger")
@@ -86,13 +86,12 @@ func main() {
 
 	aggConfig := config.Config
 
-	// 6. Create the task responder, which will send the aggregated responses to the on-chain TaskManager contract.
-	// Here we use an SDK implementation that satisfies the TaskResponder interface, but you can create your own wrapper
-	// which implements the interface and provide it to the Indexing Task Processor.
-	taskManagerAddr := gethcommon.HexToAddress(config.TaskManagerAddress)
-
+	// 6. Create the task responder, that will send the aggregated responses to the on-chain TaskManager contract.
+	// Here we use an SDK implementation that satisfies the TaskResponder interface, but you can create your wrapper
+	// (which implements the interface) and provide it to the Indexing Task Processor.
 	// Note that in this step we define the input and output types that we are using on our AVS. In this case
 	// the TaskInput struct (a key-value pair) and 32 bytes.
+	taskManagerAddr := gethcommon.HexToAddress(config.TaskManagerAddress)
 	taskResponder, err := taskmanager.NewTaskManagerFromAbi[examplecommon.TaskInput, [32]byte](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
 	if err != nil {
 		logger.Errorf("Failed to create Task Responder: %w", err)

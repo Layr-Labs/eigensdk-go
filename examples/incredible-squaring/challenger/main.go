@@ -21,7 +21,7 @@ import (
 )
 
 func main() {
-	// 1. Create the logger where all the loggs will appear
+	// 1. Create the logger where all the logs will appear
 	logger, err := logging.NewZapLogger(logging.Production) // Change here if want to change logging level
 	if err != nil {
 		println("Failure creating logger")
@@ -54,8 +54,8 @@ func main() {
 	}
 
 	// 5. Create the challenger raiser, which will raise the challenges to the on-chain TaskManager contract.
-	// Here we use an SDK implementation that satisfies the ChallengeRaiser interface, but you can create your own wrapper
-	// which implements the interface and provide it to the Indexing Task Processor.
+	// Here we use an SDK implementation that satisfies the ChallengeRaiser interface, but you can create your wrapper
+	// (which implements the interface) and provide it to the Indexing Task Processor.
 	// Note that in this step we define the input and output types that we are using on our AVS. In this case
 	// the input and output are both big int numbers.
 	challengeRaiser, err := taskmanager.NewTaskManagerFromAbi[*big.Int, *big.Int](
@@ -71,13 +71,13 @@ func main() {
 
 	// 6. Create the calculator and validation function with the AVS calculation logic. Note that here we create a
 	// Response calculator with the NewFunctionResponseCalculator from the operator package, and with that
-	// calculator we create the validator with the ResponseValidationFunctionFromResponseCalculator builder from
+	// calculator, we create the validator with the ResponseValidationFunctionFromResponseCalculator builder from
 	// the challengerprocessor package.
 	squareCalculator := operator.NewFunctionResponseCalculator(examplecommon.Square)
 	squareValidation := challengerprocessor.ResponseValidationFunctionFromResponseCalculator(squareCalculator, common.BigIntEqual)
 
-	// 7. Create the Challenger Processor, which will manage the challenge raising in case the response is not
-	// correct. Here we use the IndexingChallengerProcessor, a generic implementation provided by the SDK that
+	// 7. Create the Challenger Processor, which will manage the challenge raising in case the response is
+	// different. Here we use the IndexingChallengerProcessor, a generic implementation provided by the SDK that
 	// saves the tasks in a map and in case of receiving a wrong response delegates the raising of the
 	// challenges to the on-chain TaskManager contract.
 	indexingChallengerProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, squareValidation, challengeRaiser)

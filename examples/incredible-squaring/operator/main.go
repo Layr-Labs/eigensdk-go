@@ -14,7 +14,7 @@ import (
 
 // The idea of this example is to show how to create a custom operator using the SDK generic implementation
 func main() {
-	// 1. Create the logger where all the loggs will appear
+	// 1. Create the logger where all the logs will appear
 	logger, err := logging.NewZapLogger(logging.Production) // Change here if want to change logging level
 	if err != nil {
 		println("Failure creating logger")

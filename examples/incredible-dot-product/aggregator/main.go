@@ -86,9 +86,9 @@ func main() {
 
 	aggConfig := config.Config
 
-	// 6. Create the task responder, which will send the aggregated responses to the on-chain TaskManager contract.
-	// Here we use an SDK implementation that satisfies the TaskResponder interface, but you can create your own wrapper
-	// which implements the interface and provide it to the Indexing Task Processor.
+	// 6. Create the task responder, that will send the aggregated responses to the on-chain TaskManager contract.
+	// Here we use an SDK implementation that satisfies the TaskResponder interface, but you can create your wrapper
+	// (which implements the interface) and provide it to the Indexing Task Processor.
 
 	// Note that in this step we define the input and output types that we are using on our AVS. In this case
 	// the DotProductInput struct (a pair of vectors) and a big int.

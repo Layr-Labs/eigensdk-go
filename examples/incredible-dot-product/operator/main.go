@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	// 1. Create the logger where all the loggs will appear
+	// 1. Create the logger where all the logs will appear
 	logger, err := logging.NewZapLogger(logging.Production)
 	if err != nil {
 		println("Failure creating logger")
