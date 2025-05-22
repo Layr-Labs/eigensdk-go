@@ -117,7 +117,7 @@ The `TaskProcessor` interface has the following methods:
 
 - `ProcessNewTask` receives a `Task` and a `TaskIndex`, processes the new task, and returns the metadata to be sent to the BLS aggregation service.
 - `ProcessTaskResponse` receives a `TaskResponse` and processes it, returning the hashed bytes of the response.
-- `ProcessAggregatedResponse` receives an aggregated response and processes it, returning an error if the processing fails.
+- `ProcessAggregatedResponse` receives an aggregated response, processes it, and sends it to the on-chain TaskManager contract, returning an error if the processing fails.
 
 Now we will suggest how to implement the interface methods, based on the implementation of the `IndexingTaskProcessor`.
 
