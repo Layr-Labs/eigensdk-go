@@ -84,7 +84,7 @@ func main() {
 		return
 	}
 
-	// 10. Run the created operator
+	// 7. Run the created operator
 	err = operator.Start(context.Background())
 	if err != nil {
 		logger.Errorf("Error while running operator: %v", err)
