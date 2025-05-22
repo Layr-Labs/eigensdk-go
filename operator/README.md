@@ -124,7 +124,7 @@ To create your Response Calculator you have to declare a struct that satisfies t
 
 The `ResponseCalculator` interface has the `ComputeResponse` method, which computes the response of a task given its index and input, returning the output, or an error if the computation fails.
 
-If you don't need to save a state between the operator responses you can use the `NewFunctionResponseCalculator` function, provided by the SDK in the operator package, that receives a function that computes the result from an input returning an output (or an error if fails) and returns a `ResponseCalculator` that on every call to the `ComputeResponse` method will call the received function.
+We recommend implementing your own reponse calculator if you need to save state between responses. If you don't need to save a state between the operator responses you can use the `NewFunctionResponseCalculator` function, provided by the SDK in the operator package, that receives a function that computes the result from an input returning an output (or an error if fails) and returns a `ResponseCalculator` that on every call to the `ComputeResponse` method will call the received function.
 
 If you need to save a state between the operator responses, then you should implement your Response calculator following the above interface.
 
