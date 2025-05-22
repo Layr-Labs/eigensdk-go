@@ -27,7 +27,7 @@ The Operator functions through the following flow:
 ## How to Set Up an Operator
 
 1. **Task Manager ABI**: Get the ABI of the task manager from your bindings.
-   
+
    ```go
       taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
    ```
@@ -83,7 +83,7 @@ The Operator functions through the following flow:
    - In case you need to save state in the operator, you can use your own struct implementing the `ResponseCalculator` interface.
 
 5. **Failing Response Calculator**: If you want to test what happens when the operator responds incorrectly to a task and see how slashing works, you can wrap your logic with `NewFailingResponseCalculator` method to inject failures and a given failure rate. **Use this for testing purposes only.**
-    
+
     ```go
         logic, err := operator.NewFailingResponseCalculator(calculator, 50, big.NewInt(0))
     ```
@@ -111,4 +111,3 @@ Here are some examples of operators that are already implemented:
 - [Incredible Squaring](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-1/examples/incredible-squaring/operator/main.go)
 - [Incredible Dot Product](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-1/examples/incredible-dot-product/operator/main.go)
 - [Awesome Vault Service](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-1/examples/awesome-vault-service/operator/main.go)
-
