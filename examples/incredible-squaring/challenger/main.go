@@ -107,7 +107,7 @@ func main() {
 	// 10. Run the created challenger
 	err = challenger.Start(context.Background())
 	if err != nil {
-		logger.Errorf("Error while running operator: %v", err)
+		logger.Errorf("Error while running challenger: %v", err)
 		return
 	}
 }
