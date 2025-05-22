@@ -46,14 +46,6 @@ func main() {
 		logger.Fatalf(err.Error())
 	}
 
-	cfg := aggregator.Config{
-		RegistryCoordinatorAddress:    common.HexToAddress("0x7bc06c482dead17c0e297afbc32f6e63d3846650"),
-		OperatorStateRetrieverAddress: common.HexToAddress("0x4c5859f0f772848b2d91f1d83e2fe57935348029"),
-		EthHttpUrl:                    ethHttpUrl,
-		EthWsUrl:                      "ws://localhost:8545",
-		AggregatorServerIpPortAddr:    "localhost:8090",
-	}
-
 	taskManagerAddr := common.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3")
 
 	taskResponder, err := taskmanager.NewTaskManagerFromAbi[*big.Int, *big.Int](
@@ -71,6 +63,14 @@ func main() {
 		logger.Fatalf(err.Error())
 	}
 
+	cfg := aggregator.Config{
+		RegistryCoordinatorAddress:    common.HexToAddress("0x7bc06c482dead17c0e297afbc32f6e63d3846650"),
+		OperatorStateRetrieverAddress: common.HexToAddress("0x4c5859f0f772848b2d91f1d83e2fe57935348029"),
+		EthHttpUrl:                    ethHttpUrl,
+		EthWsUrl:                      "ws://localhost:8545",
+		AggregatorServerIpPortAddr:    "localhost:8090",
+	}
+	
 	agg, err := aggregator.NewAggregator(cfg, logger, taskProcessor, taskManagerAbi)
 	if err != nil {
 		logger.Fatalf(err.Error())
