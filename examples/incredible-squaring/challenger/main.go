@@ -58,7 +58,7 @@ func main() {
 	// which implements the interface and provide it to the Indexing Task Processor.
 	// Note that in this step we define the input and output types that we are using on our AVS. In this case
 	// the input and output are both big int numbers.
-	challengerRaiser, err := taskmanager.NewTaskManagerFromAbi[*big.Int, *big.Int](
+	challengeRaiser, err := taskmanager.NewTaskManagerFromAbi[*big.Int, *big.Int](
 		gethcommon.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3"),
 		taskManagerAbi,
 		txMgr,
@@ -80,7 +80,7 @@ func main() {
 	// correct. Here we use the IndexingChallengerProcessor, a generic implementation provided by the SDK that
 	// saves the tasks in a map and in case of receiving a wrong response delegates the raising of the
 	// challenges to the on-chain TaskManager contract.
-	indexingTaskProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, squareValidation, challengerRaiser)
+	indexingChallengerProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, squareValidation, challengeRaiser)
 	if err != nil {
 		logger.Errorf("Failed to create challenger logic from config: %v", err)
 		return
@@ -97,7 +97,7 @@ func main() {
 	// 9. Build the challenger, providing challenger config, and the challenger processor.
 	challenger, err := challenger.NewChallenger(
 		cfg,
-		indexingTaskProcessor,
+		indexingChallengerProcessor,
 	)
 	if err != nil {
 		logger.Errorf("Failed to create challenger from config: %v", err)
