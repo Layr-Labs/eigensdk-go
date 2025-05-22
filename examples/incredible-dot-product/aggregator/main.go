@@ -38,29 +38,35 @@ func GetConfigFromPath(path string) (*Config, error) {
 }
 
 func main() {
+	// 1. Create the logger where all the loggs will appear
 	logger, err := logging.NewZapLogger(logging.Production)
 	if err != nil {
 		println("Failure creating logger")
 		return
 	}
 
+	// 2. Get the config from the aggregator config file, reading the required information to create the aggregator
 	config, err := GetConfigFromPath("config/aggregator_config.toml")
 	if err != nil {
 		logger.Errorf("Failed to read config file: %w", err)
 		return
 	}
 
+	// 3. Get the ABI of the task manager contract's binding
 	taskManagerAbi, err := idptaskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
 	if err != nil {
 		logger.Errorf("Failed to get task manager abi: %w", err)
 		return
 	}
 
+	// 4. Create the ethereum client that will send the RPC messages to the node
 	ethClient, err := ethclient.Dial(config.EthHttpUrl)
 	if err != nil {
 		logger.Errorf("Failed to dial ethclient: %w", err)
 		return
 	}
+
+	// 5. Create the transaction manager, that will manage the transaction sending
 
 	// Depends on the aggregatorPrivateKey passed to TaskManager.initialize
 	// To change it, modify aggregator_addr in
@@ -80,6 +86,9 @@ func main() {
 
 	aggConfig := config.Config
 
+	// 6. Create the task responder, which will send the aggregated responses to the on-chain TaskManager contract.
+	// Here we use an SDK implementation that satisfies the TaskResponder interface, but you can create your own wrapper
+	// which implements the interface and provide it to the Indexing Task Processor.
 	taskManagerAddr := gethcommon.HexToAddress(config.TaskManagerAddress)
 	taskResponder, err := taskmanager.NewTaskManagerFromAbi[examplecommon.DotProductInput, *big.Int](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
 	if err != nil {
@@ -87,18 +96,23 @@ func main() {
 		return
 	}
 
+	// 7. Create the Task Processor, which will manage the processing of the tasks and the aggregated responses.
+	// Here we use the IndexingTaskProcessor, a generic implementation provided by the SDK that saves the tasks
+	// in a map and delegates the sending of aggregated responses to the on-chain TaskManager contract.
 	taskProcessor, err := taskprocessor.NewIndexingTaskProcessor(logger, taskResponder)
 	if err != nil {
 		logger.Errorf("Failed to create Task Processor: %w", err)
 		return
 	}
 
+	// 8. Build the aggregator, providing aggregator config, logger, task processor and the task manager ABI.
 	aggregator, err := aggregator.NewAggregator(aggConfig, logger, taskProcessor, taskManagerAbi)
 	if err != nil {
 		logger.Errorf("Failed to create aggregator: %w", err)
 		return
 	}
 
+	// 9. Run the created aggregator
 	err = aggregator.Start(context.Background())
 	if err != nil {
 		logger.Errorf("Failure while running aggregator: %w", err)
