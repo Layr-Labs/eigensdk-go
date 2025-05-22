@@ -38,13 +38,6 @@ func main() {
 		return
 	}
 
-	cfg := challenger.Config{
-		EthWsUrl:       "ws://localhost:8545",
-		Logger:         logger,
-		TaskManagerAbi: taskManagerAbi,
-		EthClient:      ethHttpClient,
-	}
-
 	ecdsaPrivateKey, err := crypto.HexToECDSA(testutils.ANVIL_FIRST_PRIVATE_KEY)
 	if err != nil {
 		logger.Errorf("Cannot parse ecdsa private key", "err", err)
@@ -74,6 +67,13 @@ func main() {
 	if err != nil {
 		logger.Errorf("Failed to create challenger logic from config: %v", err)
 		return
+	}
+
+	cfg := challenger.Config{
+		EthWsUrl:       "ws://localhost:8545",
+		Logger:         logger,
+		TaskManagerAbi: taskManagerAbi,
+		EthClient:      ethHttpClient,
 	}
 
 	challenger, err := challenger.NewChallenger(
