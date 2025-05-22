@@ -123,7 +123,7 @@ Now we will suggest how to implement the interface methods, based on the impleme
 
 The `ProcessNewTask` method should:
 
-1. Save the task on a map with the associated task index.
+1. Save the task with the associated task index.
 2. Create the task metadata that will be sent to the BLS aggregation service to be processed.
 3. Return the BLS metadata
 
@@ -135,6 +135,6 @@ The `ProcessTaskResponse` method should:
 
 The `ProcessAggregatedResponse` method should:
 
-1. Obtain the task from the task map with the task index.
+1. Obtain the task with the received task index.
 2. Process the BLS aggregated response, obtaining the nonsigner stakes and signature
 3. Send the task, task response, and nonsigner stakes and signature to the on-chain `TaskManager` contract
