@@ -89,6 +89,9 @@ func main() {
 	// 6. Create the task responder, which will send the aggregated responses to the on-chain TaskManager contract.
 	// Here we use an SDK implementation that satisfies the TaskResponder interface, but you can create your own wrapper
 	// which implements the interface and provide it to the Indexing Task Processor.
+
+	// Note that in this step we define the input and output types that we are using on our AVS. In this case
+	// the DotProductInput struct (a pair of vectors) and a big int.
 	taskManagerAddr := gethcommon.HexToAddress(config.TaskManagerAddress)
 	taskResponder, err := taskmanager.NewTaskManagerFromAbi[examplecommon.DotProductInput, *big.Int](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
 	if err != nil {

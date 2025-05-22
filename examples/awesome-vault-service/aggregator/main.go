@@ -90,6 +90,9 @@ func main() {
 	// Here we use an SDK implementation that satisfies the TaskResponder interface, but you can create your own wrapper
 	// which implements the interface and provide it to the Indexing Task Processor.
 	taskManagerAddr := gethcommon.HexToAddress(config.TaskManagerAddress)
+
+	// Note that in this step we define the input and output types that we are using on our AVS. In this case
+	// the TaskInput struct (a key-value pair) and 32 bytes.
 	taskResponder, err := taskmanager.NewTaskManagerFromAbi[examplecommon.TaskInput, [32]byte](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
 	if err != nil {
 		logger.Errorf("Failed to create Task Responder: %w", err)
