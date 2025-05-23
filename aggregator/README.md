@@ -51,7 +51,7 @@ This flow ensures tasks are initialized, signatures collected, and the final res
 
 2. **Provide a Task Processor**: Provide a struct implementing the `TaskProcessor` interface. This interface contains user-defined logic to handle new tasks, signed responses, and the final aggregated result. We provide a standard `IndexingTaskProcessor` implementation that can be used as is for most cases, you can create it using the `NewIndexingTaskProcessor` constructor from `taskprocessor` package:
 
-    1. Instantiate an ethereum client and a transaction manager for the task responder:
+    1. Instantiate an Ethereum client and a transaction manager for the task responder:
 
         ``` go
             ethHttpClient, err := ethclient.Dial("http://localhost:8545")
@@ -66,7 +66,7 @@ This flow ensures tasks are initialized, signatures collected, and the final res
             taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
         ```
 
-    3. Provide a struct that implements the `TaskResponder` interface. That interface requires a method to send the aggregated task responses and another for hashing task responses. Here we provide an SDK implementation that satisfies the Task Responder interface, receiving the TaskManager address and ABI, a transaction manager and an ethereum client:
+    3. Provide a struct that implements the `TaskResponder` interface. That interface requires a method to send the aggregated task responses and another for hashing task responses. Here we provide an SDK implementation that satisfies the Task Responder interface, receiving the TaskManager address and ABI, a transaction manager and an Ethereum client:
 
         ``` go
             taskResponder, err := taskmanager.NewTaskManagerFromAbi[*big.Int, *big.Int](

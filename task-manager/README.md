@@ -8,7 +8,7 @@ This package provides utilities for interacting with a user-defined `TaskManager
 
 A Task Manager abstracts communication with the `TaskManager` contract, letting the SDK create tasks, submit responses, and raise challenges through a `TaskManager` interface without worrying about specific implementation details.
 
-Implementing the [`TaskManager`] interface requires that your on-chain contract expose some specific Solidity types and functions and provide some specific parameters. Our SDK will wire up all the rest; you need to supply your generic `Input`/`Output`, the task manager contract and ABI, a transaction manager and an ethereum client. You can refer to [this contract](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-2/examples/incredible-squaring/contracts/src/IIncredibleSquaringTaskManager.sol) as an example.
+Implementing the [`TaskManager`] interface requires that your on-chain contract expose some specific Solidity types and functions and provide some specific parameters. Our SDK will wire up all the rest; you need to supply your generic `Input`/`Output`, the task manager contract and ABI, a transaction manager and an Ethereum client. You can refer to [this contract](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-2/examples/incredible-squaring/contracts/src/IIncredibleSquaringTaskManager.sol) as an example.
 
 **Required Solidity Structs**:
 
