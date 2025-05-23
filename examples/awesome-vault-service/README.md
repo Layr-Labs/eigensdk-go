@@ -47,6 +47,15 @@ For response validation, there should be an additional check to verify that the 
 
 To create the sequence that passes input values to the task spammer, we use the sequence generator in the task manager main (in `examples/awesome-vault-service/task-spammer/main.go`), that creates a sequence that on each iteration advances on 1 and gives as input a fixed key-pair defined from the iteration number.
 
+### Moving parts
+
+The system flow is composed of 4 binaries:
+
+- [Aggregator](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-2/examples/awesome-vault-service/aggregator/main.go): Aggregates responses from operators and sends the aggregated responses to the task manager contract.
+- [Challenger](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-2/examples/awesome-vault-service/challenger/main.go): If the aggregated responses are incorrect, raises a challenge to the task manager contract.
+- [Operator](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-2/examples/awesome-vault-service/operator/main.go): Responds to tasks and sends them to the aggregator.
+- [Task Spammer](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-2/examples/awesome-vault-service/task-spammer/main.go): Creates new tasks and sends them to the task manager contract.
+
 ## How to run
 
 This simple session illustrates the basic flow of the AVS:
