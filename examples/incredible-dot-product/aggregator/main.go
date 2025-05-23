@@ -37,25 +37,28 @@ func GetConfigFromPath(path string) (*Config, error) {
 	return config, err
 }
 
+// This is the main function for the aggregator in the incredible dot product example. The steps followed are
+// also explained in the aggregator module readme, which can be found at aggregator/README.md
 func main() {
+	// 0. Create the logger where all the logs will appear
 	logger, err := logging.NewZapLogger(logging.Production)
 	if err != nil {
 		println("Failure creating logger")
 		return
 	}
 
+	// 1. Create the aggregator configuration (in this case we read it from aggregator config file)
 	config, err := GetConfigFromPath("config/aggregator_config.toml")
 	if err != nil {
 		logger.Errorf("Failed to read config file: %w", err)
 		return
 	}
+	aggConfig := config.Config
 
-	taskManagerAbi, err := idptaskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
-	if err != nil {
-		logger.Errorf("Failed to get task manager abi: %w", err)
-		return
-	}
+	// 2. Provide a Task Processor, first instantiating the things required for creating it
 
+	// i. Create the ethereum client that will send the RPC messages to the node, and the transaction
+	// manager, that will manage the transaction sending
 	ethClient, err := ethclient.Dial(config.EthHttpUrl)
 	if err != nil {
 		logger.Errorf("Failed to dial ethclient: %w", err)
@@ -78,8 +81,17 @@ func main() {
 		return
 	}
 
-	aggConfig := config.Config
+	// ii. Get the ABI of the task manager contract's binding
+	taskManagerAbi, err := idptaskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
+	if err != nil {
+		logger.Errorf("Failed to get task manager abi: %w", err)
+		return
+	}
 
+	// iii. Provide a struct that implements the `TaskResponder` interface. Here we use an SDK implementation
+	// that already satisfies it, but you can also provide your own type implementing the interface.
+	// Note that in this step we define the input and output types that we are using on our AVS. In this case
+	// the DotProductInput struct (a pair of vectors) and a big int.
 	taskManagerAddr := gethcommon.HexToAddress(config.TaskManagerAddress)
 	taskResponder, err := taskmanager.NewTaskManagerFromAbi[examplecommon.DotProductInput, *big.Int](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
 	if err != nil {
@@ -87,12 +99,16 @@ func main() {
 		return
 	}
 
+	// iv. Create the Task Processor. Here we use the IndexingTaskProcessor, you can see its implementation
+	// in aggregator/task-processor/indexing_task_processor.go
 	taskProcessor, err := taskprocessor.NewIndexingTaskProcessor(logger, taskResponder)
 	if err != nil {
 		logger.Errorf("Failed to create Task Processor: %w", err)
 		return
 	}
 
+	// 3. Build the aggregator, providing aggregator config, logger, task processor and the task manager ABI, and
+	// then start it.
 	aggregator, err := aggregator.NewAggregator(aggConfig, logger, taskProcessor, taskManagerAbi)
 	if err != nil {
 		logger.Errorf("Failed to create aggregator: %w", err)

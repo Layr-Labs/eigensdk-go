@@ -16,36 +16,18 @@ import (
 	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/bindings/taskManager"
 )
 
+// This is the main function for the aggregator in the incredible squaring example. The steps followed are
+// also explained in the aggregator module readme, which can be found at aggregator/README.md
 func main() {
-	logger, err := logging.NewZapLogger(logging.Production) // Change here if want to change logging level
+	// 0. Create the logger where all the logs will appear
+	logger, err := logging.NewZapLogger(logging.Production)
 	if err != nil {
 		println("Failure creating logger")
 		return
 	}
 
+	// 1. Create the aggregator configuration
 	ethHttpUrl := "http://localhost:8545"
-	ethHttpClient, err := ethclient.Dial(ethHttpUrl)
-	if err != nil {
-		return
-	}
-
-	ecdsaPrivateKey, err := crypto.HexToECDSA("2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6")
-	if err != nil {
-		logger.Errorf("Cannot parse ecdsa private key", "err", err)
-		return
-	}
-
-	txMgr, err := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethHttpClient, ecdsaPrivateKey)
-	if err != nil {
-		logger.Errorf("Failed to create transaction manager", "err", err)
-		return
-	}
-
-	taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
-	if err != nil {
-		logger.Fatalf(err.Error())
-	}
-
 	cfg := aggregator.Config{
 		RegistryCoordinatorAddress:    common.HexToAddress("0x7bc06c482dead17c0e297afbc32f6e63d3846650"),
 		OperatorStateRetrieverAddress: common.HexToAddress("0x4c5859f0f772848b2d91f1d83e2fe57935348029"),
@@ -54,30 +36,74 @@ func main() {
 		AggregatorServerIpPortAddr:    "localhost:8090",
 	}
 
-	taskManagerAddr := common.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3")
+	// 2. Provide a Task Processor, first instantiating the things required for creating it
 
+	// i. Create the ethereum client that will send the RPC messages to the node, and the transaction
+	// manager, that will manage the transaction sending
+	ethClient, err := ethclient.Dial(ethHttpUrl)
+	if err != nil {
+		logger.Errorf("Failed to dial ethclient: %w", err)
+		return
+	}
+
+	// Depends on the aggregatorPrivateKey passed to TaskManager.initialize
+	// To change it, modify aggregator_addr in
+	// examples/incredible-squaring/contracts/incredible_squaring_config.json
+	aggregatorPrivateKey := "2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6"
+	ecdsaPrivateKey, err := crypto.HexToECDSA(aggregatorPrivateKey)
+	if err != nil {
+		logger.Errorf("Failed to create ecdsa private key: %w", err)
+		return
+	}
+
+	txMgr, err := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethClient, ecdsaPrivateKey)
+	if err != nil {
+		logger.Errorf("Failed to create tx manager from private key: %w", err)
+		return
+	}
+
+	// ii. Get the ABI of the task manager contract's binding
+	taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
+	if err != nil {
+		logger.Errorf("Failed to get task manager abi: %w", err)
+		return
+	}
+
+	// iii. Provide a struct that implements the `TaskResponder` interface. Here we use an SDK implementation
+	// that already satisfies it, but you can also provide your own type implementing the interface.
+	// Note that in this step we define the input and output types that we are using on our AVS. In this case
+	// the input and output are both big int numbers.
+	taskManagerAddr := common.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3")
 	taskResponder, err := taskmanager.NewTaskManagerFromAbi[*big.Int, *big.Int](
 		taskManagerAddr,
 		taskManagerAbi,
 		txMgr,
-		ethHttpClient,
+		ethClient,
 	)
 	if err != nil {
-		logger.Fatalf(err.Error())
+		logger.Errorf("Failed to create Task Responder: %w", err)
+		return
 	}
 
+	// iv. Create the Task Processor. Here we use the IndexingTaskProcessor, you can see its implementation
+	// in aggregator/task-processor/indexing_task_processor.go
 	taskProcessor, err := taskprocessor.NewIndexingTaskProcessor(logger, taskResponder)
 	if err != nil {
-		logger.Fatalf(err.Error())
+		logger.Errorf("Failed to create Task Processor: %w", err)
+		return
 	}
 
-	agg, err := aggregator.NewAggregator(cfg, logger, taskProcessor, taskManagerAbi)
+	// 3. Build the aggregator, providing aggregator config, logger, task processor and the task manager ABI, and
+	// then start it.
+	aggregator, err := aggregator.NewAggregator(cfg, logger, taskProcessor, taskManagerAbi)
 	if err != nil {
-		logger.Fatalf(err.Error())
+		logger.Errorf("Failed to create aggregator: %w", err)
+		return
 	}
 
-	err = agg.Start(context.Background())
+	err = aggregator.Start(context.Background())
 	if err != nil {
-		logger.Fatalf(err.Error())
+		logger.Errorf("Failure while running aggregator: %w", err)
+		return
 	}
 }

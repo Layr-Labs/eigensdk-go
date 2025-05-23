@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+// We decided to create a custom Response Calculator because we have to save state between task responses, so
+// the NewFunctionResponseCalculator from the operator package wont be useful.
 type VaultServiceResponseCalculator struct {
 	vaults []TaskInput
 }

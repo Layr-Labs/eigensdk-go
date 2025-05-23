@@ -9,20 +9,23 @@ A Challenger is a validator component that monitors the network for the creation
 The Challenger operates through a well-defined workflow:
 
 1. **Event Subscription**:
-  - Subscribes to blockchain events for new tasks and task responses
-  - Monitors for `NewTaskCreated` to track new tasks created in the system
-  - Watches for `TaskResponded` when operators submit responses to tasks
+
+    - Subscribes to blockchain events for new tasks and task responses
+    - Monitors for `NewTaskCreated` to track new tasks created in the system
+    - Watches for `TaskResponded` when operators submit responses to tasks
 
 2. **Verification Process**:
-  - When a new task is detected, user defined logic is used to process the new task
-  - When a task response is received, user defined logic is used to process the task response and verify it
-  - Uses a user-defined verification function to determine if the response is correct
-  - The verification logic can be customized based on the specific AVS requirements
+
+    - When a new task is detected, user defined logic is used to process the new task
+    - When a task response is received, user defined logic is used to process the task response and verify it
+    - Uses a user-defined verification function to determine if the response is correct
+    - The verification logic can be customized based on the specific AVS requirements
 
 3. **Challenge Mechanism**:
-  - If a response is verified as correct, the challenger logs the result and takes no action
-  - If a response is determined to be incorrect, the challenger raises a challenge
-  - Includes identifying the non-signing operators who might have abstained from the incorrect response
+
+    - If a response is verified as correct, the challenger logs the result and takes no action
+    - If a response is determined to be incorrect, the challenger raises a challenge
+    - Includes identifying the non-signing operators who might have abstained from the incorrect response
 
 ## How to Set Up a Challenger
 
@@ -71,7 +74,7 @@ The Challenger operates through a well-defined workflow:
         ``` go
             taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
         ```
-    
+
     3. Provide a struct that implements the `ChallengeRaiser` interface. That interface requires a method to raise an on-chain challenge when operator responses are incorrect. Here we provide a SDK implementation that satisfies the `ChallengeRaiser` interface, receiving the TaskManager address and ABI, a transaction manager and an Ethereum client:
 
         ``` go
@@ -83,7 +86,7 @@ The Challenger operates through a well-defined workflow:
             )
         ```
 
-    4. Create the `NewIndexingChallengerProcessor` with the `ChallengeRaiser` created below:
+    4. Create the `NewIndexingChallengerProcessor` with the `ChallengeRaiser` created above:
 
         ```go
             indexingTaskProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, isValidSquare, challengerRaiser)
@@ -95,12 +98,11 @@ The Challenger operates through a well-defined workflow:
       challenger, _ := challenger.NewChallenger(cfg, indexingTaskProcessor)
     ```
 
-5.  **Start the Challenger**: Start the challenger.
+5. **Start the Challenger**: Start the challenger.
 
     ```go
       challenger.Start(context.Background())
     ```
-
 
 ## Examples
 
