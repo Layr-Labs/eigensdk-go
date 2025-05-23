@@ -86,7 +86,7 @@ The Challenger operates through a well-defined workflow:
             )
         ```
 
-    4. Create the `NewIndexingChallengerProcessor` with the `ChallengeRaiser` created below:
+    4. Create the `NewIndexingChallengerProcessor` with the `ChallengeRaiser` created above:
 
         ```go
             indexingTaskProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, isValidSquare, challengerRaiser)
