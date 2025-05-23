@@ -28,6 +28,8 @@ type Config struct {
 	TaskManagerAddress string `toml:"task_manager_address"`
 }
 
+// This function reads the config from the .toml file at the path received as a parameter
+// and returns a config with those values
 func GetConfigFromPath(path string) (*Config, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
