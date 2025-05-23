@@ -42,10 +42,10 @@ To create the sequence that passes input values to the task spammer, we use the 
 
 The system flow is composed of 4 binaries:
 
-- Aggregator: Aggregates responses from operators and sends the aggregated responses to the task manager contract. [Link to use example](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-2/examples/incredible-squaring/aggregator/main.go)
-- Challenger: If the aggregated responses are incorrect, raises a challenge to the task manager contract. [Link to use example](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-2/examples/incredible-squaring/challenger/main.go)
-- Operator: Responds to tasks and sends them to the aggregator. [Link to use example](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-2/examples/incredible-squaring/operator/main.go)
-- Task Spammer: Creates new tasks and sends them to the task manager contract. [Link to use example](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-2/examples/incredible-squaring/task-spammer/main.go)
+- [Aggregator](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-2/examples/incredible-squaring/aggregator/main.go): Aggregates responses from operators and sends the aggregated responses to the task manager contract.
+- [Challenger](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-2/examples/incredible-squaring/challenger/main.go): If the aggregated responses are incorrect, raises a challenge to the task manager contract.
+- [Operator](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-2/examples/incredible-squaring/operator/main.go): Responds to tasks and sends them to the aggregator.
+- [Task Spammer](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-2/examples/incredible-squaring/task-spammer/main.go): Creates new tasks and sends them to the task manager contract.
 
 ## How to run
 
