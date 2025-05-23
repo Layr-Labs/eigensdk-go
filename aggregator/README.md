@@ -115,26 +115,20 @@ If you want to see an example of `TaskProcessor` you can watch our `IndexingTask
 
 The `TaskProcessor` interface has the following methods:
 
-- `ProcessNewTask` receives a `Task` and a `TaskIndex`, processes the new task, and returns the metadata to be sent to the BLS aggregation service.
-- `ProcessTaskResponse` receives a `TaskResponse` and processes it, returning the hashed bytes of the response.
-- `ProcessAggregatedResponse` receives an aggregated response, processes it, and sends it to the on-chain TaskManager contract, returning an error if the processing fails.
+1. `ProcessNewTask`, that should:
 
-Now we will suggest how to implement the interface methods, based on the implementation of the `IndexingTaskProcessor`.
+    - Saves the task with the associated task index.
+    - Creates the task metadata that will be sent to the BLS aggregation service to be processed.
+    - Returns the BLS metadata
 
-The `ProcessNewTask` method should:
+2. `ProcessTaskResponse`, that should:
 
-1. Save the task with the associated task index.
-2. Create the task metadata that will be sent to the BLS aggregation service to be processed.
-3. Return the BLS metadata
+    - Encode the task response in the `TaskManager` ABI
+    - Hash the encoded task response
+    - Return the digest
 
-The `ProcessTaskResponse` method should:
+3. `ProcessAggregatedResponse` receives an aggregated response, processes it, and sends it to the on-chain TaskManager contract, returning an error if the processing fails.
 
-1. Encode the task response in the `TaskManager` ABI
-2. Hash the encoded task response
-3. Return the digest
-
-The `ProcessAggregatedResponse` method should:
-
-1. Obtain the task with the received task index.
-2. Process the BLS aggregated response, obtaining the nonsigner stakes and signature
-3. Send the task, task response, and nonsigner stakes and signature to the on-chain `TaskManager` contract
+    - Obtain the task with the received task index.
+    - Process the BLS aggregated response, obtaining the nonsigner stakes and signature
+    - Send the task, task response, and nonsigner stakes and signature to the on-chain `TaskManager` contract
