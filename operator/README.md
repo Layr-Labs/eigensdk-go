@@ -124,6 +124,6 @@ To create your Response Calculator you have to declare a struct that satisfies t
 
 The `ResponseCalculator` interface has the `ComputeResponse` method, which computes the response of a task given its index and input, returning the output, or an error if the computation fails.
 
-We recommend implementing your own reponse calculator if you need to save state between responses. If you need to save a state between the operator responses, then you should implement your Response calculator following the above interface. As a suggestion, you should place the calculation logic in the `ComputeResponse` method and initialize the necessary things for calculating the response on the new response calculator builder.
+We recommend implementing your own `ReponseCalculator` if you need to save state between responses, for that you should implement your Response calculator following the above interface. The response calculation logic should go in the `ComputeResponse` method and you can set your initial state in a constructor.
 
 If you don't need to save a state between the operator responses you can use the `NewFunctionResponseCalculator` function, provided by the SDK in the operator package. You can find it on `operator/response_calculator.go`.
