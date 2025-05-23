@@ -59,6 +59,7 @@ func main() {
 	// required for creating it
 
 	// Create the transaction manager, that will manage the transaction sending
+	// This is the anvil first rich account's private key
 	ecdsaPrivateKey, err := crypto.HexToECDSA("ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80")
 	if err != nil {
 		logger.Errorf("Failed to create ecdsa private key: %w", err)
