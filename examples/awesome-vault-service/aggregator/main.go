@@ -20,6 +20,8 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
+// This config has the same attributes as the aggregator config and also includes the
+// deployed TaskManager contract address
 type Config struct {
 	aggregator.Config
 
