@@ -23,6 +23,11 @@ We support following modules right now.
 * [BLS Signer](./signer)
 * [ChainIO](./chainio)
 * [Services](./services)
+* [Aggregator](./aggregator)
+* [Challenger](./challenger)
+* [Operator](./operator)
+* [Task Manager](./task-manager)
+* [Task Spammer](./task-spammer)
 
 ## AVS use examples
 
