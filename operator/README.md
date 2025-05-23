@@ -111,3 +111,19 @@ Here are some examples of operators that are already implemented:
 - [Incredible Squaring](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-1/examples/incredible-squaring/operator/main.go)
 - [Incredible Dot Product](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-1/examples/incredible-dot-product/operator/main.go)
 - [Awesome Vault Service](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-1/examples/awesome-vault-service/operator/main.go)
+
+## How to create your Response Calculator
+
+To create your Response Calculator you have to declare a struct that satisfies the `ResponseCalculator` interface:
+
+``` go
+   type ResponseCalculator[Input any, Output any] interface {
+      ComputeResponse(taskIndex uint32, input Input) (Output, error)
+   }
+```
+
+The `ResponseCalculator` interface has the `ComputeResponse` method, which computes the response of a task given its index and input, returning the output, or an error if the computation fails.
+
+We recommend implementing your own `ReponseCalculator` if you need to save state between responses, for that you should implement your Response calculator following the above interface. The response calculation logic should go in the `ComputeResponse` method and you can set your initial state in a constructor.
+
+If you don't need to save a state between the operator responses you can use the `NewFunctionResponseCalculator` function, provided by the SDK in the operator package. You can find it on `operator/response_calculator.go`.

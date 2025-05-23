@@ -17,6 +17,7 @@ type functionResponseCalculator[Input any, Output any] struct {
 }
 
 // Turns a function that receives a task index and an input value and returns an output value into a ResponseCalculator.
+// On each call to ComputeResponse method, the created calculator will call the function received on building
 func NewFunctionResponseCalculator[Input any, Output any](
 	computeFn func(taskIndex uint32, input Input) (Output, error),
 ) ResponseCalculator[Input, Output] {
