@@ -70,8 +70,7 @@ func main() {
 	}
 
 	// iii. Provide a struct that implements the `TaskResponder` interface. Here we use an SDK implementation
-	// that satisfies the TaskResponder interface, but you can create your wrapper (which implements the
-	// interface) and provide it to the Indexing Task Processor.
+	// that already satisfies it, but you can also provide your own type implementing the interface.
 	// Note that in this step we define the input and output types that we are using on our AVS. In this case
 	// the input and output are both big int numbers.
 	taskManagerAddr := common.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3")
