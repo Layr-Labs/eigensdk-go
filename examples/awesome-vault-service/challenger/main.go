@@ -84,14 +84,14 @@ func main() {
 		return
 	}
 
-	// 4. Create the Challenger Processor, with the challenger raiser created above.
+	// Create the Challenger Processor, with the challenger raiser created above.
 	challengerProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, vaultSetValidation, challengeRaiser)
 	if err != nil {
 		logger.Errorf("Failed to create challenger processor: %v", err)
 		return
 	}
 
-	// 5. Create a Challenger from the Config and the ChallengerProcessor.
+	// 4. Create a Challenger from the Config and the ChallengerProcessor.
 	challenger, err := challenger.NewChallenger(
 		challengerConfig,
 		challengerProcessor,
@@ -101,7 +101,7 @@ func main() {
 		return
 	}
 
-	// 6. Start the challenger
+	// 5. Start the challenger
 	err = challenger.Start(context.Background())
 	if err != nil {
 		logger.Errorf("Failure while running challenger: %w", err)
