@@ -77,13 +77,13 @@ This flow ensures tasks are initialized, signatures collected, and the final res
             )
         ```
 
-    4. Create the `IndexingTaskProcessor` with the `TaskResponder` created below:
+    4. Create the `IndexingTaskProcessor` with the `TaskResponder` created above:
 
         ```go
             taskProcessor, err := taskprocessor.NewIndexingTaskProcessor(logger, taskResponder)
         ```
 
-3. **Run the aggregator**: Instantiate an `Aggregator` with the config, a logger, the task processor created below and the task manager contract ABI, and then start it:
+3. **Run the aggregator**: Instantiate an `Aggregator` with the config, a logger, the task processor created above and the task manager contract ABI, and then start it:
 
     ``` go
         agg, err := aggregator.NewAggregator(cfg, logger, taskProcessor, taskManagerAbi)
