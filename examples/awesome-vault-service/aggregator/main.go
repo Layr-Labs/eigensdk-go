@@ -20,12 +20,16 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
+// This config has the same attributes as the aggregator config and also includes the
+// deployed TaskManager contract address
 type Config struct {
 	aggregator.Config
 
 	TaskManagerAddress string `toml:"task_manager_address"`
 }
 
+// This function reads the config from the .toml file at the path received as a parameter
+// and returns a config with those values
 func GetConfigFromPath(path string) (*Config, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
