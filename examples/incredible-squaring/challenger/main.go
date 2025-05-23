@@ -28,7 +28,7 @@ func main() {
 		return
 	}
 
-	// 1. Create the config passed to the challenger, also creating the values inside it before
+	// 1. Create the config passed to the challenger
 
 	// Get the ABI of the task manager contract's binding
 	taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()

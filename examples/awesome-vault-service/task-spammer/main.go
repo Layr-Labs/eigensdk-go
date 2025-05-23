@@ -26,8 +26,7 @@ func main() {
 		return
 	}
 
-	// 1. Provide a struct that implements the `TaskManager` interface, also creating the the
-	// parameters for the builder before.
+	// 1. Provide a struct that implements the `TaskManager` interface
 
 	// i. Create the ethereum client that will send the RPC messages to the node
 	ethClient, err := ethclient.Dial("http://localhost:8545")
