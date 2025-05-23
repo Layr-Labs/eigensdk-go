@@ -98,3 +98,37 @@ Here are some examples of aggregator implementations:
 - [Incredible Squaring](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-1/examples/incredible-squaring/aggregator/main.go)
 - [Incredible Dot Product](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-1/examples/incredible-dot-product/aggregator/main.go)
 - [Awesome Vault Service](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-1/examples/awesome-vault-service/aggregator/main.go)
+
+## How to create your Task Processor
+
+To create your Task Processor you have to declare a struct that satisfies the `TaskProcessor` interface:
+
+``` go
+    type TaskProcessor[Input any, Output any] interface {
+        ProcessNewTask(taskIndex sdktypes.TaskIndex, task taskmanager.Task[Input]) (blsagg.TaskMetadata, error)
+        ProcessTaskResponse(taskResponse taskmanager.TaskResponse[Output]) ([32]byte, error)
+        ProcessAggregatedResponse(response blsagg.BlsAggregationServiceResponse) error
+ }
+```
+
+If you want to see an example of `TaskProcessor` you can watch our `IndexingTaskProcessor` on `aggregator/task-processor/indexing_task_processor.go`.
+
+The `TaskProcessor` interface has the following methods:
+
+1. `ProcessNewTask`, that should:
+
+    - Saves the task with the associated task index.
+    - Creates the task metadata that will be sent to the BLS aggregation service to be processed.
+    - Returns the BLS metadata
+
+2. `ProcessTaskResponse`, that should:
+
+    - Encode the task response in the `TaskManager` ABI
+    - Hash the encoded task response
+    - Return the digest
+
+3. `ProcessAggregatedResponse` receives an aggregated response, processes it, and sends it to the on-chain TaskManager contract, returning an error if the processing fails.
+
+    - Obtain the task with the received task index.
+    - Process the BLS aggregated response, obtaining the nonsigner stakes and signature
+    - Send the task, task response, and nonsigner stakes and signature to the on-chain `TaskManager` contract
