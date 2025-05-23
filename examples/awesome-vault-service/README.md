@@ -47,7 +47,7 @@ For response validation, there should be an additional check to verify that the 
 
 To create the sequence that passes input values to the task spammer, we use the sequence generator in the task manager main (in `examples/awesome-vault-service/task-spammer/main.go`), that creates a sequence that on each iteration advances on 1 and gives as input a fixed key-pair defined from the iteration number.
 
-### Binaries
+### Moving parts
 
 The system flow is composed of 4 binaries:
 

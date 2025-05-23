@@ -43,7 +43,7 @@ In the specific case of the dot product, the function receives an input with two
 
 To create the sequence that passes input values to the task spammer, we use the sequence generator in the task manager main (in `examples/incredible-dot-product/task-spammer/main.go`), which creates a sequence that on each iteration advances on 1 and gives as input a fixed pair of vectors defined from the iteration number.
 
-### Binaries
+### Moving parts
 
 The system flow is composed of 4 binaries:
 

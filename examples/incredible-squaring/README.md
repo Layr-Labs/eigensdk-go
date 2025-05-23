@@ -38,7 +38,7 @@ In the specific case of squaring, the function receives an input of an uint256, 
 
 To create the sequence that passes input values to the task spammer, we use the sequence generator in the task manager main (in `examples/incredible-squaring/task-spammer/main.go`) which creates a sequence that advances on 1 and gives the iteration number as input on each iteration.
 
-### Binaries
+### Moving parts
 
 The system flow is composed of 4 binaries:
 
