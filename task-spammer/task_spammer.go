@@ -15,15 +15,17 @@ type TaskSpammer[Input any] struct {
 	// The task creator sends the tasks to the on-chain task manager contract
 	taskCreator taskmanager.TaskCreator[Input]
 	config      Config
+	inputGen    iter.Seq[Input]
 }
 
 // Builds a task spammer from a task creator and the received task spammer config. Returns an error if the
 // received config is invalid
-func NewTaskSpammer[Input any](taskCreator taskmanager.TaskCreator[Input], config Config) (*TaskSpammer[Input], error) {
+func NewTaskSpammer[Input any](taskCreator taskmanager.TaskCreator[Input], config Config, inputGen iter.Seq[Input]) (*TaskSpammer[Input], error) {
 	// TODO: validate config
 	return &TaskSpammer[Input]{
 		taskCreator,
 		config,
+		inputGen,
 	}, nil
 }
 
@@ -32,7 +34,7 @@ func NewTaskSpammer[Input any](taskCreator taskmanager.TaskCreator[Input], confi
 // depends on the inputGen received by parameter.
 // Note that the taskIndex value is not sent to the task manager contract, so it may differ (will differ if shut
 // down and raise another without reseting the anvil node), but it wont affect the workflow of the system.
-func (taskGen *TaskSpammer[Input]) Start(ctx context.Context, inputGen iter.Seq[Input]) error {
+func (taskGen *TaskSpammer[Input]) Start(ctx context.Context) error {
 	logger := taskGen.config.Logger
 
 	logger.Info("Starting Task Spammer.")
@@ -43,7 +45,7 @@ func (taskGen *TaskSpammer[Input]) Start(ctx context.Context, inputGen iter.Seq[
 
 	taskIndex := int64(0)
 
-	nextInput, stop := iter.Pull(inputGen)
+	nextInput, stop := iter.Pull(taskGen.inputGen)
 	defer stop()
 
 	for {
