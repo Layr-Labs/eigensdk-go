@@ -190,7 +190,26 @@ func (agg *Aggregator[Input, Output]) processAggregatedResponse(
 		return utils.WrapError("BlsAggregationServiceResponse contains an error", response.Err)
 	}
 
-	err := agg.taskProcessor.ProcessAggregatedResponse(response)
+	nonSignerPubkeys := []sdktypes.BN254G1Point{}
+	for _, nonSignerPubkey := range response.NonSignersPubkeysG1 {
+		nonSignerPubkeys = append(nonSignerPubkeys, sdktypes.ConvertToBN254G1Point(nonSignerPubkey))
+	}
+	quorumApks := []sdktypes.BN254G1Point{}
+	for _, quorumApk := range response.QuorumApksG1 {
+		quorumApks = append(quorumApks, sdktypes.ConvertToBN254G1Point(quorumApk))
+	}
+	nonSignerStakesAndSignature := sdktypes.NonSignerStakesAndSignature{
+		NonSignerPubkeys:             nonSignerPubkeys,
+		QuorumApks:                   quorumApks,
+		ApkG2:                        sdktypes.ConvertToBN254G2Point(response.SignersApkG2),
+		Sigma:                        sdktypes.ConvertToBN254G1Point(response.SignersAggSigG1.G1Point),
+		NonSignerQuorumBitmapIndices: response.NonSignerQuorumBitmapIndices,
+		QuorumApkIndices:             response.QuorumApkIndices,
+		TotalStakeIndices:            response.TotalStakeIndices,
+		NonSignerStakeIndices:        response.NonSignerStakeIndices,
+	}
+
+	err := agg.taskProcessor.ProcessAggregatedResponse(response, nonSignerStakesAndSignature)
 	if err != nil {
 		return utils.WrapError("Aggregator failed to respond to task", err)
 	}

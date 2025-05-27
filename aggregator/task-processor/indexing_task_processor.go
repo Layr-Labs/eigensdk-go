@@ -85,32 +85,10 @@ func (itp *IndexingTaskProcessor[Input, Output]) ProcessTaskResponse(taskRespons
 
 // Processes an aggregated response, creating the required types and sending them to the on-chain Task Manager contract. After
 // sending the response, deletes the completed task from the tasks map.
-func (itp *IndexingTaskProcessor[Input, Output]) ProcessAggregatedResponse(response blsagg.BlsAggregationServiceResponse) error {
+func (itp *IndexingTaskProcessor[Input, Output]) ProcessAggregatedResponse(response blsagg.BlsAggregationServiceResponse, nonSignerStakesAndSignature sdktypes.NonSignerStakesAndSignature) error {
 	itp.tasksMu.RLock()
 	task := itp.tasks[response.TaskIndex]
 	itp.tasksMu.RUnlock()
-
-	if response.Err != nil {
-		return utils.WrapError("BlsAggregationServiceResponse contains an error", response.Err)
-	}
-	nonSignerPubkeys := []sdktypes.BN254G1Point{}
-	for _, nonSignerPubkey := range response.NonSignersPubkeysG1 {
-		nonSignerPubkeys = append(nonSignerPubkeys, ConvertToBN254G1Point(nonSignerPubkey))
-	}
-	quorumApks := []sdktypes.BN254G1Point{}
-	for _, quorumApk := range response.QuorumApksG1 {
-		quorumApks = append(quorumApks, ConvertToBN254G1Point(quorumApk))
-	}
-	nonSignerStakesAndSignature := sdktypes.NonSignerStakesAndSignature{
-		NonSignerPubkeys:             nonSignerPubkeys,
-		QuorumApks:                   quorumApks,
-		ApkG2:                        ConvertToBN254G2Point(response.SignersApkG2),
-		Sigma:                        ConvertToBN254G1Point(response.SignersAggSigG1.G1Point),
-		NonSignerQuorumBitmapIndices: response.NonSignerQuorumBitmapIndices,
-		QuorumApkIndices:             response.QuorumApkIndices,
-		TotalStakeIndices:            response.TotalStakeIndices,
-		NonSignerStakeIndices:        response.NonSignerStakeIndices,
-	}
 
 	itp.logger.Info("Threshold reached. Sending aggregated response onchain.", "taskIndex", response.TaskIndex)
 
