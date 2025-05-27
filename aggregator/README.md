@@ -107,8 +107,8 @@ To create your Task Processor you have to declare a struct that satisfies the `T
     type TaskProcessor[Input any, Output any] interface {
         ProcessNewTask(taskIndex sdktypes.TaskIndex, task taskmanager.Task[Input]) (blsagg.TaskMetadata, error)
         ProcessTaskResponse(taskResponse taskmanager.TaskResponse[Output]) ([32]byte, error)
-        ProcessAggregatedResponse(response blsagg.BlsAggregationServiceResponse) error
- }
+        ProcessAggregatedResponse(taskIndex sdktypes.TaskIndex, taskResponse taskmanager.TaskResponse[Output], nonSignerStakesAndSignature sdktypes.NonSignerStakesAndSignature) error
+    }
 ```
 
 If you want to see an example of `TaskProcessor` you can watch our `IndexingTaskProcessor` on `aggregator/task-processor/indexing_task_processor.go`.
@@ -127,7 +127,7 @@ The `TaskProcessor` interface has the following methods:
     - Hash the encoded task response
     - Return the digest
 
-3. `ProcessAggregatedResponse` receives an aggregated response, processes it, and sends it to the on-chain TaskManager contract, returning an error if the processing fails.
+3. `ProcessAggregatedResponse` receives a task index, a task response and the non signer stakes and signature, and sends the aggregated response information to the on-chain TaskManager contract, returning an error if the processing fails.
 
     - Obtain the task with the received task index.
     - Process the BLS aggregated response, obtaining the nonsigner stakes and signature
