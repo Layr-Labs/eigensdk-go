@@ -43,13 +43,7 @@ The Task Spammer uses a builder pattern and follows this workflow:
         }
       ```
 
-3. **Build the Task Spammer**: Use the `NewTaskSpammer` function to build the task spammer
-
-    ```go
-      taskSpammer, _ := taskspammer.NewTaskSpammer(taskCreator, taskSpammerConfig)
-    ```
-
-4. **Create the iterator**: Define an iterator that creates appropriate input values for your specific AVS
+3. **Create the iterator**: Define an iterator that creates appropriate input values for your specific AVS
    - The input values will be passed to the `CreateNewTask` function on the `TaskSpammer` struct
 
       ```go
@@ -68,10 +62,16 @@ The Task Spammer uses a builder pattern and follows this workflow:
         inputGen := NewNumberToSquareSequence()
       ```
 
+4. **Build the Task Spammer**: Use the `NewTaskSpammer` function to build the task spammer
+
+    ```go
+      taskSpammer, _ := taskspammer.NewTaskSpammer(taskCreator, taskSpammerConfig, inputGen)
+    ```
+
 5. **Start the Task Spammer**: Call the `Start` method to start the task spammer
 
     ```go
-      taskSpammer.Start(context.Background(), inputGen)
+      taskSpammer.Start(context.Background())
     ```
 
 ## Examples
