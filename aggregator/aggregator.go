@@ -209,7 +209,12 @@ func (agg *Aggregator[Input, Output]) processAggregatedResponse(
 		NonSignerStakeIndices:        response.NonSignerStakeIndices,
 	}
 
-	err := agg.taskProcessor.ProcessAggregatedResponse(response, nonSignerStakesAndSignature)
+	taskResponse, ok := response.TaskResponse.(taskmanager.TaskResponse[Output])
+	if !ok {
+		agg.logger.Error("task Response could not be converted to sdk aggregator's Task Response type")
+	}
+
+	err := agg.taskProcessor.ProcessAggregatedResponse(response.TaskIndex, taskResponse, nonSignerStakesAndSignature)
 	if err != nil {
 		return utils.WrapError("Aggregator failed to respond to task", err)
 	}

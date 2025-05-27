@@ -85,25 +85,24 @@ func (itp *IndexingTaskProcessor[Input, Output]) ProcessTaskResponse(taskRespons
 
 // Processes an aggregated response, creating the required types and sending them to the on-chain Task Manager contract. After
 // sending the response, deletes the completed task from the tasks map.
-func (itp *IndexingTaskProcessor[Input, Output]) ProcessAggregatedResponse(response blsagg.BlsAggregationServiceResponse, nonSignerStakesAndSignature sdktypes.NonSignerStakesAndSignature) error {
+func (itp *IndexingTaskProcessor[Input, Output]) ProcessAggregatedResponse(
+	taskIndex sdktypes.TaskIndex,
+	taskResponse taskmanager.TaskResponse[Output],
+	nonSignerStakesAndSignature sdktypes.NonSignerStakesAndSignature,
+) error {
 	itp.tasksMu.RLock()
-	task := itp.tasks[response.TaskIndex]
+	task := itp.tasks[taskIndex]
 	itp.tasksMu.RUnlock()
 
-	itp.logger.Info("Threshold reached. Sending aggregated response onchain.", "taskIndex", response.TaskIndex)
+	itp.logger.Info("Threshold reached. Sending aggregated response onchain.", "taskIndex", taskIndex)
 
-	taskResponseAgg, ok := response.TaskResponse.(taskmanager.TaskResponse[Output])
-	if !ok {
-		itp.logger.Error("task Response could not be converted to sdk aggregator's Task Response type")
-	}
-
-	err := itp.taskResponder.RespondToTask(task, taskResponseAgg, nonSignerStakesAndSignature)
+	err := itp.taskResponder.RespondToTask(task, taskResponse, nonSignerStakesAndSignature)
 	if err != nil {
 		return utils.WrapError("Aggregator failed to respond to task", err)
 	}
 
 	itp.tasksMu.RLock()
-	delete(itp.tasks, response.TaskIndex)
+	delete(itp.tasks, taskIndex)
 	itp.tasksMu.RUnlock()
 
 	return nil

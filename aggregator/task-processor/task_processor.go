@@ -17,5 +17,5 @@ type TaskProcessor[Input any, Output any] interface {
 	ProcessTaskResponse(taskResponse taskmanager.TaskResponse[Output]) ([32]byte, error)
 
 	// Processes an aggregated response, returning an error if the process fails
-	ProcessAggregatedResponse(response blsagg.BlsAggregationServiceResponse, nonSignerStakesAndSignature sdktypes.NonSignerStakesAndSignature) error
+	ProcessAggregatedResponse(taskIndex sdktypes.TaskIndex, taskResponse taskmanager.TaskResponse[Output], nonSignerStakesAndSignature sdktypes.NonSignerStakesAndSignature) error
 }
