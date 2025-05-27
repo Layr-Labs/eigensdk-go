@@ -1,11 +1,9 @@
 package taskprocessor
 
 import (
-	"math/big"
 	"sync"
 	"time"
 
-	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	blsagg "github.com/Layr-Labs/eigensdk-go/services/bls_aggregation"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
@@ -87,65 +85,25 @@ func (itp *IndexingTaskProcessor[Input, Output]) ProcessTaskResponse(taskRespons
 
 // Processes an aggregated response, creating the required types and sending them to the on-chain Task Manager contract. After
 // sending the response, deletes the completed task from the tasks map.
-func (itp *IndexingTaskProcessor[Input, Output]) ProcessAggregatedResponse(response blsagg.BlsAggregationServiceResponse) error {
+func (itp *IndexingTaskProcessor[Input, Output]) ProcessAggregatedResponse(
+	taskIndex sdktypes.TaskIndex,
+	taskResponse taskmanager.TaskResponse[Output],
+	nonSignerStakesAndSignature sdktypes.NonSignerStakesAndSignature,
+) error {
 	itp.tasksMu.RLock()
-	task := itp.tasks[response.TaskIndex]
+	task := itp.tasks[taskIndex]
 	itp.tasksMu.RUnlock()
 
-	if response.Err != nil {
-		return utils.WrapError("BlsAggregationServiceResponse contains an error", response.Err)
-	}
-	nonSignerPubkeys := []sdktypes.BN254G1Point{}
-	for _, nonSignerPubkey := range response.NonSignersPubkeysG1 {
-		nonSignerPubkeys = append(nonSignerPubkeys, ConvertToBN254G1Point(nonSignerPubkey))
-	}
-	quorumApks := []sdktypes.BN254G1Point{}
-	for _, quorumApk := range response.QuorumApksG1 {
-		quorumApks = append(quorumApks, ConvertToBN254G1Point(quorumApk))
-	}
-	nonSignerStakesAndSignature := sdktypes.NonSignerStakesAndSignature{
-		NonSignerPubkeys:             nonSignerPubkeys,
-		QuorumApks:                   quorumApks,
-		ApkG2:                        ConvertToBN254G2Point(response.SignersApkG2),
-		Sigma:                        ConvertToBN254G1Point(response.SignersAggSigG1.G1Point),
-		NonSignerQuorumBitmapIndices: response.NonSignerQuorumBitmapIndices,
-		QuorumApkIndices:             response.QuorumApkIndices,
-		TotalStakeIndices:            response.TotalStakeIndices,
-		NonSignerStakeIndices:        response.NonSignerStakeIndices,
-	}
+	itp.logger.Info("Threshold reached. Sending aggregated response onchain.", "taskIndex", taskIndex)
 
-	itp.logger.Info("Threshold reached. Sending aggregated response onchain.", "taskIndex", response.TaskIndex)
-
-	taskResponseAgg, ok := response.TaskResponse.(taskmanager.TaskResponse[Output])
-	if !ok {
-		itp.logger.Error("task Response could not be converted to sdk aggregator's Task Response type")
-	}
-
-	err := itp.taskResponder.RespondToTask(task, taskResponseAgg, nonSignerStakesAndSignature)
+	err := itp.taskResponder.RespondToTask(task, taskResponse, nonSignerStakesAndSignature)
 	if err != nil {
 		return utils.WrapError("Aggregator failed to respond to task", err)
 	}
 
 	itp.tasksMu.RLock()
-	delete(itp.tasks, response.TaskIndex)
+	delete(itp.tasks, taskIndex)
 	itp.tasksMu.RUnlock()
 
 	return nil
-}
-
-// Utils
-func ConvertToBN254G1Point(input *bls.G1Point) sdktypes.BN254G1Point {
-	output := sdktypes.BN254G1Point{
-		X: input.X.BigInt(big.NewInt(0)),
-		Y: input.Y.BigInt(big.NewInt(0)),
-	}
-	return output
-}
-
-func ConvertToBN254G2Point(input *bls.G2Point) sdktypes.BN254G2Point {
-	output := sdktypes.BN254G2Point{
-		X: [2]*big.Int{input.X.A1.BigInt(big.NewInt(0)), input.X.A0.BigInt(big.NewInt(0))},
-		Y: [2]*big.Int{input.Y.A1.BigInt(big.NewInt(0)), input.Y.A0.BigInt(big.NewInt(0))},
-	}
-	return output
 }
