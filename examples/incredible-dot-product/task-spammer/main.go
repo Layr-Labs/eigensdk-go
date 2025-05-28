@@ -92,7 +92,7 @@ func main() {
 	}
 
 	// 5. Run the created task spammer, passing the created sequence as parameter
-	err = taskSpammer.Start(context.Background())
+	err = <-taskSpammer.Start(context.Background())
 	if err != nil {
 		logger.Errorf("Failure while running Task Spammer: %w", err)
 		return

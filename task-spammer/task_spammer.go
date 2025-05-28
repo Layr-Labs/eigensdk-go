@@ -29,23 +29,35 @@ func NewTaskSpammer[Input any](taskCreator taskmanager.TaskCreator[Input], confi
 	}, nil
 }
 
-// The start method contains the main loop of the task spammer, that creates new tasks every period of time, and
+// Runs the Task Spammer in a separate goroutine. This should be called only one time per Task Spammer.
+// Returns an error channel, that in case of an error in the run method will contain the received error.
+func (taskSpam *TaskSpammer[Input]) Start(ctx context.Context) <-chan error {
+	errChan := make(chan error)
+
+	go func() {
+		errChan <- taskSpam.run(ctx)
+	}()
+
+	return errChan
+}
+
+// The run method contains the main loop of the task spammer, that creates new tasks every period of time, and
 // sends them to the on-chain task manager contract. The input sent to the task manager contract on each iteration
 // depends on the inputGen received by parameter.
 // Note that the taskIndex value is not sent to the task manager contract, so it may differ (will differ if shut
 // down and raise another without reseting the anvil node), but it wont affect the workflow of the system.
-func (taskGen *TaskSpammer[Input]) Start(ctx context.Context) error {
-	logger := taskGen.config.Logger
+func (taskSpam *TaskSpammer[Input]) run(ctx context.Context) error {
+	logger := taskSpam.config.Logger
 
 	logger.Info("Starting Task Spammer.")
 
-	ticker := time.NewTicker(taskGen.config.TimeBetweenTasks)
+	ticker := time.NewTicker(taskSpam.config.TimeBetweenTasks)
 	defer ticker.Stop()
-	logger.Infof("Task Spammer set to send new task every %v seconds...", taskGen.config.TimeBetweenTasks)
+	logger.Infof("Task Spammer set to send new task every %v seconds...", taskSpam.config.TimeBetweenTasks)
 
 	taskIndex := int64(0)
 
-	nextInput, stop := iter.Pull(taskGen.inputGen)
+	nextInput, stop := iter.Pull(taskSpam.inputGen)
 	defer stop()
 
 	for {
@@ -57,7 +69,7 @@ func (taskGen *TaskSpammer[Input]) Start(ctx context.Context) error {
 			logger.Info("Task Spammer finished sending tasks")
 			return nil
 		}
-		err := taskGen.taskCreator.CreateNewTask(ctx, value, taskGen.config.QuorumThresholdPercentage, taskGen.config.QuorumNumbers)
+		err := taskSpam.taskCreator.CreateNewTask(ctx, value, taskSpam.config.QuorumThresholdPercentage, taskSpam.config.QuorumNumbers)
 		if err != nil {
 			logger.Error("Task Spammer failed to send new task", "err", err)
 			return err
