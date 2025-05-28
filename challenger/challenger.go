@@ -110,6 +110,8 @@ func (c *Challenger[Input, Output]) run(ctx context.Context) error {
 
 	for {
 		select {
+		case <-ctx.Done():
+			return nil
 		case newTaskCreatedLog := <-c.newTaskCreatedChan:
 			c.logger.Info("New task created log received")
 			err := c.processNewTaskCreatedLog(newTaskCreatedLog)
