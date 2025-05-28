@@ -122,14 +122,27 @@ func NewAggregator[Input any, Output any](
 	}, nil
 }
 
-// Starts running the Aggregator. This should be called only one time per Aggregator.
-//
-// The main loop of the Aggregator has 2 main events:
+// Runs the Aggregator in a separate goroutine. This should be called only one time per Aggregator.
+// Returns an error channel, that in case of an error in the run method will contain the received error.
+func (agg *Aggregator[Input, Output]) Start(ctx context.Context) <-chan error {
+	errChan := make(chan error)
+
+	go func() {
+		defer close(errChan)
+		if err := agg.run(ctx); err != nil {
+			errChan <- err
+		}
+	}()
+
+	return errChan
+}
+
+// The run method contains the main loop of the Aggregator, that has 2 main events:
 //   - Get a response from the BLS aggregation service: In this case the response is processed and sent to
 //     the Task Manager on-chain contract.
 //   - Receive a new task created event log: In this case the aggregator processes that event, and sends to
 //     the BLS aggregation service the new task created metadata.
-func (agg *Aggregator[Input, Output]) Start(ctx context.Context) error {
+func (agg *Aggregator[Input, Output]) run(ctx context.Context) error {
 	agg.logger.Info("Starting aggregator.")
 	agg.logger.Info("Starting aggregator rpc server.")
 	go agg.startServer(ctx)
