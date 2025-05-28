@@ -88,7 +88,7 @@ This flow ensures tasks are initialized, signatures collected, and the final res
     ``` go
         agg, err := aggregator.NewAggregator(cfg, logger, taskProcessor, taskManagerAbi)
 
-        err = agg.Start(context.Background())
+        err = <-agg.Start(context.Background())
     ```
 
 ## Examples
