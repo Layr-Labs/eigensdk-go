@@ -128,10 +128,7 @@ func (agg *Aggregator[Input, Output]) Start(ctx context.Context) <-chan error {
 	errChan := make(chan error)
 
 	go func() {
-		defer close(errChan)
-		if err := agg.run(ctx); err != nil {
-			errChan <- err
-		}
+		errChan <- agg.run(ctx)
 	}()
 
 	return errChan
