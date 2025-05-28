@@ -71,7 +71,7 @@ The Task Spammer uses a builder pattern and follows this workflow:
 5. **Start the Task Spammer**: Call the `Start` method to start the task spammer
 
     ```go
-      taskSpammer.Start(context.Background())
+      err = <-taskSpammer.Start(context.Background())
     ```
 
 ## Examples

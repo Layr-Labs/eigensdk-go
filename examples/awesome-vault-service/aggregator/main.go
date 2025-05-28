@@ -119,7 +119,7 @@ func main() {
 		return
 	}
 
-	err = aggregator.Start(context.Background())
+	err = <-aggregator.Start(context.Background())
 	if err != nil {
 		logger.Errorf("Failure while running aggregator: %w", err)
 		return

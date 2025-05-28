@@ -84,25 +84,25 @@ The Operator functions through the following flow:
 
 5. **Failing Response Calculator**: If you want to test what happens when the operator responds incorrectly to a task and see how slashing works, you can wrap your logic with `NewFailingResponseCalculator` method to inject failures and a given failure rate. **Use this for testing purposes only.**
 
-    ```go
-        logic, err := operator.NewFailingResponseCalculator(calculator, 50, big.NewInt(0))
-    ```
+   ```go
+      logic, err := operator.NewFailingResponseCalculator(calculator, 50, big.NewInt(0))
+   ```
 
 6. **Run the operator**: Initialize the `Operator` with the configuration and the processing logic. Then start the operator.
 
-    ```go
-        operator, err := operator.NewOperatorFromConfig(operatorConfig, logic, nil)
-        if err != nil {
-          logger.Errorf("Failed to create operator from config: %v", err)
-          return
-        }
+   ```go
+      operator, err := operator.NewOperatorFromConfig(operatorConfig, logic, nil)
+      if err != nil {
+         logger.Errorf("Failed to create operator from config: %v", err)
+         return
+      }
 
-        err = operator.Start(context.Background())
-        if err != nil {
-          logger.Errorf("Error while running operator: %v", err)
-          return
-        }
-    ```
+      err = <-operator.Start(context.Background())
+      if err != nil {
+         logger.Errorf("Error while running operator: %v", err)
+         return
+      }
+   ```
 
 ## Examples
 

@@ -178,9 +178,21 @@ func NewOperatorFromConfig[Input any, Output any](
 	return operator, nil
 }
 
-// The start function executes the main loop for the operator, that basically listens to new task created events
+// Runs the Operator in a separate goroutine. This should be called only one time per Operator.
+// Returns an error channel, that in case of an error in the run method will contain the received error.
+func (o *Operator[Input, Output]) Start(ctx context.Context) <-chan error {
+	errChan := make(chan error)
+
+	go func() {
+		errChan <- o.run(ctx)
+	}()
+
+	return errChan
+}
+
+// The run method executes the main loop for the operator, that basically listens to new task created events
 // and respond to those tasks, signs them and sends them to the aggregator via aggregator RPC client.
-func (o *Operator[Input, Output]) Start(ctx context.Context) error {
+func (o *Operator[Input, Output]) run(ctx context.Context) error {
 	o.logger.Info("Starting operator.")
 
 	for {

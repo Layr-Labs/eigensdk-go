@@ -88,16 +88,30 @@ func NewChallenger[Input any, Output any](
 	}, nil
 }
 
-// Start method runs the main loop of the Challenger. This loop has 2 main events:
+// Runs the Challenger in a separate goroutine. This should be called only one time per Challenger.
+// Returns an error channel, that in case of an error in the run method will contain the received error.
+func (c *Challenger[Input, Output]) Start(ctx context.Context) <-chan error {
+	errChan := make(chan error)
+
+	go func() {
+		errChan <- c.run(ctx)
+	}()
+
+	return errChan
+}
+
+// The run method executes the main loop of the Challenger. This loop has 2 main events:
 //   - Receive a task responded event: In this case the challenger will process that event, saving the
 //     task index
 //   - Receive a new task created event log: In this case the challenger processes that event, and in case
 //     the response is wrong, a challenge will be raised
-func (c *Challenger[Input, Output]) Start(ctx context.Context) error {
+func (c *Challenger[Input, Output]) run(ctx context.Context) error {
 	c.logger.Info("Starting Challenger.")
 
 	for {
 		select {
+		case <-ctx.Done():
+			return nil
 		case newTaskCreatedLog := <-c.newTaskCreatedChan:
 			c.logger.Info("New task created log received")
 			err := c.processNewTaskCreatedLog(newTaskCreatedLog)

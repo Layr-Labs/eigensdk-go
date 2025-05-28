@@ -95,13 +95,13 @@ The Challenger operates through a well-defined workflow:
 4. **Challenger**: Create a `Challenger` from the `Config` and the `ChallengerProcessor`.
 
     ```go
-      challenger, _ := challenger.NewChallenger(cfg, indexingTaskProcessor)
+        challenger, _ := challenger.NewChallenger(cfg, indexingTaskProcessor)
     ```
 
 5. **Start the Challenger**: Start the challenger.
 
     ```go
-      challenger.Start(context.Background())
+        err = <-challenger.Start(context.Background())
     ```
 
 ## Examples

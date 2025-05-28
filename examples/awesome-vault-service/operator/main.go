@@ -87,7 +87,7 @@ func main() {
 		logger.Fatalf("Failed to create operator: %w", err)
 	}
 
-	err = operator.Start(context.Background())
+	err = <-operator.Start(context.Background())
 	if err != nil {
 		logger.Fatalf("Failure while running operator: %w", err)
 	}

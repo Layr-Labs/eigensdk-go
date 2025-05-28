@@ -104,7 +104,7 @@ func main() {
 	}
 
 	// 6. Start the challenger
-	err = challenger.Start(context.Background())
+	err = <-challenger.Start(context.Background())
 	if err != nil {
 		logger.Errorf("Error while running challenger: %v", err)
 		return
