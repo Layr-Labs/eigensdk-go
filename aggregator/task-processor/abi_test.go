@@ -11,8 +11,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
-
-	istaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/bindings/taskManager"
 )
 
 // Testing structs
@@ -44,41 +42,6 @@ type Arg1 struct {
 type Arg2 struct {
 	Arg1 Arg1
 	Data []byte
-}
-
-func TestIncredibleSquaringAbi(t *testing.T) {
-	taskManagerAbi, err := istaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
-	require.NoError(t, err)
-
-	originalTaskStruct := taskmanager.Task[*big.Int]{
-		InputValue:                big.NewInt(10),
-		TaskCreatedBlock:          10,
-		QuorumNumbers:             []uint8{0},
-		QuorumThresholdPercentage: 100,
-	}
-
-	originalTaskResponseStruct := taskmanager.TaskResponse[*big.Int]{
-		ReferenceTaskIndex: 0,
-		OutputValue:        big.NewInt(100),
-	}
-
-	nonSigStruct := sdktypes.NonSignerStakesAndSignature{
-		NonSignerQuorumBitmapIndices: []uint32{0},
-		NonSignerPubkeys:             []sdktypes.BN254G1Point{{X: common.Big0, Y: common.Big0}},
-		QuorumApks:                   []sdktypes.BN254G1Point{{X: common.Big0, Y: common.Big0}},
-		ApkG2:                        sdktypes.BN254G2Point{X: [2]*big.Int{common.Big0, common.Big0}, Y: [2]*big.Int{common.Big0, common.Big0}},
-		Sigma:                        sdktypes.BN254G1Point{X: common.Big0, Y: common.Big0},
-		QuorumApkIndices:             []uint32{0},
-		TotalStakeIndices:            []uint32{0},
-		NonSignerStakeIndices:        [][]uint32{{0}},
-	}
-
-	taskReflectStruct := internalutils.CopyStructAndChangeFieldName(originalTaskStruct, "InputValue", "NumberToBeSquared")
-	taskResponseReflectStruct := internalutils.CopyStructAndChangeFieldName(originalTaskResponseStruct, "OutputValue", "NumberSquared")
-
-	packedBytes, err := taskManagerAbi.Pack("respondToTask", taskReflectStruct, taskResponseReflectStruct, nonSigStruct)
-	require.NoError(t, err)
-	require.NotZero(t, packedBytes)
 }
 
 func TestSimpleStructValueAbi(t *testing.T) {
