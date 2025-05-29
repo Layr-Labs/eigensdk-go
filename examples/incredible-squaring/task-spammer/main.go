@@ -71,6 +71,7 @@ func main() {
 	taskManagerAddress := common.HexToAddress(tsConfig.TaskManagerAddress)
 	taskCreator, err := taskmanager.NewTaskManagerFromAbi[*big.Int, *big.Int](taskManagerAddress, abi, txMgr, ethHttpClient)
 	if err != nil {
+		logger.Errorf("Failed to create Task Creator: %w", err)
 		return
 	}
 
