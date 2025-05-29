@@ -15,8 +15,8 @@ service_manager_address = "0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"
 registry_coordinator_address = "0x7bc06c482dead17c0e297afbc32f6e63d3846650"
 token_strategy_addr = "0x2b961e3959b79326a8e7f64ef0d2d825707669b5"
 
-ecdsa_private_key_store_path = "tests/keys/test.ecdsa.key.json"
-bls_private_key_store_path = "tests/keys/test.bls.key.json"
+ecdsa_private_key_store_path = "keys/test.ecdsa.key.json"
+bls_private_key_store_path = "keys/test.bls.key.json"
 
 # Node URLs
 eth_http_url = "http://localhost:8545"
