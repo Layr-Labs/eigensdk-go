@@ -100,14 +100,14 @@ func main() {
 		return
 	}
 
-	// 4. Create the Challenger Processor, with the challenger raiser created above.
+	// Create the Challenger Processor, with the challenger raiser created above.
 	indexingChallengerProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, squareValidation, challengeRaiser)
 	if err != nil {
 		logger.Errorf("Failed to create challenger logic from config: %v", err)
 		return
 	}
 
-	// 5. Create a Challenger from the Config and the ChallengerProcessor.
+	// 4. Create a Challenger from the Config and the ChallengerProcessor.
 	challenger, err := challenger.NewChallenger(
 		cfg,
 		indexingChallengerProcessor,
@@ -117,7 +117,7 @@ func main() {
 		return
 	}
 
-	// 6. Start the challenger
+	// 5. Start the challenger
 	err = <-challenger.Start(context.Background())
 	if err != nil {
 		logger.Errorf("Error while running challenger: %v", err)

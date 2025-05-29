@@ -97,6 +97,9 @@ func main() {
 		RegistrationCfg:               registrationConfig,
 	}
 
+	// 3. Implement the computation function that processes task inputs and produces outputs
+	// (we do this in examples/incredible-squaring/common/common.go)
+
 	// 4. Create the response calculator with the AVS calculation logic. Note that here we create a
 	// Response calculator with the NewFunctionResponseCalculator from the operator package
 	calculator := operator.NewFunctionResponseCalculator(examplecommon.Square)

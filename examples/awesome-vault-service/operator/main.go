@@ -55,6 +55,9 @@ func main() {
 		return
 	}
 
+	// 2. Create the operator config, including the registration config. If you don't want to
+	// register your operator, you can leave the RegistrationCfg field of operator config empty
+
 	opConfig := &Config{}
 	err = examplecommon.ReadTomlConfig("config/operator_config.toml", opConfig)
 	if err != nil {
@@ -93,6 +96,9 @@ func main() {
 		TaskManagerAbi:                taskManagerAbi,
 		RegistrationCfg:               registrationConfig,
 	}
+
+	// 3. Implement the computation function that processes task inputs and produces outputs
+	// (we do this in examples/incredible-squaring/common/common.go)
 
 	// 4. Create the response calculator with the AVS calculation logic. Note that here we create a
 	// custom Response calculator, declared on examples/awesome-vault-service/common/response_calculator.go
