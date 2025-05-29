@@ -52,7 +52,7 @@ func main() {
 	}
 
 	// 1. Create the aggregator configuration (in this case we read it from aggregator config file)
-	config, err := GetConfigFromPath("config/aggregator_config.toml")
+	config, err := GetConfigFromPath("config/config.toml")
 	if err != nil {
 		logger.Errorf("Failed to read config file: %w", err)
 		return

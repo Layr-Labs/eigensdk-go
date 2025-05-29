@@ -33,7 +33,7 @@ func main() {
 	// 1. Provide a struct that implements the `TaskManager` interface
 
 	tsConfig := &Config{}
-	err = examplecommon.ReadTomlConfig("config/task_spammer_config.toml", tsConfig)
+	err = examplecommon.ReadTomlConfig("config/config.toml", tsConfig)
 	if err != nil {
 		logger.Fatalf(err.Error())
 	}
