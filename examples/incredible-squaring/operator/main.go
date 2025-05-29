@@ -12,6 +12,32 @@ import (
 	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/common"
 )
 
+// TODO: add toml flags to the SDK operator config, removing most of this config attributes
+type Config struct {
+	OperatorAddress string `toml:"operator_address"`
+
+	// Core deployment addresses
+	AllocationManagerAddress    string `toml:"allocation_manager_address"`
+	DelegationManagerAddress    string `toml:"delegation_manager_address"`
+	RewardsCoordinatorAddress   string `toml:"rewards_coordinator_address"`
+	PermissionControllerAddress string `toml:"permission_controller_address"`
+
+	// Avs deployment addresses
+	ServiceManagerAddress      string `toml:"service_manager_address"`
+	RegistryCoordinatorAddress string `toml:"registry_coordinator_address"`
+	TokenStrategyAddr          string `toml:"token_strategy_addr"`
+
+	EcdsaPrivateKeyStorePath string `toml:"ecdsa_private_key_store_path"`
+	BlsPrivateKeyStorePath   string `toml:"bls_private_key_store_path"`
+
+	EthRpcUrl string `toml:"eth_http_url"`
+	EthWsUrl  string `toml:"eth_ws_url"`
+
+	AggregatorServerIpPortAddress string `toml:"aggregator_server_ip_port"`
+
+	TaskManagerAddress string `toml:"task_manager_address"`
+}
+
 // This is the main function for the operator in the incredible squaring example. The steps followed are
 // also explained in the operator module readme, which can be found at operator/README.md
 func main() {
@@ -31,20 +57,27 @@ func main() {
 
 	// 2. Create the operator config, including the registration config. If you don't want to
 	// register your operator, you can leave the RegistrationCfg field of operator config empty
+
+	opConfig := &Config{}
+	err = examplecommon.ReadTomlConfig("config/operator_config.toml", opConfig)
+	if err != nil {
+		logger.Fatalf(err.Error())
+	}
+
 	amount := new(big.Int)
 	amount.SetString("1000000000000000000000", 10)
 	registrationConfig := operator.RegistrationConfig{
 		RegisterOnStartup: true,
 
-		AllocationManagerAddr: common.HexToAddress("0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6"),
-		AvsAddress:            common.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"),
-		StrategyAddrs:         []common.Address{common.HexToAddress("0x2b961e3959b79326a8e7f64ef0d2d825707669b5")},
+		AllocationManagerAddr: common.HexToAddress(opConfig.AllocationManagerAddress),
+		AvsAddress:            common.HexToAddress(opConfig.ServiceManagerAddress),
+		StrategyAddrs:         []common.Address{common.HexToAddress(opConfig.TokenStrategyAddr)},
 
-		DelegationManagerAddress:    common.HexToAddress("0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0"),
-		RewardsCoordinatorAddress:   common.HexToAddress("0xa51c1fc2f0d1a1b8494ed1fe312d7c3a78ed91c0"),
-		PermissionControllerAddress: common.HexToAddress("0x59b670e9fa9d0a427751af201d676719a970857b"),
+		DelegationManagerAddress:    common.HexToAddress(opConfig.DelegationManagerAddress),
+		RewardsCoordinatorAddress:   common.HexToAddress(opConfig.RewardsCoordinatorAddress),
+		PermissionControllerAddress: common.HexToAddress(opConfig.PermissionControllerAddress),
 
-		EcdsaKeyStorePath: "keys/test.ecdsa.key.json",
+		EcdsaKeyStorePath: opConfig.EcdsaPrivateKeyStorePath,
 
 		AmountToMint:          amount,
 		AllocatableMagnitudes: []uint64{1000000000000000},
@@ -53,12 +86,12 @@ func main() {
 	}
 
 	operatorConfig := operator.Config{
-		OperatorAddress:               "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-		RegistryCoordinatorAddress:    "0x7bc06c482dead17c0e297afbc32f6e63d3846650",
-		EthRpcUrl:                     "http://localhost:8545",
-		EthWsUrl:                      "ws://localhost:8545",
-		BlsPrivateKeyStorePath:        "keys/test.bls.key.json",
-		AggregatorServerIpPortAddress: "localhost:8090",
+		OperatorAddress:               opConfig.OperatorAddress,
+		RegistryCoordinatorAddress:    opConfig.RegistryCoordinatorAddress,
+		EthRpcUrl:                     opConfig.EthRpcUrl,
+		EthWsUrl:                      opConfig.EthWsUrl,
+		BlsPrivateKeyStorePath:        opConfig.BlsPrivateKeyStorePath,
+		AggregatorServerIpPortAddress: opConfig.AggregatorServerIpPortAddress,
 		Logger:                        logger,
 		TaskManagerAbi:                taskManagerAbi,
 		RegistrationCfg:               registrationConfig,
