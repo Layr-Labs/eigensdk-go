@@ -39,7 +39,7 @@ func main() {
 	// 1. Create the config passed to the challenger
 
 	challengerConfig := &Config{}
-	err = examplecommon.ReadTomlConfig("config/challenger_config.toml", challengerConfig)
+	err = examplecommon.ReadTomlConfig("config/config.toml", challengerConfig)
 	if err != nil {
 		logger.Fatalf(err.Error())
 	}

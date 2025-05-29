@@ -59,7 +59,7 @@ func main() {
 	// register your operator, you can leave the RegistrationCfg field of operator config empty
 
 	opConfig := &Config{}
-	err = examplecommon.ReadTomlConfig("config/operator_config.toml", opConfig)
+	err = examplecommon.ReadTomlConfig("config/config.toml", opConfig)
 	if err != nil {
 		logger.Fatalf(err.Error())
 	}

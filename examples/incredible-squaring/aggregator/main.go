@@ -37,7 +37,7 @@ func main() {
 
 	// 1. Create the aggregator configuration (in this case we read it from aggregator config file)
 	config := &Config{}
-	err = examplecommon.ReadTomlConfig("config/aggregator_config.toml", config)
+	err = examplecommon.ReadTomlConfig("config/config.toml", config)
 	if err != nil {
 		logger.Errorf("Failed to read config file: %w", err)
 		return
