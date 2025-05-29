@@ -1,9 +1,12 @@
 package examplecommon
 
 import (
+	"os"
 	"slices"
 
 	"github.com/ethereum/go-ethereum/crypto"
+
+	"github.com/pelletier/go-toml/v2"
 )
 
 type TaskInput struct {
@@ -39,4 +42,16 @@ func hashNodes(leftNode [32]byte, rightNode [32]byte) [32]byte {
 		leftNode, rightNode = rightNode, leftNode
 	}
 	return crypto.Keccak256Hash(leftNode[:], rightNode[:])
+}
+
+// This function reads the config from the .toml file at the path received as a parameter
+// and returns a config with those values
+func ReadTomlConfig(path string, config any) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+
+	err = toml.Unmarshal(data, config)
+	return err
 }

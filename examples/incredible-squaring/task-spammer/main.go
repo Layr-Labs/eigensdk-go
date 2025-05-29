@@ -8,6 +8,7 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/bindings/taskManager"
+	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/common"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
 	taskspammer "github.com/Layr-Labs/eigensdk-go/task-spammer"
@@ -15,6 +16,12 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
+
+type Config struct {
+	TaskManagerAddress string `toml:"task_manager_address"`
+
+	EthHttpUrl string `toml:"eth_http_url"`
+}
 
 func main() {
 	// 0. Create the logger where all the logs will appear
@@ -25,8 +32,14 @@ func main() {
 
 	// 1. Provide a struct that implements the `TaskManager` interface
 
+	tsConfig := &Config{}
+	err = examplecommon.ReadTomlConfig("config/task_spammer_config.toml", tsConfig)
+	if err != nil {
+		logger.Fatalf(err.Error())
+	}
+
 	// i. Create the ethereum client that will send the RPC messages to the node
-	ethHttpClient, err := ethclient.Dial("http://localhost:8545")
+	ethHttpClient, err := ethclient.Dial(tsConfig.EthHttpUrl)
 	if err != nil {
 		logger.Errorf("Failed to dial ethclient: %w", err)
 		return
@@ -55,9 +68,10 @@ func main() {
 	// in task-manager/task_manager_wrapper.go
 	// Note that in this step we define the input and output types that we are using on our AVS. In this case
 	// the input and output are both big int numbers.
-	taskManagerAddress := common.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3")
+	taskManagerAddress := common.HexToAddress(tsConfig.TaskManagerAddress)
 	taskCreator, err := taskmanager.NewTaskManagerFromAbi[*big.Int, *big.Int](taskManagerAddress, abi, txMgr, ethHttpClient)
 	if err != nil {
+		logger.Errorf("Failed to create Task Creator: %w", err)
 		return
 	}
 

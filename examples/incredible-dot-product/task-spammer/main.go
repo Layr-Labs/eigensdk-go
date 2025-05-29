@@ -18,6 +18,12 @@ import (
 	idptaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
 )
 
+type Config struct {
+	TaskManagerAddress string `toml:"task_manager_address"`
+
+	EthHttpUrl string `toml:"eth_http_url"`
+}
+
 func main() {
 	// 0. Create the logger where all the logs will appear
 	logger, err := logging.NewZapLogger(logging.Production)
@@ -28,8 +34,14 @@ func main() {
 
 	// 1. Provide a struct that implements the `TaskManager` interface
 
+	tsConfig := &Config{}
+	err = examplecommon.ReadTomlConfig("config/task_spammer_config.toml", tsConfig)
+	if err != nil {
+		logger.Fatalf(err.Error())
+	}
+
 	// i. Create the ethereum client that will send the RPC messages to the node
-	ethClient, err := ethclient.Dial("http://localhost:8545")
+	ethClient, err := ethclient.Dial(tsConfig.EthHttpUrl)
 	if err != nil {
 		logger.Errorf("Failed to dial ethclient: %w", err)
 		return
@@ -61,7 +73,7 @@ func main() {
 	// in task-manager/task_manager_wrapper.go
 	// Note that in this step we define the input and output types that we are using on our AVS. In this case
 	// the DotProductInput struct (a pair of vectors) and a big int.
-	taskManagerAddr := common.HexToAddress("0x7bc06c482dead17c0e297afbc32f6e63d3846650")
+	taskManagerAddr := common.HexToAddress(tsConfig.TaskManagerAddress)
 	taskCreator, err := taskmanager.NewTaskManagerFromAbi[examplecommon.DotProductInput, *big.Int](taskManagerAddr, taskManagerAbi, txMgr, ethClient)
 	if err != nil {
 		logger.Errorf("Failed to create Task Creator: %w", err)

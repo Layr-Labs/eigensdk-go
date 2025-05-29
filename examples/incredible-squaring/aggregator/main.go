@@ -14,7 +14,16 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 
 	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/bindings/taskManager"
+	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/common"
 )
+
+// This config has the same attributes as the aggregator config and also includes the
+// deployed TaskManager contract address
+type Config struct {
+	aggregator.Config
+
+	TaskManagerAddress string `toml:"task_manager_address"`
+}
 
 // This is the main function for the aggregator in the incredible squaring example. The steps followed are
 // also explained in the aggregator module readme, which can be found at aggregator/README.md
@@ -26,21 +35,20 @@ func main() {
 		return
 	}
 
-	// 1. Create the aggregator configuration
-	ethHttpUrl := "http://localhost:8545"
-	cfg := aggregator.Config{
-		RegistryCoordinatorAddress:    common.HexToAddress("0x7bc06c482dead17c0e297afbc32f6e63d3846650"),
-		OperatorStateRetrieverAddress: common.HexToAddress("0x4c5859f0f772848b2d91f1d83e2fe57935348029"),
-		EthHttpUrl:                    ethHttpUrl,
-		EthWsUrl:                      "ws://localhost:8545",
-		AggregatorServerIpPortAddr:    "localhost:8090",
+	// 1. Create the aggregator configuration (in this case we read it from aggregator config file)
+	config := &Config{}
+	err = examplecommon.ReadTomlConfig("config/aggregator_config.toml", config)
+	if err != nil {
+		logger.Errorf("Failed to read config file: %w", err)
+		return
 	}
+	aggConfig := config.Config
 
 	// 2. Provide a Task Processor, first instantiating the things required for creating it
 
 	// i. Create the ethereum client that will send the RPC messages to the node, and the transaction
 	// manager, that will manage the transaction sending
-	ethClient, err := ethclient.Dial(ethHttpUrl)
+	ethClient, err := ethclient.Dial(aggConfig.EthHttpUrl)
 	if err != nil {
 		logger.Errorf("Failed to dial ethclient: %w", err)
 		return
@@ -95,7 +103,7 @@ func main() {
 
 	// 3. Build the aggregator, providing aggregator config, logger, task processor and the task manager ABI, and
 	// then start it.
-	aggregator, err := aggregator.NewAggregator(cfg, logger, taskProcessor, taskManagerAbi)
+	aggregator, err := aggregator.NewAggregator(aggConfig, logger, taskProcessor, taskManagerAbi)
 	if err != nil {
 		logger.Errorf("Failed to create aggregator: %w", err)
 		return

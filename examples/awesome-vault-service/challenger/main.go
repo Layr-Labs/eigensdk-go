@@ -16,6 +16,14 @@ import (
 	avtaskmanager "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/contracts/bindings/AwesomeVaultTaskManager"
 )
 
+// This config contains the values needed to create and run the Challenger
+type Config struct {
+	TaskManagerAddress string `toml:"task_manager_address"`
+
+	EthHttpUrl string `toml:"eth_http_url"`
+	EthWsUrl   string `toml:"eth_ws_url"`
+}
+
 func main() {
 	// 0. Create the logger where all the logs will appear
 	logger, err := logging.NewZapLogger(logging.Production) // Change here if want to change logging level
@@ -26,6 +34,12 @@ func main() {
 
 	// 1. Create the config passed to the challenger
 
+	challengerConfig := &Config{}
+	err = examplecommon.ReadTomlConfig("config/challenger_config.toml", challengerConfig)
+	if err != nil {
+		logger.Fatalf(err.Error())
+	}
+
 	// Get the ABI of the task manager contract's binding
 	taskManagerAbi, err := avtaskmanager.ContractAwesomeVaultTaskManagerMetaData.GetAbi()
 	if err != nil {
@@ -34,14 +48,14 @@ func main() {
 	}
 
 	// Create the ethereum client that will send the RPC messages to the node
-	ethClient, err := ethclient.Dial("http://localhost:8545")
+	ethClient, err := ethclient.Dial(challengerConfig.EthHttpUrl)
 	if err != nil {
 		logger.Errorf("Failed to dial ethclient: %w", err)
 		return
 	}
 
-	challengerConfig := challenger.Config{
-		EthWsUrl:       "ws://localhost:8545",
+	cfg := challenger.Config{
+		EthWsUrl:       challengerConfig.EthWsUrl,
 		Logger:         logger,
 		TaskManagerAbi: taskManagerAbi,
 		EthClient:      ethClient,
@@ -75,7 +89,7 @@ func main() {
 	// Note that in this step we define the input and output types that we are using on our AVS. In this case
 	// the TaskInput struct (a key-value pair) and 32 bytes.
 	challengeRaiser, err := taskmanager.NewTaskManagerFromAbi[examplecommon.TaskInput, [32]byte](
-		gethcommon.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3"),
+		gethcommon.HexToAddress(challengerConfig.TaskManagerAddress),
 		taskManagerAbi,
 		txMgr,
 		ethClient,
@@ -94,7 +108,7 @@ func main() {
 
 	// 4. Create a Challenger from the Config and the ChallengerProcessor.
 	challenger, err := challenger.NewChallenger(
-		challengerConfig,
+		cfg,
 		challengerProcessor,
 	)
 	if err != nil {

@@ -20,6 +20,14 @@ import (
 	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/common"
 )
 
+// This config contains the values needed to create and run the Challenger
+type Config struct {
+	TaskManagerAddress string `toml:"task_manager_address"`
+
+	EthHttpUrl string `toml:"eth_http_url"`
+	EthWsUrl   string `toml:"eth_ws_url"`
+}
+
 func main() {
 	// 0. Create the logger where all the logs will appear
 	logger, err := logging.NewZapLogger(logging.Production) // Change here if want to change logging level
@@ -30,6 +38,12 @@ func main() {
 
 	// 1. Create the config passed to the challenger
 
+	challengerConfig := &Config{}
+	err = examplecommon.ReadTomlConfig("config/challenger_config.toml", challengerConfig)
+	if err != nil {
+		logger.Fatalf(err.Error())
+	}
+
 	// Get the ABI of the task manager contract's binding
 	taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
 	if err != nil {
@@ -37,13 +51,13 @@ func main() {
 	}
 
 	// Create the ethereum client that will send the RPC messages to the node
-	ethHttpClient, err := ethclient.Dial("http://localhost:8545")
+	ethHttpClient, err := ethclient.Dial(challengerConfig.EthHttpUrl)
 	if err != nil {
 		return
 	}
 
 	cfg := challenger.Config{
-		EthWsUrl:       "ws://localhost:8545",
+		EthWsUrl:       challengerConfig.EthWsUrl,
 		Logger:         logger,
 		TaskManagerAbi: taskManagerAbi,
 		EthClient:      ethHttpClient,
@@ -76,7 +90,7 @@ func main() {
 	// Note that in this step we define the input and output types that we are using on our AVS. In this case
 	// the input and output are both big int numbers.
 	challengeRaiser, err := taskmanager.NewTaskManagerFromAbi[*big.Int, *big.Int](
-		gethcommon.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3"),
+		gethcommon.HexToAddress(challengerConfig.TaskManagerAddress),
 		taskManagerAbi,
 		txMgr,
 		ethHttpClient,
@@ -86,14 +100,14 @@ func main() {
 		return
 	}
 
-	// 4. Create the Challenger Processor, with the challenger raiser created above.
+	// Create the Challenger Processor, with the challenger raiser created above.
 	indexingChallengerProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, squareValidation, challengeRaiser)
 	if err != nil {
 		logger.Errorf("Failed to create challenger logic from config: %v", err)
 		return
 	}
 
-	// 5. Create a Challenger from the Config and the ChallengerProcessor.
+	// 4. Create a Challenger from the Config and the ChallengerProcessor.
 	challenger, err := challenger.NewChallenger(
 		cfg,
 		indexingChallengerProcessor,
@@ -103,7 +117,7 @@ func main() {
 		return
 	}
 
-	// 6. Start the challenger
+	// 5. Start the challenger
 	err = <-challenger.Start(context.Background())
 	if err != nil {
 		logger.Errorf("Error while running challenger: %v", err)
