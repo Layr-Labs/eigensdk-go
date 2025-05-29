@@ -8,8 +8,8 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/operator"
 	"github.com/ethereum/go-ethereum/common"
 
-	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/bindings/taskManager"
 	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/common"
+	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/contracts/bindings/IncredibleSquaringTaskManager"
 )
 
 // TODO: add toml flags to the SDK operator config, removing most of this config attributes

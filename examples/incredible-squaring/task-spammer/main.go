@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
-	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/bindings/taskManager"
 	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/common"
+	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/contracts/bindings/IncredibleSquaringTaskManager"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
 	taskspammer "github.com/Layr-Labs/eigensdk-go/task-spammer"
