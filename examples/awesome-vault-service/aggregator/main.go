@@ -113,7 +113,7 @@ func main() {
 
 	// 3. Build the aggregator, providing aggregator config, logger, task processor and the task manager ABI, and
 	// then start it.
-	aggregator, err := aggregator.NewAggregator(aggConfig, logger, taskProcessor, taskManagerAbi)
+	aggregator, err := aggregator.NewAggregator(logger, aggConfig, taskManagerAbi, taskProcessor)
 	if err != nil {
 		logger.Errorf("Failed to create aggregator: %w", err)
 		return
