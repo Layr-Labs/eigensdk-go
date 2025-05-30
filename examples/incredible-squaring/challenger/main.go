@@ -58,7 +58,6 @@ func main() {
 	}
 
 	cfg := challengerConfig.Config
-	cfg.EthClient = ethHttpClient
 
 	// 2. Define a function that verifies the response for a task. Note that here we wrap the logic into a
 	// `ResponseCalculator` implementation, and then we use the ResponseValidationFunctionFromResponseCalculator,
