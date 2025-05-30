@@ -31,7 +31,7 @@ var taskManagerAddress = common.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52
 func TestIncredibleSquaring(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 
-	anvilC, err := testutils.StartAnvilContainer("./examples/incredible-squaring/tests/anvil/incredible-squaring-anvil-state.json")
+	anvilC, err := testutils.StartAnvilContainer("../../examples/incredible-squaring/tests/anvil/incredible-squaring-anvil-state.json")
 	require.NoError(t, err)
 	ethHttpUrl, err := anvilC.Endpoint(context.Background(), "http")
 	require.NoError(t, err)
