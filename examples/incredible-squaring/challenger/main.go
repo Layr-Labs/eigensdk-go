@@ -24,8 +24,6 @@ import (
 type Config struct {
 	TaskManagerAddress string `toml:"task_manager_address"`
 
-	EthHttpUrl string `toml:"eth_http_url"`
-
 	challenger.Config
 }
 
@@ -54,6 +52,7 @@ func main() {
 	// Create the ethereum client that will send the RPC messages to the node
 	ethHttpClient, err := ethclient.Dial(challengerConfig.EthHttpUrl)
 	if err != nil {
+		logger.Errorf("Failed to dial ethclient: %w", err)
 		return
 	}
 
