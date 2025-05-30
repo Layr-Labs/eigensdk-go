@@ -181,7 +181,7 @@ func NewOperatorFromConfig[Input any, Output any](
 }
 
 // Runs the Operator in a separate goroutine. This should be called only one time per Operator.
-// Returns an error channel, that in case of an error in the run method will contain the received error.
+// Will return an error if execution fails or nil in case the context is cancelled.
 func (o *Operator[Input, Output]) Start(ctx context.Context) <-chan error {
 	errChan := make(chan error)
 

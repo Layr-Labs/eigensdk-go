@@ -34,7 +34,7 @@ func NewTaskSpammer[Input any](logger logging.Logger, config Config, taskCreator
 }
 
 // Runs the Task Spammer in a separate goroutine. This should be called only one time per Task Spammer.
-// Returns an error channel, that in case of an error in the run method will contain the received error.
+// Will return an error if execution fails or nil in case the context is cancelled or the tasks generation ends.
 func (taskSpam *TaskSpammer[Input]) Start(ctx context.Context) <-chan error {
 	errChan := make(chan error)
 
