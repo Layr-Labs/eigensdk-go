@@ -211,7 +211,8 @@ func createIncredibleSquaringOperator(t *testing.T, ethHttpUrl, ethWsUrl string)
 		RewardsCoordinatorAddress:   common.HexToAddress("0xa51c1fc2f0d1a1b8494ed1fe312d7c3a78ed91c0"),
 		PermissionControllerAddress: common.HexToAddress("0x59b670e9fa9d0a427751af201d676719a970857b"),
 
-		EcdsaKeyStorePath: "keys/test.ecdsa.key.json",
+		// Current dir is integration-tests
+		EcdsaKeyStorePath: "../examples/incredible-squaring/keys/test.ecdsa.key.json",
 
 		AmountToMint:          amount,
 		AllocatableMagnitudes: []uint64{1000000000000000},
@@ -220,11 +221,12 @@ func createIncredibleSquaringOperator(t *testing.T, ethHttpUrl, ethWsUrl string)
 	}
 
 	operatorConfig := operator.Config{
-		OperatorAddress:               "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-		RegistryCoordinatorAddress:    "0x7bc06c482dead17c0e297afbc32f6e63d3846650",
-		EthRpcUrl:                     ethHttpUrl,
-		EthWsUrl:                      ethWsUrl,
-		BlsPrivateKeyStorePath:        "keys/test.bls.key.json",
+		OperatorAddress:            "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+		RegistryCoordinatorAddress: "0x7bc06c482dead17c0e297afbc32f6e63d3846650",
+		EthRpcUrl:                  ethHttpUrl,
+		EthWsUrl:                   ethWsUrl,
+		// Current dir is integration-tests
+		BlsPrivateKeyStorePath:        "../examples/incredible-squaring/keys/test.bls.key.json",
 		AggregatorServerIpPortAddress: "localhost:8090",
 		Logger:                        logger,
 		TaskManagerAbi:                taskManagerAbi,
