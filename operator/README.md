@@ -40,7 +40,7 @@ The Operator functions through the following flow:
       - `EthWsUrl`: The URL of the Ethereum WebSocket
       - `BlsPrivateKeyStorePath`: The path to the BLS private key store
       - `AggregatorServerIpPortAddress`: The IP and port of the aggregator
-      - `Registration`: The registration configuration. If `RegistrationCfg.RegisterOnStartup` is `true`, the operator attempts to register itself to EigenLayer using the values provided here. To skip automatic registration, leave this field unset (or set `RegistrationCfg.RegisterOnStartup` to `false`), but note that this requires the operator to be already registered to EigenLayer.
+      - `Registration`: The registration configuration. If `Registration.RegisterOnStartup` is `true`, the operator attempts to register itself to EigenLayer using the values provided here. To skip automatic registration, leave this field unset (or set `Registration.RegisterOnStartup` to `false`), but note that this requires the operator to be already registered to EigenLayer.
 
       ```go
           operatorConfig := operator.Config{
