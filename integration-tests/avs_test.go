@@ -227,9 +227,7 @@ func createIncredibleSquaringOperator(t *testing.T, ethHttpUrl, ethWsUrl string)
 		// Current dir is integration-tests
 		BlsPrivateKeyStorePath:        "../examples/incredible-squaring/keys/test.bls.key.json",
 		AggregatorServerIpPortAddress: "localhost:8090",
-		Logger:                        logger,
-		TaskManagerAbi:                taskManagerAbi,
-		RegistrationCfg:               registrationConfig,
+		Registration:                  registrationConfig,
 	}
 
 	calculator := operator.NewFunctionResponseCalculator(square)
@@ -237,7 +235,7 @@ func createIncredibleSquaringOperator(t *testing.T, ethHttpUrl, ethWsUrl string)
 	possibleFailureCalculator, err := operator.NewFailingResponseCalculator(calculator, 50, big.NewInt(0))
 	require.NoError(t, err, "Failed to create the possible failure function")
 
-	operator, err := operator.NewOperatorFromConfig(operatorConfig, possibleFailureCalculator, nil)
+	operator, err := operator.NewOperatorFromConfig(logger, operatorConfig, taskManagerAbi, possibleFailureCalculator, nil)
 	require.NoError(t, err, "Failed to create operator from config")
 
 	return operator
