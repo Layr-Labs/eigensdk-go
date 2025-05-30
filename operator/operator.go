@@ -55,7 +55,9 @@ type TaskResponseHashFunction[Output any] func(taskResponse taskmanager.TaskResp
 
 // NewOperatorFromConfig creates a new Operator with the provided config and the functions to calculate and hashing the response.
 func NewOperatorFromConfig[Input any, Output any](
+	logger logging.Logger,
 	c Config,
+	taskManagerAbi *abi.ABI,
 	responseCalculator ResponseCalculator[Input, Output],
 	taskResponseHashFn TaskResponseHashFunction[Output],
 ) (*Operator[Input, Output], error) {
@@ -71,19 +73,19 @@ func NewOperatorFromConfig[Input any, Output any](
 		return nil, utils.WrapError("Failed to create Eth Http client", err)
 	}
 
-	avsReader, err := avsregistry.NewReaderFromConfig(avsConfig, ethHttpClient, c.Logger)
+	avsReader, err := avsregistry.NewReaderFromConfig(avsConfig, ethHttpClient, logger)
 	if err != nil {
-		c.Logger.Error("Cannot create AvsReader", "err", err)
+		logger.Error("Cannot create AvsReader", "err", err)
 		return nil, err
 	}
 
 	blsKeyPassword, ok := os.LookupEnv("OPERATOR_BLS_KEY_PASSWORD")
 	if !ok {
-		c.Logger.Warnf("OPERATOR_BLS_KEY_PASSWORD env var not set. using empty string")
+		logger.Warnf("OPERATOR_BLS_KEY_PASSWORD env var not set. using empty string")
 	}
 	blsKeyPair, err := bls.ReadPrivateKeyFromFile(c.BlsPrivateKeyStorePath, blsKeyPassword)
 	if err != nil {
-		c.Logger.Errorf("Cannot parse bls private key", "err", err)
+		logger.Errorf("Cannot parse bls private key", "err", err)
 		return nil, err
 	}
 
@@ -91,21 +93,21 @@ func NewOperatorFromConfig[Input any, Output any](
 	// If its not registered and should be registered on startup, make the registration.
 	operatorIsRegistered, err := avsReader.IsOperatorRegistered(&bind.CallOpts{}, common.HexToAddress(c.OperatorAddress))
 	if err != nil {
-		c.Logger.Error("Error checking if operator is registered", "err", err)
+		logger.Error("Error checking if operator is registered", "err", err)
 		return nil, err
 	}
 	if !operatorIsRegistered {
-		if c.RegistrationCfg.RegisterOnStartup {
+		if c.Registration.RegisterOnStartup {
 			err = registerOperatorOnStartup(
-				c.RegistrationCfg,
-				c.Logger,
+				c.Registration,
+				logger,
 				avsConfig.RegistryCoordinatorAddress,
 				common.HexToAddress(c.OperatorAddress),
 				ethHttpClient,
 				blsKeyPair,
 			)
 			if err != nil {
-				c.Logger.Errorf("Failure while registering operator on startup: %w", err)
+				logger.Errorf("Failure while registering operator on startup: %w", err)
 				return nil, err
 			}
 		} else {
@@ -120,22 +122,22 @@ func NewOperatorFromConfig[Input any, Output any](
 
 	operatorId, err := avsReader.GetOperatorId(&bind.CallOpts{}, common.HexToAddress(c.OperatorAddress))
 	if err != nil {
-		c.Logger.Error("Cannot get operator id", "err", err)
+		logger.Error("Cannot get operator id", "err", err)
 		return nil, err
 	}
 
-	aggregatorRpcClient, err := NewAggregatorRpcClient[Output](c.AggregatorServerIpPortAddress, c.Logger)
+	aggregatorRpcClient, err := NewAggregatorRpcClient[Output](c.AggregatorServerIpPortAddress, logger)
 	if err != nil {
-		c.Logger.Error("Cannot create AggregatorRpcClient. Is aggregator running?", "err", err)
+		logger.Error("Cannot create AggregatorRpcClient. Is aggregator running?", "err", err)
 		return nil, err
 	}
 
 	wsClient, err := ethclient.Dial(c.EthWsUrl)
 	if err != nil {
-		c.Logger.Fatal("error connecting to web socket", "err", err)
+		logger.Fatal("error connecting to web socket", "err", err)
 	}
 
-	eventHash := c.TaskManagerAbi.Events["NewTaskCreated"].ID
+	eventHash := taskManagerAbi.Events["NewTaskCreated"].ID
 	query := ethereum.FilterQuery{
 		Addresses: []common.Address{},
 		Topics:    [][]common.Hash{{eventHash}},
@@ -144,13 +146,13 @@ func NewOperatorFromConfig[Input any, Output any](
 	newTaskCreatedLogs := make(chan types.Log)
 	_, err = wsClient.SubscribeFilterLogs(context.Background(), query, newTaskCreatedLogs)
 	if err != nil {
-		c.Logger.Fatal("error subscribing to newTaskCreated events", "err", err)
+		logger.Fatal("error subscribing to newTaskCreated events", "err", err)
 	}
 
 	if taskResponseHashFn == nil {
-		taskResponseType, err := extractTypeFromAbi(c.TaskManagerAbi)
+		taskResponseType, err := extractTypeFromAbi(taskManagerAbi)
 		if err != nil {
-			c.Logger.Error("Failed to get task response type in default abi.", "err", err)
+			logger.Error("Failed to get task response type in default abi.", "err", err)
 			return nil, err
 		}
 
@@ -158,17 +160,17 @@ func NewOperatorFromConfig[Input any, Output any](
 	}
 
 	operator := &Operator[Input, Output]{
-		logger:              c.Logger,
+		logger:              logger,
 		blsKeypair:          blsKeyPair,
 		aggregatorRpcClient: *aggregatorRpcClient,
 		operatorId:          operatorId,
 		newTaskCreatedLogs:  newTaskCreatedLogs,
-		taskManagerAbi:      c.TaskManagerAbi,
+		taskManagerAbi:      taskManagerAbi,
 		responseCalculator:  responseCalculator,
 		taskResponseHashFn:  taskResponseHashFn,
 	}
 
-	c.Logger.Info("Operator info",
+	logger.Info("Operator info",
 		"operatorId", operatorId,
 		"operatorAddr", c.OperatorAddress,
 		"operatorG1Pubkey", operator.blsKeypair.GetPubKeyG1(),

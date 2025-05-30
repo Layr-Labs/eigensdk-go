@@ -2,38 +2,16 @@ package main
 
 import (
 	"context"
-	"math/big"
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/operator"
-	"github.com/ethereum/go-ethereum/common"
 
 	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/common"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/contracts/bindings/AwesomeVaultTaskManager"
 )
 
-// TODO: add toml flags to the SDK operator config, removing most of this config attributes
 type Config struct {
-	OperatorAddress string `toml:"operator_address"`
-
-	// Core deployment addresses
-	AllocationManagerAddress    string `toml:"allocation_manager_address"`
-	DelegationManagerAddress    string `toml:"delegation_manager_address"`
-	RewardsCoordinatorAddress   string `toml:"rewards_coordinator_address"`
-	PermissionControllerAddress string `toml:"permission_controller_address"`
-
-	// Avs deployment addresses
-	ServiceManagerAddress      string `toml:"service_manager_address"`
-	RegistryCoordinatorAddress string `toml:"registry_coordinator_address"`
-	TokenStrategyAddr          string `toml:"token_strategy_addr"`
-
-	EcdsaPrivateKeyStorePath string `toml:"ecdsa_private_key_store_path"`
-	BlsPrivateKeyStorePath   string `toml:"bls_private_key_store_path"`
-
-	EthRpcUrl string `toml:"eth_http_url"`
-	EthWsUrl  string `toml:"eth_ws_url"`
-
-	AggregatorServerIpPortAddress string `toml:"aggregator_server_ip_port"`
+	operator.Config
 
 	TaskManagerAddress string `toml:"task_manager_address"`
 }
@@ -64,38 +42,7 @@ func main() {
 		logger.Fatalf(err.Error())
 	}
 
-	amount := new(big.Int)
-	amount.SetString("1000000000000000000000", 10)
-	registrationConfig := operator.RegistrationConfig{
-		RegisterOnStartup: true,
-
-		AllocationManagerAddr: common.HexToAddress(opConfig.AllocationManagerAddress),
-		AvsAddress:            common.HexToAddress(opConfig.ServiceManagerAddress),
-		StrategyAddrs:         []common.Address{common.HexToAddress(opConfig.TokenStrategyAddr)},
-
-		DelegationManagerAddress:    common.HexToAddress(opConfig.DelegationManagerAddress),
-		RewardsCoordinatorAddress:   common.HexToAddress(opConfig.RewardsCoordinatorAddress),
-		PermissionControllerAddress: common.HexToAddress(opConfig.PermissionControllerAddress),
-
-		EcdsaKeyStorePath: opConfig.EcdsaPrivateKeyStorePath,
-
-		AmountToMint:          amount,
-		AllocatableMagnitudes: []uint64{1000000000000000},
-
-		OperatorSetIds: []uint32{0},
-	}
-
-	operatorConfig := operator.Config{
-		OperatorAddress:               opConfig.OperatorAddress,
-		RegistryCoordinatorAddress:    opConfig.RegistryCoordinatorAddress,
-		EthRpcUrl:                     opConfig.EthRpcUrl,
-		EthWsUrl:                      opConfig.EthWsUrl,
-		BlsPrivateKeyStorePath:        opConfig.BlsPrivateKeyStorePath,
-		AggregatorServerIpPortAddress: opConfig.AggregatorServerIpPortAddress,
-		Logger:                        logger,
-		TaskManagerAbi:                taskManagerAbi,
-		RegistrationCfg:               registrationConfig,
-	}
+	operatorConfig := opConfig.Config
 
 	// 3. Implement the computation function that processes task inputs and produces outputs
 	// (we do this in examples/incredible-squaring/common/common.go)
@@ -113,7 +60,7 @@ func main() {
 	// 6. Build the operator, providing operator config, the response calculator and a task response hashing
 	// function, and then start it.
 	// We leave this last parameter as nil because we are using the default hashing function provided by the SDK
-	operator, err := operator.NewOperatorFromConfig(operatorConfig, possibleFailureCalculator, nil)
+	operator, err := operator.NewOperatorFromConfig(logger, operatorConfig, taskManagerAbi, possibleFailureCalculator, nil)
 	if err != nil {
 		logger.Fatalf("Failed to create operator: %w", err)
 	}

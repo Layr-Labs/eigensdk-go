@@ -49,10 +49,10 @@ type Aggregator[Input any, Output any] struct {
 
 // NewAggregator creates a new Aggregator with the provided config, a logger, a task processor and the task manager contract's ABI.
 func NewAggregator[Input any, Output any](
-	c Config,
 	logger logging.Logger,
-	taskProcessor taskprocessor.TaskProcessor[Input, Output],
+	c Config,
 	taskManagerAbi *abi.ABI,
+	taskProcessor taskprocessor.TaskProcessor[Input, Output],
 ) (*Aggregator[Input, Output], error) {
 	avsRegistryConfig := avsregistry.Config{
 		RegistryCoordinatorAddress:    c.RegistryCoordinatorAddress,
