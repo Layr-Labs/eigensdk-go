@@ -10,7 +10,6 @@ import (
 	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/contracts/bindings/AwesomeVaultTaskManager"
 )
 
-// TODO: add toml flags to the SDK operator config, removing most of this config attributes
 type Config struct {
 	operator.Config
 
