@@ -55,11 +55,11 @@ type TaskResponseHashFunction[Output any] func(taskResponse taskmanager.TaskResp
 
 // NewOperatorFromConfig creates a new Operator with the provided config and the functions to calculate and hashing the response.
 func NewOperatorFromConfig[Input any, Output any](
+	logger logging.Logger,
 	c Config,
+	taskManagerAbi *abi.ABI,
 	responseCalculator ResponseCalculator[Input, Output],
 	taskResponseHashFn TaskResponseHashFunction[Output],
-	logger logging.Logger,
-	taskManagerAbi *abi.ABI,
 ) (*Operator[Input, Output], error) {
 	// Note: here we only assign the registry coordinator address because is the only address we use
 	// when we use the AVS registry reader. If you want to do more things with avs registry reader,
