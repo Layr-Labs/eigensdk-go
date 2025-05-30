@@ -29,7 +29,7 @@ This flow ensures tasks are initialized, signatures collected, and the final res
 
 ## How to Set Up an Aggregator
 
-1. **Create the aggregator configuration**: Create a `aggregator.Config` struct
+1. **Create the aggregator configuration**: Create an `aggregator.Config`. An alternative way to populate it is to load it from a config file like we do in the example.
     - Config fields:
         - `RegistryCoordinatorAddress`: The address of the AVS registry coordinator
         - `OperatorStateRetrieverAddress`: The address of the operator state retriever

@@ -32,7 +32,7 @@ The Operator functions through the following flow:
       taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
    ```
 
-2. **Create the operator configuration**: Create a `operator.Config` struct
+2. **Create the operator configuration**: Create an `operator.Config` struct. An alternative way to populate it is to load it from a config file like we do in the example.
     - Config fields:
       - `OperatorAddress`: The address of the operator
       - `OperatorStateRetrieverAddress`: The address of the operator state retriever

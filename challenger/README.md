@@ -29,23 +29,24 @@ The Challenger operates through a well-defined workflow:
 
 ## How to Set Up a Challenger
 
-1. **Challenger Configuration**: Create a `challenger.Config` struct with the following fields:
-   - `EthWsUrl`: The URL of the Ethereum websocket
-   - `Logger`: The logger
-   - `TaskManagerAbi`: The ABI of the task manager
-   - `EthClient`: The Ethereum client
+1. **Challenger Configuration**: Create a `challenger.Config`. An alternative way to populate it is to load it from a config file like we do in the example.
+    - Config fields:
+        - `EthWsUrl`: The URL of the Ethereum websocket
+        - `Logger`: The logger
+        - `TaskManagerAbi`: The ABI of the task manager
+        - `EthClient`: The Ethereum client
 
-      ```go
-        ethHttpUrl := "http://localhost:8545"
-        ethHttpClient, _ := ethclient.Dial(ethHttpUrl)
-      
-        cfg := challenger.Config{
-          EthWsUrl:       "ws://localhost:8545",
-          Logger:         logger,
-          TaskManagerAbi: taskManagerAbi,
-          EthClient:      ethHttpClient,
-        }
-      ```
+            ```go
+                ethHttpUrl := "http://localhost:8545"
+                ethHttpClient, _ := ethclient.Dial(ethHttpUrl)
+            
+                cfg := challenger.Config{
+                EthWsUrl:       "ws://localhost:8545",
+                Logger:         logger,
+                TaskManagerAbi: taskManagerAbi,
+                EthClient:      ethHttpClient,
+                }
+            ```
 
 2. **Task Verification Logic**: Define a function that verifies the response for a task, returning `true` for valid tasks.
 
