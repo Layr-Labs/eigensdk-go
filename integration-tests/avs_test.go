@@ -264,8 +264,6 @@ func createIncredibleSquaringTaskSpammer(t *testing.T, ethHttpUrl string) *tasks
 	require.NoError(t, err, "Failed to create Task Creator")
 
 	taskSpammerConfig := taskspammer.Config{
-		Logger: logger,
-
 		// This means TaskGenerator will send tasks every 10 seconds
 		TimeBetweenTasks: 10 * time.Second,
 
@@ -275,7 +273,7 @@ func createIncredibleSquaringTaskSpammer(t *testing.T, ethHttpUrl string) *tasks
 
 	squaringSequence := newNumberToSquareSequence()
 
-	taskSpammer, err := taskspammer.NewTaskSpammer(taskCreator, taskSpammerConfig, squaringSequence)
+	taskSpammer, err := taskspammer.NewTaskSpammer(logger, taskSpammerConfig, taskCreator, squaringSequence)
 	require.NoError(t, err, "Failed to create Task Spammer")
 
 	return taskSpammer
