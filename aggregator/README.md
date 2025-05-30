@@ -86,7 +86,7 @@ This flow ensures tasks are initialized, signatures collected, and the final res
 3. **Run the aggregator**: Instantiate an `Aggregator` with the config, a logger, the task processor created above and the task manager contract ABI, and then start it:
 
     ``` go
-        agg, err := aggregator.NewAggregator(cfg, logger, taskProcessor, taskManagerAbi)
+        agg, err := aggregator.NewAggregator(logger, cfg, taskManagerAbi, taskProcessor)
 
         err = <-agg.Start(context.Background())
     ```

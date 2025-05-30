@@ -89,13 +89,13 @@ The Challenger operates through a well-defined workflow:
     4. Create the `NewIndexingChallengerProcessor` with the `ChallengeRaiser` created above:
 
         ```go
-            indexingTaskProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, isValidSquare, challengerRaiser)
+            challengerProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, isValidSquare, challengerRaiser)
         ```
 
 4. **Challenger**: Create a `Challenger` from the `Config` and the `ChallengerProcessor`.
 
     ```go
-        challenger, _ := challenger.NewChallenger(cfg, indexingTaskProcessor)
+        challenger, _ := challenger.NewChallenger(logger, cfg, taskManagerAbi, challengerProcessor)
     ```
 
 5. **Start the Challenger**: Start the challenger.

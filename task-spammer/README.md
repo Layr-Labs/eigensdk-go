@@ -65,7 +65,7 @@ The Task Spammer uses a builder pattern and follows this workflow:
 4. **Build the Task Spammer**: Use the `NewTaskSpammer` function to build the task spammer
 
     ```go
-      taskSpammer, _ := taskspammer.NewTaskSpammer(taskCreator, taskSpammerConfig, inputGen)
+      taskSpammer, _ := taskspammer.NewTaskSpammer(logger, taskSpammerConfig, taskCreator, inputGen)
     ```
 
 5. **Start the Task Spammer**: Call the `Start` method to start the task spammer
