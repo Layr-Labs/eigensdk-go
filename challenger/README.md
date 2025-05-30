@@ -32,19 +32,12 @@ The Challenger operates through a well-defined workflow:
 1. **Challenger Configuration**: Create a `challenger.Config`. An alternative way to populate it is to load it from a config file like we do in the example.
     - Config fields:
         - `EthWsUrl`: The URL of the Ethereum websocket
-        - `Logger`: The logger
-        - `TaskManagerAbi`: The ABI of the task manager
-        - `EthClient`: The Ethereum client
+        - `EthHttpUrl`: The URL of the Ethereum HTTP RPC
 
             ```go
-                ethHttpUrl := "http://localhost:8545"
-                ethHttpClient, _ := ethclient.Dial(ethHttpUrl)
-            
                 cfg := challenger.Config{
-                EthWsUrl:       "ws://localhost:8545",
-                Logger:         logger,
-                TaskManagerAbi: taskManagerAbi,
-                EthClient:      ethHttpClient,
+                    EthWsUrl:       "ws://localhost:8545",
+                    EthHttpUrl:     "http://localhost:8545",
                 }
             ```
 

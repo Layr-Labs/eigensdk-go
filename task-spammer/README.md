@@ -30,14 +30,12 @@ The Task Spammer uses a builder pattern and follows this workflow:
 
 2. **Task Spammer Config**: Create a `taskspammer.Config`. An alternative way to populate it is to load it from a config file like we do in the example.
     - Config fields:
-      - `Logger`: The logger
       - `TimeBetweenTasks`: The time between task creations
       - `QuorumThresholdPercentage`: The percentage of the total quorum stake needed by the signers to make the aggregated response valid
       - `QuorumNumbers`: The numbers of the quorums required to respond to tasks for the response to be valid
 
         ```go
           taskSpammerConfig := taskspammer.Config{
-            Logger:                     logger,
             TimeBetweenTasks:           10 * time.Second,
             QuorumThresholdPercentage:  100,
             QuorumNumbers:              []uint8{0},

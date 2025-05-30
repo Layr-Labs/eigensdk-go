@@ -33,10 +33,8 @@ This flow ensures tasks are initialized, signatures collected, and the final res
     - Config fields:
         - `RegistryCoordinatorAddress`: The address of the AVS registry coordinator
         - `OperatorStateRetrieverAddress`: The address of the operator state retriever
-        - `ServiceManagerAddress`: The address of the service manager
         - `EthHttpUrl`: The URL of the Ethereum HTTP RPC
         - `EthWsUrl`: The URL of the Ethereum WebSocket
-        - `EcdsaPrivateKey`: The Ecdsa private key used by the aggregator to build the avs registry reader and subscriber
         - `AggregatorServerIpPortAddr`: The IP and port of the aggregator for listening for RPC calls
 
         ```go
