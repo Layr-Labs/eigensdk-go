@@ -121,9 +121,8 @@ func createIncredibleSquaringAggregator(t *testing.T, ethHttpUrl, ethWsUrl strin
 	taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
 	require.NoError(t, err, "Failed to get task manager abi")
 
-	taskManagerAddr := taskManagerAddress
 	taskResponder, err := taskmanager.NewTaskManagerFromAbi[*big.Int, *big.Int](
-		taskManagerAddr,
+		taskManagerAddress,
 		taskManagerAbi,
 		txMgr,
 		ethClient,
