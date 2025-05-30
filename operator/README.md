@@ -32,33 +32,25 @@ The Operator functions through the following flow:
       taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
    ```
 
-2. **Create the operator configuration**: Create a `operator.Config` struct
+2. **Create the operator configuration**: Create an `operator.Config` struct. An alternative way to populate it is to load it from a config file like we do in the example.
     - Config fields:
       - `OperatorAddress`: The address of the operator
-      - `OperatorStateRetrieverAddress`: The address of the operator state retriever
-      - `ServiceManagerAddress`: The address of the service manager
-      - `AVSRegistryCoordinatorAddress`: The address of the AVS registry coordinator
+      - `RegistryCoordinatorAddress`: The address of the AVS registry coordinator
       - `EthRpcUrl`: The URL of the Ethereum RPC
       - `EthWsUrl`: The URL of the Ethereum WebSocket
       - `BlsPrivateKeyStorePath`: The path to the BLS private key store
       - `AggregatorServerIpPortAddress`: The IP and port of the aggregator
-      - `Logger`: The logger
-      - `TaskManagerAbi`: The ABI of the task manager
-      - `RegistrationCfg`: The registration configuration. If `RegistrationCfg.RegisterOnStartup` is `true`, the operator attempts to register itself to EigenLayer using the values provided here. To skip automatic registration, leave this field unset (or set `RegistrationCfg.RegisterOnStartup` to `false`), but note that this requires the operator to be already registered to EigenLayer.
+      - `Registration`: The registration configuration. If `Registration.RegisterOnStartup` is `true`, the operator attempts to register itself to EigenLayer using the values provided here. To skip automatic registration, leave this field unset (or set `Registration.RegisterOnStartup` to `false`), but note that this requires the operator to be already registered to EigenLayer.
 
       ```go
           operatorConfig := operator.Config{
             OperatorAddress:               "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-            OperatorStateRetrieverAddress: "0x4c5859f0f772848b2d91f1d83e2fe57935348029",
-            ServiceManagerAddress:         "0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154",
-            AVSRegistryCoordinatorAddress: "0x7bc06c482dead17c0e297afbc32f6e63d3846650",
+            RegistryCoordinatorAddress:    "0x7bc06c482dead17c0e297afbc32f6e63d3846650",
             EthRpcUrl:                     "http://localhost:8545",
             EthWsUrl:                      "ws://localhost:8545",
             BlsPrivateKeyStorePath:        "keys/test.bls.key.json",
             AggregatorServerIpPortAddress: "localhost:8090",
-            Logger:                        logger,
-            TaskManagerAbi:                taskManagerAbi,
-            RegistrationCfg:               registrationConfig,
+            Registration:               registrationConfig,
           }
       ```
 
@@ -91,7 +83,7 @@ The Operator functions through the following flow:
 6. **Run the operator**: Initialize the `Operator` with the configuration and the processing logic. Then start the operator.
 
    ```go
-      operator, err := operator.NewOperatorFromConfig(operatorConfig, logic, nil)
+      operator, err := operator.NewOperatorFromConfig(logger, operatorConfig, taskManagerAbi, logic, nil)
       if err != nil {
          logger.Errorf("Failed to create operator from config: %v", err)
          return

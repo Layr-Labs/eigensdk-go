@@ -29,14 +29,12 @@ This flow ensures tasks are initialized, signatures collected, and the final res
 
 ## How to Set Up an Aggregator
 
-1. **Create the aggregator configuration**: Create a `aggregator.Config` struct
+1. **Create the aggregator configuration**: Create an `aggregator.Config`. An alternative way to populate it is to load it from a config file like we do in the example.
     - Config fields:
         - `RegistryCoordinatorAddress`: The address of the AVS registry coordinator
         - `OperatorStateRetrieverAddress`: The address of the operator state retriever
-        - `ServiceManagerAddress`: The address of the service manager
         - `EthHttpUrl`: The URL of the Ethereum HTTP RPC
         - `EthWsUrl`: The URL of the Ethereum WebSocket
-        - `EcdsaPrivateKey`: The Ecdsa private key used by the aggregator to build the avs registry reader and subscriber
         - `AggregatorServerIpPortAddr`: The IP and port of the aggregator for listening for RPC calls
 
         ```go
@@ -86,7 +84,7 @@ This flow ensures tasks are initialized, signatures collected, and the final res
 3. **Run the aggregator**: Instantiate an `Aggregator` with the config, a logger, the task processor created above and the task manager contract ABI, and then start it:
 
     ``` go
-        agg, err := aggregator.NewAggregator(cfg, logger, taskProcessor, taskManagerAbi)
+        agg, err := aggregator.NewAggregator(logger, cfg, taskManagerAbi, taskProcessor)
 
         err = <-agg.Start(context.Background())
     ```

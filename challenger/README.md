@@ -29,23 +29,17 @@ The Challenger operates through a well-defined workflow:
 
 ## How to Set Up a Challenger
 
-1. **Challenger Configuration**: Create a `challenger.Config` struct with the following fields:
-   - `EthWsUrl`: The URL of the Ethereum websocket
-   - `Logger`: The logger
-   - `TaskManagerAbi`: The ABI of the task manager
-   - `EthClient`: The Ethereum client
+1. **Challenger Configuration**: Create a `challenger.Config`. An alternative way to populate it is to load it from a config file like we do in the example.
+    - Config fields:
+        - `EthWsUrl`: The URL of the Ethereum websocket
+        - `EthHttpUrl`: The URL of the Ethereum HTTP RPC
 
-      ```go
-        ethHttpUrl := "http://localhost:8545"
-        ethHttpClient, _ := ethclient.Dial(ethHttpUrl)
-      
-        cfg := challenger.Config{
-          EthWsUrl:       "ws://localhost:8545",
-          Logger:         logger,
-          TaskManagerAbi: taskManagerAbi,
-          EthClient:      ethHttpClient,
-        }
-      ```
+            ```go
+                cfg := challenger.Config{
+                    EthWsUrl:       "ws://localhost:8545",
+                    EthHttpUrl:     "http://localhost:8545",
+                }
+            ```
 
 2. **Task Verification Logic**: Define a function that verifies the response for a task, returning `true` for valid tasks.
 
@@ -89,13 +83,13 @@ The Challenger operates through a well-defined workflow:
     4. Create the `NewIndexingChallengerProcessor` with the `ChallengeRaiser` created above:
 
         ```go
-            indexingTaskProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, isValidSquare, challengerRaiser)
+            challengerProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, isValidSquare, challengerRaiser)
         ```
 
 4. **Challenger**: Create a `Challenger` from the `Config` and the `ChallengerProcessor`.
 
     ```go
-        challenger, _ := challenger.NewChallenger(cfg, indexingTaskProcessor)
+        challenger, _ := challenger.NewChallenger(logger, cfg, taskManagerAbi, challengerProcessor)
     ```
 
 5. **Start the Challenger**: Start the challenger.
