@@ -106,10 +106,10 @@ func main() {
 
 	// 4. Create a Challenger from the Config and the ChallengerProcessor.
 	challenger, err := challenger.NewChallenger(
-		cfg,
-		indexingChallengerProcessor,
 		logger,
+		cfg,
 		taskManagerAbi,
+		indexingChallengerProcessor,
 	)
 	if err != nil {
 		logger.Errorf("Failed to create challenger from config: %v", err)

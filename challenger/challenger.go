@@ -49,10 +49,10 @@ type Challenger[Input any, Output any] struct {
 
 // NewChallenger creates a new Aggregator with the provided config and a challenger processor.
 func NewChallenger[Input any, Output any](
-	c Config,
-	challengerProcessor ChallengerProcessor[Input, Output],
 	logger logging.Logger,
+	c Config,
 	taskManagerAbi *abi.ABI,
+	challengerProcessor ChallengerProcessor[Input, Output],
 ) (*Challenger[Input, Output], error) {
 	client, err := ethclient.Dial(c.EthWsUrl)
 	if err != nil {
