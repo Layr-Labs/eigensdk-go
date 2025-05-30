@@ -24,7 +24,8 @@ type Config struct {
 	TaskManagerAddress string `toml:"task_manager_address"`
 
 	EthHttpUrl string `toml:"eth_http_url"`
-	EthWsUrl   string `toml:"eth_ws_url"`
+
+	challenger.Config
 }
 
 func main() {
@@ -56,12 +57,8 @@ func main() {
 		return
 	}
 
-	cfg := challenger.Config{
-		EthWsUrl:       challengerConfig.EthWsUrl,
-		Logger:         logger,
-		TaskManagerAbi: taskManagerAbi,
-		EthClient:      ethClient,
-	}
+	cfg := challengerConfig.Config
+	cfg.EthClient = ethClient
 
 	// 2. Define a function that verifies the response for a task. Note that here we wrap the logic into a
 	// `ResponseCalculator` implementation, and then we use the ResponseValidationFunctionFromResponseCalculator,
@@ -112,6 +109,8 @@ func main() {
 	challenger, err := challenger.NewChallenger(
 		cfg,
 		challengerProcessor,
+		logger,
+		taskManagerAbi,
 	)
 	if err != nil {
 		logger.Errorf("Failed to create challenger: %w", err)
