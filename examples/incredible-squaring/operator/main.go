@@ -92,8 +92,6 @@ func main() {
 		EthWsUrl:                      opConfig.EthWsUrl,
 		BlsPrivateKeyStorePath:        opConfig.BlsPrivateKeyStorePath,
 		AggregatorServerIpPortAddress: opConfig.AggregatorServerIpPortAddress,
-		Logger:                        logger,
-		TaskManagerAbi:                taskManagerAbi,
 		RegistrationCfg:               registrationConfig,
 	}
 
@@ -113,7 +111,7 @@ func main() {
 	// 6. Build the operator, providing operator config, the response calculator and a task response hashing
 	// function, and then start it.
 	// We leave this last parameter as nil because we are using the default hashing function provided by the SDK
-	operator, err := operator.NewOperatorFromConfig(operatorConfig, possibleFailureCalculator, nil)
+	operator, err := operator.NewOperatorFromConfig(operatorConfig, possibleFailureCalculator, nil, logger, taskManagerAbi)
 	if err != nil {
 		logger.Fatalf("Failed to create operator: %w", err)
 	}
