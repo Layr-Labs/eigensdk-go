@@ -5,6 +5,7 @@ import (
 	"iter"
 	"time"
 
+	"github.com/Layr-Labs/eigensdk-go/logging"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
 )
 
@@ -12,19 +13,22 @@ import (
 // Start() method. To send the generated tasks to the TaskManager contract uses the task creator
 // received on the NewTaskSpammer function.
 type TaskSpammer[Input any] struct {
+	logger logging.Logger
+	config Config
+
 	// The task creator sends the tasks to the on-chain task manager contract
 	taskCreator taskmanager.TaskCreator[Input]
-	config      Config
 	inputGen    iter.Seq[Input]
 }
 
 // Builds a task spammer from a task creator and the received task spammer config. Returns an error if the
 // received config is invalid
-func NewTaskSpammer[Input any](taskCreator taskmanager.TaskCreator[Input], config Config, inputGen iter.Seq[Input]) (*TaskSpammer[Input], error) {
+func NewTaskSpammer[Input any](logger logging.Logger, config Config, taskCreator taskmanager.TaskCreator[Input], inputGen iter.Seq[Input]) (*TaskSpammer[Input], error) {
 	// TODO: validate config
 	return &TaskSpammer[Input]{
-		taskCreator,
+		logger,
 		config,
+		taskCreator,
 		inputGen,
 	}, nil
 }
@@ -47,7 +51,7 @@ func (taskSpam *TaskSpammer[Input]) Start(ctx context.Context) <-chan error {
 // Note that the taskIndex value is not sent to the task manager contract, so it may differ (will differ if shut
 // down and raise another without reseting the anvil node), but it wont affect the workflow of the system.
 func (taskSpam *TaskSpammer[Input]) run(ctx context.Context) error {
-	logger := taskSpam.config.Logger
+	logger := taskSpam.logger
 
 	logger.Info("Starting Task Spammer.")
 

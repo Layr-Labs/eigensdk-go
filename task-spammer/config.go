@@ -2,8 +2,6 @@ package taskspammer
 
 import (
 	"time"
-
-	"github.com/Layr-Labs/eigensdk-go/logging"
 )
 
 // Task spammer configuration struct.
@@ -11,9 +9,6 @@ import (
 // Contains optional parameters for the task spammer.
 // TODO: have default values
 type Config struct {
-	// The logger where the loggs will appear
-	Logger logging.Logger
-
 	// The duration of the period between tasks
 	TimeBetweenTasks time.Duration
 
