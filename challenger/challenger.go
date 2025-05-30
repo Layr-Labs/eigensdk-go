@@ -49,15 +49,17 @@ type Challenger[Input any, Output any] struct {
 
 // NewChallenger creates a new Aggregator with the provided config and a challenger processor.
 func NewChallenger[Input any, Output any](
+	logger logging.Logger,
 	c Config,
+	taskManagerAbi *abi.ABI,
 	challengerProcessor ChallengerProcessor[Input, Output],
 ) (*Challenger[Input, Output], error) {
 	client, err := ethclient.Dial(c.EthWsUrl)
 	if err != nil {
-		c.Logger.Fatalf("error connecting to web socket: %v", err)
+		logger.Fatalf("error connecting to web socket: %v", err)
 	}
 
-	newTaskEventHash := c.TaskManagerAbi.Events["NewTaskCreated"].ID
+	newTaskEventHash := taskManagerAbi.Events["NewTaskCreated"].ID
 	query := ethereum.FilterQuery{
 		Addresses: []common.Address{},
 		Topics:    [][]common.Hash{{newTaskEventHash}},
@@ -66,25 +68,30 @@ func NewChallenger[Input any, Output any](
 	newTaskCreatedLogs := make(chan types.Log)
 	_, err = client.SubscribeFilterLogs(context.Background(), query, newTaskCreatedLogs)
 	if err != nil {
-		c.Logger.Fatalf("error subscribing to newTaskCreated events: %v", err)
+		logger.Fatalf("error subscribing to newTaskCreated events: %v", err)
 	}
 
-	taskRespondedEventHash := c.TaskManagerAbi.Events["TaskResponded"].ID
+	taskRespondedEventHash := taskManagerAbi.Events["TaskResponded"].ID
 	query.Topics[0][0] = taskRespondedEventHash
 
 	taskRespondedLogs := make(chan types.Log)
 	_, err = client.SubscribeFilterLogs(context.Background(), query, taskRespondedLogs)
 	if err != nil {
-		c.Logger.Fatalf("error subscribing to taskResponded events: %v", err)
+		logger.Fatalf("error subscribing to taskResponded events: %v", err)
+	}
+
+	ethClient, err := ethclient.Dial(c.EthHttpUrl)
+	if err != nil {
+		logger.Fatalf("Failed to dial ethclient: %v", err)
 	}
 
 	return &Challenger[Input, Output]{
-		logger:              c.Logger,
+		logger:              logger,
 		challengerProcessor: challengerProcessor,
 		newTaskCreatedChan:  newTaskCreatedLogs,
 		taskResponseChan:    taskRespondedLogs,
-		taskManagerAbi:      c.TaskManagerAbi,
-		ethClient:           c.EthClient,
+		taskManagerAbi:      taskManagerAbi,
+		ethClient:           ethClient,
 	}, nil
 }
 
