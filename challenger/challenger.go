@@ -80,13 +80,18 @@ func NewChallenger[Input any, Output any](
 		logger.Fatalf("error subscribing to taskResponded events: %v", err)
 	}
 
+	ethClient, err := ethclient.Dial(c.EthHttpUrl)
+	if err != nil {
+		logger.Fatalf("Failed to dial ethclient: %v", err)
+	}
+
 	return &Challenger[Input, Output]{
 		logger:              logger,
 		challengerProcessor: challengerProcessor,
 		newTaskCreatedChan:  newTaskCreatedLogs,
 		taskResponseChan:    taskRespondedLogs,
 		taskManagerAbi:      taskManagerAbi,
-		ethClient:           c.EthClient,
+		ethClient:           ethClient,
 	}, nil
 }
 

@@ -151,8 +151,8 @@ func createIncredibleSquaringChallenger(t *testing.T, ethHttpUrl, ethWsUrl strin
 	require.NoError(t, err, "Failed to create eth client")
 
 	challengerCfg := challenger.Config{
-		EthWsUrl:  ethWsUrl,
-		EthClient: ethHttpClient,
+		EthWsUrl:   ethWsUrl,
+		EthHttpUrl: ethHttpUrl,
 	}
 
 	squareCalculator := operator.NewFunctionResponseCalculator(square)
