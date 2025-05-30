@@ -151,10 +151,8 @@ func createIncredibleSquaringChallenger(t *testing.T, ethHttpUrl, ethWsUrl strin
 	require.NoError(t, err, "Failed to create eth client")
 
 	challengerCfg := challenger.Config{
-		EthWsUrl:       ethWsUrl,
-		Logger:         logger,
-		TaskManagerAbi: taskManagerAbi,
-		EthClient:      ethHttpClient,
+		EthWsUrl:  ethWsUrl,
+		EthClient: ethHttpClient,
 	}
 
 	squareCalculator := operator.NewFunctionResponseCalculator(square)
@@ -180,7 +178,9 @@ func createIncredibleSquaringChallenger(t *testing.T, ethHttpUrl, ethWsUrl strin
 	require.NoError(t, err, "Failed to create indexing challenger processor")
 
 	challenger, err := challenger.NewChallenger(
+		logger,
 		challengerCfg,
+		taskManagerAbi,
 		indexingChallengerProcessor,
 	)
 	require.NoError(t, err, "Failed to create challenger from config")
