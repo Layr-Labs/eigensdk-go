@@ -20,7 +20,7 @@ task_manager_address = "0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3"
 
 operator_state_retriever_address = "0x4c5859f0f772848b2d91f1d83e2fe57935348029"
 
-[Registration]
+[registration]
 
 register_on_startup = true
 

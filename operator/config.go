@@ -27,7 +27,7 @@ type Config struct {
 	AggregatorServerIpPortAddress string `toml:"aggregator_server_ip_port"`
 
 	// The config used to register an operator
-	Registration RegistrationConfig `toml:"Registration"`
+	Registration RegistrationConfig `toml:"registration"`
 }
 
 // This config is used to register an operator on startup.
