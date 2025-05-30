@@ -51,13 +51,15 @@ type Challenger[Input any, Output any] struct {
 func NewChallenger[Input any, Output any](
 	c Config,
 	challengerProcessor ChallengerProcessor[Input, Output],
+	logger logging.Logger,
+	taskManagerAbi *abi.ABI,
 ) (*Challenger[Input, Output], error) {
 	client, err := ethclient.Dial(c.EthWsUrl)
 	if err != nil {
-		c.Logger.Fatalf("error connecting to web socket: %v", err)
+		logger.Fatalf("error connecting to web socket: %v", err)
 	}
 
-	newTaskEventHash := c.TaskManagerAbi.Events["NewTaskCreated"].ID
+	newTaskEventHash := taskManagerAbi.Events["NewTaskCreated"].ID
 	query := ethereum.FilterQuery{
 		Addresses: []common.Address{},
 		Topics:    [][]common.Hash{{newTaskEventHash}},
@@ -66,24 +68,24 @@ func NewChallenger[Input any, Output any](
 	newTaskCreatedLogs := make(chan types.Log)
 	_, err = client.SubscribeFilterLogs(context.Background(), query, newTaskCreatedLogs)
 	if err != nil {
-		c.Logger.Fatalf("error subscribing to newTaskCreated events: %v", err)
+		logger.Fatalf("error subscribing to newTaskCreated events: %v", err)
 	}
 
-	taskRespondedEventHash := c.TaskManagerAbi.Events["TaskResponded"].ID
+	taskRespondedEventHash := taskManagerAbi.Events["TaskResponded"].ID
 	query.Topics[0][0] = taskRespondedEventHash
 
 	taskRespondedLogs := make(chan types.Log)
 	_, err = client.SubscribeFilterLogs(context.Background(), query, taskRespondedLogs)
 	if err != nil {
-		c.Logger.Fatalf("error subscribing to taskResponded events: %v", err)
+		logger.Fatalf("error subscribing to taskResponded events: %v", err)
 	}
 
 	return &Challenger[Input, Output]{
-		logger:              c.Logger,
+		logger:              logger,
 		challengerProcessor: challengerProcessor,
 		newTaskCreatedChan:  newTaskCreatedLogs,
 		taskResponseChan:    taskRespondedLogs,
-		taskManagerAbi:      c.TaskManagerAbi,
+		taskManagerAbi:      taskManagerAbi,
 		ethClient:           c.EthClient,
 	}, nil
 }
