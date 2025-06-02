@@ -109,7 +109,7 @@ func dotProduct(taskIndex uint32, points DotProductInput) (*big.Int, error) {
 	return totalSum, nil
 }
 
-func createIncredibleDotProductAggregator(t *testing.T, ethHttpUrl, ethWsUrl string) *aggregator.Aggregator[*big.Int, *big.Int] {
+func createIncredibleDotProductAggregator(t *testing.T, ethHttpUrl, ethWsUrl string) *aggregator.Aggregator[DotProductInput, *big.Int] {
 	t.Helper()
 
 	logger, err := logging.NewZapLogger(logging.Production)
@@ -136,7 +136,7 @@ func createIncredibleDotProductAggregator(t *testing.T, ethHttpUrl, ethWsUrl str
 	taskManagerAbi, err := cstaskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
 	require.NoError(t, err, "Failed to get task manager abi")
 
-	taskResponder, err := taskmanager.NewTaskManagerFromAbi[*big.Int, *big.Int](
+	taskResponder, err := taskmanager.NewTaskManagerFromAbi[DotProductInput, *big.Int](
 		taskManagerAddress,
 		taskManagerAbi,
 		txMgr,
