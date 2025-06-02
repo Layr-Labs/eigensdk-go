@@ -280,12 +280,14 @@ func createIncredibleSquaringTaskSpammer(t *testing.T, ethHttpUrl string) *tasks
 func newNumberToSquareSequence() iter.Seq[*big.Int] {
 	acc := big.NewInt(1)
 	delta := big.NewInt(1)
+	count := 0
 	return func(yield func(*big.Int) bool) {
-		for {
+		for count < 3 {
 			if !yield(acc) {
 				break
 			}
 			acc.Add(acc, delta)
+			count++
 		}
 	}
 }
