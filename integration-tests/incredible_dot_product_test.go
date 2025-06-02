@@ -120,7 +120,7 @@ func createIncredibleDotProductAggregator(t *testing.T, ethHttpUrl, ethWsUrl str
 		OperatorStateRetrieverAddress: common.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"),
 		EthHttpUrl:                    ethHttpUrl,
 		EthWsUrl:                      ethWsUrl,
-		AggregatorServerIpPortAddr:    "localhost:8090",
+		AggregatorServerIpPortAddr:    "localhost:8091",
 	}
 
 	ethClient, err := ethclient.Dial(ethHttpUrl)
@@ -241,7 +241,7 @@ func createIncredibleDotProductOperator(t *testing.T, ethHttpUrl, ethWsUrl strin
 		EthWsUrl:                   ethWsUrl,
 		// Current dir is integration-tests
 		BlsPrivateKeyStorePath:        "../examples/incredible-dot-product/keys/test.bls.key.json",
-		AggregatorServerIpPortAddress: "localhost:8090",
+		AggregatorServerIpPortAddress: "localhost:8091",
 		Registration:                  registrationConfig,
 	}
 
