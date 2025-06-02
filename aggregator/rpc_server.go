@@ -2,6 +2,8 @@ package aggregator
 
 import (
 	"context"
+	"log"
+	"net"
 	"net/http"
 	"net/rpc"
 
@@ -14,16 +16,17 @@ import (
 // When starting the server, the aggregator start listening at the address specified by config the calls to
 // the ProcessSignedTaskResponse method
 func (agg *Aggregator[Input, Output]) startServer(ctx context.Context) {
-	err := rpc.RegisterName("Aggregator", agg)
+	server := rpc.NewServer()
+	err := server.RegisterName("Aggregator", agg)
 	if err != nil {
 		agg.logger.Fatal("Format of service TaskManager isn't correct. ", "err", err)
 	}
-	rpc.HandleHTTP()
 
-	err = http.ListenAndServe(agg.serverIpPortAddr, nil)
+	listener, err := net.Listen("tcp", agg.serverIpPortAddr)
 	if err != nil {
-		agg.logger.Fatal("ListenAndServe", "err", err)
+		log.Fatal(err)
 	}
+	go http.Serve(listener, server)
 }
 
 type SignedTaskResponse[Output any] struct {
