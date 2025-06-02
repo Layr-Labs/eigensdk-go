@@ -90,7 +90,7 @@ func TestIncredibleSquaring(t *testing.T) {
 
 	taskIndex, err := taskManager.TaskNumber(&bind.CallOpts{})
 	require.NoError(t, err, "Failed to get final task index")
-	require.Greater(t, taskIndex, initialTaskIndex, "Final task index should be greater than initial task index")
+	require.Equal(t, taskIndex, uint32(3), "Final task index should be equal to the amount of tasks generated")
 }
 
 func square(taskIndex uint32, input *big.Int) (*big.Int, error) {
