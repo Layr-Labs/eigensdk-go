@@ -63,6 +63,10 @@ func EcdsaPrivateKeyToAddress(privateKey *ecdsa.PrivateKey) (gethcommon.Address,
 }
 
 // RoundUpDivideBig divides two positive big.Int numbers and rounds up the result.
+// Panics if `b` is zero.
+// Result is undefined for negative numbers.
+//
+// Deprecated: this function is deprecated and will be removed in the future.
 func RoundUpDivideBig(a, b *big.Int) *big.Int {
 	one := new(big.Int).SetUint64(1)
 	res := new(big.Int)
