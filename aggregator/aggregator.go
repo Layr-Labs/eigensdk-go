@@ -143,7 +143,10 @@ func (agg *Aggregator[Input, Output]) run(ctx context.Context) error {
 	agg.logger.Info("Starting aggregator.")
 	agg.logger.Info("Starting aggregator rpc server.")
 
-	serverErrorChannel := agg.startServer(ctx)
+	serverErrorChannel := make(chan error)
+	go func() {
+		serverErrorChannel <- agg.startServer(ctx)
+	}()
 
 	for {
 		select {
