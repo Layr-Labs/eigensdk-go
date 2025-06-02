@@ -99,9 +99,14 @@ func TestIncredibleDotProduct(t *testing.T) {
 	}
 }
 
-func dotProduct(taskIndex uint32, input *big.Int) (*big.Int, error) {
-	result := new(big.Int).Mul(input, input)
-	return result, nil
+func dotProduct(taskIndex uint32, points DotProductInput) (*big.Int, error) {
+	totalSum := big.NewInt(0)
+	for i := range points.X {
+		currentSum := big.NewInt(0).Mul(points.X[i], points.Y[i])
+		totalSum.Add(totalSum, currentSum)
+	}
+
+	return totalSum, nil
 }
 
 func createIncredibleDotProductAggregator(t *testing.T, ethHttpUrl, ethWsUrl string) *aggregator.Aggregator[*big.Int, *big.Int] {
@@ -148,7 +153,7 @@ func createIncredibleDotProductAggregator(t *testing.T, ethHttpUrl, ethWsUrl str
 	return aggregator
 }
 
-func createIncredibleDotProductChallenger(t *testing.T, ethHttpUrl, ethWsUrl string) *challenger.Challenger[*big.Int, *big.Int] {
+func createIncredibleDotProductChallenger(t *testing.T, ethHttpUrl, ethWsUrl string) *challenger.Challenger[DotProductInput, *big.Int] {
 	t.Helper()
 
 	logger, err := logging.NewZapLogger(logging.Production)
@@ -176,7 +181,7 @@ func createIncredibleDotProductChallenger(t *testing.T, ethHttpUrl, ethWsUrl str
 	txMgr, err := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethHttpClient, ecdsaPrivateKey)
 	require.NoError(t, err, "Failed to create transaction manager")
 
-	challengeRaiser, err := taskmanager.NewTaskManagerFromAbi[*big.Int, *big.Int](
+	challengeRaiser, err := taskmanager.NewTaskManagerFromAbi[DotProductInput, *big.Int](
 		taskManagerAddress,
 		taskManagerAbi,
 		txMgr,
@@ -198,7 +203,7 @@ func createIncredibleDotProductChallenger(t *testing.T, ethHttpUrl, ethWsUrl str
 	return challenger
 }
 
-func createIncredibleDotProductOperator(t *testing.T, ethHttpUrl, ethWsUrl string) *operator.Operator[*big.Int, *big.Int] {
+func createIncredibleDotProductOperator(t *testing.T, ethHttpUrl, ethWsUrl string) *operator.Operator[DotProductInput, *big.Int] {
 	t.Helper()
 
 	logger, err := logging.NewZapLogger(logging.Production)
