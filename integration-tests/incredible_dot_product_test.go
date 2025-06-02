@@ -26,7 +26,7 @@ import (
 	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
 )
 
-// var taskManagerAddress = common.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3")
+var dotProductTaskManagerAddress = common.HexToAddress("0x7bc06c482dead17c0e297afbc32f6e63d3846650")
 
 func TestIncredibleDotProduct(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -41,7 +41,7 @@ func TestIncredibleDotProduct(t *testing.T) {
 	ethClient, err := ethclient.Dial(ethHttpUrl)
 	require.NoError(t, err, "Failed to create eth client")
 
-	taskManager, err := cstaskmanager.NewContractIncredibleDotProductTaskManager(taskManagerAddress, ethClient)
+	taskManager, err := cstaskmanager.NewContractIncredibleDotProductTaskManager(dotProductTaskManagerAddress, ethClient)
 	require.NoError(t, err, "Failed to create task manager contract")
 
 	initialTaskIndex, err := taskManager.TaskNumber(&bind.CallOpts{})
@@ -116,8 +116,8 @@ func createIncredibleDotProductAggregator(t *testing.T, ethHttpUrl, ethWsUrl str
 	require.NoError(t, err, "Failure creating logger")
 
 	cfg := aggregator.Config{
-		RegistryCoordinatorAddress:    common.HexToAddress("0x7bc06c482dead17c0e297afbc32f6e63d3846650"),
-		OperatorStateRetrieverAddress: common.HexToAddress("0x4c5859f0f772848b2d91f1d83e2fe57935348029"),
+		RegistryCoordinatorAddress:    common.HexToAddress("0xfd471836031dc5108809d173a067e8486b9047a3"),
+		OperatorStateRetrieverAddress: common.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"),
 		EthHttpUrl:                    ethHttpUrl,
 		EthWsUrl:                      ethWsUrl,
 		AggregatorServerIpPortAddr:    "localhost:8090",
@@ -137,7 +137,7 @@ func createIncredibleDotProductAggregator(t *testing.T, ethHttpUrl, ethWsUrl str
 	require.NoError(t, err, "Failed to get task manager abi")
 
 	taskResponder, err := taskmanager.NewTaskManagerFromAbi[DotProductInput, *big.Int](
-		taskManagerAddress,
+		dotProductTaskManagerAddress,
 		taskManagerAbi,
 		txMgr,
 		ethClient,
@@ -182,7 +182,7 @@ func createIncredibleDotProductChallenger(t *testing.T, ethHttpUrl, ethWsUrl str
 	require.NoError(t, err, "Failed to create transaction manager")
 
 	challengeRaiser, err := taskmanager.NewTaskManagerFromAbi[DotProductInput, *big.Int](
-		taskManagerAddress,
+		dotProductTaskManagerAddress,
 		taskManagerAbi,
 		txMgr,
 		ethHttpClient,
@@ -218,7 +218,7 @@ func createIncredibleDotProductOperator(t *testing.T, ethHttpUrl, ethWsUrl strin
 		RegisterOnStartup: true,
 
 		AllocationManagerAddr: common.HexToAddress("0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6"),
-		AvsAddress:            common.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"),
+		AvsAddress:            common.HexToAddress("0xcd8a1c3ba11cf5ecfa6267617243239504a98d90"),
 		StrategyAddrs:         []common.Address{common.HexToAddress("0x2b961e3959b79326a8e7f64ef0d2d825707669b5")},
 
 		DelegationManagerAddress:    common.HexToAddress("0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0"),
@@ -236,7 +236,7 @@ func createIncredibleDotProductOperator(t *testing.T, ethHttpUrl, ethWsUrl strin
 
 	operatorConfig := operator.Config{
 		OperatorAddress:            "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-		RegistryCoordinatorAddress: "0x7bc06c482dead17c0e297afbc32f6e63d3846650",
+		RegistryCoordinatorAddress: "0xfd471836031dc5108809d173a067e8486b9047a3",
 		EthRpcUrl:                  ethHttpUrl,
 		EthWsUrl:                   ethWsUrl,
 		// Current dir is integration-tests
@@ -271,8 +271,8 @@ func createIncredibleDotProductTaskSpammer(t *testing.T, ethHttpUrl string) *tas
 	abi, err := cstaskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
 	require.NoError(t, err, "Failed to get task manager abi")
 
-	taskManagerAddress := taskManagerAddress
-	taskCreator, err := taskmanager.NewTaskManagerFromAbi[DotProductInput, *big.Int](taskManagerAddress, abi, txMgr, ethHttpClient)
+	dotProductTaskManagerAddress := dotProductTaskManagerAddress
+	taskCreator, err := taskmanager.NewTaskManagerFromAbi[DotProductInput, *big.Int](dotProductTaskManagerAddress, abi, txMgr, ethHttpClient)
 	require.NoError(t, err, "Failed to create Task Creator")
 
 	taskSpammerConfig := taskspammer.Config{
