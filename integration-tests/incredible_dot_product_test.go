@@ -248,7 +248,7 @@ func createIncredibleDotProductOperator(t *testing.T, ethHttpUrl, ethWsUrl strin
 	return operator
 }
 
-func createIncredibleDotProductTaskSpammer(t *testing.T, ethHttpUrl string) *taskspammer.TaskSpammer[*big.Int] {
+func createIncredibleDotProductTaskSpammer(t *testing.T, ethHttpUrl string) *taskspammer.TaskSpammer[DotProductInput] {
 	t.Helper()
 
 	logger, err := logging.NewZapLogger(logging.Production)
@@ -267,7 +267,7 @@ func createIncredibleDotProductTaskSpammer(t *testing.T, ethHttpUrl string) *tas
 	require.NoError(t, err, "Failed to get task manager abi")
 
 	taskManagerAddress := taskManagerAddress
-	taskCreator, err := taskmanager.NewTaskManagerFromAbi[*big.Int, *big.Int](taskManagerAddress, abi, txMgr, ethHttpClient)
+	taskCreator, err := taskmanager.NewTaskManagerFromAbi[DotProductInput, *big.Int](taskManagerAddress, abi, txMgr, ethHttpClient)
 	require.NoError(t, err, "Failed to create Task Creator")
 
 	taskSpammerConfig := taskspammer.Config{
@@ -286,18 +286,28 @@ func createIncredibleDotProductTaskSpammer(t *testing.T, ethHttpUrl string) *tas
 	return taskSpammer
 }
 
+type DotProductInput struct {
+	X []*big.Int
+	Y []*big.Int
+}
+
 // Returns an iterator for the sequence 1, 2, 3, ...
-func newVectorsToMultiplySequence() iter.Seq[*big.Int] {
-	acc := big.NewInt(1)
-	delta := big.NewInt(1)
-	count := 0
-	return func(yield func(*big.Int) bool) {
-		for count < 3 {
-			if !yield(acc) {
+func newVectorsToMultiplySequence() iter.Seq[DotProductInput] {
+	n := big.NewInt(1)
+	return func(yield func(DotProductInput) bool) {
+		for {
+			length := int(n.Int64())
+			x := make([]*big.Int, length)
+			y := make([]*big.Int, length)
+			for i := 0; i < length; i++ {
+				v := big.NewInt(int64(i + 1))
+				x[i] = v
+				y[i] = v
+			}
+			if !yield(DotProductInput{X: x, Y: y}) {
 				break
 			}
-			acc.Add(acc, delta)
-			count++
+			n.Add(n, big.NewInt(1))
 		}
 	}
 }
