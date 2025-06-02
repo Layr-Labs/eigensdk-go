@@ -301,8 +301,9 @@ type DotProductInput struct {
 // Returns an iterator for the sequence 1, 2, 3, ...
 func newVectorsToMultiplySequence() iter.Seq[DotProductInput] {
 	n := big.NewInt(1)
+	count := 0
 	return func(yield func(DotProductInput) bool) {
-		for {
+		for count < 3 {
 			length := int(n.Int64())
 			x := make([]*big.Int, length)
 			y := make([]*big.Int, length)
@@ -315,6 +316,7 @@ func newVectorsToMultiplySequence() iter.Seq[DotProductInput] {
 				break
 			}
 			n.Add(n, big.NewInt(1))
+			count++
 		}
 	}
 }
