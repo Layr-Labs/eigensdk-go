@@ -232,10 +232,7 @@ func createIncredibleSquaringOperator(t *testing.T, ethHttpUrl, ethWsUrl string)
 
 	calculator := operator.NewFunctionResponseCalculator(square)
 
-	possibleFailureCalculator, err := operator.NewFailingResponseCalculator(calculator, 50, big.NewInt(0))
-	require.NoError(t, err, "Failed to create the possible failure function")
-
-	operator, err := operator.NewOperatorFromConfig(logger, operatorConfig, taskManagerAbi, possibleFailureCalculator, nil)
+	operator, err := operator.NewOperatorFromConfig(logger, operatorConfig, taskManagerAbi, calculator, nil)
 	require.NoError(t, err, "Failed to create operator from config")
 
 	return operator
