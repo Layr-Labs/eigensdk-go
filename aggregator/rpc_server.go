@@ -15,7 +15,7 @@ import (
 
 // When starting the server, the aggregator start listening at the address specified by config the calls to
 // the ProcessSignedTaskResponse method
-func (agg *Aggregator[Input, Output]) startServer(ctx context.Context) {
+func (agg *Aggregator[Input, Output]) startServer(ctx context.Context) <-chan error {
 	server := rpc.NewServer()
 	err := server.RegisterName("Aggregator", agg)
 	if err != nil {
@@ -26,7 +26,19 @@ func (agg *Aggregator[Input, Output]) startServer(ctx context.Context) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	go http.Serve(listener, server)
+
+	errChan := make(chan error)
+
+	go func() {
+		err := http.Serve(listener, server)
+		if err != nil {
+			errChan <- err
+			return
+		}
+		errChan <- nil
+	}()
+
+	return errChan
 }
 
 type SignedTaskResponse[Output any] struct {

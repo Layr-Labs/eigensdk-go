@@ -142,12 +142,15 @@ func (agg *Aggregator[Input, Output]) Start(ctx context.Context) <-chan error {
 func (agg *Aggregator[Input, Output]) run(ctx context.Context) error {
 	agg.logger.Info("Starting aggregator.")
 	agg.logger.Info("Starting aggregator rpc server.")
-	go agg.startServer(ctx)
+
+	serverErrorChannel := agg.startServer(ctx)
 
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
+		case err := <-serverErrorChannel:
+			return err
 		case blsAggServiceResp := <-agg.blsAggregationService.GetResponseChannel():
 			agg.logger.Info("Received response from blsAggregationService", "blsAggServiceResp", blsAggServiceResp)
 			err := agg.processAggregatedResponse(blsAggServiceResp)
