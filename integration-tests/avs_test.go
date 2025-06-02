@@ -78,7 +78,11 @@ func TestIncredibleSquaring(t *testing.T) {
 	case err := <-opErrC:
 		t.Fatal("Operator error:", err)
 	case err := <-tsErrC:
-		t.Fatal("Task Spammer error:", err)
+		if err == nil {
+			cancel()
+		} else {
+			t.Fatal("Task Spammer error:", err)
+		}
 	case <-timer.C:
 		// Time passed, so we can stop the test
 		cancel()
