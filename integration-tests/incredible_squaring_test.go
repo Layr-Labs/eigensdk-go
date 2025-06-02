@@ -78,7 +78,12 @@ func TestIncredibleSquaring(t *testing.T) {
 	case err := <-opErrC:
 		t.Fatal("Operator error:", err)
 	case err := <-tsErrC:
-		t.Fatal("Task Spammer error:", err)
+		// Here we handle the input generation termination (in that case returns nil but does not imply an error)
+		if err == nil {
+			cancel()
+		} else {
+			t.Fatal("Task Spammer error:", err)
+		}
 	case <-timer.C:
 		// Time passed, so we can stop the test
 		cancel()
@@ -86,7 +91,13 @@ func TestIncredibleSquaring(t *testing.T) {
 
 	taskIndex, err := taskManager.TaskNumber(&bind.CallOpts{})
 	require.NoError(t, err, "Failed to get final task index")
-	require.Greater(t, taskIndex, initialTaskIndex, "Final task index should be greater than initial task index")
+	require.Equal(t, taskIndex, uint32(3), "Final task index should be equal to the amount of tasks generated")
+
+	for i := range uint32(3) {
+		taskResponse, err := taskManager.AllTaskResponses(&bind.CallOpts{}, i)
+		require.NoError(t, err, "Failed to get task response number %v", i)
+		require.NotZero(t, taskResponse, "Task response number %v should not be nil", i)
+	}
 }
 
 func square(taskIndex uint32, input *big.Int) (*big.Int, error) {
@@ -232,10 +243,7 @@ func createIncredibleSquaringOperator(t *testing.T, ethHttpUrl, ethWsUrl string)
 
 	calculator := operator.NewFunctionResponseCalculator(square)
 
-	possibleFailureCalculator, err := operator.NewFailingResponseCalculator(calculator, 50, big.NewInt(0))
-	require.NoError(t, err, "Failed to create the possible failure function")
-
-	operator, err := operator.NewOperatorFromConfig(logger, operatorConfig, taskManagerAbi, possibleFailureCalculator, nil)
+	operator, err := operator.NewOperatorFromConfig(logger, operatorConfig, taskManagerAbi, calculator, nil)
 	require.NoError(t, err, "Failed to create operator from config")
 
 	return operator
@@ -283,12 +291,14 @@ func createIncredibleSquaringTaskSpammer(t *testing.T, ethHttpUrl string) *tasks
 func newNumberToSquareSequence() iter.Seq[*big.Int] {
 	acc := big.NewInt(1)
 	delta := big.NewInt(1)
+	count := 0
 	return func(yield func(*big.Int) bool) {
-		for {
+		for count < 3 {
 			if !yield(acc) {
 				break
 			}
 			acc.Add(acc, delta)
+			count++
 		}
 	}
 }
