@@ -9,7 +9,7 @@ import {StrategyBaseTVLLimits} from "eigenlayer-contracts/src/contracts/strategi
 
 import "eigenlayer-middleware/src/interfaces/IStakeRegistry.sol";
 import {ISlashingRegistryCoordinatorTypes} from "eigenlayer-middleware/src/interfaces/ISlashingRegistryCoordinator.sol";
-import {RegistryCoordinator} from "eigenlayer-middleware/src/RegistryCoordinator.sol";
+import {SlashingRegistryCoordinator} from "eigenlayer-middleware/src/SlashingRegistryCoordinator.sol";
 import {IStakeRegistryTypes} from "eigenlayer-middleware/src/interfaces/IStakeRegistry.sol";
 
 import {MockERC20, IERC20} from "../src/MockERC20.sol";
@@ -19,6 +19,7 @@ import {ContractsRegistry} from "../src/ContractsRegistry.sol";
 
 import "forge-std/Script.sol";
 import "forge-std/StdJson.sol";
+import {AllocationManager} from "eigenlayer-contracts/src/contracts/core/AllocationManager.sol";
 
 contract DeployTokensStrategiesCreateQuorums is Script, EigenlayerContractsParser, MockAvsContractsParser {
     uint256 MINT_AMOUNT = 5_000 ether;
@@ -93,10 +94,10 @@ contract DeployTokensStrategiesCreateQuorums is Script, EigenlayerContractsParse
         return (IERC20(mockERC20), erc20MockStrategy);
     }
 
-    function _createQuorum(RegistryCoordinator mockAvsRegCoord, IStrategy strat) internal {
+    function _createQuorum(SlashingRegistryCoordinator mockAvsRegCoord, IStrategy strat) internal {
         // for each quorum to setup, we need to define
         // quorumsOperatorSetParams, quorumsMinimumStake, and quorumsStrategyParams
-        RegistryCoordinator.OperatorSetParam memory quorumOperatorSetParams = ISlashingRegistryCoordinatorTypes
+        SlashingRegistryCoordinator.OperatorSetParam memory quorumOperatorSetParams = ISlashingRegistryCoordinatorTypes
             .OperatorSetParam({
             // hardcoded for now
             maxOperatorCount: 10000,
@@ -114,7 +115,11 @@ contract DeployTokensStrategiesCreateQuorums is Script, EigenlayerContractsParse
             multiplier: 1 ether
         });
 
-        RegistryCoordinator(address(mockAvsRegCoord)).createTotalDelegatedStakeQuorum(
+        // Update the metadata so does not fail with error InvalidAVSWithNoMetadataRegistered()
+        AllocationManager allocationManager = AllocationManager(0x8A791620dd6260079BF849Dc5567aDC3F2FdC318);
+        allocationManager.updateAVSMetadataURI(address(0xa82fF9aFd8f496c3d6ac40E2a0F282E47488CFc9), "metadataURI");
+
+        SlashingRegistryCoordinator(address(mockAvsRegCoord)).createTotalDelegatedStakeQuorum(
             quorumOperatorSetParams, quorumMinimumStake, quorumStrategyParams
         );
     }

@@ -12,6 +12,7 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/fireblocks"
 	"github.com/Layr-Labs/eigensdk-go/logging"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
@@ -71,7 +72,7 @@ func NewFireblocksWallet(
 ) (Wallet, error) {
 	chainID, err := ethClient.ChainID(context.Background())
 	if err != nil {
-		return nil, fmt.Errorf("error getting chain ID: %w", err)
+		return nil, utils.WrapError("error getting chain ID", err)
 	}
 	logger.Debug("Creating new Fireblocks wallet for chain", "chainID", chainID)
 	return &fireblocksWallet{
@@ -95,7 +96,7 @@ func (t *fireblocksWallet) getAccount(ctx context.Context) (*fireblocks.VaultAcc
 	if t.account == nil {
 		accounts, err := t.fireblocksClient.ListVaultAccounts(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("error listing vault accounts: %w", err)
+			return nil, utils.WrapError("error listing vault accounts", err)
 		}
 		for i, a := range accounts {
 			if a.Name == t.vaultAccountName {
@@ -119,7 +120,7 @@ func (f *fireblocksWallet) getWhitelistedAccount(
 	if !ok {
 		accounts, err := f.fireblocksClient.ListExternalWallets(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("error listing external wallets: %w", err)
+			return nil, utils.WrapError("error listing external wallets", err)
 		}
 		for i, a := range accounts {
 			for _, asset := range a.Assets {
@@ -150,7 +151,7 @@ func (t *fireblocksWallet) getWhitelistedContract(
 	if !ok {
 		contracts, err := t.fireblocksClient.ListContracts(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("error listing contracts: %w", err)
+			return nil, utils.WrapError("error listing contracts", err)
 		}
 		for i_c, c := range contracts {
 			for _, a := range c.Assets {
@@ -176,7 +177,7 @@ func (t *fireblocksWallet) SendTransaction(ctx context.Context, tx *types.Transa
 	}
 	account, err := t.getAccount(ctx)
 	if err != nil {
-		return "", fmt.Errorf("error getting account: %w", err)
+		return "", utils.WrapError("error getting account:", err)
 	}
 	foundAsset := false
 	for _, a := range account.Assets {
@@ -201,7 +202,8 @@ func (t *fireblocksWallet) SendTransaction(ctx context.Context, tx *types.Transa
 	if txID, ok := t.nonceToTxID[nonce]; ok {
 		fireblockTx, err := t.fireblocksClient.GetTransaction(ctx, txID)
 		if err != nil {
-			return "", fmt.Errorf("error getting fireblocks transaction %s: %w", txID, err)
+			text := fmt.Sprintf("error getting fireblocks transaction %s", txID)
+			return "", utils.WrapError(text, err)
 		}
 		if fireblockTx.TxHash != "" {
 			replaceTxByHash = fireblockTx.TxHash
@@ -232,7 +234,8 @@ func (t *fireblocksWallet) SendTransaction(ctx context.Context, tx *types.Transa
 	if len(tx.Data()) == 0 && tx.Value().Cmp(big.NewInt(0)) > 0 {
 		targetAccount, clientErr := t.getWhitelistedAccount(ctx, *tx.To())
 		if clientErr != nil {
-			return "", fmt.Errorf("error getting whitelisted account %s: %w", tx.To().Hex(), clientErr)
+			text := fmt.Sprintf("error getting whitelisted account %s", tx.To().Hex())
+			return "", utils.WrapError(text, clientErr)
 		}
 		req := fireblocks.NewTransferRequest(
 			"", // externalTxID
@@ -251,7 +254,8 @@ func (t *fireblocksWallet) SendTransaction(ctx context.Context, tx *types.Transa
 	} else if len(tx.Data()) > 0 {
 		contract, clientErr := t.getWhitelistedContract(ctx, *tx.To())
 		if clientErr != nil {
-			return "", fmt.Errorf("error getting whitelisted contract %s: %w", tx.To().Hex(), clientErr)
+			text := fmt.Sprintf("error getting whitelisted contract %s", tx.To().Hex())
+			return "", utils.WrapError(text, clientErr)
 		}
 		req := fireblocks.NewContractCallRequest(
 			"", // externalTxID
@@ -273,7 +277,8 @@ func (t *fireblocksWallet) SendTransaction(ctx context.Context, tx *types.Transa
 	}
 
 	if err != nil {
-		return "", fmt.Errorf("error sending a transaction %s: %w", tx.To().Hex(), err)
+		text := fmt.Sprintf("error sending a transaction %s", tx.To().Hex())
+		return "", utils.WrapError(text, err)
 	}
 	t.nonceToTxID[nonce] = res.ID
 	t.txIDToNonce[res.ID] = nonce
@@ -289,7 +294,8 @@ func (t *fireblocksWallet) CancelTransactionBroadcast(ctx context.Context, txID 
 func (t *fireblocksWallet) GetTransactionReceipt(ctx context.Context, txID TxID) (*types.Receipt, error) {
 	fireblockTx, err := t.fireblocksClient.GetTransaction(ctx, txID)
 	if err != nil {
-		return nil, fmt.Errorf("error getting fireblocks transaction %s: %w", txID, err)
+		text := fmt.Sprintf("error getting fireblocks transaction %s", txID)
+		return nil, utils.WrapError(text, err)
 	}
 	if fireblockTx.Status == fireblocks.Completed {
 		txHash := common.HexToHash(fireblockTx.TxHash)
@@ -307,7 +313,7 @@ func (t *fireblocksWallet) GetTransactionReceipt(ctx context.Context, txID TxID)
 		if errors.Is(err, ethereum.NotFound) {
 			return nil, fmt.Errorf("%w: for txID %s", ErrReceiptNotYetAvailable, txID)
 		} else {
-			return nil, fmt.Errorf("Transaction receipt retrieval failed: %w", err)
+			return nil, utils.WrapError("Transaction receipt retrieval failed", err)
 		}
 	} else if fireblockTx.Status == fireblocks.Failed ||
 		fireblockTx.Status == fireblocks.Rejected ||
@@ -336,7 +342,7 @@ func (t *fireblocksWallet) GetTransactionReceipt(ctx context.Context, txID TxID)
 func (f *fireblocksWallet) SenderAddress(ctx context.Context) (common.Address, error) {
 	account, err := f.getAccount(ctx)
 	if err != nil {
-		return common.Address{}, fmt.Errorf("error getting account: %w", err)
+		return common.Address{}, utils.WrapError("error getting account", err)
 	}
 	addresses, err := f.fireblocksClient.GetAssetAddresses(
 		ctx,
@@ -344,7 +350,7 @@ func (f *fireblocksWallet) SenderAddress(ctx context.Context) (common.Address, e
 		fireblocks.AssetIDByChain[f.chainID.Uint64()],
 	)
 	if err != nil {
-		return common.Address{}, fmt.Errorf("error getting asset addresses: %w", err)
+		return common.Address{}, utils.WrapError("error getting asset addresses", err)
 	}
 	if len(addresses) == 0 {
 		return common.Address{}, errors.New("no addresses found")

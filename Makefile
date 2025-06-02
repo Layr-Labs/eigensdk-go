@@ -19,7 +19,7 @@ mocks: ## generates mocks
 
 .PHONY: tests
 tests: ## runs all tests
-	go test -race ./... -timeout=6m
+	go test -race ./... -timeout=15m
 
 .PHONY: tests-cover
 tests-cover: ## run all tests with test coverge
@@ -59,7 +59,7 @@ lint: ## runs all linters
 
 ___BINDINGS___: ## 
 
-core_default := "DelegationManager IRewardsCoordinator StrategyManager EigenPod EigenPodManager IStrategy AVSDirectory AllocationManager PermissionController"
+core_default := "DelegationManager RewardsCoordinator StrategyManager EigenPod EigenPodManager IStrategy AVSDirectory AllocationManager PermissionController"
 core_location := "./lib/eigenlayer-middleware/lib/eigenlayer-contracts"
 core_bindings_location := "../../../../bindings"
 
@@ -107,13 +107,9 @@ else
 	cd contracts && ./generate-bindings.sh $(sdk_location) $(sdk_default) $(sdk_bindings_location)
 endif
 
-.PHONY: eigenpod-bindings
-eigenpod-bindings: ## generates contract bindings for eigenpod
-	cd chainio/clients/eigenpod && ./generate.sh
-
 .PHONY: bindings
 bindings: ## generates all contract bindings
-	rm -rf contracts/bindings/* && make core-bindings middleware-bindings sdk-bindings eigenpod-bindings
+	rm -rf contracts/bindings/* && make core-bindings middleware-bindings sdk-bindings
 
 
 ___CONTRACTS___: ## 
@@ -122,6 +118,57 @@ ___CONTRACTS___: ##
 deploy-contracts-to-anvil-and-save-state: ##
 	./contracts/anvil/deploy-contracts-save-anvil-state.sh
 
+deploy-M2-contracts-to-anvil-and-save-state: ##
+	./M2-contracts/anvil/deploy-contracts-save-anvil-state.sh
+
 .PHONY: start-anvil-with-contracts-deployed
 start-anvil-with-contracts-deployed: ## 
 	./contracts/anvil/start-anvil-chain-with-el-and-avs-deployed.sh
+
+start-anvil-with-M2-contracts-deployed: ## 
+	./M2-contracts/anvil/start-anvil-chain-with-el-and-avs-deployed.sh
+
+# M2 Bindings
+M2_core_default := "DelegationManager IRewardsCoordinator ISlasher StrategyManager EigenPod EigenPodManager IStrategy IAVSDirectory"
+M2_middleware_default := "RegistryCoordinator IndexRegistry OperatorStateRetriever StakeRegistry BLSApkRegistry IBLSSignatureChecker ServiceManagerBase IERC20"
+M2_sdk_default := "MockAvsServiceManager ContractsRegistry"
+
+# To generate bindings for specific contracts, run `make core-bindings contracts="DelegationManager IRewardsCoordinator"`
+.PHONY: M2-core-bindings ## generates core contracts bindings
+M2-core-bindings: ## generates core bindings
+	@echo "Starting core bindings generation"
+ifneq ($(contracts),)
+	@echo "Contracts: $(contracts)"
+	cd M2-contracts && ./generate-bindings.sh $(core_location) $(contracts) $(core_bindings_location)
+else
+	@echo "Contracts: $(M2_core_default)"
+	cd M2-contracts && ./generate-bindings.sh $(core_location) $(M2_core_default) $(core_bindings_location)
+endif
+
+# To generate bindings for specific contracts, run `make middleware-bindings contracts="RegistryCoordinator"`
+.PHONY: M2-middleware-bindings ## generates middleware contracts bindings
+M2-middleware-bindings: ## generates middleware bindings
+	@echo "Starting middleware bindings generation"
+ifneq ($(contracts),)
+	@echo "Contracts: $(contracts)"
+	cd M2-contracts && ./generate-bindings.sh $(middleware_location) $(contracts) $(middleware_bindings_location)
+else
+	@echo "Contracts: $(M2_middleware_default)"
+	cd M2-contracts && ./generate-bindings.sh $(middleware_location) $(M2_middleware_default) $(middleware_bindings_location)
+endif
+
+# To generate bindings for specific contracts, run `make sdk-bindings contracts="MockAvsServiceManager"`
+.PHONY: M2-sdk-bindings ## generates sdk contracts bindings
+M2-sdk-bindings: ## generates sdk bindings
+	@echo "Starting sdk bindings generation"
+ifneq ($(contracts),)
+	@echo "Contracts: $(contracts)"
+	cd M2-contracts && ./generate-bindings.sh $(sdk_location) $(contracts) $(sdk_bindings_location)
+else
+	@echo "Contracts: $(M2_sdk_default)"
+	cd M2-contracts && ./generate-bindings.sh $(sdk_location) $(M2_sdk_default) $(sdk_bindings_location)
+endif
+
+.PHONY: M2-bindings
+M2-bindings: ## generates all contract bindings
+	rm -rf M2-contracts/bindings/* && make M2-core-bindings M2-middleware-bindings M2-sdk-bindings

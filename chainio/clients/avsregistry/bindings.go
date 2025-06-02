@@ -111,15 +111,19 @@ func NewBindingsFromConfig(
 			return nil, utils.WrapError("Failed to get DelegationManager address", err)
 		}
 
-		delegationManager, err := contractDelegationManager.NewContractDelegationManager(
-			delegationManagerAddr,
-			client)
-		if err != nil {
-			return nil, utils.WrapError("Failed to get DelegationManager contract", err)
-		}
-		allocationManagerAddr, err = delegationManager.AllocationManager(&bind.CallOpts{})
-		if err != nil {
-			return nil, utils.WrapError("Failed to get AllocationManager address", err)
+		// NOTE: this is a hack to make this version of the SDK work with mainnet
+		// TODO: remove this once mainnet is updated with the new contracts
+		if !cfg.DontUseAllocationManager {
+			delegationManager, err := contractDelegationManager.NewContractDelegationManager(
+				delegationManagerAddr,
+				client)
+			if err != nil {
+				return nil, utils.WrapError("Failed to get DelegationManager contract", err)
+			}
+			allocationManagerAddr, err = delegationManager.AllocationManager(&bind.CallOpts{})
+			if err != nil {
+				return nil, utils.WrapError("Failed to get AllocationManager address", err)
+			}
 		}
 	}
 

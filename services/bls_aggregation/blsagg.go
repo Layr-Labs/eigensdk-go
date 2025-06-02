@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math/big"
 	"sort"
-	"sync"
 	"time"
 
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
@@ -22,7 +21,8 @@ var (
 	// error string directly.
 	//       see https://go.dev/blog/go1.13-errors
 	TaskInitializationErrorFn = func(err error, taskIndex types.TaskIndex) error {
-		return fmt.Errorf("Failed to initialize task %d: %w", taskIndex, err)
+		text := fmt.Sprintf("failed to initialize task %d", taskIndex)
+		return utils.WrapError(text, err)
 	}
 	TaskAlreadyInitializedErrorFn = func(taskIndex types.TaskIndex) error {
 		return fmt.Errorf("task %d already initialized", taskIndex)
@@ -37,12 +37,12 @@ var (
 		return fmt.Errorf("operator %x not part of task %d's quorum", operatorId, taskIndex)
 	}
 	HashFunctionError = func(err error) error {
-		return fmt.Errorf("Failed to hash task response: %w", err)
+		return utils.WrapError("failed to hash task response", err)
 	}
 	SignatureVerificationError = func(err error) error {
-		return fmt.Errorf("Failed to verify signature: %w", err)
+		return utils.WrapError("failed to verify signature", err)
 	}
-	IncorrectSignatureError = errors.New("Signature verification failed. Incorrect Signature.")
+	ErrIncorrectSignature = errors.New("signature verification failed. incorrect signature")
 )
 
 // BlsAggregationServiceResponse is the response from the bls aggregation service
@@ -78,6 +78,71 @@ type aggregatedOperators struct {
 	signersOperatorIdsSet map[types.OperatorId]bool
 }
 
+// TaskSignature contains the data required to process and verify a new signature for a task response.
+type TaskSignature struct {
+	// unique identifier of the task associated with this signature
+	taskIndex types.TaskIndex
+	// response data that has been signed
+	taskResponse types.TaskResponse
+	// BLS cryptographic signature for the task response
+	blsSignature *bls.Signature
+	// id of the operator who signed the task response
+	operatorId types.OperatorId
+}
+
+// NewTaskSignature creates a new instance of TaskSignature
+func NewTaskSignature(
+	taskIndex types.TaskIndex,
+	taskResponse types.TaskResponse,
+	blsSignature *bls.Signature,
+	operatorId types.OperatorId,
+) TaskSignature {
+	return TaskSignature{
+		taskIndex:    taskIndex,
+		taskResponse: taskResponse,
+		blsSignature: blsSignature,
+		operatorId:   operatorId,
+	}
+}
+
+// TaskMetadata encapsulates the necessary parameters to initialize a task
+type TaskMetadata struct {
+	// index of the task
+	taskIndex types.TaskIndex
+	// block the task was created
+	taskCreatedBlock uint32
+	// quorum numbers which should respond to the task
+	quorumNumbers types.QuorumNums
+	// threshold percentages required for each quorum
+	quorumThresholdPercentages types.QuorumThresholdPercentages
+	// time before expiry of the task response aggregation
+	timeToExpiry time.Duration
+	// time window to collect signatures after reaching quorum, defaults to 0 if not specified
+	windowDuration time.Duration
+}
+
+func NewTaskMetadata(
+	taskIndex types.TaskIndex,
+	taskCreatedBlock uint32,
+	quorumNumbers types.QuorumNums,
+	quorumThresholdPercentages types.QuorumThresholdPercentages,
+	timeToExpiry time.Duration,
+) TaskMetadata {
+	return TaskMetadata{
+		taskIndex:                  taskIndex,
+		taskCreatedBlock:           taskCreatedBlock,
+		quorumNumbers:              quorumNumbers,
+		quorumThresholdPercentages: quorumThresholdPercentages,
+		timeToExpiry:               timeToExpiry,
+		windowDuration:             0, // Default to 0
+	}
+}
+
+func (t TaskMetadata) WithWindowDuration(windowDuration time.Duration) TaskMetadata {
+	t.windowDuration = windowDuration
+	return t
+}
+
 // BlsAggregationService is the interface provided to avs aggregator code for doing bls aggregation
 // Currently its only implementation is the BlsAggregatorService, so see the comment there for more details
 type BlsAggregationService interface {
@@ -87,34 +152,13 @@ type BlsAggregationService interface {
 	// complete, which
 	// happens when a particular TaskResponseDigest (received via the a.taskChans[taskIndex]) has been signed by signers
 	// whose stake in each of the listed quorums adds up to at least quorumThresholdPercentages[i] of the total stake in
-	// that quorum
-	InitializeNewTask(
-		taskIndex types.TaskIndex,
-		taskCreatedBlock uint32,
-		quorumNumbers types.QuorumNums,
-		quorumThresholdPercentages types.QuorumThresholdPercentages,
-		timeToExpiry time.Duration,
-	) error
-
-	// InitializeNewTaskWithWindow creates a new task goroutine meant to process new signed task responses for that task
-	// (that are sent via ProcessNewSignature) and adds a channel to a.taskChans to send the signed task responses to
-	// it. The quorumNumbers and quorumThresholdPercentages set the requirements for this task to be considered
-	// complete, which
-	// happens when a particular TaskResponseDigest (received via the a.taskChans[taskIndex]) has been signed by signers
-	// whose stake in each of the listed quorums adds up to at least quorumThresholdPercentages[i] of the total stake in
 	// that quorum.
-	// Once the quorum is reached, the task is still open for a window of `windowDuration` time to receive more
-	// signatures,
-	// before sending the aggregation response through the aggregatedResponsesC channel.
+	// Once the quorum is reached, the task is still open for a window of `windowDuration` time (default 0) to receive
+	// more signatures, before sending the aggregation response through the aggregatedResponsesC channel.
 	// If the task expiration is reached before the window finishes, the task response will still be sent to the
 	// aggregatedResponsesC channel.
-	InitializeNewTaskWithWindow(
-		taskIndex types.TaskIndex,
-		taskCreatedBlock uint32,
-		quorumNumbers types.QuorumNums,
-		quorumThresholdPercentages types.QuorumThresholdPercentages,
-		timeToExpiry time.Duration,
-		windowDuration time.Duration,
+	InitializeNewTask(
+		metadata TaskMetadata,
 	) error
 
 	// ProcessNewSignature processes a new signature over a taskResponseDigest for a particular taskIndex by a
@@ -126,10 +170,7 @@ type BlsAggregationService interface {
 	// BlsAggregationService does not verify semantic integrity of the taskResponses)
 	ProcessNewSignature(
 		ctx context.Context,
-		taskIndex types.TaskIndex,
-		taskResponse types.TaskResponse,
-		blsSignature *bls.Signature,
-		operatorId types.OperatorId,
+		task TaskSignature,
 	) error
 
 	// GetResponseChannel returns the single channel that meant to be used as the response channel
@@ -151,24 +192,47 @@ type BlsAggregationService interface {
 //     only submitted after the previous one's response has been aggregated and responded onchain, could have
 //     a much simpler AggregationService without all the complicated parallel goroutines.
 type BlsAggregatorService struct {
-	// aggregatedResponsesC is the channel which all goroutines share to send their responses back to the
-	// main thread after they are done aggregating (either they reached the threshold, or timeout expired)
-	aggregatedResponsesC chan BlsAggregationServiceResponse
-	// signedTaskRespsCs are the channels to send the signed task responses to the goroutines processing them
-	// each new task is assigned a new goroutine and a new channel
-	signedTaskRespsCs map[types.TaskIndex]chan types.SignedTaskResponseDigest
-	// we add chans to taskChans from the main thread (InitializeNewTask) when we create new tasks,
-	// we read them in ProcessNewSignature from the main thread when we receive new signed tasks,
-	// and remove them from its respective goroutine when the task is completed or reached timeout
-	// we thus need a mutex to protect taskChans
-	taskChansMutex     sync.RWMutex
+	handler  ServiceHandler
+	receiver <-chan BlsAggregationServiceResponse
+}
+
+var _ BlsAggregationService = (*BlsAggregatorService)(nil)
+
+func (a *BlsAggregatorService) InitializeNewTask(
+	metadata TaskMetadata,
+) error {
+	return a.handler.InitializeNewTask(metadata)
+}
+
+func (a *BlsAggregatorService) ProcessNewSignature(
+	ctx context.Context,
+	task TaskSignature,
+) error {
+	return a.handler.ProcessNewSignature(ctx, task)
+}
+
+func (a *BlsAggregatorService) GetResponseChannel() <-chan BlsAggregationServiceResponse {
+	return a.receiver
+}
+
+type BlsAggregatorBuilder struct {
 	avsRegistryService avsregistry.AvsRegistryService
 	logger             logging.Logger
 
 	hashFunction types.TaskResponseHashFunction
 }
 
-var _ BlsAggregationService = (*BlsAggregatorService)(nil)
+func NewBlsAggregatorBuilder(
+	avsRegistryService avsregistry.AvsRegistryService,
+	hashFunction types.TaskResponseHashFunction,
+	logger logging.Logger,
+) *BlsAggregatorBuilder {
+	return &BlsAggregatorBuilder{
+		avsRegistryService: avsRegistryService,
+		logger:             logger,
+		hashFunction:       hashFunction,
+	}
+}
 
 // NewBlsAggregatorService creates a new BlsAggregatorService
 // avsRegistryService is the AVS registry service to use
@@ -192,185 +256,222 @@ func NewBlsAggregatorService(
 	hashFunction types.TaskResponseHashFunction,
 	logger logging.Logger,
 ) *BlsAggregatorService {
+	// Instantiate builder and save handler and receiver.
+	builder := NewBlsAggregatorBuilder(avsRegistryService, hashFunction, logger)
+
+	handler, receiver := builder.Start()
+
 	return &BlsAggregatorService{
-		aggregatedResponsesC: make(chan BlsAggregationServiceResponse),
-		signedTaskRespsCs:    make(map[types.TaskIndex]chan types.SignedTaskResponseDigest),
-		taskChansMutex:       sync.RWMutex{},
-		avsRegistryService:   avsRegistryService,
-		logger:               logger,
-		hashFunction:         hashFunction,
+		handler:  handler,
+		receiver: receiver,
 	}
 }
 
-func (a *BlsAggregatorService) GetResponseChannel() <-chan BlsAggregationServiceResponse {
-	return a.aggregatedResponsesC
+// The service handler is a structure used to use the service without the complexity of it.
+type ServiceHandler struct {
+	//This channels are used to send messages (requests) to the service.
+	taskInitC         chan<- initializeTaskRequest
+	processSignatureC chan<- processSignatureRequest
 }
 
-// InitializeNewTask creates a new task goroutine meant to process new signed task responses for that task
-// (that are sent via ProcessNewSignature) and adds a channel to a.taskChans to send the signed task responses to it.
-// The quorumNumbers and quorumThresholdPercentages set the requirements for this task to be considered complete, which
-// happens when a particular TaskResponseDigest (received via the a.taskChans[taskIndex]) has been signed by signers
-// whose stake in each of the listed quorums adds up to at least quorumThresholdPercentages[i] of the total stake in
-// that quorum
-func (a *BlsAggregatorService) InitializeNewTask(
-	taskIndex types.TaskIndex,
-	taskCreatedBlock uint32,
-	quorumNumbers types.QuorumNums,
-	quorumThresholdPercentages types.QuorumThresholdPercentages,
-	timeToExpiry time.Duration,
-) error {
-	return a.InitializeNewTaskWithWindow(
-		taskIndex,
-		taskCreatedBlock,
-		quorumNumbers,
-		quorumThresholdPercentages,
-		timeToExpiry,
-		0,
-	)
+type initializeTaskRequest struct {
+	metadata TaskMetadata
+	errC     chan<- error
 }
 
-// InitializeNewTaskWithWindow creates a new task goroutine meant to process new signed task responses for that task
-// (that are sent via ProcessNewSignature) and adds a channel to a.taskChans to send the signed task responses to it.
+type processSignatureRequest struct {
+	metadata TaskSignature
+	errC     chan<- error
+}
+
+// This function starts the service thread, initializing the aggregateResponses, initializeTask and processSignature
+// channels, passing them to the run method (where the main loop is executed) and returns the service handler an the
+// aggregate receiver channel to interact with the service thread.
+func (a *BlsAggregatorBuilder) Start() (ServiceHandler, <-chan BlsAggregationServiceResponse) {
+	// Create channels to handle requests
+	initializeTaskC := make(chan initializeTaskRequest)
+	processSignatureC := make(chan processSignatureRequest)
+
+	aggResponsesC := make(chan BlsAggregationServiceResponse)
+
+	go func() {
+		a.run(initializeTaskC, processSignatureC, aggResponsesC)
+		close(aggResponsesC)
+	}()
+
+	// Note: here we return the channel instead of a type with a receive function (different than rust
+	// implementation) because for users is more useful to use select on the channel directly instead
+	// of running a thread on a goroutine and using other channel
+	return ServiceHandler{initializeTaskC, processSignatureC}, aggResponsesC
+}
+
+// Here is executed the main loop, where the requests are received from the initialize task and process signature
+// channels, executing the corresponding logic in each case. The aggregated responses channel is passed to the
+// single task aggregator goroutine, where the initialization of the task is done an notified.
+// The loop ends if one of the request channels is closed.
+func (a *BlsAggregatorBuilder) run(
+	initializeTaskChannel <-chan initializeTaskRequest,
+	processSignatureChannel <-chan processSignatureRequest,
+	aggResponsesC chan<- BlsAggregationServiceResponse,
+) {
+	taskChannels := make(map[types.TaskIndex]chan types.SignedTaskResponseDigest)
+
+	for {
+		select {
+		case taskInitReq, ok := <-initializeTaskChannel:
+			if !ok {
+				return
+			}
+			taskIndex := taskInitReq.metadata.taskIndex
+
+			_, taskExists := taskChannels[taskIndex]
+			if taskExists {
+				taskInitReq.errC <- TaskAlreadyInitializedErrorFn(taskInitReq.metadata.taskIndex)
+				continue
+			}
+			signedTaskRespC := make(chan types.SignedTaskResponseDigest)
+			taskChannels[taskIndex] = signedTaskRespC
+
+			go a.singleTaskAggregatorGoroutineFunc(
+				taskInitReq.metadata,
+				signedTaskRespC,
+				aggResponsesC,
+			)
+			taskInitReq.errC <- nil
+
+		case signatureReq, ok := <-processSignatureChannel:
+			if !ok {
+				return
+			}
+			taskIndex := signatureReq.metadata.taskIndex
+
+			signedTaskRespsC, taskExists := taskChannels[taskIndex]
+			if taskExists {
+				signedDigest := types.SignedTaskResponseDigest{
+					TaskResponse:                signatureReq.metadata.taskResponse,
+					BlsSignature:                signatureReq.metadata.blsSignature,
+					OperatorId:                  signatureReq.metadata.operatorId,
+					SignatureVerificationErrorC: signatureReq.errC,
+				}
+
+				signedTaskRespsC <- signedDigest
+			} else {
+				signatureReq.errC <- TaskNotFoundErrorFn(taskIndex)
+			}
+		}
+	}
+}
+
+// InitializeNewTask sends to the service thread a request to process new signed task responses for that task
+// (that are sent via ProcessNewSignature).
+//
+// The metadata parameter contains:
+//   - taskIndex: Unique identifier for the task
+//   - taskCreatedBlock: Block number at which the task was created
+//   - quorumNumbers: 	Quorum numbers which should respond to the task
+//   - quorumThresholdPercentages: Threshold percentage required per quorum
+//   - timeToExpiry: Time before expiry of the task response aggregation
+//   - windowDuration: Additional time window to collect signatures after reaching quorum (default 0)
+//
 // The quorumNumbers and quorumThresholdPercentages set the requirements for this task to be considered complete, which
 // happens when a particular TaskResponseDigest (received via the a.taskChans[taskIndex]) has been signed by signers
 // whose stake in each of the listed quorums adds up to at least quorumThresholdPercentages[i] of the total stake in
 // that quorum.
-// Once the quorum is reached, the task is still open for a window of `windowDuration` time to receive more signatures,
-// before sending the aggregation response through the aggregatedResponsesC channel.
-func (a *BlsAggregatorService) InitializeNewTaskWithWindow(
-	taskIndex types.TaskIndex,
-	taskCreatedBlock uint32,
-	quorumNumbers types.QuorumNums,
-	quorumThresholdPercentages types.QuorumThresholdPercentages,
-	timeToExpiry time.Duration,
-	windowDuration time.Duration,
+// Once the quorum is reached, the task is still open for a window of `windowDuration` time (default 0) to receive more
+// signatures, before sending the aggregation response through the aggregatedResponsesC channel.
+// If the task expiration is reached before the window finishes, the task response will still be sent to the
+// aggregatedResponsesC channel.
+func (a *ServiceHandler) InitializeNewTask(
+	metadata TaskMetadata,
 ) error {
-	a.logger.Debug(
-		"AggregatorService initializing new task",
-		"taskIndex",
-		taskIndex,
-		"taskCreatedBlock",
-		taskCreatedBlock,
-		"quorumNumbers",
-		quorumNumbers,
-		"quorumThresholdPercentages",
-		quorumThresholdPercentages,
-		"timeToExpiry",
-		timeToExpiry,
-	)
-
-	a.taskChansMutex.Lock()
-	defer a.taskChansMutex.Unlock()
-	if _, taskExists := a.signedTaskRespsCs[taskIndex]; taskExists {
-		return TaskAlreadyInitializedErrorFn(taskIndex)
-	}
-	signedTaskRespsC := make(chan types.SignedTaskResponseDigest)
-	a.signedTaskRespsCs[taskIndex] = signedTaskRespsC
-
-	go a.singleTaskAggregatorGoroutineFunc(
-		taskIndex,
-		taskCreatedBlock,
-		quorumNumbers,
-		quorumThresholdPercentages,
-		timeToExpiry,
-		windowDuration,
-		signedTaskRespsC,
-	)
-	return nil
+	errChan := make(chan error)
+	a.taskInitC <- initializeTaskRequest{metadata, errChan}
+	err := <-errChan
+	return err
 }
 
-func (a *BlsAggregatorService) ProcessNewSignature(
+// ProcessNewSignature sends to the service thread a request to process a new signature for a previous initialize task.
+//
+// The metadata parameter contains:
+//   - taskIndex: Unique identifier for the task
+//   - taskResponse: Response data that has been signed
+//   - blsSignature: BLS cryptographic signature for the task response
+//   - operatorId: id of the operator who signed the task response
+//
+// The last three attributes are used to make the response digest.
+func (a *ServiceHandler) ProcessNewSignature(
 	ctx context.Context,
-	taskIndex types.TaskIndex,
-	taskResponse types.TaskResponse,
-	blsSignature *bls.Signature,
-	operatorId types.OperatorId,
+	metadata TaskSignature,
 ) error {
-	a.taskChansMutex.Lock()
-	taskC, taskInitialized := a.signedTaskRespsCs[taskIndex]
-	a.taskChansMutex.Unlock()
-	if !taskInitialized {
-		return TaskNotFoundErrorFn(taskIndex)
-	}
+	errChan := make(chan error)
+	a.processSignatureC <- processSignatureRequest{metadata, errChan}
 
-	signatureVerificationErrorC := make(chan error)
-	// send the task to the goroutine processing this task
-	// and return the error (if any) returned by the signature verification routine
-
+	// Doing this we let the goroutine consume the result of the operation, but allow
+	// the operation to end early if the context is cancelled
 	select {
-	// we need to send this as part of select because if the goroutine is processing another SignedTaskResponseDigest
-	// and cannot receive this one, we want the context to be able to cancel the request
-	case taskC <- types.SignedTaskResponseDigest{
-		TaskResponse:                taskResponse,
-		BlsSignature:                blsSignature,
-		OperatorId:                  operatorId,
-		SignatureVerificationErrorC: signatureVerificationErrorC,
-	}:
-		// note that we need to wait synchronously here for this response because we want to
-		// send back an informative error message to the operator who sent his signature to the aggregator
-		return <-signatureVerificationErrorC
+	case err := <-errChan:
+		return err
 	case <-ctx.Done():
 		return ctx.Err()
 	}
 }
 
-func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
-	taskIndex types.TaskIndex,
-	taskCreatedBlock uint32,
-	quorumNumbers types.QuorumNums,
-	quorumThresholdPercentages []types.QuorumThresholdPercentage,
-	timeToExpiry time.Duration,
-	windowDuration time.Duration,
+func (a *BlsAggregatorBuilder) singleTaskAggregatorGoroutineFunc(
+	metadata TaskMetadata,
 	signedTaskRespsC <-chan types.SignedTaskResponseDigest,
+	aggregatedResponsesC chan<- BlsAggregationServiceResponse,
 ) {
 	a.logger.Debug("AggregatorService goroutine processing new task",
-		"taskIndex", taskIndex,
-		"taskCreatedBlock", taskCreatedBlock)
+		"taskIndex", metadata.taskIndex,
+		"taskCreatedBlock", metadata.taskCreatedBlock)
 
-	defer a.closeTaskGoroutine(taskIndex)
 	quorumThresholdPercentagesMap := make(map[types.QuorumNum]types.QuorumThresholdPercentage)
-	for i, quorumNumber := range quorumNumbers {
-		quorumThresholdPercentagesMap[quorumNumber] = quorumThresholdPercentages[i]
+	for i, quorumNumber := range metadata.quorumNumbers {
+		quorumThresholdPercentagesMap[quorumNumber] = metadata.quorumThresholdPercentages[i]
 		a.logger.Debug("AggregatorService goroutine quorum threshold percentage",
-			"taskIndex", taskIndex,
+			"taskIndex", metadata.taskIndex,
 			"quorumNumber", quorumNumber,
-			"quorumThresholdPercentage", quorumThresholdPercentages[i])
+			"quorumThresholdPercentage", metadata.quorumThresholdPercentages[i])
 	}
 	operatorsAvsStateDict, err := a.avsRegistryService.GetOperatorsAvsStateAtBlock(
 		context.Background(),
-		quorumNumbers,
-		taskCreatedBlock,
+		metadata.quorumNumbers,
+		metadata.taskCreatedBlock,
 	)
 	if err != nil {
 		a.logger.Error(
 			"Task goroutine failed to get operators state from avs registry",
 			"taskIndex",
-			taskIndex,
+			metadata.taskIndex,
 			"err",
 			err,
 		)
-		a.aggregatedResponsesC <- BlsAggregationServiceResponse{
-			Err:       TaskInitializationErrorFn(fmt.Errorf("AggregatorService failed to get operators state from avs registry at blockNum %d: %w", taskCreatedBlock, err), taskIndex),
-			TaskIndex: taskIndex,
+		text := fmt.Sprintf(
+			"AggregatorService failed to get operators state from avs registry at blockNum %d",
+			metadata.taskCreatedBlock,
+		)
+		aggregatedResponsesC <- BlsAggregationServiceResponse{
+			Err:       TaskInitializationErrorFn(utils.WrapError(text, err), metadata.taskIndex),
+			TaskIndex: metadata.taskIndex,
 		}
 		return
 	}
 	quorumsAvsStakeDict, err := a.avsRegistryService.GetQuorumsAvsStateAtBlock(
 		context.Background(),
-		quorumNumbers,
-		taskCreatedBlock,
+		metadata.quorumNumbers,
+		metadata.taskCreatedBlock,
 	)
 	if err != nil {
 		a.logger.Error(
 			"Task goroutine failed to get quorums state from avs registry",
 			"taskIndex",
-			taskIndex,
+			metadata.taskIndex,
 			"err",
 			err,
 		)
-		a.aggregatedResponsesC <- BlsAggregationServiceResponse{
-			Err:       TaskInitializationErrorFn(fmt.Errorf("Aggregator failed to get quorums state from avs registry: %w", err), taskIndex),
-			TaskIndex: taskIndex,
+		aggregatedResponsesC <- BlsAggregationServiceResponse{
+			Err:       TaskInitializationErrorFn(utils.WrapError("aggregator failed to get quorums state from avs registry", err), metadata.taskIndex),
+			TaskIndex: metadata.taskIndex,
 		}
 		return
 	}
@@ -378,23 +479,23 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 	for quorumNum, quorumAvsState := range quorumsAvsStakeDict {
 		totalStakePerQuorum[quorumNum] = quorumAvsState.TotalStake
 		a.logger.Debug("Task goroutine quorum total stake",
-			"taskIndex", taskIndex,
+			"taskIndex", metadata.taskIndex,
 			"quorumNum", quorumNum,
 			"totalStake", quorumAvsState.TotalStake)
 	}
 	quorumApksG1 := []*bls.G1Point{}
-	for _, quorumNumber := range quorumNumbers {
+	for _, quorumNumber := range metadata.quorumNumbers {
 		quorumApksG1 = append(quorumApksG1, quorumsAvsStakeDict[quorumNumber].AggPubkeyG1)
 	}
 
 	// TODO(samlaf): instead of taking a TTE, we should take a block as input
 	// and monitor the chain and only close the task goroutine when that block is reached
-	taskExpiredTimer := time.NewTimer(timeToExpiry)
+	taskExpiredTimer := time.NewTimer(metadata.timeToExpiry)
 
 	aggregatedOperatorsDict := map[types.TaskResponseDigest]aggregatedOperators{}
 	// The windowTimer is initialized to be longer than the taskExpiredTimer as it will
 	// be overwritten once the stake threshold is met
-	windowTimer := time.NewTimer(timeToExpiry + 1*time.Second)
+	windowTimer := time.NewTimer(metadata.timeToExpiry + 1*time.Second)
 	openWindow := false
 	var lastSignedTaskResponseDigest types.SignedTaskResponseDigest
 	var lastDigestAggregatedOperators aggregatedOperators
@@ -405,7 +506,7 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 			a.logger.Debug(
 				"Task goroutine received new signed task response digest",
 				"taskIndex",
-				taskIndex,
+				metadata.taskIndex,
 				"signedTaskResponseDigest",
 				signedTaskResponseDigest,
 			)
@@ -426,14 +527,14 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 					a.logger.Info(
 						"Duplicate signature received",
 						"operatorId", fmt.Sprintf("%x", signedTaskResponseDigest.OperatorId),
-						"taskIndex", taskIndex,
+						"taskIndex", metadata.taskIndex,
 					)
-					signedTaskResponseDigest.SignatureVerificationErrorC <- fmt.Errorf("duplicate signature from operator %x for task %d", signedTaskResponseDigest.OperatorId, taskIndex)
+					signedTaskResponseDigest.SignatureVerificationErrorC <- fmt.Errorf("duplicate signature from operator %x for task %d", signedTaskResponseDigest.OperatorId, metadata.taskIndex)
 					continue
 				}
 			}
 
-			err = a.verifySignature(taskIndex, signedTaskResponseDigest, operatorsAvsStateDict)
+			err = a.verifySignature(metadata.taskIndex, signedTaskResponseDigest, operatorsAvsStateDict)
 			// return the err (or nil) to the operator, and then proceed to do aggregation logic asynchronously (when no
 			// error)
 			signedTaskResponseDigest.SignatureVerificationErrorC <- err
@@ -444,12 +545,22 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 			// after verifying signature we aggregate its sig and pubkey, and update the signed stake amount
 			if !ok {
 				// first operator to sign on this digest
+				signersApkG2 := bls.NewZeroG2Point()
+				signersAggSigG1 := bls.NewZeroSignature()
+				// for each quorum the operator has stake in, the signature is aggregated
+				// see
+				// https://github.com/Layr-Labs/eigenlayer-middleware/blob/7d49b5181b09198ed275783453aa082bb3766990/src/BLSSignatureChecker.sol#L161-L168
+				for range operatorsAvsStateDict[signedTaskResponseDigest.OperatorId].StakePerQuorum {
+					signersApkG2 = signersApkG2.Add(
+						operatorsAvsStateDict[signedTaskResponseDigest.OperatorId].OperatorInfo.Pubkeys.G2Pubkey,
+					)
+					signersAggSigG1 = signersAggSigG1.Add(signedTaskResponseDigest.BlsSignature)
+				}
 				digestAggregatedOperators = aggregatedOperators{
 					// we've already verified that the operator is part of the task's quorum, so we don't need checks
 					// here
-					signersApkG2: bls.NewZeroG2Point().
-						Add(operatorsAvsStateDict[signedTaskResponseDigest.OperatorId].OperatorInfo.Pubkeys.G2Pubkey),
-					signersAggSigG1:       signedTaskResponseDigest.BlsSignature,
+					signersApkG2:          signersApkG2,
+					signersAggSigG1:       signersAggSigG1,
 					signersOperatorIdsSet: map[types.OperatorId]bool{signedTaskResponseDigest.OperatorId: true},
 					signersTotalStakePerQuorum: cloneStakePerQuorumMap(
 						operatorsAvsStateDict[signedTaskResponseDigest.OperatorId].StakePerQuorum,
@@ -457,13 +568,14 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 				}
 			} else {
 				a.logger.Debug("Task goroutine updating existing aggregated operator signatures",
-					"taskIndex", taskIndex,
+					"taskIndex", metadata.taskIndex,
 					"taskResponseDigest", taskResponseDigest)
 
-				digestAggregatedOperators.signersAggSigG1.Add(signedTaskResponseDigest.BlsSignature)
-				digestAggregatedOperators.signersApkG2.Add(operatorsAvsStateDict[signedTaskResponseDigest.OperatorId].OperatorInfo.Pubkeys.G2Pubkey)
 				digestAggregatedOperators.signersOperatorIdsSet[signedTaskResponseDigest.OperatorId] = true
+				// for each quorum the operator has stake in, the signature is aggregated
 				for quorumNum, stake := range operatorsAvsStateDict[signedTaskResponseDigest.OperatorId].StakePerQuorum {
+					digestAggregatedOperators.signersAggSigG1.Add(signedTaskResponseDigest.BlsSignature)
+					digestAggregatedOperators.signersApkG2.Add(operatorsAvsStateDict[signedTaskResponseDigest.OperatorId].OperatorInfo.Pubkeys.G2Pubkey)
 					if _, ok := digestAggregatedOperators.signersTotalStakePerQuorum[quorumNum]; !ok {
 						// if we haven't seen this quorum before, initialize its signed stake to 0
 						// possible if previous operators who sent us signatures were not part of this quorum
@@ -489,50 +601,52 @@ func (a *BlsAggregatorService) singleTaskAggregatorGoroutineFunc(
 				quorumThresholdPercentagesMap,
 			) {
 				a.logger.Debug("Task goroutine stake threshold reached",
-					"taskIndex", taskIndex,
+					"taskIndex", metadata.taskIndex,
 					"taskResponseDigest", taskResponseDigest)
 
 				openWindow = true
-				windowTimer = time.NewTimer(windowDuration)
+				windowTimer = time.NewTimer(metadata.windowDuration)
 				a.logger.Debug("Window timer started")
 			}
 		case <-taskExpiredTimer.C:
 			if openWindow {
 				a.sendAggregatedResponse(
 					operatorsAvsStateDict,
-					taskIndex,
-					taskCreatedBlock,
+					metadata.taskIndex,
+					metadata.taskCreatedBlock,
 					lastSignedTaskResponseDigest,
 					lastDigestAggregatedOperators,
-					quorumNumbers,
+					metadata.quorumNumbers,
 					lastTaskResponseDigest,
 					quorumApksG1,
+					aggregatedResponsesC,
 				)
-			}
-
-			a.aggregatedResponsesC <- BlsAggregationServiceResponse{
-				Err:       TaskExpiredErrorFn(taskIndex),
-				TaskIndex: taskIndex,
+			} else {
+				aggregatedResponsesC <- BlsAggregationServiceResponse{
+					Err:       TaskExpiredErrorFn(metadata.taskIndex),
+					TaskIndex: metadata.taskIndex,
+				}
 			}
 			return
 		case <-windowTimer.C:
 			a.logger.Debug("Window timer expired")
 			a.sendAggregatedResponse(
 				operatorsAvsStateDict,
-				taskIndex,
-				taskCreatedBlock,
+				metadata.taskIndex,
+				metadata.taskCreatedBlock,
 				lastSignedTaskResponseDigest,
 				lastDigestAggregatedOperators,
-				quorumNumbers,
+				metadata.quorumNumbers,
 				lastTaskResponseDigest,
 				quorumApksG1,
+				aggregatedResponsesC,
 			)
 			return
 		}
 	}
 }
 
-func (a *BlsAggregatorService) sendAggregatedResponse(
+func (a *BlsAggregatorBuilder) sendAggregatedResponse(
 	operatorsAvsStateDict map[types.OperatorId]types.OperatorAvsState,
 	taskIndex types.TaskIndex,
 	taskCreatedBlock uint32,
@@ -541,6 +655,7 @@ func (a *BlsAggregatorService) sendAggregatedResponse(
 	quorumNumbers types.QuorumNums,
 	taskResponseDigest types.TaskResponseDigest,
 	quorumApksG1 []*bls.G1Point,
+	aggregatedResponsesC chan<- BlsAggregationServiceResponse,
 ) {
 	nonSignersOperatorIds := []types.OperatorId{}
 	for operatorId := range operatorsAvsStateDict {
@@ -569,8 +684,8 @@ func (a *BlsAggregatorService) sendAggregatedResponse(
 		nonSignersOperatorIds,
 	)
 	if err != nil {
-		a.aggregatedResponsesC <- BlsAggregationServiceResponse{
-			Err:       utils.WrapError(errors.New("Failed to get check signatures indices"), err),
+		aggregatedResponsesC <- BlsAggregationServiceResponse{
+			Err:       utils.WrapError(errors.New("failed to get check signatures indices"), err),
 			TaskIndex: taskIndex,
 		}
 		return
@@ -590,22 +705,12 @@ func (a *BlsAggregatorService) sendAggregatedResponse(
 		TotalStakeIndices:            indices.TotalStakeIndices,
 		NonSignerStakeIndices:        indices.NonSignerStakeIndices,
 	}
-	a.aggregatedResponsesC <- blsAggregationServiceResponse
-}
-
-// closeTaskGoroutine is run when the goroutine processing taskIndex's task responses ends (for whatever reason)
-// it deletes the response channel for taskIndex from a.taskChans
-// so that the main thread knows that this task goroutine is no longer running
-// and doesn't try to send new signatures to it
-func (a *BlsAggregatorService) closeTaskGoroutine(taskIndex types.TaskIndex) {
-	a.taskChansMutex.Lock()
-	delete(a.signedTaskRespsCs, taskIndex)
-	a.taskChansMutex.Unlock()
+	aggregatedResponsesC <- blsAggregationServiceResponse
 }
 
 // verifySignature verifies that a signature is valid against the operator pubkey stored in the
 // operatorsAvsStateDict for that particular task
-func (a *BlsAggregatorService) verifySignature(
+func (a *BlsAggregatorBuilder) verifySignature(
 	taskIndex types.TaskIndex,
 	signedTaskResponseDigest types.SignedTaskResponseDigest,
 	operatorsAvsStateDict map[types.OperatorId]types.OperatorAvsState,
@@ -659,7 +764,7 @@ func (a *BlsAggregatorService) verifySignature(
 		return SignatureVerificationError(err)
 	}
 	if !signatureVerified {
-		return IncorrectSignatureError
+		return ErrIncorrectSignature
 	}
 	return nil
 }

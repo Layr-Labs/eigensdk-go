@@ -3,7 +3,6 @@ package cerberus
 import (
 	"context"
 	"encoding/hex"
-	"fmt"
 	"time"
 
 	"google.golang.org/grpc"
@@ -13,6 +12,7 @@ import (
 
 	sdkBls "github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/signer/bls/types"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/consensys/gnark-crypto/ecc/bn254"
 
 	v1 "github.com/Layr-Labs/cerberus-api/pkg/api/v1"
@@ -46,7 +46,7 @@ func New(cfg Config) (Signer, error) {
 	if cfg.EnableTLS {
 		creds, err := credentials.NewClientTLSFromFile(cfg.TLSCertFilePath, "")
 		if err != nil {
-			return Signer{}, fmt.Errorf("could not load tls cert: %w", err)
+			return Signer{}, utils.WrapError("could not load tls cert", err)
 		}
 		opts = append(opts, grpc.WithTransportCredentials(creds))
 	} else {
@@ -55,7 +55,7 @@ func New(cfg Config) (Signer, error) {
 
 	conn, err := grpc.NewClient(cfg.URL, opts...)
 	if err != nil {
-		return Signer{}, fmt.Errorf("did not connect: %w", err)
+		return Signer{}, utils.WrapError("did not connect", err)
 	}
 
 	signerClient := v1.NewSignerClient(conn)
@@ -112,12 +112,12 @@ func (s Signer) SignG1(ctx context.Context, msg []byte) ([]byte, error) {
 func (s Signer) GetOperatorId() (string, error) {
 	pkBytes, err := hex.DecodeString(s.pubKeyHex)
 	if err != nil {
-		return "", fmt.Errorf("failed to decode BLS public key: %w", err)
+		return "", utils.WrapError("failed to decode BLS public key", err)
 	}
 	var point bn254.G1Affine
 	_, err = point.SetBytes(pkBytes)
 	if err != nil {
-		return "", fmt.Errorf("failed to set BLS public key: %w", err)
+		return "", utils.WrapError("failed to set BLS public key", err)
 	}
 	pubkey := &sdkBls.G1Point{G1Affine: &point}
 	return pubkey.GetOperatorID(), nil

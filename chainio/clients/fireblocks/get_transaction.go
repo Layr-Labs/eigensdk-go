@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
 // Transaction is a type for the transaction response from Fireblocks
@@ -52,12 +54,12 @@ func (f *client) GetTransaction(ctx context.Context, txID string) (*Transaction,
 	path := fmt.Sprintf("/v1/transactions/%s", txID)
 	res, err := f.makeRequest(ctx, "GET", path, nil)
 	if err != nil {
-		return nil, fmt.Errorf("error making request: %w", err)
+		return nil, utils.WrapError("error making request", err)
 	}
 	var tx Transaction
 	err = json.NewDecoder(strings.NewReader(string(res))).Decode(&tx)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing response body: %w", err)
+		return nil, utils.WrapError("error parsing response body", err)
 	}
 
 	return &tx, nil

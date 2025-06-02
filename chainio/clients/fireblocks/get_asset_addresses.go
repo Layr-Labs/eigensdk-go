@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+
+	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
 type AssetAddress struct {
@@ -40,7 +42,7 @@ func (f *client) GetAssetAddresses(ctx context.Context, vaultID string, assetID 
 		path := fmt.Sprintf("/v1/vault/accounts/%s/%s/addresses_paginated", vaultID, assetID)
 		u, err := url.Parse(path)
 		if err != nil {
-			return addresses, fmt.Errorf("error parsing URL: %w", err)
+			return nil, utils.WrapError("error parsing URL", err)
 		}
 		q := u.Query()
 		q.Set("before", p.Before)
@@ -49,12 +51,13 @@ func (f *client) GetAssetAddresses(ctx context.Context, vaultID string, assetID 
 
 		res, err := f.makeRequest(ctx, "GET", u.String(), nil)
 		if err != nil {
-			return nil, fmt.Errorf("error making request: %w", err)
+			return nil, utils.WrapError("error making request", err)
 		}
 		body := string(res)
 		err = json.NewDecoder(strings.NewReader(body)).Decode(&response)
 		if err != nil {
-			return addresses, fmt.Errorf("error parsing response body: %s: %w", body, err)
+			text := fmt.Sprintf("error parsing response body: %s", body)
+			return nil, utils.WrapError(text, err)
 		}
 
 		addresses = append(addresses, response.Addresses...)

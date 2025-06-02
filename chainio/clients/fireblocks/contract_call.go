@@ -3,8 +3,9 @@ package fireblocks
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strings"
+
+	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
 func NewContractCallRequest(
@@ -58,12 +59,12 @@ func (f *client) ContractCall(ctx context.Context, req *TransactionRequest) (*Tr
 	f.logger.Debug("Fireblocks call contract", "req", req)
 	res, err := f.makeRequest(ctx, "POST", "/v1/transactions", req)
 	if err != nil {
-		return nil, fmt.Errorf("error making request: %w", err)
+		return nil, utils.WrapError("error making request", err)
 	}
 	var response TransactionResponse
 	err = json.NewDecoder(strings.NewReader(string(res))).Decode(&response)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing response body: %w", err)
+		return nil, utils.WrapError("error parsing response body", err)
 	}
 
 	return &TransactionResponse{

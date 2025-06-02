@@ -2,16 +2,20 @@ package elcontracts
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/rand"
 	"errors"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/crypto"
 
 	"math/big"
 
 	gethcommon "github.com/ethereum/go-ethereum/common"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
 
+	m2delegationmanager "github.com/Layr-Labs/eigensdk-go/M2-contracts/bindings/DelegationManager"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/eth"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	chainioutils "github.com/Layr-Labs/eigensdk-go/chainio/utils"
@@ -19,10 +23,10 @@ import (
 	allocationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/AllocationManager"
 	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
 	erc20 "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IERC20"
-	rewardscoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IRewardsCoordinator"
 	strategy "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IStrategy"
 	permissioncontroller "github.com/Layr-Labs/eigensdk-go/contracts/bindings/PermissionController"
 	regcoord "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
+	rewardscoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RewardsCoordinator"
 	strategymanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StrategyManager"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
@@ -42,26 +46,30 @@ type Reader interface {
 type ChainWriter struct {
 	delegationManager    *delegationmanager.ContractDelegationManager
 	strategyManager      *strategymanager.ContractStrategyManager
-	rewardsCoordinator   *rewardscoordinator.ContractIRewardsCoordinator
+	rewardsCoordinator   *rewardscoordinator.ContractRewardsCoordinator
 	avsDirectory         *avsdirectory.ContractAVSDirectory
 	allocationManager    *allocationmanager.ContractAllocationManager
 	permissionController *permissioncontroller.ContractPermissionController
-	strategyManagerAddr  gethcommon.Address
-	elChainReader        Reader
-	ethClient            eth.HttpBackend
-	logger               logging.Logger
-	txMgr                txmgr.TxManager
+	// This field exists to handle M2 contracts, so the address is used to create
+	// the M2 delegationManager binding in registerAsOperatorPreSlashing.
+	delegationManagerAddr gethcommon.Address
+	strategyManagerAddr   gethcommon.Address
+	elChainReader         Reader
+	ethClient             eth.HttpBackend
+	logger                logging.Logger
+	txMgr                 txmgr.TxManager
 }
 
 // Returns a new instance of ChainWriter.
 func NewChainWriter(
 	delegationManager *delegationmanager.ContractDelegationManager,
 	strategyManager *strategymanager.ContractStrategyManager,
-	rewardsCoordinator *rewardscoordinator.ContractIRewardsCoordinator,
+	rewardsCoordinator *rewardscoordinator.ContractRewardsCoordinator,
 	avsDirectory *avsdirectory.ContractAVSDirectory,
 	allocationManager *allocationmanager.ContractAllocationManager,
 	permissionController *permissioncontroller.ContractPermissionController,
 	strategyManagerAddr gethcommon.Address,
+	delegationManagerAddr gethcommon.Address,
 	elChainReader Reader,
 	ethClient eth.HttpBackend,
 	logger logging.Logger,
@@ -71,17 +79,18 @@ func NewChainWriter(
 	logger = logger.With(logging.ComponentKey, "elcontracts/writer")
 
 	return &ChainWriter{
-		delegationManager:    delegationManager,
-		strategyManager:      strategyManager,
-		strategyManagerAddr:  strategyManagerAddr,
-		rewardsCoordinator:   rewardsCoordinator,
-		allocationManager:    allocationManager,
-		permissionController: permissionController,
-		avsDirectory:         avsDirectory,
-		elChainReader:        elChainReader,
-		logger:               logger,
-		ethClient:            ethClient,
-		txMgr:                txMgr,
+		delegationManager:     delegationManager,
+		delegationManagerAddr: delegationManagerAddr,
+		strategyManager:       strategyManager,
+		strategyManagerAddr:   strategyManagerAddr,
+		rewardsCoordinator:    rewardsCoordinator,
+		allocationManager:     allocationManager,
+		permissionController:  permissionController,
+		avsDirectory:          avsDirectory,
+		elChainReader:         elChainReader,
+		logger:                logger,
+		ethClient:             ethClient,
+		txMgr:                 txMgr,
 	}
 }
 
@@ -119,6 +128,7 @@ func NewWriterFromConfig(
 		elContractBindings.AllocationManager,
 		elContractBindings.PermissionController,
 		elContractBindings.StrategyManagerAddr,
+		elContractBindings.DelegationManagerAddr,
 		elChainReader,
 		ethClient,
 		logger,
@@ -156,6 +166,45 @@ func (w *ChainWriter) RegisterAsOperator(
 	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt)
 	if err != nil {
 		return nil, utils.WrapError("failed to send tx", err)
+	}
+	w.logger.Info("tx successfully included", "txHash", receipt.TxHash.String())
+
+	return receipt, nil
+}
+
+// Registers the caller as an operator in EigenLayer through the M2 DelegationManager contract.
+// Note: This method is only works on the pre-slashing (M2) version of the contracts.
+func (w *ChainWriter) RegisterAsOperatorPreSlashing(
+	ctx context.Context,
+	operator types.M2Operator,
+	waitForReceipt bool,
+) (*gethtypes.Receipt, error) {
+	w.logger.Infof("registering operator %s to EigenLayer", operator.Address)
+
+	m2DelegationManager, err := m2delegationmanager.NewContractDelegationManager(w.delegationManagerAddr, w.ethClient)
+	if err != nil {
+		return nil, utils.WrapError("Failed to fetch m2DelegationManager contract", err)
+	}
+
+	opDetails := m2delegationmanager.IDelegationManagerOperatorDetails{
+		// Earning receiver has been deprecated, so we just use the operator address as a dummy value
+		// Any reward related setup is via RewardsCoordinator contract
+		DeprecatedEarningsReceiver: gethcommon.HexToAddress(operator.Address),
+		StakerOptOutWindowBlocks:   operator.StakerOptOutWindowBlocks,
+		DelegationApprover:         gethcommon.HexToAddress(operator.DelegationApproverAddress),
+	}
+
+	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
+	if err != nil {
+		return nil, err
+	}
+	tx, err := m2DelegationManager.RegisterAsOperator(noSendTxOpts, opDetails, operator.MetadataUrl)
+	if err != nil {
+		return nil, err
+	}
+	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt)
+	if err != nil {
+		return nil, errors.New("failed to send tx with err: " + err.Error())
 	}
 	w.logger.Info("tx successfully included", "txHash", receipt.TxHash.String())
 
@@ -466,46 +515,6 @@ func (w *ChainWriter) ProcessClaims(
 	return receipt, nil
 }
 
-// Deregisters an operator from each of the operator sets given by
-// `operatorSetIds` for the given AVS, by calling the function
-// `deregisterFromOperatorSets` in the AllocationManager.
-func (w *ChainWriter) ForceDeregisterFromOperatorSets(
-	ctx context.Context,
-	operator gethcommon.Address,
-	avs gethcommon.Address,
-	operatorSetIds []uint32,
-	waitForReceipt bool,
-) (*gethtypes.Receipt, error) {
-	if w.allocationManager == nil {
-		return nil, errors.New("AVSDirectory contract not provided")
-	}
-
-	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
-	if err != nil {
-		return nil, utils.WrapError("failed to get no send tx opts", err)
-	}
-
-	tx, err := w.allocationManager.DeregisterFromOperatorSets(
-		noSendTxOpts,
-		allocationmanager.IAllocationManagerTypesDeregisterParams{
-			Operator:       operator,
-			Avs:            avs,
-			OperatorSetIds: operatorSetIds,
-		},
-	)
-
-	if err != nil {
-		return nil, utils.WrapError("failed to create ForceDeregisterFromOperatorSets tx", err)
-	}
-
-	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt)
-	if err != nil {
-		return nil, utils.WrapError("failed to send tx", err)
-	}
-
-	return receipt, nil
-}
-
 // Modifies the proportions of slashable stake allocated to an operator set
 // from a list of strategies, for the given `operatorAddress`.
 func (w *ChainWriter) ModifyAllocations(
@@ -600,6 +609,36 @@ func (w *ChainWriter) SetAllocationDelay(
 	return receipt, nil
 }
 
+// Sets the avsRegistrar for the received avs.
+// The avsRegistrar is the contract called to complete registration,
+// usually a RegistryCoordinator
+func (w *ChainWriter) SetAVSRegistrar(
+	ctx context.Context,
+	avs gethcommon.Address,
+	registrar gethcommon.Address,
+	waitForReceipt bool,
+) (*gethtypes.Receipt, error) {
+	if w.allocationManager == nil {
+		return nil, errors.New("AllocationManager contract not provided")
+	}
+
+	noSendTxOpts, err := w.txMgr.GetNoSendTxOpts()
+	if err != nil {
+		return nil, utils.WrapError("failed to get no send tx opts", err)
+	}
+
+	tx, err := w.allocationManager.SetAVSRegistrar(noSendTxOpts, avs, registrar)
+	if err != nil {
+		return nil, utils.WrapError("failed to create SetAVSRegistrar tx", err)
+	}
+	receipt, err := w.txMgr.Send(ctx, tx, waitForReceipt)
+	if err != nil {
+		return nil, utils.WrapError("failed to send tx", err)
+	}
+
+	return receipt, nil
+}
+
 // Deregister an operator from one or more of the AVS's operator sets.
 // If the operator has any slashable stake allocated to the AVS,
 // it remains slashable until the deallocation delay has passed.
@@ -637,6 +676,8 @@ func (w *ChainWriter) DeregisterFromOperatorSets(
 }
 
 // Register an operator for one or more operator sets for an AVS.
+// If `churnApprovalEcdsaPrivateKey` is provided, the churn approver
+// parameters will be used for replacing existing operators in full quorums.
 // If the operator has any stake allocated to these operator sets,
 // it immediately becomes slashable.
 func (w *ChainWriter) RegisterForOperatorSets(
@@ -663,9 +704,37 @@ func (w *ChainWriter) RegisterForOperatorSets(
 		return nil, utils.WrapError("failed to get public key registration params", err)
 	}
 
-	data, err := AbiEncodeRegistrationParams(RegistrationTypeNormal, request.Socket, *pubkeyRegParams)
-	if err != nil {
-		return nil, utils.WrapError("failed to encode registration params", err)
+	var data []byte
+
+	if request.ChurnApprovalEcdsaPrivateKey != nil {
+		// it's a registration with churn approval
+		signatureWithSaltAndExpiry, err := signChurnRegistration(
+			ctx,
+			w.ethClient,
+			registryCoordinatorAddr,
+			request.OperatorAddress,
+			request.ChurnApprovalEcdsaPrivateKey,
+			request.BlsKeyPair.GetPubKeyG1(),
+			request.OperatorKickParams,
+		)
+		if err != nil {
+			return nil, utils.WrapError("failed to compute churn registration signature", err)
+		}
+		data, err = AbiEncodeRegistrationWithChurnParams(
+			request.Socket,
+			*pubkeyRegParams,
+			request.OperatorKickParams,
+			signatureWithSaltAndExpiry,
+		)
+		if err != nil {
+			return nil, utils.WrapError("failed to encode churn registration params", err)
+		}
+	} else {
+		// it's a normal registration
+		data, err = AbiEncodeNormalRegistrationParams(request.Socket, *pubkeyRegParams)
+		if err != nil {
+			return nil, utils.WrapError("failed to encode normal registration params", err)
+		}
 	}
 	tx, err := w.allocationManager.RegisterForOperatorSets(
 		noSendTxOpts,
@@ -905,13 +974,76 @@ func getPubkeyRegistrationParams(
 	return &pubkeyRegParams, nil
 }
 
-// Returns the ABI encoding of the given registration params.
-func AbiEncodeRegistrationParams(
-	registrationType RegistrationType,
-	socket string,
-	pubkeyRegistrationParams regcoord.IBLSApkRegistryTypesPubkeyRegistrationParams,
-) ([]byte, error) {
-	registrationParamsType, err := abi.NewType("tuple", "", []abi.ArgumentMarshaling{
+// Returns the pubkey registration params for the operator given by `operatorAddress`.
+func signChurnRegistration(
+	ctx context.Context,
+	ethClient eth.HttpBackend,
+	registryCoordinatorAddr, operatorAddress gethcommon.Address,
+	churnApprovalEcdsaPrivateKey *ecdsa.PrivateKey,
+	pubKeyG1 *bls.G1Point,
+	operatorKickParams []OperatorKickParam,
+) (SignatureWithSaltAndExpiry, error) {
+	curBlockNum, err := ethClient.BlockNumber(context.Background())
+	if err != nil {
+		return SignatureWithSaltAndExpiry{}, err
+	}
+	curBlock, err := ethClient.BlockByNumber(context.Background(), new(big.Int).SetUint64(curBlockNum))
+	if err != nil {
+		return SignatureWithSaltAndExpiry{}, err
+	}
+
+	sigValidForSeconds := int64(60 * 60) // 1 hour
+
+	curTime := new(big.Int).SetUint64(curBlock.Time())
+	expiry := new(big.Int).Add(curTime, big.NewInt(sigValidForSeconds))
+
+	var salt [32]byte
+	_, err = rand.Read(salt[:])
+	if err != nil {
+		return SignatureWithSaltAndExpiry{}, err
+	}
+	registryCoordinator, err := regcoord.NewContractRegistryCoordinator(registryCoordinatorAddr, ethClient)
+	if err != nil {
+		return SignatureWithSaltAndExpiry{}, utils.WrapError("failed to create registry coordinator", err)
+	}
+	operatorId := types.OperatorIdFromG1Pubkey(pubKeyG1)
+	kickParams := make([]regcoord.ISlashingRegistryCoordinatorTypesOperatorKickParam, len(operatorKickParams))
+	for i, kickParam := range operatorKickParams {
+		kickParams[i] = regcoord.ISlashingRegistryCoordinatorTypesOperatorKickParam{
+			QuorumNumber: kickParam.QuorumNumber,
+			Operator:     kickParam.Operator,
+		}
+	}
+	msgToSign, err := registryCoordinator.CalculateOperatorChurnApprovalDigestHash(
+		&bind.CallOpts{Context: ctx},
+		operatorAddress,
+		operatorId,
+		kickParams,
+		salt,
+		expiry,
+	)
+	if err != nil {
+		return SignatureWithSaltAndExpiry{}, err
+	}
+	signature, err := crypto.Sign(msgToSign[:], churnApprovalEcdsaPrivateKey)
+	if err != nil {
+		return SignatureWithSaltAndExpiry{}, err
+	}
+	// the crypto library is low level and deals with 0/1 v values, whereas ethereum expects 27/28, so we add 27
+	// see https://github.com/ethereum/go-ethereum/issues/28757#issuecomment-1874525854
+	// and https://twitter.com/pcaversaccio/status/1671488928262529031
+	signature[64] += 27
+
+	signatureWithSaltAndExpiry := SignatureWithSaltAndExpiry{
+		Signature: signature,
+		Salt:      salt,
+		Expiry:    expiry,
+	}
+	return signatureWithSaltAndExpiry, nil
+}
+
+func getNormalRegistrationAbi() []abi.ArgumentMarshaling {
+	return []abi.ArgumentMarshaling{
 		{Name: "RegistrationType", Type: "uint8"},
 		{Name: "Socket", Type: "string"},
 		{Name: "PubkeyRegParams", Type: "tuple", Components: []abi.ArgumentMarshaling{
@@ -928,7 +1060,29 @@ func AbiEncodeRegistrationParams(
 				{Name: "Y", Type: "uint256[2]"},
 			}},
 		}},
-	})
+	}
+}
+
+func getRegistrationWithChurnAbi() []abi.ArgumentMarshaling {
+	return append(getNormalRegistrationAbi(), []abi.ArgumentMarshaling{
+		{Name: "OperatorKickParams", Type: "tuple[]", Components: []abi.ArgumentMarshaling{
+			{Name: "QuorumNumber", Type: "uint8"},
+			{Name: "Operator", Type: "address"},
+		}},
+		{Name: "SignatureWithSaltAndExpiry", Type: "tuple", Components: []abi.ArgumentMarshaling{
+			{Name: "Signature", Type: "bytes"},
+			{Name: "Salt", Type: "bytes32"},
+			{Name: "Expiry", Type: "uint256"},
+		}},
+	}...)
+}
+
+// Returns the ABI encoding of the given normal registration params.
+func AbiEncodeNormalRegistrationParams(
+	socket string,
+	pubkeyRegistrationParams regcoord.IBLSApkRegistryTypesPubkeyRegistrationParams,
+) ([]byte, error) {
+	registrationParamsType, err := abi.NewType("tuple", "", getNormalRegistrationAbi())
 	if err != nil {
 		return nil, err
 	}
@@ -938,9 +1092,48 @@ func AbiEncodeRegistrationParams(
 		Socket           string
 		PubkeyRegParams  regcoord.IBLSApkRegistryTypesPubkeyRegistrationParams
 	}{
-		registrationType,
+		RegistrationTypeNormal,
 		socket,
 		pubkeyRegistrationParams,
+	}
+
+	args := abi.Arguments{
+		{Type: registrationParamsType, Name: "registrationParams"},
+	}
+
+	data, err := args.Pack(&registrationParams)
+	if err != nil {
+		return nil, err
+	}
+	// The encoder is prepending 32 bytes to the data as if it was used in a dynamic function parameter.
+	// This is not used when decoding the bytes directly, so we need to remove it.
+	return data[32:], nil
+}
+
+// Returns the ABI encoding of the given registration with churn params.
+func AbiEncodeRegistrationWithChurnParams(
+	socket string,
+	pubkeyRegistrationParams regcoord.IBLSApkRegistryTypesPubkeyRegistrationParams,
+	operatorKickParams []OperatorKickParam,
+	churnApproverSignature SignatureWithSaltAndExpiry,
+) ([]byte, error) {
+	registrationParamsType, err := abi.NewType("tuple", "", getRegistrationWithChurnAbi())
+	if err != nil {
+		return nil, err
+	}
+
+	registrationParams := struct {
+		RegistrationType           RegistrationType
+		Socket                     string
+		PubkeyRegParams            regcoord.IBLSApkRegistryTypesPubkeyRegistrationParams
+		OperatorKickParams         []OperatorKickParam
+		SignatureWithSaltAndExpiry SignatureWithSaltAndExpiry
+	}{
+		RegistrationTypeChurn,
+		socket,
+		pubkeyRegistrationParams,
+		operatorKickParams,
+		churnApproverSignature,
 	}
 
 	args := abi.Arguments{

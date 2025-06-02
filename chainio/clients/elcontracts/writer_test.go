@@ -11,10 +11,10 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
 	allocationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/AllocationManager"
-	rewardscoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IRewardsCoordinator"
 	strategy "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IStrategy"
 	mockerc20 "github.com/Layr-Labs/eigensdk-go/contracts/bindings/MockERC20"
 	regcoord "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RegistryCoordinator"
+	rewardscoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RewardsCoordinator"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
@@ -123,44 +123,26 @@ func TestRegisterOperator(t *testing.T) {
 }
 
 func TestRegisterAndDeregisterFromOperatorSets(t *testing.T) {
-	testConfig := testutils.GetDefaultTestConfig()
-	anvilC, err := testutils.StartAnvilContainer(testConfig.AnvilStateFileName)
-	require.NoError(t, err)
-
-	anvilHttpEndpoint, err := anvilC.Endpoint(context.Background(), "http")
-	require.NoError(t, err)
+	clients, anvilHttpEndpoint := testclients.BuildTestClients(t)
 	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
 
-	operatorAddressHex := testutils.ANVIL_SECOND_ADDRESS
-	operatorPrivateKeyHex := testutils.ANVIL_SECOND_PRIVATE_KEY
-
-	config := elcontracts.Config{
-		DelegationManagerAddress:  contractAddrs.DelegationManager,
-		RewardsCoordinatorAddress: contractAddrs.RewardsCoordinator,
-	}
-
 	// Create operator clients
-	chainWriter, err := testclients.NewTestChainWriterFromConfig(anvilHttpEndpoint, operatorPrivateKeyHex, config)
-	require.NoError(t, err)
+	chainWriter := clients.ElChainWriter
 
-	chainReader, err := testclients.NewTestChainReaderFromConfig(anvilHttpEndpoint, config)
-	require.NoError(t, err)
+	chainReader := clients.ElChainReader
 
-	avsAddress := common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
+	avsAddress := contractAddrs.ServiceManager
 	operatorSetId := uint32(1)
 	erc20MockStrategyAddr := contractAddrs.Erc20MockStrategy
 
 	// Create an operator set to register an operator on it
-	err = createOperatorSet(
-		anvilHttpEndpoint,
-		testutils.ANVIL_FIRST_PRIVATE_KEY,
-		avsAddress,
-		operatorSetId,
+	err := createTotalStakeOperatorSet(
+		clients,
 		erc20MockStrategyAddr,
 	)
 	require.NoError(t, err)
 
-	operatorAddress := common.HexToAddress(operatorAddressHex)
+	operatorAddress := common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
 	keypair, err := bls.NewKeyPairFromString("0x01")
 	require.NoError(t, err)
 
@@ -175,7 +157,7 @@ func TestRegisterAndDeregisterFromOperatorSets(t *testing.T) {
 
 	operatorSet := allocationmanager.OperatorSet{
 		Avs: avsAddress,
-		Id:  uint32(operatorSetId),
+		Id:  operatorSetId,
 	}
 	t.Run("register operator for operator set", func(t *testing.T) {
 		registryCoordinatorAddress := contractAddrs.RegistryCoordinator
@@ -241,8 +223,113 @@ func TestRegisterAndDeregisterFromOperatorSets(t *testing.T) {
 	})
 }
 
-func TestEncodeRegistrationParams(t *testing.T) {
-	// Values are random
+func TestRegisterOperatorSetWithChurn(t *testing.T) {
+	clients, anvilHttpEndpoint := testclients.BuildTestClients(t)
+	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
+
+	config := elcontracts.Config{
+		DelegationManagerAddress:    contractAddrs.DelegationManager,
+		RewardsCoordinatorAddress:   contractAddrs.RewardsCoordinator,
+		PermissionControllerAddress: contractAddrs.PermissionController,
+	}
+
+	avsWriter := clients.AvsRegistryChainWriter
+	avsAddress := contractAddrs.ServiceManager
+
+	op1Address := common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
+	// Create ChainWriter for second operator
+	op2Address := common.HexToAddress(testutils.ANVIL_SECOND_ADDRESS)
+	op2PrivateKeyHex := testutils.ANVIL_SECOND_PRIVATE_KEY
+	op2ChainWriter, err := testclients.NewTestChainWriterFromConfig(anvilHttpEndpoint, op2PrivateKeyHex, config)
+	require.NoError(t, err)
+
+	// Create an operator set
+	operatorSetId := uint32(1)
+	erc20MockStrategyAddr := contractAddrs.Erc20MockStrategy
+
+	err = createTotalStakeOperatorSet(clients, erc20MockStrategyAddr)
+	require.NoError(t, err)
+
+	// Allow only 1 operator
+	opsetParams := regcoord.ISlashingRegistryCoordinatorTypesOperatorSetParam{
+		MaxOperatorCount:        1,
+		KickBIPsOfOperatorStake: 10,
+		KickBIPsOfTotalStake:    10000,
+	}
+
+	receipt, err := avsWriter.SetOperatorSetParams(context.TODO(), uint8(operatorSetId), opsetParams, true)
+	require.NoError(t, err)
+	require.Equal(t, gethtypes.ReceiptStatusSuccessful, receipt.Status)
+
+	// Register first operator
+	privKey1, err := bls.NewKeyPairFromString("0x01")
+	require.NoError(t, err)
+	registrationRequest := elcontracts.RegistrationRequest{
+		OperatorAddress: op1Address,
+		AVSAddress:      avsAddress,
+		OperatorSetIds:  []uint32{operatorSetId},
+		WaitForReceipt:  true,
+		Socket:          "socket",
+		BlsKeyPair:      privKey1,
+	}
+
+	receipt, err = clients.ElChainWriter.RegisterForOperatorSets(
+		context.TODO(),
+		contractAddrs.RegistryCoordinator,
+		registrationRequest,
+	)
+	require.NoError(t, err)
+	require.Equal(t, gethtypes.ReceiptStatusSuccessful, receipt.Status)
+
+	// Register second operator with churn
+	privKey2, err := bls.NewKeyPairFromString("0x02")
+	require.NoError(t, err)
+	churnApproverKey, err := crypto.HexToECDSA(testutils.ANVIL_FIRST_PRIVATE_KEY)
+	require.NoError(t, err)
+
+	registrationRequest.OperatorAddress = op2Address
+	registrationRequest.BlsKeyPair = privKey2
+	registrationRequest.ChurnApprovalEcdsaPrivateKey = churnApproverKey
+	registrationRequest.OperatorKickParams = []elcontracts.OperatorKickParam{
+		{
+			QuorumNumber: uint8(operatorSetId),
+			Operator:     op1Address,
+		},
+	}
+
+	receipt, err = op2ChainWriter.RegisterForOperatorSets(
+		context.TODO(),
+		contractAddrs.RegistryCoordinator,
+		registrationRequest,
+	)
+	require.NoError(t, err)
+	require.Equal(t, gethtypes.ReceiptStatusSuccessful, receipt.Status)
+
+	// Check operator 1 is no longer registered
+	operatorSet := allocationmanager.OperatorSet{
+		Avs: avsAddress,
+		Id:  operatorSetId,
+	}
+	isRegistered, err := clients.ElChainReader.IsOperatorRegisteredWithOperatorSet(
+		context.Background(),
+		op1Address,
+		operatorSet,
+	)
+	require.NoError(t, err)
+	require.False(t, isRegistered)
+
+	// Check operator 2 is registered
+	isRegistered, err = clients.ElChainReader.IsOperatorRegisteredWithOperatorSet(
+		context.Background(),
+		op2Address,
+		operatorSet,
+	)
+	require.NoError(t, err)
+	require.True(t, isRegistered)
+}
+
+func getExampleRegistrationParams(t *testing.T) regcoord.IBLSApkRegistryTypesPubkeyRegistrationParams {
+	// Values are the same as in contracts/test/RegistrationEncoding.t.sol
 	signatureX, ok := new(
 		big.Int,
 	).SetString("756874975973566196338995715738218418291193261429375530560923897690728869289", 10)
@@ -292,8 +379,12 @@ func TestEncodeRegistrationParams(t *testing.T) {
 			Y: [2]*big.Int{g2PubkeyY0, g2PubkeyY1},
 		},
 	}
-	result, err := elcontracts.AbiEncodeRegistrationParams(
-		elcontracts.RegistrationTypeNormal,
+	return registrationParams
+}
+
+func TestEncodeRegistrationParams(t *testing.T) {
+	registrationParams := getExampleRegistrationParams(t)
+	result, err := elcontracts.AbiEncodeNormalRegistrationParams(
 		"unused",
 		registrationParams,
 	)
@@ -302,6 +393,59 @@ func TestEncodeRegistrationParams(t *testing.T) {
 	// This value was generated by running `abi.encode(...)` on the Solidity equivalent of the above struct
 	expected, err := hex.DecodeString(
 		"0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000014001ac6045296d64b31ed644e53ce1a1c4f72f67a2d47b06b652ca8167f1b2ada900fb7cd59f322f4dffa18360bfcdc15f1f6cd09aea573efa919dc828dfabaf5f16ee091592629fc566636de7b3d53322f4833014b4655dd57279cfb2828bbc6e0c5cb58c8d572dc9dcf5f5999501533e22243fac4f8ee4452a6dd0d4bcaeb2e403006a43453d56eafa7dc4ddcbd41b2330031f58e437ee3806c50a9e554a0cbc0bae792831463d56a1a9983647b77fcdbae38a6621ceef9e147614bb4869bf36267e47def74c144f8e7238dd088097943d1007f8ce7cab028151e9a1beac6d500e56fef5ea67a586d1fbb03dcc0a268f6c4835ad1c215eadc77cc676c378101d0000000000000000000000000000000000000000000000000000000000000006756e757365640000000000000000000000000000000000000000000000000000",
+	)
+	require.NoError(t, err)
+
+	require.Equal(t, expected, result)
+}
+
+func TestEncodeChurnRegistrationParams(t *testing.T) {
+	registrationParams := getExampleRegistrationParams(t)
+
+	// Values are the same as in contracts/test/RegistrationEncoding.t.sol
+	operatorKickParams := []elcontracts.OperatorKickParam{
+		{
+			QuorumNumber: 0x0,
+			Operator:     common.HexToAddress("0x1374038C2E2403f9aB7db62EE7516e0119F1124A"),
+		},
+		{
+			QuorumNumber: 0x1,
+			Operator:     common.HexToAddress("0xD393FD495367164d7eB53840e59469c13266bA59"),
+		},
+	}
+
+	signature, err := hex.DecodeString(
+		"d547fa0126f97d1752a3b3103c495961a4a6a7a5386feb32ac514289c578db5a0d64bfa34855c39d78cce241a9c73d5cae47dee02c691fd5320fdef4ad3e1f8e",
+	)
+	require.NoError(t, err)
+	require.Equal(t, 64, len(signature))
+
+	salt, err := hex.DecodeString("7879ea091cd16d7afec6bc1e96b92f2229f744c703fb9603b2ca6f60ea9df6c0")
+	require.NoError(t, err)
+	require.Equal(t, 32, len(salt))
+
+	expiry, ok := new(
+		big.Int,
+	).SetString("138752197623537982159531315300136159918886501617089726422768086017712946835", 10)
+	require.True(t, ok)
+
+	churnApproverSignature := elcontracts.SignatureWithSaltAndExpiry{
+		Signature: signature,
+		Salt:      [32]byte(salt),
+		Expiry:    expiry,
+	}
+
+	result, err := elcontracts.AbiEncodeRegistrationWithChurnParams(
+		"unused",
+		registrationParams,
+		operatorKickParams,
+		churnApproverSignature,
+	)
+	require.NoError(t, err)
+
+	// This value was generated by running `abi.encode(...)` on the Solidity equivalent of the above struct
+	expected, err := hex.DecodeString(
+		"0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000018001ac6045296d64b31ed644e53ce1a1c4f72f67a2d47b06b652ca8167f1b2ada900fb7cd59f322f4dffa18360bfcdc15f1f6cd09aea573efa919dc828dfabaf5f16ee091592629fc566636de7b3d53322f4833014b4655dd57279cfb2828bbc6e0c5cb58c8d572dc9dcf5f5999501533e22243fac4f8ee4452a6dd0d4bcaeb2e403006a43453d56eafa7dc4ddcbd41b2330031f58e437ee3806c50a9e554a0cbc0bae792831463d56a1a9983647b77fcdbae38a6621ceef9e147614bb4869bf36267e47def74c144f8e7238dd088097943d1007f8ce7cab028151e9a1beac6d500e56fef5ea67a586d1fbb03dcc0a268f6c4835ad1c215eadc77cc676c378101d00000000000000000000000000000000000000000000000000000000000001c000000000000000000000000000000000000000000000000000000000000002600000000000000000000000000000000000000000000000000000000000000006756e757365640000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000000000000000000000000001374038c2e2403f9ab7db62ee7516e0119f1124a0000000000000000000000000000000000000000000000000000000000000001000000000000000000000000d393fd495367164d7eb53840e59469c13266ba5900000000000000000000000000000000000000000000000000000000000000607879ea091cd16d7afec6bc1e96b92f2229f744c703fb9603b2ca6f60ea9df6c0004e87ed0c684886b5b2e661e58348383df270f2ad5630aaadde83c88c517e930000000000000000000000000000000000000000000000000000000000000040d547fa0126f97d1752a3b3103c495961a4a6a7a5386feb32ac514289c578db5a0d64bfa34855c39d78cce241a9c73d5cae47dee02c691fd5320fdef4ad3e1f8e",
 	)
 	require.NoError(t, err)
 
@@ -531,16 +675,10 @@ func TestSetOperatorAVSSplit(t *testing.T) {
 }
 
 func TestSetOperatorSetSplit(t *testing.T) {
-	testConfig := testutils.GetDefaultTestConfig()
-	anvilC, err := testutils.StartAnvilContainer(testConfig.AnvilStateFileName)
-	require.NoError(t, err)
-
-	anvilHttpEndpoint, err := anvilC.Endpoint(context.Background(), "http")
-	require.NoError(t, err)
+	clients, anvilHttpEndpoint := testclients.BuildTestClients(t)
 	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
 
-	operatorPrivateKeyHex := testutils.ANVIL_SECOND_PRIVATE_KEY
-	operatorAddress := common.HexToAddress(testutils.ANVIL_SECOND_ADDRESS)
+	operatorAddress := common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
 	privateKeyHex := testutils.ANVIL_FIRST_PRIVATE_KEY
 	activationDelay := uint32(0)
 
@@ -549,28 +687,18 @@ func TestSetOperatorSetSplit(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, gethtypes.ReceiptStatusSuccessful, receipt.Status)
 
-	config := elcontracts.Config{
-		DelegationManagerAddress:  contractAddrs.DelegationManager,
-		RewardsCoordinatorAddress: contractAddrs.RewardsCoordinator,
-	}
-
 	// Create operator clients
-	chainWriter, err := testclients.NewTestChainWriterFromConfig(anvilHttpEndpoint, operatorPrivateKeyHex, config)
-	require.NoError(t, err)
+	chainWriter := clients.ElChainWriter
 
-	chainReader, err := testclients.NewTestChainReaderFromConfig(anvilHttpEndpoint, config)
-	require.NoError(t, err)
+	chainReader := clients.ElChainReader
 
-	avsAddress := common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
-	operatorSetId := uint32(1)
+	avsAddress := contractAddrs.ServiceManager
+	operatorSetId := uint32(0)
 	erc20MockStrategyAddr := contractAddrs.Erc20MockStrategy
 
 	// Create an operator set to register an operator on it
-	err = createOperatorSet(
-		anvilHttpEndpoint,
-		privateKeyHex,
-		avsAddress,
-		operatorSetId,
+	err = createTotalStakeOperatorSet(
+		clients,
 		erc20MockStrategyAddr,
 	)
 	require.NoError(t, err)
@@ -696,12 +824,11 @@ func TestSetAndRemovePermission(t *testing.T) {
 	anvilHttpEndpoint, err := anvilC.Endpoint(context.Background(), "http")
 	require.NoError(t, err)
 	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
-	permissionControllerAddr := common.HexToAddress(testutils.PERMISSION_CONTROLLER_ADDRESS)
 
 	privateKeyHex := testutils.ANVIL_FIRST_PRIVATE_KEY
 	config := elcontracts.Config{
-		DelegationManagerAddress:     contractAddrs.DelegationManager,
-		PermissionsControllerAddress: permissionControllerAddr,
+		DelegationManagerAddress:    contractAddrs.DelegationManager,
+		PermissionControllerAddress: contractAddrs.PermissionController,
 	}
 	chainWriter, err := testclients.NewTestChainWriterFromConfig(anvilHttpEndpoint, privateKeyHex, config)
 	require.NoError(t, err)
@@ -762,28 +889,19 @@ func TestSetAndRemovePermission(t *testing.T) {
 }
 
 func TestModifyAllocations(t *testing.T) {
-	testConfig := testutils.GetDefaultTestConfig()
-	anvilC, err := testutils.StartAnvilContainer(testConfig.AnvilStateFileName)
-	require.NoError(t, err)
-
-	anvilHttpEndpoint, err := anvilC.Endpoint(context.Background(), "http")
-	require.NoError(t, err)
+	clients, anvilHttpEndpoint := testclients.BuildTestClients(t)
 	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
 
+	anvilC := clients.AnvilC
+
 	operatorAddr := common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
-	privateKeyHex := testutils.ANVIL_FIRST_PRIVATE_KEY
-	config := elcontracts.Config{
-		DelegationManagerAddress: contractAddrs.DelegationManager,
-	}
 
-	chainWriter, err := testclients.NewTestChainWriterFromConfig(anvilHttpEndpoint, privateKeyHex, config)
-	require.NoError(t, err)
+	chainWriter := clients.ElChainWriter
 
-	chainReader, err := testclients.NewTestChainReaderFromConfig(anvilHttpEndpoint, config)
-	require.NoError(t, err)
+	chainReader := clients.ElChainReader
 
 	strategyAddr := contractAddrs.Erc20MockStrategy
-	avsAddr := common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
+	avsAddr := contractAddrs.ServiceManager
 	operatorSetId := uint32(1)
 
 	operatorSet := allocationmanager.OperatorSet{
@@ -799,7 +917,7 @@ func TestModifyAllocations(t *testing.T) {
 		},
 	}
 
-	_, err = chainWriter.ModifyAllocations(context.Background(), operatorAddr, allocateParams, false)
+	_, err := chainWriter.ModifyAllocations(context.Background(), operatorAddr, allocateParams, true)
 	require.Error(t, err, "cannot modify allocations without initializing the allocation delay")
 
 	waitForReceipt := true
@@ -818,7 +936,7 @@ func TestModifyAllocations(t *testing.T) {
 	_, err = chainReader.GetAllocationDelay(context.Background(), operatorAddr)
 	require.NoError(t, err)
 
-	err = createOperatorSet(anvilHttpEndpoint, privateKeyHex, avsAddr, operatorSetId, strategyAddr)
+	err = createTotalStakeOperatorSet(clients, strategyAddr)
 	require.NoError(t, err)
 
 	receipt, err = chainWriter.ModifyAllocations(context.Background(), operatorAddr, allocateParams, waitForReceipt)
@@ -846,28 +964,19 @@ func TestModifyAllocations(t *testing.T) {
 }
 
 func TestClearDeallocationQueue(t *testing.T) {
-	testConfig := testutils.GetDefaultTestConfig()
-	anvilC, err := testutils.StartAnvilContainer(testConfig.AnvilStateFileName)
-	require.NoError(t, err)
-
-	anvilHttpEndpoint, err := anvilC.Endpoint(context.Background(), "http")
-	require.NoError(t, err)
+	clients, anvilHttpEndpoint := testclients.BuildTestClients(t)
 	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
 
+	anvilC := clients.AnvilC
+
 	operatorAddr := common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
-	privateKeyHex := testutils.ANVIL_FIRST_PRIVATE_KEY
-	config := elcontracts.Config{
-		DelegationManagerAddress: contractAddrs.DelegationManager,
-	}
 
-	chainWriter, err := testclients.NewTestChainWriterFromConfig(anvilHttpEndpoint, privateKeyHex, config)
-	require.NoError(t, err)
+	chainWriter := clients.ElChainWriter
 
-	chainReader, err := testclients.NewTestChainReaderFromConfig(anvilHttpEndpoint, config)
-	require.NoError(t, err)
+	chainReader := clients.ElChainReader
 
 	strategyAddr := contractAddrs.Erc20MockStrategy
-	avsAddr := common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
+	avsAddr := contractAddrs.ServiceManager
 	operatorSetId := uint32(1)
 
 	operatorSet := allocationmanager.OperatorSet{
@@ -899,7 +1008,7 @@ func TestClearDeallocationQueue(t *testing.T) {
 	_, err = chainReader.GetAllocationDelay(context.Background(), operatorAddr)
 	require.NoError(t, err)
 
-	err = createOperatorSet(anvilHttpEndpoint, privateKeyHex, avsAddr, operatorSetId, strategyAddr)
+	err = createTotalStakeOperatorSet(clients, strategyAddr)
 	require.NoError(t, err)
 
 	receipt, err = chainWriter.ModifyAllocations(context.Background(), operatorAddr, allocateParams, waitForReceipt)
@@ -942,13 +1051,11 @@ func TestAddAndRemovePendingAdmin(t *testing.T) {
 	require.NoError(t, err)
 	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
 
-	permissionControllerAddr := common.HexToAddress(testutils.PERMISSION_CONTROLLER_ADDRESS)
-
 	operatorAddr := common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
 	privateKeyHex := testutils.ANVIL_FIRST_PRIVATE_KEY
 	config := elcontracts.Config{
-		DelegationManagerAddress:     contractAddrs.DelegationManager,
-		PermissionsControllerAddress: permissionControllerAddr,
+		DelegationManagerAddress:    contractAddrs.DelegationManager,
+		PermissionControllerAddress: contractAddrs.PermissionController,
 	}
 	chainWriter, err := testclients.NewTestChainWriterFromConfig(anvilHttpEndpoint, privateKeyHex, config)
 	require.NoError(t, err)
@@ -1007,13 +1114,12 @@ func TestAcceptAdmin(t *testing.T) {
 	anvilHttpEndpoint, err := anvilC.Endpoint(context.Background(), "http")
 	require.NoError(t, err)
 	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
-	permissionControllerAddr := common.HexToAddress(testutils.PERMISSION_CONTROLLER_ADDRESS)
 
 	accountAddr := common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
 	accountPrivateKeyHex := testutils.ANVIL_FIRST_PRIVATE_KEY
 	config := elcontracts.Config{
-		DelegationManagerAddress:     contractAddrs.DelegationManager,
-		PermissionsControllerAddress: permissionControllerAddr,
+		DelegationManagerAddress:    contractAddrs.DelegationManager,
+		PermissionControllerAddress: contractAddrs.PermissionController,
 	}
 	accountChainWriter, err := testclients.NewTestChainWriterFromConfig(anvilHttpEndpoint, accountPrivateKeyHex, config)
 	require.NoError(t, err)
@@ -1068,13 +1174,11 @@ func TestRemoveAdmin(t *testing.T) {
 	require.NoError(t, err)
 	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
 
-	permissionControllerAddr := common.HexToAddress(testutils.PERMISSION_CONTROLLER_ADDRESS)
-
 	accountAddr := common.HexToAddress(testutils.ANVIL_FIRST_ADDRESS)
 	accountPrivateKeyHex := testutils.ANVIL_FIRST_PRIVATE_KEY
 	config := elcontracts.Config{
-		DelegationManagerAddress:     contractAddrs.DelegationManager,
-		PermissionsControllerAddress: permissionControllerAddr,
+		DelegationManagerAddress:    contractAddrs.DelegationManager,
+		PermissionControllerAddress: contractAddrs.PermissionController,
 	}
 	accountChainWriter, err := testclients.NewTestChainWriterFromConfig(anvilHttpEndpoint, accountPrivateKeyHex, config)
 	require.NoError(t, err)
@@ -1244,111 +1348,33 @@ func TestProcessClaims(t *testing.T) {
 	require.Equal(t, gethtypes.ReceiptStatusSuccessful, receipt.Status)
 }
 
-// Creates an operator set with `avsAddress`, `operatorSetId` and `erc20MockStrategyAddr`.
-func createOperatorSet(
-	anvilHttpEndpoint string,
-	privateKeyHex string,
-	avsAddress common.Address,
-	operatorSetId uint32,
+// Creates an operator set with a single strategy. Note that operator set Id will be
+// defined sequentially (as the new amount of operator sets minus one)
+func createTotalStakeOperatorSet(
+	clients *clients.Clients,
 	erc20MockStrategyAddr common.Address,
 ) error {
-	testConfig := testutils.GetDefaultTestConfig()
-	contractAddrs := testutils.GetContractAddressesFromContractRegistry(anvilHttpEndpoint)
-	config := elcontracts.Config{
-		DelegationManagerAddress: contractAddrs.DelegationManager,
-	}
-	logger := logging.NewTextSLogger(os.Stdout, &logging.SLoggerOptions{Level: testConfig.LogLevel})
-	ethHttpClient, err := ethclient.Dial(anvilHttpEndpoint)
-	if err != nil {
-		return err
-	}
-
-	elBindings, err := elcontracts.NewBindingsFromConfig(config, ethHttpClient, logger)
-	if err != nil {
-		return err
-	}
-
-	allocationManager := elBindings.AllocationManager
-	registryCoordinatorAddress := contractAddrs.RegistryCoordinator
-	registryCoordinator, err := regcoord.NewContractRegistryCoordinator(
-		registryCoordinatorAddress,
-		ethHttpClient,
-	)
-	if err != nil {
-		return err
-	}
-	txManager, err := testclients.NewTestTxManager(anvilHttpEndpoint, privateKeyHex)
-	if err != nil {
-		return err
-	}
-	noSendTxOpts, err := txManager.GetNoSendTxOpts()
-	if err != nil {
-		return err
-	}
-
-	tx, err := allocationManager.SetAVSRegistrar(noSendTxOpts, avsAddress, registryCoordinatorAddress)
-	if err != nil {
-		return err
-	}
-
 	waitForReceipt := true
-
-	_, err = txManager.Send(context.Background(), tx, waitForReceipt)
-	if err != nil {
-		return err
-	}
-
-	tx, err = registryCoordinator.EnableOperatorSets(noSendTxOpts)
-	if err != nil {
-		return err
-	}
-
-	_, err = txManager.Send(context.Background(), tx, waitForReceipt)
-	if err != nil {
-		return err
-	}
 
 	operatorSetParam := regcoord.ISlashingRegistryCoordinatorTypesOperatorSetParam{
 		MaxOperatorCount:        10,
 		KickBIPsOfOperatorStake: 100,
 		KickBIPsOfTotalStake:    1000,
 	}
-	minimumStake := big.NewInt(0)
+	minimumStake := big.NewInt(1)
 
 	strategyParams := regcoord.IStakeRegistryTypesStrategyParams{
 		Strategy:   erc20MockStrategyAddr,
 		Multiplier: big.NewInt(1),
 	}
 	strategyParamsArray := []regcoord.IStakeRegistryTypesStrategyParams{strategyParams}
-	lookAheadPeriod := uint32(0)
-	tx, err = registryCoordinator.CreateSlashableStakeQuorum(
-		noSendTxOpts,
+	_, err := clients.AvsRegistryChainWriter.CreateTotalDelegatedStakeQuorum(
+		context.Background(),
 		operatorSetParam,
 		minimumStake,
 		strategyParamsArray,
-		lookAheadPeriod,
+		waitForReceipt,
 	)
-	if err != nil {
-		return err
-	}
-
-	_, err = txManager.Send(context.Background(), tx, waitForReceipt)
-	if err != nil {
-		return err
-	}
-
-	strategies := []common.Address{erc20MockStrategyAddr}
-	operatorSetParams := allocationmanager.IAllocationManagerTypesCreateSetParams{
-		OperatorSetId: operatorSetId,
-		Strategies:    strategies,
-	}
-	operatorSetParamsArray := []allocationmanager.IAllocationManagerTypesCreateSetParams{operatorSetParams}
-	tx, err = allocationManager.CreateOperatorSets(noSendTxOpts, avsAddress, operatorSetParamsArray)
-	if err != nil {
-		return err
-	}
-
-	_, err = txManager.Send(context.Background(), tx, waitForReceipt)
 	return err
 }
 
@@ -1366,7 +1392,7 @@ func setTestRewardsCoordinatorActivationDelay(
 		return nil, utils.WrapError("Failed to create eth client", err)
 	}
 
-	rewardsCoordinator, err := rewardscoordinator.NewContractIRewardsCoordinator(rewardsCoordinatorAddr, ethHttpClient)
+	rewardsCoordinator, err := rewardscoordinator.NewContractRewardsCoordinator(rewardsCoordinatorAddr, ethHttpClient)
 	if err != nil {
 		return nil, utils.WrapError("Failed to create rewards coordinator", err)
 	}
@@ -1861,7 +1887,7 @@ func newTestClaim(
 		return nil, utils.WrapError("Failed to call CurrRewardsCalculationEndTimestamp", err)
 	}
 
-	rewardsCoordinator, err := rewardscoordinator.NewContractIRewardsCoordinator(rewardsCoordinatorAddr, ethClient)
+	rewardsCoordinator, err := rewardscoordinator.NewContractRewardsCoordinator(rewardsCoordinatorAddr, ethClient)
 	if err != nil {
 		return nil, utils.WrapError("Failed to create rewards coordinator contract", err)
 	}
@@ -1890,4 +1916,76 @@ func newTestClaim(
 	}
 
 	return &claim, nil
+}
+
+func TestM2Registering(t *testing.T) {
+	testConfig := testutils.GetDefaultTestConfig()
+	anvilC, err := testutils.StartM2AnvilContainer(testConfig.AnvilStateFileName)
+	require.NoError(t, err)
+	anvilHttpEndpoint, err := anvilC.Endpoint(context.Background(), "http")
+	require.NoError(t, err)
+	anvilWsEndpoint, err := anvilC.Endpoint(context.Background(), "ws")
+	require.NoError(t, err)
+	logger := logging.NewTextSLogger(os.Stdout, &logging.SLoggerOptions{Level: testConfig.LogLevel})
+
+	contractAddrs := testutils.GetM2ContractAddressesFromContractRegistry(anvilHttpEndpoint)
+	require.NoError(t, err)
+
+	chainioConfig := clients.BuildAllConfig{
+		EthHttpUrl:                 anvilHttpEndpoint,
+		EthWsUrl:                   anvilWsEndpoint,
+		RegistryCoordinatorAddr:    contractAddrs.RegistryCoordinator.String(),
+		OperatorStateRetrieverAddr: contractAddrs.OperatorStateRetriever.String(),
+		AvsName:                    "exampleAvs",
+		PromMetricsIpPortAddress:   ":9090",
+		ServiceManagerAddress:      contractAddrs.ServiceManager.String(),
+		DontUseAllocationManager:   true,
+	}
+
+	// Fund the new address with 5 ether
+	fundedAccount := "0x408EfD9C90d59298A9b32F4441aC9Df6A2d8C3E1"
+	fundedPrivateKeyHex := "3339854a8622364bcd5650fa92eac82d5dccf04089f5575a761c9b7d3c405b1c"
+	richPrivateKeyHex := testutils.ANVIL_FIRST_PRIVATE_KEY
+	code, _, err := anvilC.Exec(
+		context.Background(),
+		[]string{"cast",
+			"send",
+			fundedAccount,
+			"--value",
+			"5ether",
+			"--private-key",
+			richPrivateKeyHex,
+		},
+	)
+	assert.NoError(t, err)
+	assert.Equal(t, 0, code)
+	time.Sleep(500 * time.Millisecond) // wait for the account to be funded
+
+	ecdsaPrivateKey, err := crypto.HexToECDSA(fundedPrivateKeyHex)
+	require.NoError(t, err)
+
+	clients, err := clients.BuildAll(
+		chainioConfig,
+		ecdsaPrivateKey,
+		logger,
+	)
+	require.NoError(t, err)
+
+	// Register an operator with success
+	operator :=
+		types.M2Operator{
+			Address:                   fundedAccount,
+			DelegationApproverAddress: "0xd5e099c71b797516c10ed0f0d895f429c2781142",
+			StakerOptOutWindowBlocks:  100,
+			MetadataUrl:               "https://madhur-test-public.s3.us-east-2.amazonaws.com/metadata.json",
+		}
+
+	receipt, err := clients.ElChainWriter.RegisterAsOperatorPreSlashing(context.Background(), operator, true)
+	assert.NoError(t, err)
+	assert.True(t, receipt.Status == 1)
+
+	// Register the same operator again will return an error
+	_, err = clients.ElChainWriter.RegisterAsOperatorPreSlashing(context.Background(), operator, true)
+	assert.Error(t, err)
+	assert.ErrorContains(t, err, "caller is already actively delegated")
 }

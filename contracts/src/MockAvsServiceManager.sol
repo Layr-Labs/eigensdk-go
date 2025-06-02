@@ -6,14 +6,14 @@ import {IRewardsCoordinator} from "eigenlayer-contracts/src/contracts/interfaces
 import {IAllocationManager} from "eigenlayer-contracts/src/contracts/interfaces/IAllocationManager.sol";
 import {IPermissionController} from "eigenlayer-contracts/src/contracts/interfaces/IPermissionController.sol";
 
-import {IRegistryCoordinator} from "eigenlayer-middleware/src/interfaces/IRegistryCoordinator.sol";
+import {ISlashingRegistryCoordinator} from "eigenlayer-middleware/src/interfaces/ISlashingRegistryCoordinator.sol";
 import {IBLSSignatureChecker} from "eigenlayer-middleware/src/interfaces/IBLSSignatureChecker.sol";
 import {ServiceManagerBase} from "eigenlayer-middleware/src/ServiceManagerBase.sol";
 import {BLSSignatureChecker} from "eigenlayer-middleware/src/BLSSignatureChecker.sol";
 
 contract MockAvsServiceManager is ServiceManagerBase, BLSSignatureChecker {
     constructor(
-        IRegistryCoordinator _registryCoordinator,
+        ISlashingRegistryCoordinator _registryCoordinator,
         IAVSDirectory _avsDirectory,
         IRewardsCoordinator _rewardsCoordinator,
         IPermissionController _permissionController,

@@ -2,7 +2,7 @@ package txmgr_test
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"math/big"
 	"testing"
 	"time"
@@ -108,7 +108,7 @@ func (s *FailingEthBackend) SendTransaction(ctx context.Context, tx *types.Trans
 		return nil
 	}
 	s.pendingFailures--
-	return fmt.Errorf("did not send tx")
+	return errors.New("did not send tx")
 }
 
 func (s *FailingEthBackend) TransactionReceipt(ctx context.Context, txHash common.Hash) (*types.Receipt, error) {

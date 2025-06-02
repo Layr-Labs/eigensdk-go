@@ -42,7 +42,7 @@ contract DeployMockAvs is DeployMockAvsRegistries {
         );
 
         mockAvsProxyAdmin.upgradeAndCall(
-            TransparentUpgradeableProxy(payable(address(mockAvsServiceManager))),
+            ITransparentUpgradeableProxy(payable(address(mockAvsServiceManager))),
             address(mockAvsServiceManagerImplementation),
             abi.encodeWithSelector(mockAvsServiceManager.initialize.selector, addressConfig.communityMultisig)
         );
@@ -51,6 +51,16 @@ contract DeployMockAvs is DeployMockAvsRegistries {
         address avsAddress = address(mockAvsServiceManager);
         eigenlayerContracts.permissionController.acceptAdmin(avsAddress);
         _setupPermissions(avsAddress, eigenlayerContracts);
+        // Give some permissions back to the ServiceManager
+        // NOTE: by accepting admin permissions, we remove the admin permissions the AVS had on its own address
+        eigenlayerContracts.permissionController.setAppointee(
+            avsAddress,
+            avsAddress,
+            address(eigenlayerContracts.rewardsCoordinator),
+            eigenlayerContracts.rewardsCoordinator.createOperatorDirectedAVSRewardsSubmission.selector
+        );
+
+        eigenlayerContracts.allocationManager.setAVSRegistrar(avsAddress, mockAvsContracts.registryCoordinator);
 
         if (block.chainid == 31337 || block.chainid == 1337) {
             _writeContractsToRegistry(contractsRegistry, eigenlayerContracts, mockAvsContracts);

@@ -58,7 +58,6 @@ jobs:
           filters: |
             contracts:
               - 'contracts/lib/**'
-              - 'contracts/script/**'
               - 'contracts/src/**'
             bindings:
               - 'contracts/bindings/**'

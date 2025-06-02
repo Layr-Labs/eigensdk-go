@@ -42,13 +42,15 @@ func BuildTestClients(t *testing.T) (*clients.Clients, string) {
 	require.NoError(t, err)
 
 	chainioConfig := clients.BuildAllConfig{
-		EthHttpUrl:                 anvilHttpEndpoint,
-		EthWsUrl:                   anvilWsEndpoint,
-		RegistryCoordinatorAddr:    contractAddrs.RegistryCoordinator.String(),
-		OperatorStateRetrieverAddr: contractAddrs.OperatorStateRetriever.String(),
-		AvsName:                    "exampleAvs",
-		PromMetricsIpPortAddress:   ":9090",
-		ServiceManagerAddress:      contractAddrs.ServiceManager.String(),
+		EthHttpUrl:                  anvilHttpEndpoint,
+		EthWsUrl:                    anvilWsEndpoint,
+		RegistryCoordinatorAddr:     contractAddrs.RegistryCoordinator.String(),
+		OperatorStateRetrieverAddr:  contractAddrs.OperatorStateRetriever.String(),
+		AvsName:                     "exampleAvs",
+		PromMetricsIpPortAddress:    ":9090",
+		ServiceManagerAddress:       contractAddrs.ServiceManager.String(),
+		RewardsCoordinatorAddress:   contractAddrs.RewardsCoordinator.String(),
+		PermissionControllerAddress: contractAddrs.PermissionController.String(),
 	}
 
 	clients, err := clients.BuildAll(
@@ -57,6 +59,7 @@ func BuildTestClients(t *testing.T) (*clients.Clients, string) {
 		logger,
 	)
 	require.NoError(t, err)
+	clients.AnvilC = anvilC
 	return clients, anvilHttpEndpoint
 }
 
@@ -239,4 +242,27 @@ func NewTestAvsRegistryWriterFromConfig(
 		return nil, err
 	}
 	return testWriter, nil
+}
+
+// Creates a testing AVSRegistrer ChainReader from an httpEndpoint, private key and config.
+func NewTestAvsRegistryReaderFromConfig(
+	httpEndpoint string,
+	config avsregistry.Config,
+) (*avsregistry.ChainReader, error) {
+	testConfig := testutils.GetDefaultTestConfig()
+	logger := logging.NewTextSLogger(os.Stdout, &logging.SLoggerOptions{Level: testConfig.LogLevel})
+	ethHttpClient, err := ethclient.Dial(httpEndpoint)
+	if err != nil {
+		return nil, utils.WrapError("Failed to create eth client", err)
+	}
+
+	testReader, err := avsregistry.NewReaderFromConfig(
+		config,
+		ethHttpClient,
+		logger,
+	)
+	if err != nil {
+		return nil, utils.WrapError("Failed to create chain reader from config", err)
+	}
+	return testReader, nil
 }

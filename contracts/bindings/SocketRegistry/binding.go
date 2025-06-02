@@ -31,8 +31,8 @@ var (
 
 // ContractSocketRegistryMetaData contains all meta data concerning the ContractSocketRegistry contract.
 var ContractSocketRegistryMetaData = &bind.MetaData{
-	ABI: "[{\"type\":\"constructor\",\"inputs\":[{\"name\":\"_registryCoordinator\",\"type\":\"address\",\"internalType\":\"contractIRegistryCoordinator\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getOperatorSocket\",\"inputs\":[{\"name\":\"_operatorId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"operatorIdToSocket\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"registryCoordinator\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"setOperatorSocket\",\"inputs\":[{\"name\":\"_operatorId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"_socket\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"}]",
-	Bin: "0x60a0604052348015600e575f5ffd5b506040516105fd3803806105fd833981016040819052602b91603b565b6001600160a01b03166080526066565b5f60208284031215604a575f5ffd5b81516001600160a01b0381168114605f575f5ffd5b9392505050565b6080516105796100845f395f8181607c015261021f01526105795ff3fe608060405234801561000f575f5ffd5b506004361061004a575f3560e01c806310bea0d71461004e5780636d14a98714610077578063af65fdfc146100b6578063f043367e146100c9575b5f5ffd5b61006161005c3660046102e8565b6100de565b60405161006e91906102ff565b60405180910390f35b61009e7f000000000000000000000000000000000000000000000000000000000000000081565b6040516001600160a01b03909116815260200161006e565b6100616100c43660046102e8565b61017d565b6100dc6100d7366004610348565b610214565b005b5f8181526020819052604090208054606091906100fa90610405565b80601f016020809104026020016040519081016040528092919081815260200182805461012690610405565b80156101715780601f1061014857610100808354040283529160200191610171565b820191905f5260205f20905b81548152906001019060200180831161015457829003601f168201915b50505050509050919050565b5f602081905290815260409020805461019590610405565b80601f01602080910402602001604051908101604052809291908181526020018280546101c190610405565b801561020c5780601f106101e35761010080835404028352916020019161020c565b820191905f5260205f20905b8154815290600101906020018083116101ef57829003601f168201915b505050505081565b336001600160a01b037f000000000000000000000000000000000000000000000000000000000000000016146102cc5760405162461bcd60e51b815260206004820152604d60248201527f536f636b657452656769737472792e6f6e6c795265676973747279436f6f726460448201527f696e61746f723a2063616c6c6572206973206e6f74207468652052656769737460648201526c393ca1b7b7b93234b730ba37b960991b608482015260a40160405180910390fd5b5f8281526020819052604090206102e38282610488565b505050565b5f602082840312156102f8575f5ffd5b5035919050565b602081525f82518060208401528060208501604085015e5f604082850101526040601f19601f83011684010191505092915050565b634e487b7160e01b5f52604160045260245ffd5b5f5f60408385031215610359575f5ffd5b82359150602083013567ffffffffffffffff811115610376575f5ffd5b8301601f81018513610386575f5ffd5b803567ffffffffffffffff8111156103a0576103a0610334565b604051601f8201601f19908116603f0116810167ffffffffffffffff811182821017156103cf576103cf610334565b6040528181528282016020018710156103e6575f5ffd5b816020840160208301375f602083830101528093505050509250929050565b600181811c9082168061041957607f821691505b60208210810361043757634e487b7160e01b5f52602260045260245ffd5b50919050565b601f8211156102e357805f5260205f20601f840160051c810160208510156104625750805b601f840160051c820191505b81811015610481575f815560010161046e565b5050505050565b815167ffffffffffffffff8111156104a2576104a2610334565b6104b6816104b08454610405565b8461043d565b6020601f8211600181146104e8575f83156104d15750848201515b5f19600385901b1c1916600184901b178455610481565b5f84815260208120601f198516915b8281101561051757878501518255602094850194600190920191016104f7565b508482101561053457868401515f19600387901b60f8161c191681555b50505050600190811b0190555056fea2646970667358221220490b90f09fd71d7375c286b7faee8e783be318e94626af83a625183cbff2107f64736f6c634300081b0033",
+	ABI: "[{\"type\":\"constructor\",\"inputs\":[{\"name\":\"_slashingRegistryCoordinator\",\"type\":\"address\",\"internalType\":\"contractISlashingRegistryCoordinator\"}],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"getOperatorSocket\",\"inputs\":[{\"name\":\"_operatorId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"operatorIdToSocket\",\"inputs\":[{\"name\":\"\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"}],\"outputs\":[{\"name\":\"\",\"type\":\"string\",\"internalType\":\"string\"}],\"stateMutability\":\"view\"},{\"type\":\"function\",\"name\":\"setOperatorSocket\",\"inputs\":[{\"name\":\"_operatorId\",\"type\":\"bytes32\",\"internalType\":\"bytes32\"},{\"name\":\"_socket\",\"type\":\"string\",\"internalType\":\"string\"}],\"outputs\":[],\"stateMutability\":\"nonpayable\"},{\"type\":\"function\",\"name\":\"slashingRegistryCoordinator\",\"inputs\":[],\"outputs\":[{\"name\":\"\",\"type\":\"address\",\"internalType\":\"address\"}],\"stateMutability\":\"view\"},{\"type\":\"error\",\"name\":\"OnlySlashingRegistryCoordinator\",\"inputs\":[]}]",
+	Bin: "0x60a0604052348015600e575f5ffd5b5060405161058e38038061058e833981016040819052602b91603b565b6001600160a01b03166080526066565b5f60208284031215604a575f5ffd5b81516001600160a01b0381168114605f575f5ffd5b9392505050565b60805161050a6100845f395f8181608f015261021f015261050a5ff3fe608060405234801561000f575f5ffd5b506004361061004a575f3560e01c806310bea0d71461004e578063af65fdfc14610077578063cf1d6b421461008a578063f043367e146100c9575b5f5ffd5b61006161005c366004610279565b6100de565b60405161006e9190610290565b60405180910390f35b610061610085366004610279565b61017d565b6100b17f000000000000000000000000000000000000000000000000000000000000000081565b6040516001600160a01b03909116815260200161006e565b6100dc6100d73660046102d9565b610214565b005b5f8181526020819052604090208054606091906100fa90610396565b80601f016020809104026020016040519081016040528092919081815260200182805461012690610396565b80156101715780601f1061014857610100808354040283529160200191610171565b820191905f5260205f20905b81548152906001019060200180831161015457829003601f168201915b50505050509050919050565b5f602081905290815260409020805461019590610396565b80601f01602080910402602001604051908101604052809291908181526020018280546101c190610396565b801561020c5780601f106101e35761010080835404028352916020019161020c565b820191905f5260205f20905b8154815290600101906020018083116101ef57829003601f168201915b505050505081565b336001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000161461025d57604051632c01b20560e21b815260040160405180910390fd5b5f8281526020819052604090206102748282610419565b505050565b5f60208284031215610289575f5ffd5b5035919050565b602081525f82518060208401528060208501604085015e5f604082850101526040601f19601f83011684010191505092915050565b634e487b7160e01b5f52604160045260245ffd5b5f5f604083850312156102ea575f5ffd5b82359150602083013567ffffffffffffffff811115610307575f5ffd5b8301601f81018513610317575f5ffd5b803567ffffffffffffffff811115610331576103316102c5565b604051601f8201601f19908116603f0116810167ffffffffffffffff81118282101715610360576103606102c5565b604052818152828201602001871015610377575f5ffd5b816020840160208301375f602083830101528093505050509250929050565b600181811c908216806103aa57607f821691505b6020821081036103c857634e487b7160e01b5f52602260045260245ffd5b50919050565b601f82111561027457805f5260205f20601f840160051c810160208510156103f35750805b601f840160051c820191505b81811015610412575f81556001016103ff565b5050505050565b815167ffffffffffffffff811115610433576104336102c5565b610447816104418454610396565b846103ce565b6020601f821160018114610479575f83156104625750848201515b5f19600385901b1c1916600184901b178455610412565b5f84815260208120601f198516915b828110156104a85787850151825560209485019460019092019101610488565b50848210156104c557868401515f19600387901b60f8161c191681555b50505050600190811b0190555056fea264697066735822122088aec5afa49e649717682abc4b0daa85f105b8e097db51f672581f5b1a1dc19b64736f6c634300081b0033",
 }
 
 // ContractSocketRegistryABI is the input ABI used to generate the binding from.
@@ -44,7 +44,7 @@ var ContractSocketRegistryABI = ContractSocketRegistryMetaData.ABI
 var ContractSocketRegistryBin = ContractSocketRegistryMetaData.Bin
 
 // DeployContractSocketRegistry deploys a new Ethereum contract, binding an instance of ContractSocketRegistry to it.
-func DeployContractSocketRegistry(auth *bind.TransactOpts, backend bind.ContractBackend, _registryCoordinator common.Address) (common.Address, *types.Transaction, *ContractSocketRegistry, error) {
+func DeployContractSocketRegistry(auth *bind.TransactOpts, backend bind.ContractBackend, _slashingRegistryCoordinator common.Address) (common.Address, *types.Transaction, *ContractSocketRegistry, error) {
 	parsed, err := ContractSocketRegistryMetaData.GetAbi()
 	if err != nil {
 		return common.Address{}, nil, nil, err
@@ -53,7 +53,7 @@ func DeployContractSocketRegistry(auth *bind.TransactOpts, backend bind.Contract
 		return common.Address{}, nil, nil, errors.New("GetABI returned nil")
 	}
 
-	address, tx, contract, err := bind.DeployContract(auth, *parsed, common.FromHex(ContractSocketRegistryBin), backend, _registryCoordinator)
+	address, tx, contract, err := bind.DeployContract(auth, *parsed, common.FromHex(ContractSocketRegistryBin), backend, _slashingRegistryCoordinator)
 	if err != nil {
 		return common.Address{}, nil, nil, err
 	}
@@ -73,7 +73,7 @@ type ContractSocketRegistryCalls interface {
 
 	OperatorIdToSocket(opts *bind.CallOpts, arg0 [32]byte) (string, error)
 
-	RegistryCoordinator(opts *bind.CallOpts) (common.Address, error)
+	SlashingRegistryCoordinator(opts *bind.CallOpts) (common.Address, error)
 }
 
 // ContractSocketRegistryTransacts is an auto generated interface that defines the transact methods available for an Ethereum contract.
@@ -301,12 +301,12 @@ func (_ContractSocketRegistry *ContractSocketRegistryCallerSession) OperatorIdTo
 	return _ContractSocketRegistry.Contract.OperatorIdToSocket(&_ContractSocketRegistry.CallOpts, arg0)
 }
 
-// RegistryCoordinator is a free data retrieval call binding the contract method 0x6d14a987.
+// SlashingRegistryCoordinator is a free data retrieval call binding the contract method 0xcf1d6b42.
 //
-// Solidity: function registryCoordinator() view returns(address)
-func (_ContractSocketRegistry *ContractSocketRegistryCaller) RegistryCoordinator(opts *bind.CallOpts) (common.Address, error) {
+// Solidity: function slashingRegistryCoordinator() view returns(address)
+func (_ContractSocketRegistry *ContractSocketRegistryCaller) SlashingRegistryCoordinator(opts *bind.CallOpts) (common.Address, error) {
 	var out []interface{}
-	err := _ContractSocketRegistry.contract.Call(opts, &out, "registryCoordinator")
+	err := _ContractSocketRegistry.contract.Call(opts, &out, "slashingRegistryCoordinator")
 
 	if err != nil {
 		return *new(common.Address), err
@@ -318,18 +318,18 @@ func (_ContractSocketRegistry *ContractSocketRegistryCaller) RegistryCoordinator
 
 }
 
-// RegistryCoordinator is a free data retrieval call binding the contract method 0x6d14a987.
+// SlashingRegistryCoordinator is a free data retrieval call binding the contract method 0xcf1d6b42.
 //
-// Solidity: function registryCoordinator() view returns(address)
-func (_ContractSocketRegistry *ContractSocketRegistrySession) RegistryCoordinator() (common.Address, error) {
-	return _ContractSocketRegistry.Contract.RegistryCoordinator(&_ContractSocketRegistry.CallOpts)
+// Solidity: function slashingRegistryCoordinator() view returns(address)
+func (_ContractSocketRegistry *ContractSocketRegistrySession) SlashingRegistryCoordinator() (common.Address, error) {
+	return _ContractSocketRegistry.Contract.SlashingRegistryCoordinator(&_ContractSocketRegistry.CallOpts)
 }
 
-// RegistryCoordinator is a free data retrieval call binding the contract method 0x6d14a987.
+// SlashingRegistryCoordinator is a free data retrieval call binding the contract method 0xcf1d6b42.
 //
-// Solidity: function registryCoordinator() view returns(address)
-func (_ContractSocketRegistry *ContractSocketRegistryCallerSession) RegistryCoordinator() (common.Address, error) {
-	return _ContractSocketRegistry.Contract.RegistryCoordinator(&_ContractSocketRegistry.CallOpts)
+// Solidity: function slashingRegistryCoordinator() view returns(address)
+func (_ContractSocketRegistry *ContractSocketRegistryCallerSession) SlashingRegistryCoordinator() (common.Address, error) {
+	return _ContractSocketRegistry.Contract.SlashingRegistryCoordinator(&_ContractSocketRegistry.CallOpts)
 }
 
 // SetOperatorSocket is a paid mutator transaction binding the contract method 0xf043367e.

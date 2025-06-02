@@ -1,0 +1,28 @@
+name: "Pull Request Workflow"
+on:
+  merge_group:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
+
+env:
+  PR_URL: https://github.com/Layr-Labs/eigensdk-go/pull/${{ github.event.number }}
+
+jobs:
+  # Enforces the update of a changelog file on every pull request 
+  # The update in the changelog can be skipped if the pull request
+  # includes the `changelog-ignore` label.
+  changelog:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Check CHANGELOG.md is updated
+      uses: dangoslen/changelog-enforcer@v3
+      with:
+        skipLabels: changelog-ignore
+
+    - name: Check the PR URL is included in CHANGELOG.md
+      if: contains(github.event.pull_request.labels.*.name, 'changelog-ignore') == false
+      run: git diff CHANGELOG.md | grep $PR_URL CHANGELOG.md

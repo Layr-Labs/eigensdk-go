@@ -11,7 +11,7 @@ import (
 	avsdirectory "github.com/Layr-Labs/eigensdk-go/contracts/bindings/AVSDirectory"
 	allocationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/AllocationManager"
 	delegationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/DelegationManager"
-	rewardscoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/IRewardsCoordinator"
+	rewardscoordinator "github.com/Layr-Labs/eigensdk-go/contracts/bindings/RewardsCoordinator"
 	strategymanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/StrategyManager"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/utils"
@@ -30,7 +30,7 @@ type ContractBindings struct {
 	DelegationManager         *delegationmanager.ContractDelegationManager
 	StrategyManager           *strategymanager.ContractStrategyManager
 	AvsDirectory              *avsdirectory.ContractAVSDirectory
-	RewardsCoordinator        *rewardscoordinator.ContractIRewardsCoordinator
+	RewardsCoordinator        *rewardscoordinator.ContractRewardsCoordinator
 	AllocationManager         *allocationmanager.ContractAllocationManager
 	PermissionController      *permissioncontroller.ContractPermissionController
 }
@@ -49,7 +49,7 @@ func NewBindingsFromConfig(
 		strategyManagerAddr       gethcommon.Address
 		allocationManagerAddr     gethcommon.Address
 		avsDirectory              *avsdirectory.ContractAVSDirectory
-		rewardsCoordinator        *rewardscoordinator.ContractIRewardsCoordinator
+		rewardsCoordinator        *rewardscoordinator.ContractRewardsCoordinator
 		permissionController      *permissioncontroller.ContractPermissionController
 	)
 
@@ -70,21 +70,25 @@ func NewBindingsFromConfig(
 			return nil, utils.WrapError("Failed to fetch StrategyManager contract", err)
 		}
 
-		allocationManagerAddr, err = contractDelegationManager.AllocationManager(&bind.CallOpts{})
-		if err != nil {
-			return nil, utils.WrapError("Failed to fetch AllocationManager address", err)
-		}
-		contractAllocationManager, err = allocationmanager.NewContractAllocationManager(allocationManagerAddr, client)
-		if err != nil {
-			return nil, utils.WrapError("Failed to fetch AllocationManager contract", err)
+		// NOTE: this is a hack to make this version of the SDK work with mainnet
+		// TODO: remove this once mainnet is updated with the new contracts
+		if !cfg.DontUseAllocationManager {
+			allocationManagerAddr, err = contractDelegationManager.AllocationManager(&bind.CallOpts{})
+			if err != nil {
+				return nil, utils.WrapError("Failed to fetch AllocationManager address", err)
+			}
+			contractAllocationManager, err = allocationmanager.NewContractAllocationManager(allocationManagerAddr, client)
+			if err != nil {
+				return nil, utils.WrapError("Failed to fetch AllocationManager contract", err)
+			}
 		}
 	}
 
-	if isZeroAddress(cfg.PermissionsControllerAddress) {
+	if isZeroAddress(cfg.PermissionControllerAddress) {
 		logger.Debug("PermissionController address not provided, the calls to the contract will not work")
 	} else {
 		permissionController, err = permissioncontroller.NewContractPermissionController(
-			cfg.PermissionsControllerAddress,
+			cfg.PermissionControllerAddress,
 			client,
 		)
 		if err != nil {
@@ -104,7 +108,7 @@ func NewBindingsFromConfig(
 	if isZeroAddress(cfg.RewardsCoordinatorAddress) {
 		logger.Debug("RewardsCoordinator address not provided, the calls to the contract will not work")
 	} else {
-		rewardsCoordinator, err = rewardscoordinator.NewContractIRewardsCoordinator(cfg.RewardsCoordinatorAddress, client)
+		rewardsCoordinator, err = rewardscoordinator.NewContractRewardsCoordinator(cfg.RewardsCoordinatorAddress, client)
 		if err != nil {
 			return nil, utils.WrapError("Failed to fetch RewardsCoordinator contract", err)
 		}
