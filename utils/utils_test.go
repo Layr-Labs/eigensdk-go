@@ -184,8 +184,7 @@ func TestReadPublicURL(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			url := server.URL + tt.urlPath
-			client := &http.Client{}
-			_, err := ReadPublicURL(url, client)
+			_, err := ReadPublicURL(url)
 			assert.Equal(t, tt.expectedErr, err)
 		})
 	}
@@ -236,8 +235,7 @@ func TestIsImageURL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := &http.Client{}
-			err := IsImageURL(tt.url, client)
+			err := IsImageURL(tt.url)
 			assert.Equal(t, tt.expectedErr, err)
 		})
 	}

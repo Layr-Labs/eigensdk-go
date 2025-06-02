@@ -1,8 +1,6 @@
 package types
 
 import (
-	"net/http"
-
 	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
@@ -47,8 +45,7 @@ func (om *OperatorMetadata) Validate() error {
 		return ErrLogoRequired
 	}
 
-	client := &http.Client{}
-	if err = utils.IsImageURL(om.Logo, client); err != nil {
+	if err = utils.IsImageURL(om.Logo); err != nil {
 		return err
 	}
 

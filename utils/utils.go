@@ -80,12 +80,14 @@ func IsValidEthereumAddress(address string) bool {
 	return ethAddrPattern.MatchString(address)
 }
 
-func ReadPublicURL(url string, httpClient *http.Client) ([]byte, error) {
+func ReadPublicURL(url string) ([]byte, error) {
 	// Allow no redirects
-	httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-		return http.ErrUseLastResponse
+	httpClient := http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+		Timeout: 3 * time.Second,
 	}
-	httpClient.Timeout = 3 * time.Second
 
 	resp, err := httpClient.Get(url)
 	if err != nil {
@@ -174,7 +176,7 @@ func CheckIfUrlIsValid(rawUrl string) error {
 	return nil
 }
 
-func IsImageURL(urlString string, httpClient *http.Client) error {
+func IsImageURL(urlString string) error {
 	// Parse the URL
 	parsedURL, err := url.Parse(urlString)
 	if err != nil {
@@ -190,7 +192,7 @@ func IsImageURL(urlString string, httpClient *http.Client) error {
 	// Check if the extension is in the list of image extensions
 	for _, imgExt := range ImageExtensions {
 		if strings.EqualFold(extension, imgExt) {
-			imageBytes, err := ReadPublicURL(urlString, httpClient)
+			imageBytes, err := ReadPublicURL(urlString)
 			if err != nil {
 				return err
 			}
