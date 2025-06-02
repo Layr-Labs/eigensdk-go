@@ -11,6 +11,7 @@ import (
 	blsagg "github.com/Layr-Labs/eigensdk-go/services/bls_aggregation"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
 // When starting the server, the aggregator start listening at the address specified by config the calls to
@@ -22,21 +23,22 @@ func (agg *Aggregator[Input, Output]) startServer(ctx context.Context) error {
 		agg.logger.Fatal("Format of service TaskManager isn't correct. ", "err", err)
 	}
 
+	// TODO: Replace with http.ListenAndServe()
+	err = agg.ListenAndServe(server)
+	if err != nil {
+		return utils.WrapError("Failed to listen and serve", err)
+	}
+
+	return nil
+}
+
+func (agg *Aggregator[Input, Output]) ListenAndServe(server *rpc.Server) error {
 	listener, err := net.Listen("tcp", agg.serverIpPortAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	errChan := make(chan error)
-
-	go func() {
-		err := http.Serve(listener, server)
-		if err != nil {
-			errChan <- err
-			return
-		}
-		errChan <- nil
-	}()
+	err = http.Serve(listener, server)
 
 	return err
 }
