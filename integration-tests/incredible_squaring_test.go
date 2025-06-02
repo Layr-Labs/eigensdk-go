@@ -78,6 +78,7 @@ func TestIncredibleSquaring(t *testing.T) {
 	case err := <-opErrC:
 		t.Fatal("Operator error:", err)
 	case err := <-tsErrC:
+		// Here we handle the input generation termination (in that case returns nil but does not imply an error)
 		if err == nil {
 			cancel()
 		} else {
