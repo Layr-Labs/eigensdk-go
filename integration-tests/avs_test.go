@@ -92,9 +92,11 @@ func TestIncredibleSquaring(t *testing.T) {
 	require.NoError(t, err, "Failed to get final task index")
 	require.Equal(t, taskIndex, uint32(3), "Final task index should be equal to the amount of tasks generated")
 
-	taskResponse, err := taskManager.AllTaskResponses(&bind.CallOpts{}, 2)
-	require.NoError(t, err, "Failed to get third task response")
-	require.NotZero(t, taskResponse, "Third task response should not be nil")
+	for i := range uint32(3) {
+		taskResponse, err := taskManager.AllTaskResponses(&bind.CallOpts{}, i)
+		require.NoError(t, err, "Failed to get task response number %v", i)
+		require.NotZero(t, taskResponse, "Task response number %v should not be nil", i)
+	}
 }
 
 func square(taskIndex uint32, input *big.Int) (*big.Int, error) {
