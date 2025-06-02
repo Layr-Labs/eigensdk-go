@@ -262,7 +262,9 @@ func createIncredibleDotProductTaskSpammer(t *testing.T, ethHttpUrl string) *tas
 	ethHttpClient, err := ethclient.Dial(ethHttpUrl)
 	require.NoError(t, err, "Failed to dial ethclient")
 
-	ecdsaPrivateKey, err := crypto.HexToECDSA("2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6")
+	// This private key must match with the task_generator_addr field in
+	// examples/incredible-dot-product/contracts/config/avs/incredible_dot_product_config.json
+	ecdsaPrivateKey, err := crypto.HexToECDSA("4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356")
 	require.NoError(t, err, "Failed to create ecdsa private key")
 
 	txMgr, err := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethHttpClient, ecdsaPrivateKey)
