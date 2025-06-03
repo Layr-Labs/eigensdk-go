@@ -3,6 +3,7 @@ package operator
 import (
 	"math/big"
 
+	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -36,6 +37,9 @@ type BlsSignerConfig struct {
 
 	// The password used to get the private key on local storage
 	BlsPrivateKeyPassword string `toml:"bls_private_key_password"`
+
+	// The bls Key Pair, if nil will use the store path and password above
+	BlsKeyPair *bls.KeyPair
 }
 
 // This config is used to register an operator on startup.
