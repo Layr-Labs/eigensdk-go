@@ -11,6 +11,7 @@ import (
 )
 
 // The Indexing Challenger Processor is a generic implementation provided by the SDK
+// Note: Do not confuse it with the aggregator module's IndexingProcessor struct
 type IndexingChallengerProcessor[Input any, Output any] struct {
 	logger logging.Logger
 
