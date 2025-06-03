@@ -44,6 +44,8 @@ type Aggregator[Input any, Output any] struct {
 	// ABI of the task manager contract
 	taskManagerAbi *abi.ABI
 
+	aggregatorRpcServer *AggregatorRpcServer[Input, Output]
+
 	taskProcessor taskprocessor.TaskProcessor[Input, Output]
 }
 
@@ -112,6 +114,8 @@ func NewAggregator[Input any, Output any](
 		logger.Fatal("error subscribing to newTaskCreated events", "err", err)
 	}
 
+	rpcServer := NewAggregatorRpcServer[Input, Output](logger, c.AggregatorServerIpPortAddr, blsAggregationService)
+
 	return &Aggregator[Input, Output]{
 		logger:                logger,
 		serverIpPortAddr:      c.AggregatorServerIpPortAddr,
@@ -119,6 +123,7 @@ func NewAggregator[Input any, Output any](
 		newTaskCreatedLogs:    newTaskCreatedLogs,
 		taskManagerAbi:        taskManagerAbi,
 		taskProcessor:         taskProcessor,
+		aggregatorRpcServer:   rpcServer,
 	}, nil
 }
 
@@ -145,7 +150,7 @@ func (agg *Aggregator[Input, Output]) run(ctx context.Context) error {
 
 	serverErrorChannel := make(chan error)
 	go func() {
-		serverErrorChannel <- agg.startServer(ctx)
+		serverErrorChannel <- agg.aggregatorRpcServer.StartServer()
 	}()
 
 	for {
