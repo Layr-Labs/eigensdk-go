@@ -94,10 +94,10 @@ func main() {
 		return
 	}
 
-	// Create the Challenger Processor, with the challenger raiser created above.
-	indexingChallengerProcessor, err := challenger.NewIndexingChallengerProcessor(logger, squareValidation, challengeRaiser)
+	// Create the challenger.Processor, with the challenger raiser created above.
+	challengerProcessor, err := challenger.NewIndexingProcessor(logger, squareValidation, challengeRaiser)
 	if err != nil {
-		logger.Errorf("Failed to create challenger logic from config: %v", err)
+		logger.Errorf("Failed to create challenger processor: %v", err)
 		return
 	}
 
@@ -106,7 +106,7 @@ func main() {
 		logger,
 		cfg,
 		taskManagerAbi,
-		indexingChallengerProcessor,
+		challengerProcessor,
 	)
 	if err != nil {
 		logger.Errorf("Failed to create challenger from config: %v", err)

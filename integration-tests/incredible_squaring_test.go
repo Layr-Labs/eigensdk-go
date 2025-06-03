@@ -183,14 +183,14 @@ func createIncredibleSquaringChallenger(t *testing.T, ethHttpUrl, ethWsUrl strin
 	)
 	require.NoError(t, err, "Failed to create challenge raiser")
 
-	indexingChallengerProcessor, err := challenger.NewIndexingChallengerProcessor(logger, squareValidation, challengeRaiser)
-	require.NoError(t, err, "Failed to create indexing challenger processor")
+	challengerProcessor, err := challenger.NewIndexingProcessor(logger, squareValidation, challengeRaiser)
+	require.NoError(t, err, "Failed to create challenger processor")
 
 	challenger, err := challenger.NewChallenger(
 		logger,
 		challengerCfg,
 		taskManagerAbi,
-		indexingChallengerProcessor,
+		challengerProcessor,
 	)
 	require.NoError(t, err, "Failed to create challenger from config")
 

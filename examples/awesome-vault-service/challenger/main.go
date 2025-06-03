@@ -92,10 +92,10 @@ func main() {
 		return
 	}
 
-	// Create the Challenger Processor, with the challenger raiser created above.
-	challengerProcessor, err := challenger.NewIndexingChallengerProcessor(logger, vaultSetValidation, challengeRaiser)
+	// Create the challenger.Processor, with the challenger raiser created above.
+	challengerProcessor, err := challenger.NewIndexingProcessor(logger, vaultSetValidation, challengeRaiser)
 	if err != nil {
-		logger.Errorf("Failed to create challenger processor: %v", err)
+		logger.Errorf("Failed to create processor: %v", err)
 		return
 	}
 
