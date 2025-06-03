@@ -2,7 +2,6 @@ package aggregator
 
 import (
 	"context"
-	"log"
 	"net"
 	"net/http"
 	"net/rpc"
@@ -20,7 +19,7 @@ func (agg *Aggregator[Input, Output]) startServer(ctx context.Context) error {
 	server := rpc.NewServer()
 	err := server.RegisterName("Aggregator", agg)
 	if err != nil {
-		agg.logger.Fatal("Format of service TaskManager isn't correct. ", "err", err)
+		return utils.WrapError("Error registering aggregator service (maybe the format of service task manager isn't correct)", err)
 	}
 
 	// TODO: Replace with http.ListenAndServe()
