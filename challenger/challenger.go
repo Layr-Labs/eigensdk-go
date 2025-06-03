@@ -15,15 +15,6 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-// The Challenger processor is responsible for processing the challenges
-// Note: Do not confuse it with the aggregator module's Processor interface
-type ChallengerProcessor[Input any, Output any] interface {
-	// Processes new tasks, returns an error in case of failure
-	ProcessNewTaskCreated(taskIndex uint32, task taskmanager.Task[Input]) error
-	// Processes task responses, returns an error in case of failure
-	ProcessTaskResponded(taskIndex uint32, taskResponse taskmanager.TaskResponse[Output], taskResponseMetadata sdktypes.TaskResponseMetadata, nonSigningOperatorPubKeys []sdktypes.BN254G1Point) error
-}
-
 // The challenger is the entity responsible of validating the task responsed submitted by the BLS aggregation
 // service and emited by the Task Manager on-chain contract in the TaskResponded event. To do that will need
 // To listen to new task created events (to register the new tasks) and task responded events (to validate
