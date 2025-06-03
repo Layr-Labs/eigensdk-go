@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"math/big"
 
-	taskprocessor "github.com/Layr-Labs/eigensdk-go/aggregator/task-processor"
+	aggregatorprocessor "github.com/Layr-Labs/eigensdk-go/aggregator/aggregator-processor"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
@@ -27,7 +27,7 @@ import (
 //   - Receiving signed responses from the operators.
 //   - Sending the aggregated responses to the `TaskManager` contract
 //
-// Most of these things are delegated to the `TaskProcessor` interface, that processes
+// Most of these things are delegated to the `AggregatorProcessor` interface, that processes
 // tasks and communicates with the on-chain `TaskManager` contract.
 type Aggregator[Input any, Output any] struct {
 	logger logging.Logger
@@ -44,15 +44,15 @@ type Aggregator[Input any, Output any] struct {
 	// ABI of the task manager contract
 	taskManagerAbi *abi.ABI
 
-	taskProcessor taskprocessor.TaskProcessor[Input, Output]
+	aggregatorProcessor aggregatorprocessor.AggregatorProcessor[Input, Output]
 }
 
-// NewAggregator creates a new Aggregator with the provided config, a logger, a task processor and the task manager contract's ABI.
+// NewAggregator creates a new Aggregator with the provided config, a logger, an aggregator processor and the task manager contract's ABI.
 func NewAggregator[Input any, Output any](
 	logger logging.Logger,
 	c Config,
 	taskManagerAbi *abi.ABI,
-	taskProcessor taskprocessor.TaskProcessor[Input, Output],
+	aggregatorProcessor aggregatorprocessor.AggregatorProcessor[Input, Output],
 ) (*Aggregator[Input, Output], error) {
 	avsRegistryConfig := avsregistry.Config{
 		RegistryCoordinatorAddress:    c.RegistryCoordinatorAddress,
@@ -94,7 +94,7 @@ func NewAggregator[Input any, Output any](
 			logger.Error("task Response could not be converted to sdk aggregator's Task Response type")
 		}
 
-		return taskProcessor.ProcessTaskResponse(taskResponse)
+		return aggregatorProcessor.ProcessTaskResponse(taskResponse)
 	}
 
 	avsRegistryService := avsregistryservice.NewAvsRegistryServiceChainCaller(avsRegistryReader, operatorPubkeysService, logger)
@@ -118,7 +118,7 @@ func NewAggregator[Input any, Output any](
 		blsAggregationService: blsAggregationService,
 		newTaskCreatedLogs:    newTaskCreatedLogs,
 		taskManagerAbi:        taskManagerAbi,
-		taskProcessor:         taskProcessor,
+		aggregatorProcessor:   aggregatorProcessor,
 	}, nil
 }
 
@@ -168,7 +168,7 @@ func (agg *Aggregator[Input, Output]) run(ctx context.Context) error {
 }
 
 // When processing a new task event, the aggregator unpacks the log data into the new task created event and
-// sends it to the task processor
+// sends it to the aggregator processor
 func (agg *Aggregator[Input, Output]) processNewTask(log types.Log) (blsagg.TaskMetadata, error) {
 	var newTaskCreatedLog taskmanager.NewTaskCreatedEvent[Input]
 
@@ -184,7 +184,7 @@ func (agg *Aggregator[Input, Output]) processNewTask(log types.Log) (blsagg.Task
 
 	newTask := newTaskCreatedLog.Task
 
-	metadata, err := agg.taskProcessor.ProcessNewTask(newTaskIndex, newTask)
+	metadata, err := agg.aggregatorProcessor.ProcessNewTask(newTaskIndex, newTask)
 	if err != nil {
 		return blsagg.TaskMetadata{}, err
 	}
@@ -192,7 +192,7 @@ func (agg *Aggregator[Input, Output]) processNewTask(log types.Log) (blsagg.Task
 	return metadata, nil
 }
 
-// When processing an aggregated response, the aggregator delegates the processing to the task processor
+// When processing an aggregated response, the aggregator delegates the processing to the aggregator processor
 func (agg *Aggregator[Input, Output]) processAggregatedResponse(
 	response blsagg.BlsAggregationServiceResponse,
 ) error {
@@ -224,7 +224,7 @@ func (agg *Aggregator[Input, Output]) processAggregatedResponse(
 		agg.logger.Error("task Response could not be converted to sdk aggregator's Task Response type")
 	}
 
-	err := agg.taskProcessor.ProcessAggregatedResponse(response.TaskIndex, taskResponse, nonSignerStakesAndSignature)
+	err := agg.aggregatorProcessor.ProcessAggregatedResponse(response.TaskIndex, taskResponse, nonSignerStakesAndSignature)
 	if err != nil {
 		return utils.WrapError("Aggregator failed to respond to task", err)
 	}
