@@ -109,7 +109,7 @@ To create your Aggregator Processor you have to declare a struct that satisfies 
     }
 ```
 
-If you want to see an example of `AggregatorProcessor` you can watch our `IndexingAggregatorProcessor` on `aggregator/aggregator-processor/indexing_task_processor.go`.
+If you want to see an example of `AggregatorProcessor` you can watch our `IndexingAggregatorProcessor` on `aggregator/aggregator-processor/indexing_aggregator_processor.go`.
 
 The `AggregatorProcessor` interface has the following methods:
 
