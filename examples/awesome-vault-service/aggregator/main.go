@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/Layr-Labs/eigensdk-go/aggregator"
-	taskprocessor "github.com/Layr-Labs/eigensdk-go/aggregator/task-processor"
+	aggregatorprocessor "github.com/Layr-Labs/eigensdk-go/aggregator/aggregator-processor"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
@@ -59,7 +59,7 @@ func main() {
 	}
 	aggConfig := config.Config
 
-	// 2. Provide a Task Processor, first instantiating the things required for creating it
+	// 2. Provide an Aggregator Processor, first instantiating the things required for creating it
 
 	// i. Create the ethereum client that will send the RPC messages to the node, and the transaction
 	// manager, that will manage the transaction sending
@@ -103,17 +103,17 @@ func main() {
 		return
 	}
 
-	// iv. Create the Task Processor. Here we use the IndexingTaskProcessor, you can see its implementation
-	// in aggregator/task-processor/indexing_task_processor.go
-	taskProcessor, err := taskprocessor.NewIndexingTaskProcessor(logger, taskResponder)
+	// iv. Create the Aggregator Processor. Here we use the IndexingAggregatorProcessor, you can see its implementation
+	// in aggregator/aggregator-processor/indexing_aggregator_processor.go
+	aggregatorProcessor, err := aggregatorprocessor.NewIndexingAggregatorProcessor(logger, taskResponder)
 	if err != nil {
-		logger.Errorf("Failed to create Task Processor: %w", err)
+		logger.Errorf("Failed to create Aggregator Processor: %w", err)
 		return
 	}
 
-	// 3. Build the aggregator, providing aggregator config, logger, task processor and the task manager ABI, and
+	// 3. Build the aggregator, providing aggregator config, logger, aggregator processor and the task manager ABI, and
 	// then start it.
-	aggregator, err := aggregator.NewAggregator(logger, aggConfig, taskManagerAbi, taskProcessor)
+	aggregator, err := aggregator.NewAggregator(logger, aggConfig, taskManagerAbi, aggregatorProcessor)
 	if err != nil {
 		logger.Errorf("Failed to create aggregator: %w", err)
 		return
