@@ -88,6 +88,7 @@ func registerOperatorOnStartup(
 		ethRpcClient,
 		logger,
 		txMgr,
+		c.MetadataUrl,
 	)
 	if err != nil {
 		logger.Fatalf("Failed to register operator with EigenLayer on startup: %v", err.Error())
@@ -116,7 +117,7 @@ func registerOperatorOnStartup(
 		c.AvsAddress,
 		c.OperatorSetIds,
 		*blsKeyPair,
-		"",
+		c.Socket,
 	)
 	if err != nil {
 		logger.Fatalf("Failed to register operator for operator sets on startup: %v", err.Error())
@@ -128,7 +129,7 @@ func registerOperatorOnStartup(
 		ethRpcClient,
 		c.AllocationManagerAddr,
 		txMgr,
-		0,
+		c.AllocationDelay,
 	)
 	if err != nil {
 		logger.Fatalf("Failed to set allocation delay: %v", err.Error())
@@ -160,10 +161,12 @@ func RegisterOperatorWithEigenlayer(
 	ethClient *ethclient.Client,
 	logger logging.Logger,
 	txMgr txmgr.TxManager,
+	metadataUrl string,
 ) error {
 	op := types.Operator{
 		Address:                   operatorAddr.String(),
 		DelegationApproverAddress: operatorAddr.String(),
+		MetadataUrl:               metadataUrl,
 	}
 
 	elWriter, err := elcontracts.NewWriterFromConfig(elcontractsConfig, ethClient, logger, &metrics.EigenMetrics{}, txMgr)
