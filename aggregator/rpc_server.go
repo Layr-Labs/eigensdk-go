@@ -80,9 +80,9 @@ type SignedTaskResponse[Output any] struct {
 	OperatorId   sdktypes.OperatorId
 }
 
-// rpc endpoint which is called by operator
-// reply doesn't need to be checked. If there are no errors, the task response is accepted
-// rpc framework forces a reply type to exist, so we put bool as a placeholder
+// RPC endpoint which is called by operators.
+// Reply doesn't need to be checked. If there are no errors, the task response is accepted
+// RPC framework forces a reply type to exist, so we put bool as a placeholder.
 func (aggServ *AggregatorRpcServer[Input, Output]) ProcessSignedTaskResponse(signedTaskResponse *SignedTaskResponse[Output], reply *bool) error {
 	aggServ.logger.Infof("Received signed task response: %#v", signedTaskResponse)
 	taskIndex := signedTaskResponse.TaskResponse.ReferenceTaskIndex
