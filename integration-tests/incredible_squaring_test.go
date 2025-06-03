@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/Layr-Labs/eigensdk-go/aggregator"
-	taskprocessor "github.com/Layr-Labs/eigensdk-go/aggregator/task-processor"
+	aggregatorprocessor "github.com/Layr-Labs/eigensdk-go/aggregator/aggregator-processor"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/challenger"
 	challengerprocessor "github.com/Layr-Labs/eigensdk-go/challenger/challenger-processor"
@@ -140,10 +140,10 @@ func createIncredibleSquaringAggregator(t *testing.T, ethHttpUrl, ethWsUrl strin
 	)
 	require.NoError(t, err, "Failed to create Task Responder")
 
-	taskProcessor, err := taskprocessor.NewIndexingTaskProcessor(logger, taskResponder)
-	require.NoError(t, err, "Failed to create Task Processor")
+	aggregatorProcessor, err := aggregatorprocessor.NewIndexingAggregatorProcessor(logger, taskResponder)
+	require.NoError(t, err, "Failed to create Aggregator Processor")
 
-	aggregator, err := aggregator.NewAggregator(logger, cfg, taskManagerAbi, taskProcessor)
+	aggregator, err := aggregator.NewAggregator(logger, cfg, taskManagerAbi, aggregatorProcessor)
 	require.NoError(t, err, "Failed to create aggregator")
 
 	return aggregator
