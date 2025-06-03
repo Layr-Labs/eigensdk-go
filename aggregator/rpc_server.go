@@ -13,6 +13,26 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
+type AggregatorRpcServer[Input any, Output any] struct {
+	logger logging.Logger
+
+	// IP address and port where the aggregator will listen to operator task responses
+	serverIpPortAddr string
+
+	// BLS aggregation service
+	blsAggregationService blsagg.BlsAggregationService
+}
+
+func NewAggregatorRpcServer[Input any, Output any](
+	logger logging.Logger,
+	serverIpPortAddr string,
+) *AggregatorRpcServer[Input, Output] {
+	return &AggregatorRpcServer[Input, Output]{
+		logger:           logger,
+		serverIpPortAddr: serverIpPortAddr,
+	}
+}
+
 // When starting the server, the aggregator start listening at the address specified by config the calls to
 // the ProcessSignedTaskResponse method
 func (agg *Aggregator[Input, Output]) startServer(ctx context.Context) error {
