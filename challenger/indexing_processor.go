@@ -1,4 +1,4 @@
-package challengerprocessor
+package challenger
 
 import (
 	"fmt"
@@ -10,9 +10,9 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
-// The Indexing Challenger Processor is a generic implementation provided by the SDK
+// The Indexing Processor is a generic implementation provided by the SDK
 // Note: Do not confuse it with the aggregator module's IndexingProcessor struct
-type IndexingChallengerProcessor[Input any, Output any] struct {
+type IndexingProcessor[Input any, Output any] struct {
 	logger logging.Logger
 
 	// This function validates the task response submitted by the operators
@@ -25,13 +25,13 @@ type IndexingChallengerProcessor[Input any, Output any] struct {
 
 type ResponseValidationFunction[Input any, Output any] func(taskIndex uint32, input Input, output Output) (bool, error)
 
-// Creates an Indexing Challenger Processor from a logger, a response validation function and a challenger raiser.
-func NewIndexingChallengerProcessor[Input any, Output any](
+// Creates an Indexing Processor from a logger, a response validation function and a challenger raiser.
+func NewIndexingProcessor[Input any, Output any](
 	logger logging.Logger,
 	responseValidationFn ResponseValidationFunction[Input, Output],
 	challengerRaiser taskmanager.ChallengeRaiser[Input, Output],
-) (IndexingChallengerProcessor[Input, Output], error) {
-	return IndexingChallengerProcessor[Input, Output]{
+) (IndexingProcessor[Input, Output], error) {
+	return IndexingProcessor[Input, Output]{
 		logger:               logger,
 		responseValidationFn: responseValidationFn,
 		challengerRaiser:     challengerRaiser,
@@ -40,7 +40,7 @@ func NewIndexingChallengerProcessor[Input any, Output any](
 }
 
 // Processes a new task created event by saving the task in the tasks map
-func (icp IndexingChallengerProcessor[Input, Output]) ProcessNewTaskCreated(newTaskIndex uint32, newTask taskmanager.Task[Input]) error {
+func (icp IndexingProcessor[Input, Output]) ProcessNewTaskCreated(newTaskIndex uint32, newTask taskmanager.Task[Input]) error {
 	icp.tasks[newTaskIndex] = newTask
 
 	return nil
@@ -48,7 +48,7 @@ func (icp IndexingChallengerProcessor[Input, Output]) ProcessNewTaskCreated(newT
 
 // Processes a task responded event, by validating the received task response and raising a
 // challenge to the tak manager contract if needed
-func (icp IndexingChallengerProcessor[Input, Output]) ProcessTaskResponded(taskIndex uint32, taskResponse taskmanager.TaskResponse[Output], taskResponseMetadata sdktypes.TaskResponseMetadata, nonSigningOperatorPubKeys []sdktypes.BN254G1Point) error {
+func (icp IndexingProcessor[Input, Output]) ProcessTaskResponded(taskIndex uint32, taskResponse taskmanager.TaskResponse[Output], taskResponseMetadata sdktypes.TaskResponseMetadata, nonSigningOperatorPubKeys []sdktypes.BN254G1Point) error {
 	task, found := icp.tasks[taskIndex]
 	if !found {
 		return fmt.Errorf("could not find the task for the received task index")
