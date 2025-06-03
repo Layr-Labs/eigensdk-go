@@ -47,7 +47,7 @@ This flow ensures tasks are initialized, signatures collected, and the final res
             }
         ```
 
-2. **Provide a Task Processor**: Provide a struct implementing the `TaskProcessor` interface. This interface contains user-defined logic to handle new tasks, signed responses, and the final aggregated result. We provide a standard `IndexingTaskProcessor` implementation that can be used as is for most cases, you can create it using the `NewIndexingTaskProcessor` constructor from `taskprocessor` package:
+2. **Provide an Aggregator Processor**: Provide a struct implementing the `AggregatorProcessor` interface. This interface contains user-defined logic to handle new tasks, signed responses, and the final aggregated result. We provide a standard `IndexingAggregatorProcessor` implementation that can be used as is for most cases, you can create it using the `NewIndexingAggregatorProcessor` constructor from `aggregatorprocessor` package:
 
     1. Instantiate an Ethereum client and a transaction manager for the task responder:
 
@@ -75,16 +75,16 @@ This flow ensures tasks are initialized, signatures collected, and the final res
             )
         ```
 
-    4. Create the `IndexingTaskProcessor` with the `TaskResponder` created above:
+    4. Create the `IndexingAggregatorProcessor` with the `TaskResponder` created above:
 
         ```go
-            taskProcessor, err := taskprocessor.NewIndexingTaskProcessor(logger, taskResponder)
+            aggregatorProcessor, err := aggregatorprocessor.NewIndexingAggregatorProcessor(logger, taskResponder)
         ```
 
-3. **Run the aggregator**: Instantiate an `Aggregator` with the config, a logger, the task processor created above and the task manager contract ABI, and then start it:
+3. **Run the aggregator**: Instantiate an `Aggregator` with the config, a logger, the aggregator processor created above and the task manager contract ABI, and then start it:
 
     ``` go
-        agg, err := aggregator.NewAggregator(logger, cfg, taskManagerAbi, taskProcessor)
+        agg, err := aggregator.NewAggregator(logger, cfg, taskManagerAbi, aggregatorProcessor)
 
         err = <-agg.Start(context.Background())
     ```
@@ -97,21 +97,21 @@ Here are some examples of aggregator implementations:
 - [Incredible Dot Product](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-1/examples/incredible-dot-product/aggregator/main.go)
 - [Awesome Vault Service](https://github.com/Layr-Labs/eigensdk-go/blob/v2-dev-1/examples/awesome-vault-service/aggregator/main.go)
 
-## How to create your Task Processor
+## How to create your Aggregator Processor
 
-To create your Task Processor you have to declare a struct that satisfies the `TaskProcessor` interface:
+To create your Aggregator Processor you have to declare a struct that satisfies the `AggregatorProcessor` interface:
 
 ``` go
-    type TaskProcessor[Input any, Output any] interface {
+    type AggregatorProcessor[Input any, Output any] interface {
         ProcessNewTask(taskIndex sdktypes.TaskIndex, task taskmanager.Task[Input]) (blsagg.TaskMetadata, error)
         ProcessTaskResponse(taskResponse taskmanager.TaskResponse[Output]) ([32]byte, error)
         ProcessAggregatedResponse(taskIndex sdktypes.TaskIndex, taskResponse taskmanager.TaskResponse[Output], nonSignerStakesAndSignature sdktypes.NonSignerStakesAndSignature) error
     }
 ```
 
-If you want to see an example of `TaskProcessor` you can watch our `IndexingTaskProcessor` on `aggregator/task-processor/indexing_task_processor.go`.
+If you want to see an example of `AggregatorProcessor` you can watch our `IndexingAggregatorProcessor` on `aggregator/aggregator-processor/indexing_task_processor.go`.
 
-The `TaskProcessor` interface has the following methods:
+The `AggregatorProcessor` interface has the following methods:
 
 1. `ProcessNewTask`, that should:
 
