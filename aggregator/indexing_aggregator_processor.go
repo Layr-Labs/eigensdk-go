@@ -13,6 +13,7 @@ import (
 
 // The Indexing Processor is a generic implementation provided by the SDK that
 // satisfies the `Processor` interface expected by the `Aggregator`
+// Note: Do not confuse it with the challenger module's IndexingProcessor struct
 type IndexingProcessor[Input any, Output any] struct {
 	tasks   map[sdktypes.TaskIndex]taskmanager.Task[Input]
 	tasksMu sync.RWMutex
