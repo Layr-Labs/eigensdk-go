@@ -6,7 +6,6 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/challenger"
-	challengerprocessor "github.com/Layr-Labs/eigensdk-go/challenger/challenger-processor"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/operator"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
@@ -62,7 +61,7 @@ func main() {
 	// `ResponseCalculator` implementation, and then we use the ResponseValidationFunctionFromResponseCalculator,
 	// which creates a validation function that will compute the logic function to validate the response
 	squareCalculator := operator.NewFunctionResponseCalculator(examplecommon.Square)
-	squareValidation := challengerprocessor.ResponseValidationFunctionFromResponseCalculator(squareCalculator, common.BigIntEqual)
+	squareValidation := challenger.ResponseValidationFunctionFromResponseCalculator(squareCalculator, common.BigIntEqual)
 
 	// 3. Provide a struct implementing the `ChallengerProcessor` interface, first instantiating the values
 	// required for creating it
@@ -96,7 +95,7 @@ func main() {
 	}
 
 	// Create the Challenger Processor, with the challenger raiser created above.
-	indexingChallengerProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, squareValidation, challengeRaiser)
+	indexingChallengerProcessor, err := challenger.NewIndexingChallengerProcessor(logger, squareValidation, challengeRaiser)
 	if err != nil {
 		logger.Errorf("Failed to create challenger logic from config: %v", err)
 		return

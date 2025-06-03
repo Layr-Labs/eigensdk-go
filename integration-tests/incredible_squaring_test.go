@@ -10,7 +10,6 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/aggregator"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/challenger"
-	challengerprocessor "github.com/Layr-Labs/eigensdk-go/challenger/challenger-processor"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/operator"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
@@ -166,7 +165,7 @@ func createIncredibleSquaringChallenger(t *testing.T, ethHttpUrl, ethWsUrl strin
 	}
 
 	squareCalculator := operator.NewFunctionResponseCalculator(square)
-	squareValidation := challengerprocessor.ResponseValidationFunctionFromResponseCalculator(squareCalculator, func(a, b *big.Int) bool {
+	squareValidation := challenger.ResponseValidationFunctionFromResponseCalculator(squareCalculator, func(a, b *big.Int) bool {
 		return a.Cmp(b) == 0
 	})
 
@@ -184,7 +183,7 @@ func createIncredibleSquaringChallenger(t *testing.T, ethHttpUrl, ethWsUrl strin
 	)
 	require.NoError(t, err, "Failed to create challenge raiser")
 
-	indexingChallengerProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, squareValidation, challengeRaiser)
+	indexingChallengerProcessor, err := challenger.NewIndexingChallengerProcessor(logger, squareValidation, challengeRaiser)
 	require.NoError(t, err, "Failed to create indexing challenger processor")
 
 	challenger, err := challenger.NewChallenger(

@@ -5,7 +5,6 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/challenger"
-	challengerprocessor "github.com/Layr-Labs/eigensdk-go/challenger/challenger-processor"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
 	gethcommon "github.com/ethereum/go-ethereum/common"
@@ -59,7 +58,7 @@ func main() {
 	// `ResponseCalculator` implementation, and then we use the ResponseValidationFunctionFromResponseCalculator,
 	// which creates a validation function that will compute the logic function to validate the response
 	vaultServiceResponseCalc := examplecommon.NewVaultServiceResponseCalculator()
-	vaultSetValidation := challengerprocessor.ResponseValidationFunctionFromResponseCalculator(vaultServiceResponseCalc, func(a, b [32]byte) bool { return a == b })
+	vaultSetValidation := challenger.ResponseValidationFunctionFromResponseCalculator(vaultServiceResponseCalc, func(a, b [32]byte) bool { return a == b })
 
 	// 3. Provide a struct implementing the `ChallengerProcessor` interface, first instantiating the values
 	// required for creating it
@@ -94,7 +93,7 @@ func main() {
 	}
 
 	// Create the Challenger Processor, with the challenger raiser created above.
-	challengerProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, vaultSetValidation, challengeRaiser)
+	challengerProcessor, err := challenger.NewIndexingChallengerProcessor(logger, vaultSetValidation, challengeRaiser)
 	if err != nil {
 		logger.Errorf("Failed to create challenger processor: %v", err)
 		return
