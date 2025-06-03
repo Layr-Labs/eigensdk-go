@@ -232,13 +232,17 @@ func createIncredibleSquaringOperator(t *testing.T, ethHttpUrl, ethWsUrl string)
 		AllocationDelay: 0,
 	}
 
+	blsSignerConfig := operator.BlsSignerConfig{
+		BlsPrivateKeyStorePath: "../examples/incredible-squaring/keys/test.bls.key.json",
+		BlsPrivateKeyPassword:  "",
+	}
 	operatorConfig := operator.Config{
 		OperatorAddress:            "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
 		RegistryCoordinatorAddress: "0x7bc06c482dead17c0e297afbc32f6e63d3846650",
 		EthRpcUrl:                  ethHttpUrl,
 		EthWsUrl:                   ethWsUrl,
 		// Current dir is integration-tests
-		BlsPrivateKeyStorePath:        "../examples/incredible-squaring/keys/test.bls.key.json",
+		BlsSignerCfg:                  blsSignerConfig,
 		AggregatorServerIpPortAddress: "localhost:8090",
 		Registration:                  registrationConfig,
 	}
