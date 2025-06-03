@@ -2,6 +2,7 @@ package aggregator
 
 import (
 	"context"
+	"net"
 	"net/http"
 	"net/rpc"
 
@@ -9,21 +10,39 @@ import (
 	blsagg "github.com/Layr-Labs/eigensdk-go/services/bls_aggregation"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
+	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
 // When starting the server, the aggregator start listening at the address specified by config the calls to
 // the ProcessSignedTaskResponse method
-func (agg *Aggregator[Input, Output]) startServer(ctx context.Context) {
-	err := rpc.RegisterName("Aggregator", agg)
+func (agg *Aggregator[Input, Output]) startServer(ctx context.Context) error {
+	server := rpc.NewServer()
+	err := server.RegisterName("Aggregator", agg)
 	if err != nil {
-		agg.logger.Fatal("Format of service TaskManager isn't correct. ", "err", err)
+		return utils.WrapError("Error registering aggregator service (maybe the format of service task manager isn't correct)", err)
 	}
-	rpc.HandleHTTP()
 
-	err = http.ListenAndServe(agg.serverIpPortAddr, nil)
+	// TODO: Replace with http.ListenAndServe()
+	err = agg.listenAndServe(server)
 	if err != nil {
-		agg.logger.Fatal("ListenAndServe", "err", err)
+		return utils.WrapError("Failed to listen and serve", err)
 	}
+
+	return nil
+}
+
+func (agg *Aggregator[Input, Output]) listenAndServe(server *rpc.Server) error {
+	listener, err := net.Listen("tcp", agg.serverIpPortAddr)
+	if err != nil {
+		return utils.WrapError("Err wile listening", err)
+	}
+
+	err = http.Serve(listener, server)
+	if err != nil {
+		return utils.WrapError("Err while serving", err)
+	}
+
+	return nil
 }
 
 type SignedTaskResponse[Output any] struct {
