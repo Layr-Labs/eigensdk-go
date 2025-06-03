@@ -7,6 +7,7 @@ import (
 	"net/rpc"
 
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
+	"github.com/Layr-Labs/eigensdk-go/logging"
 	blsagg "github.com/Layr-Labs/eigensdk-go/services/bls_aggregation"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
@@ -26,24 +27,26 @@ type AggregatorRpcServer[Input any, Output any] struct {
 func NewAggregatorRpcServer[Input any, Output any](
 	logger logging.Logger,
 	serverIpPortAddr string,
+	blsAggregationService blsagg.BlsAggregationService,
 ) *AggregatorRpcServer[Input, Output] {
 	return &AggregatorRpcServer[Input, Output]{
-		logger:           logger,
-		serverIpPortAddr: serverIpPortAddr,
+		logger:                logger,
+		serverIpPortAddr:      serverIpPortAddr,
+		blsAggregationService: blsAggregationService,
 	}
 }
 
 // When starting the server, the aggregator start listening at the address specified by config the calls to
 // the ProcessSignedTaskResponse method
-func (agg *Aggregator[Input, Output]) startServer(ctx context.Context) error {
+func (aggServ *AggregatorRpcServer[Input, Output]) StartServer() error {
 	server := rpc.NewServer()
-	err := server.RegisterName("Aggregator", agg)
+	err := server.RegisterName("Aggregator", aggServ)
 	if err != nil {
 		return utils.WrapError("Error registering aggregator service (maybe the format of service task manager isn't correct)", err)
 	}
 
 	// TODO: Replace with http.ListenAndServe()
-	err = agg.listenAndServe(server)
+	err = aggServ.listenAndServe(server)
 	if err != nil {
 		return utils.WrapError("Failed to listen and serve", err)
 	}
@@ -51,8 +54,8 @@ func (agg *Aggregator[Input, Output]) startServer(ctx context.Context) error {
 	return nil
 }
 
-func (agg *Aggregator[Input, Output]) listenAndServe(server *rpc.Server) error {
-	listener, err := net.Listen("tcp", agg.serverIpPortAddr)
+func (aggServ *AggregatorRpcServer[Input, Output]) listenAndServe(server *rpc.Server) error {
+	listener, err := net.Listen("tcp", aggServ.serverIpPortAddr)
 	if err != nil {
 		return utils.WrapError("Err wile listening", err)
 	}
@@ -74,8 +77,8 @@ type SignedTaskResponse[Output any] struct {
 // rpc endpoint which is called by operator
 // reply doesn't need to be checked. If there are no errors, the task response is accepted
 // rpc framework forces a reply type to exist, so we put bool as a placeholder
-func (agg *Aggregator[Input, Output]) ProcessSignedTaskResponse(signedTaskResponse *SignedTaskResponse[Output], reply *bool) error {
-	agg.logger.Infof("Received signed task response: %#v", signedTaskResponse)
+func (aggServ *AggregatorRpcServer[Input, Output]) ProcessSignedTaskResponse(signedTaskResponse *SignedTaskResponse[Output], reply *bool) error {
+	aggServ.logger.Infof("Received signed task response: %#v", signedTaskResponse)
 	taskIndex := signedTaskResponse.TaskResponse.ReferenceTaskIndex
 
 	taskSignature := blsagg.NewTaskSignature(
@@ -85,7 +88,7 @@ func (agg *Aggregator[Input, Output]) ProcessSignedTaskResponse(signedTaskRespon
 		signedTaskResponse.OperatorId,
 	)
 
-	err := agg.blsAggregationService.ProcessNewSignature(context.Background(), taskSignature)
+	err := aggServ.blsAggregationService.ProcessNewSignature(context.Background(), taskSignature)
 
 	return err
 }
