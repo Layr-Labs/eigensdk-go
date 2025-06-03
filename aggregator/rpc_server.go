@@ -35,12 +35,15 @@ func (agg *Aggregator[Input, Output]) startServer(ctx context.Context) error {
 func (agg *Aggregator[Input, Output]) ListenAndServe(server *rpc.Server) error {
 	listener, err := net.Listen("tcp", agg.serverIpPortAddr)
 	if err != nil {
-		log.Fatal(err)
+		return utils.WrapError("Err wile listening", err)
 	}
 
 	err = http.Serve(listener, server)
+	if err != nil {
+		return utils.WrapError("Err while serving", err)
+	}
 
-	return err
+	return nil
 }
 
 type SignedTaskResponse[Output any] struct {
