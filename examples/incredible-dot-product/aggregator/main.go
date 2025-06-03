@@ -58,7 +58,7 @@ func main() {
 	}
 	aggConfig := config.Config
 
-	// 2. Provide an Processor, first instantiating the things required for creating it
+	// 2. Provide a Processor, first instantiating the things required for creating it
 
 	// i. Create the ethereum client that will send the RPC messages to the node, and the transaction
 	// manager, that will manage the transaction sending
