@@ -16,6 +16,8 @@ import (
 
 // The aggregator RPC server is responsible for receiving signed responses from the operators, and sending
 // those responses to the BLS aggregation service.
+// Warning: Public methods added to this struct may be exposed via RPC and accessible over the network.
+// Ensure that any exported method has proper validation as needed.
 type AggregatorRpcServer[Input any, Output any] struct {
 	logger logging.Logger
 
