@@ -6,6 +6,14 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+type BlsSignerConfig struct {
+	// The path to the location of the bls private key on local storage
+	BlsPrivateKeyStorePath string `toml:"bls_private_key_store_path"`
+
+	// The password used to get the private key on local storage
+	BlsPrivateKeyPassword string `toml:"bls_private_key_password"`
+}
+
 // Operator configuration struct
 type Config struct {
 	// The address for the operator
@@ -20,8 +28,8 @@ type Config struct {
 	// Ethereum WebSocket RPC URL to use for subscribing to on-chain events
 	EthWsUrl string `toml:"eth_ws_url"`
 
-	// The path to the location of the bls private key on local storage
-	BlsPrivateKeyStorePath string `toml:"bls_private_key_store_path"`
+	// The config used to create the BLS signer for the operator
+	BlsSignerCfg BlsSignerConfig `toml:"bls_signer"`
 
 	// IP address and port where the aggregator will listen to operator task responses
 	AggregatorServerIpPortAddress string `toml:"aggregator_server_ip_port"`
