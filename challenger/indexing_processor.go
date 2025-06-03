@@ -1,4 +1,4 @@
-package challengerprocessor
+package challenger
 
 import (
 	"fmt"
