@@ -23,7 +23,7 @@ func (agg *Aggregator[Input, Output]) startServer(ctx context.Context) error {
 	}
 
 	// TODO: Replace with http.ListenAndServe()
-	err = agg.ListenAndServe(server)
+	err = agg.listenAndServe(server)
 	if err != nil {
 		return utils.WrapError("Failed to listen and serve", err)
 	}
@@ -31,7 +31,7 @@ func (agg *Aggregator[Input, Output]) startServer(ctx context.Context) error {
 	return nil
 }
 
-func (agg *Aggregator[Input, Output]) ListenAndServe(server *rpc.Server) error {
+func (agg *Aggregator[Input, Output]) listenAndServe(server *rpc.Server) error {
 	listener, err := net.Listen("tcp", agg.serverIpPortAddr)
 	if err != nil {
 		return utils.WrapError("Err wile listening", err)
