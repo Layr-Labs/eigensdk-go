@@ -46,7 +46,8 @@ type Aggregator[Input any, Output any] struct {
 	taskProcessor taskprocessor.TaskProcessor[Input, Output]
 }
 
-// NewAggregator creates a new Aggregator with the provided config, a logger, a task processor and the task manager contract's ABI.
+// NewAggregator creates a new Aggregator with the provided config, a logger, a task processor and the task
+// manager contract's ABI.
 func NewAggregator[Input any, Output any](
 	logger logging.Logger,
 	c Config,

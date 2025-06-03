@@ -14,16 +14,20 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
+// The aggregator RPC server is responsible for receiving signed responses from the operators, and sending
+// those responses to the BLS aggregation service.
 type AggregatorRpcServer[Input any, Output any] struct {
 	logger logging.Logger
 
 	// IP address and port where the aggregator will listen to operator task responses
 	serverIpPortAddr string
 
-	// BLS aggregation service
+	// BLS aggregation service where the operator responses will be sent
 	blsAggregationService blsagg.BlsAggregationService
 }
 
+// NewAggregatorRpcServer creates a new AggregatorRpcServer with a logger, an IP addres and port and
+// the BLS aggregation service.
 func NewAggregatorRpcServer[Input any, Output any](
 	logger logging.Logger,
 	serverIpPortAddr string,
@@ -36,8 +40,8 @@ func NewAggregatorRpcServer[Input any, Output any](
 	}
 }
 
-// When starting the server, the aggregator start listening at the address specified by config the calls to
-// the ProcessSignedTaskResponse method
+// When starting the server, the aggregator RPC server start listening at the address specified by config
+// the calls to the ProcessSignedTaskResponse method
 func (aggServ *AggregatorRpcServer[Input, Output]) StartServer() error {
 	server := rpc.NewServer()
 	err := server.RegisterName("Aggregator", aggServ)
@@ -54,6 +58,8 @@ func (aggServ *AggregatorRpcServer[Input, Output]) StartServer() error {
 	return nil
 }
 
+// This function should be replaced by http.ListenAndServe() in a future. It listens for new connections
+// from operators, and will respond to calls to the ProcessSignedTaskResponse method
 func (aggServ *AggregatorRpcServer[Input, Output]) listenAndServe(server *rpc.Server) error {
 	listener, err := net.Listen("tcp", aggServ.serverIpPortAddr)
 	if err != nil {
