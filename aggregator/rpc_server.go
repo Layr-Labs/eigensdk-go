@@ -26,8 +26,8 @@ type AggregatorRpcServer[Input any, Output any] struct {
 	blsAggregationService blsagg.BlsAggregationService
 }
 
-// NewAggregatorRpcServer creates a new AggregatorRpcServer with a logger, an IP addres and port and
-// the BLS aggregation service.
+// NewAggregatorRpcServer creates a new AggregatorRpcServer with a logger, an IP address and port,
+// and the BLS aggregation service.
 func NewAggregatorRpcServer[Input any, Output any](
 	logger logging.Logger,
 	serverIpPortAddr string,
