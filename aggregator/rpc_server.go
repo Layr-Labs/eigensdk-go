@@ -40,8 +40,8 @@ func NewAggregatorRpcServer[Input any, Output any](
 	}
 }
 
-// When starting the server, the aggregator RPC server start listening at the address specified by config
-// the calls to the ProcessSignedTaskResponse method
+// When starting the server, the aggregator RPC server starts listening at the address specified by the
+// config for calls to the `ProcessSignedTaskResponse` method
 func (aggServ *AggregatorRpcServer[Input, Output]) StartServer() error {
 	server := rpc.NewServer()
 	err := server.RegisterName("Aggregator", aggServ)
