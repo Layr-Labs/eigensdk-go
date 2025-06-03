@@ -1,4 +1,4 @@
-package aggregatorprocessor
+package aggregator
 
 import (
 	blsagg "github.com/Layr-Labs/eigensdk-go/services/bls_aggregation"

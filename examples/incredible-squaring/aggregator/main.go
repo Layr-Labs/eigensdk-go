@@ -5,7 +5,6 @@ import (
 	"math/big"
 
 	"github.com/Layr-Labs/eigensdk-go/aggregator"
-	aggregatorprocessor "github.com/Layr-Labs/eigensdk-go/aggregator/aggregator-processor"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
@@ -94,8 +93,8 @@ func main() {
 	}
 
 	// iv. Create the Aggregator Processor. Here we use the IndexingAggregatorProcessor, you can see its implementation
-	// in aggregator/aggregator-processor/indexing_aggregator_processor.go
-	aggregatorProcessor, err := aggregatorprocessor.NewIndexingAggregatorProcessor(logger, taskResponder)
+	// in aggregator/indexing_processor.go
+	aggregatorProcessor, err := aggregator.NewIndexingAggregatorProcessor(logger, taskResponder)
 	if err != nil {
 		logger.Errorf("Failed to create Aggregator Processor: %w", err)
 		return

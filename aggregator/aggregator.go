@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/big"
 
-	aggregatorprocessor "github.com/Layr-Labs/eigensdk-go/aggregator/aggregator-processor"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
@@ -44,7 +43,7 @@ type Aggregator[Input any, Output any] struct {
 	// ABI of the task manager contract
 	taskManagerAbi *abi.ABI
 
-	aggregatorProcessor aggregatorprocessor.AggregatorProcessor[Input, Output]
+	aggregatorProcessor AggregatorProcessor[Input, Output]
 }
 
 // NewAggregator creates a new Aggregator with the provided config, a logger, an aggregator processor and the task manager contract's ABI.
@@ -52,7 +51,7 @@ func NewAggregator[Input any, Output any](
 	logger logging.Logger,
 	c Config,
 	taskManagerAbi *abi.ABI,
-	aggregatorProcessor aggregatorprocessor.AggregatorProcessor[Input, Output],
+	aggregatorProcessor AggregatorProcessor[Input, Output],
 ) (*Aggregator[Input, Output], error) {
 	avsRegistryConfig := avsregistry.Config{
 		RegistryCoordinatorAddress:    c.RegistryCoordinatorAddress,

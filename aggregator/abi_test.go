@@ -1,4 +1,4 @@
-package aggregatorprocessor
+package aggregator
 
 import (
 	"math/big"
