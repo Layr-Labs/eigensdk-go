@@ -8,8 +8,6 @@ operator_address = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
 registry_coordinator_address = "0xfd471836031dc5108809d173a067e8486b9047a3"
 token_strategy_addr = "0x2b961e3959b79326a8e7f64ef0d2d825707669b5"
 
-bls_private_key_store_path = "keys/test.bls.key.json"
-
 # Node URLs
 eth_http_url = "http://localhost:8545"
 eth_ws_url = "ws://localhost:8545"
@@ -25,6 +23,12 @@ time_between_tasks = 10_000_000_000 # This means 10 seconds
 quorum_threshold_percentage = 100
 
 quorum_number = [0]
+
+[bls_signer]
+
+bls_private_key_store_path = "keys/test.bls.key.json"
+
+bls_private_key_password = ""
 
 [registration]
 
