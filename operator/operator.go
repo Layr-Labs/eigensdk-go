@@ -53,8 +53,8 @@ type Operator[Input any, Output any] struct {
 // The function used to hash the task responses, receiving the generic sdk task response and returning the digest
 type TaskResponseHashFunction[Output any] func(taskResponse taskmanager.TaskResponse[Output]) ([32]byte, error)
 
-// NewOperatorFromConfig creates a new Operator with the provided config and the functions to calculate and hashing the response.
-func NewOperatorFromConfig[Input any, Output any](
+// NewOperator creates a new Operator with the provided config and the functions to calculate and hashing the response.
+func NewOperator[Input any, Output any](
 	logger logging.Logger,
 	c Config,
 	taskManagerAbi *abi.ABI,
