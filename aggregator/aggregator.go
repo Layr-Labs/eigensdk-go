@@ -32,9 +32,6 @@ import (
 type Aggregator[Input any, Output any] struct {
 	logger logging.Logger
 
-	// IP address and port where the aggregator will listen to operator task responses
-	serverIpPortAddr string
-
 	// BLS aggregation service
 	blsAggregationService blsagg.BlsAggregationService
 
@@ -118,7 +115,6 @@ func NewAggregator[Input any, Output any](
 
 	return &Aggregator[Input, Output]{
 		logger:                logger,
-		serverIpPortAddr:      c.AggregatorServerIpPortAddr,
 		blsAggregationService: blsAggregationService,
 		newTaskCreatedLogs:    newTaskCreatedLogs,
 		taskManagerAbi:        taskManagerAbi,
