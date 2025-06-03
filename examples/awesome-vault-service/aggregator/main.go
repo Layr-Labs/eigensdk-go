@@ -58,7 +58,7 @@ func main() {
 	}
 	aggConfig := config.Config
 
-	// 2. Provide an Aggregator Processor, first instantiating the things required for creating it
+	// 2. Provide a Processor, first instantiating the things required for creating it
 
 	// i. Create the ethereum client that will send the RPC messages to the node, and the transaction
 	// manager, that will manage the transaction sending
@@ -102,17 +102,17 @@ func main() {
 		return
 	}
 
-	// iv. Create the Aggregator Processor. Here we use the IndexingAggregatorProcessor, you can see its implementation
+	// iv. Create the Processor. Here we use the IndexingProcessor, you can see its implementation
 	// in aggregator/indexing_processor.go
-	aggregatorProcessor, err := aggregator.NewIndexingAggregatorProcessor(logger, taskResponder)
+	processor, err := aggregator.NewIndexingProcessor(logger, taskResponder)
 	if err != nil {
-		logger.Errorf("Failed to create Aggregator Processor: %w", err)
+		logger.Errorf("Failed to create Processor: %w", err)
 		return
 	}
 
-	// 3. Build the aggregator, providing aggregator config, logger, aggregator processor and the task manager ABI, and
+	// 3. Build the aggregator, providing aggregator config, logger, processor and the task manager ABI, and
 	// then start it.
-	aggregator, err := aggregator.NewAggregator(logger, aggConfig, taskManagerAbi, aggregatorProcessor)
+	aggregator, err := aggregator.NewAggregator(logger, aggConfig, taskManagerAbi, processor)
 	if err != nil {
 		logger.Errorf("Failed to create aggregator: %w", err)
 		return

@@ -11,9 +11,9 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/utils"
 )
 
-// The Indexing Aggregator Processor is a generic implementation provided by the SDK that
-// satisfies the `AggregatorProcessor` interface expected by the `Aggregator`
-type IndexingAggregatorProcessor[Input any, Output any] struct {
+// The Indexing Processor is a generic implementation provided by the SDK that
+// satisfies the `Processor` interface expected by the `Aggregator`
+type IndexingProcessor[Input any, Output any] struct {
 	tasks   map[sdktypes.TaskIndex]taskmanager.Task[Input]
 	tasksMu sync.RWMutex
 
@@ -30,12 +30,12 @@ const (
 	blockTimeSeconds         = 12 * time.Second
 )
 
-// Creates an Indexing Aggregator Processor from a logger and a task responder.
-func NewIndexingAggregatorProcessor[Input any, Output any](
+// Creates an Indexing Processor from a logger and a task responder.
+func NewIndexingProcessor[Input any, Output any](
 	logger logging.Logger,
 	taskResponder taskmanager.TaskResponder[Input, Output],
-) (*IndexingAggregatorProcessor[Input, Output], error) {
-	return &IndexingAggregatorProcessor[Input, Output]{
+) (*IndexingProcessor[Input, Output], error) {
+	return &IndexingProcessor[Input, Output]{
 		tasks:         make(map[sdktypes.TaskIndex]taskmanager.Task[Input]),
 		taskResponder: taskResponder,
 		logger:        logger,
@@ -44,11 +44,11 @@ func NewIndexingAggregatorProcessor[Input any, Output any](
 
 // Processes a new task, saving it in the tasks map and creating the metadata for the BLS aggregation
 // service, which it returns
-func (itp *IndexingAggregatorProcessor[Input, Output]) ProcessNewTask(
+func (itp *IndexingProcessor[Input, Output]) ProcessNewTask(
 	taskIndex sdktypes.TaskIndex,
 	task taskmanager.Task[Input],
 ) (blsagg.TaskMetadata, error) {
-	itp.logger.Infof("Indexing aggregator processor received new task: %v: ", task)
+	itp.logger.Infof("Indexing processor received new task: %v: ", task)
 
 	itp.tasksMu.Lock()
 	itp.tasks[taskIndex] = task
@@ -79,13 +79,13 @@ func (itp *IndexingAggregatorProcessor[Input, Output]) ProcessNewTask(
 }
 
 // Processes a Task response, delegating the hashing of the response to the Task responder.
-func (itp *IndexingAggregatorProcessor[Input, Output]) ProcessTaskResponse(taskResponse taskmanager.TaskResponse[Output]) ([32]byte, error) {
+func (itp *IndexingProcessor[Input, Output]) ProcessTaskResponse(taskResponse taskmanager.TaskResponse[Output]) ([32]byte, error) {
 	return itp.taskResponder.HashTaskResponse(taskResponse)
 }
 
 // Processes an aggregated response, creating the required types and sending them to the on-chain Task Manager contract. After
 // sending the response, deletes the completed task from the tasks map.
-func (itp *IndexingAggregatorProcessor[Input, Output]) ProcessAggregatedResponse(
+func (itp *IndexingProcessor[Input, Output]) ProcessAggregatedResponse(
 	taskIndex sdktypes.TaskIndex,
 	taskResponse taskmanager.TaskResponse[Output],
 	nonSignerStakesAndSignature sdktypes.NonSignerStakesAndSignature,

@@ -139,8 +139,8 @@ func createIncredibleSquaringAggregator(t *testing.T, ethHttpUrl, ethWsUrl strin
 	)
 	require.NoError(t, err, "Failed to create Task Responder")
 
-	aggregatorProcessor, err := aggregator.NewIndexingAggregatorProcessor(logger, taskResponder)
-	require.NoError(t, err, "Failed to create Aggregator Processor")
+	aggregatorProcessor, err := aggregator.NewIndexingProcessor(logger, taskResponder)
+	require.NoError(t, err, "Failed to create Processor")
 
 	aggregator, err := aggregator.NewAggregator(logger, cfg, taskManagerAbi, aggregatorProcessor)
 	require.NoError(t, err, "Failed to create aggregator")
