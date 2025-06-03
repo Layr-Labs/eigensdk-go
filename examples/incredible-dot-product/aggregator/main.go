@@ -104,7 +104,7 @@ func main() {
 
 	// iv. Create the Processor. Here we use the IndexingProcessor, you can see its implementation
 	// in aggregator/indexing_processor.go
-	processor, err := aggregator.NewIndexingProcessor(logger, taskResponder)
+	aggregatorProcessor, err := aggregator.NewIndexingProcessor(logger, taskResponder)
 	if err != nil {
 		logger.Errorf("Failed to create Processor: %w", err)
 		return
@@ -112,7 +112,7 @@ func main() {
 
 	// 3. Build the aggregator, providing aggregator config, logger, processor and the task manager ABI, and
 	// then start it.
-	aggregator, err := aggregator.NewAggregator(logger, aggConfig, taskManagerAbi, processor)
+	aggregator, err := aggregator.NewAggregator(logger, aggConfig, taskManagerAbi, aggregatorProcessor)
 	if err != nil {
 		logger.Errorf("Failed to create aggregator: %w", err)
 		return
