@@ -78,10 +78,14 @@ func NewOperator[Input any, Output any](
 		return nil, err
 	}
 
-	blsKeyPair, err := bls.ReadPrivateKeyFromFile(c.BlsSignerCfg.BlsPrivateKeyStorePath, c.BlsSignerCfg.BlsPrivateKeyPassword)
-	if err != nil {
-		logger.Errorf("Cannot parse bls private key", "err", err)
-		return nil, err
+	blsKeyPair := c.BlsSignerCfg.BlsKeyPair
+	if blsKeyPair == nil {
+		logger.Info("Bls Key pair was nil, using the private key store path and password params...")
+		blsKeyPair, err = bls.ReadPrivateKeyFromFile(c.BlsSignerCfg.BlsPrivateKeyStorePath, c.BlsSignerCfg.BlsPrivateKeyPassword)
+		if err != nil {
+			logger.Errorf("Cannot parse bls private key", "err", err)
+			return nil, err
+		}
 	}
 
 	// Check if operator was registered, if its not registered and register on startup flag is not set, then will fail.
