@@ -227,6 +227,10 @@ func createIncredibleSquaringOperator(t *testing.T, ethHttpUrl, ethWsUrl string)
 		AllocatableMagnitudes: []uint64{1000000000000000},
 
 		OperatorSetIds: []uint32{0},
+
+		MetadataUrl:     "",
+		Socket:          "",
+		AllocationDelay: 0,
 	}
 
 	operatorConfig := operator.Config{
