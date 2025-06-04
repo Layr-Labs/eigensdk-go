@@ -31,6 +31,8 @@ type Config struct {
 	Registration RegistrationConfig `toml:"registration"`
 }
 
+// We use the go-ethereum keystore package to encrypt/decrypt the private keys, more specifically the V3 encryption,
+// so to see the supported or unsuported keystore formats refer to the geth keystore package documentation.
 type BlsSignerConfig struct {
 	// The path to the location of the bls private key on local storage
 	KeystorePath string `toml:"keystore_path"`
