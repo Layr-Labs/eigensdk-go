@@ -26,9 +26,9 @@ quorum_number = [0]
 
 [bls_signer]
 
-bls_private_key_store_path = "keys/test.bls.key.json"
+keystore_path = "keys/test.bls.key.json"
 
-bls_private_key_password = ""
+keystore_password = ""
 
 [registration]
 
