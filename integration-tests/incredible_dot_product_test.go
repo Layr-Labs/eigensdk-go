@@ -8,10 +8,8 @@ import (
 	"time"
 
 	"github.com/Layr-Labs/eigensdk-go/aggregator"
-	taskprocessor "github.com/Layr-Labs/eigensdk-go/aggregator/task-processor"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/challenger"
-	challengerprocessor "github.com/Layr-Labs/eigensdk-go/challenger/challenger-processor"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/operator"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
@@ -144,10 +142,10 @@ func createIncredibleDotProductAggregator(t *testing.T, ethHttpUrl, ethWsUrl str
 	)
 	require.NoError(t, err, "Failed to create Task Responder")
 
-	taskProcessor, err := taskprocessor.NewIndexingTaskProcessor(logger, taskResponder)
-	require.NoError(t, err, "Failed to create Task Processor")
+	aggregatorProcessor, err := aggregator.NewIndexingProcessor(logger, taskResponder)
+	require.NoError(t, err, "Failed to create Aggregator Processor")
 
-	aggregator, err := aggregator.NewAggregator(logger, cfg, taskManagerAbi, taskProcessor)
+	aggregator, err := aggregator.NewAggregator(logger, cfg, taskManagerAbi, aggregatorProcessor)
 	require.NoError(t, err, "Failed to create aggregator")
 
 	return aggregator
@@ -171,7 +169,7 @@ func createIncredibleDotProductChallenger(t *testing.T, ethHttpUrl, ethWsUrl str
 	}
 
 	dotProductCalculator := operator.NewFunctionResponseCalculator(dotProduct)
-	dotProductValidation := challengerprocessor.ResponseValidationFunctionFromResponseCalculator(dotProductCalculator, func(a, b *big.Int) bool {
+	dotProductValidation := challenger.ResponseValidationFunctionFromResponseCalculator(dotProductCalculator, func(a, b *big.Int) bool {
 		return a.Cmp(b) == 0
 	})
 
@@ -189,14 +187,14 @@ func createIncredibleDotProductChallenger(t *testing.T, ethHttpUrl, ethWsUrl str
 	)
 	require.NoError(t, err, "Failed to create challenge raiser")
 
-	indexingChallengerProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, dotProductValidation, challengeRaiser)
-	require.NoError(t, err, "Failed to create indexing challenger processor")
+	challengerProcessor, err := challenger.NewIndexingProcessor(logger, dotProductValidation, challengeRaiser)
+	require.NoError(t, err, "Failed to create challenger processor")
 
 	challenger, err := challenger.NewChallenger(
 		logger,
 		challengerCfg,
 		taskManagerAbi,
-		indexingChallengerProcessor,
+		challengerProcessor,
 	)
 	require.NoError(t, err, "Failed to create challenger from config")
 
@@ -247,7 +245,7 @@ func createIncredibleDotProductOperator(t *testing.T, ethHttpUrl, ethWsUrl strin
 
 	calculator := operator.NewFunctionResponseCalculator(dotProduct)
 
-	operator, err := operator.NewOperatorFromConfig(logger, operatorConfig, taskManagerAbi, calculator, nil)
+	operator, err := operator.NewOperator(logger, operatorConfig, taskManagerAbi, calculator, nil)
 	require.NoError(t, err, "Failed to create operator from config")
 
 	return operator
