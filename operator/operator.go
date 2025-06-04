@@ -81,7 +81,7 @@ func NewOperator[Input any, Output any](
 	blsKeyPair := c.BlsSignerCfg.BlsKeyPair
 	if blsKeyPair == nil {
 		logger.Info("Bls Key pair was nil, using the private key store path and password params...")
-		blsKeyPair, err = bls.ReadPrivateKeyFromFile(c.BlsSignerCfg.BlsPrivateKeyStorePath, c.BlsSignerCfg.BlsPrivateKeyPassword)
+		blsKeyPair, err = bls.ReadPrivateKeyFromFile(c.BlsSignerCfg.KeystorePath, c.BlsSignerCfg.KeystorePassword)
 		if err != nil {
 			logger.Errorf("Cannot parse bls private key", "err", err)
 			return nil, err
