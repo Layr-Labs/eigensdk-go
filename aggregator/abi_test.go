@@ -1,4 +1,4 @@
-package taskprocessor
+package aggregator
 
 import (
 	"math/big"

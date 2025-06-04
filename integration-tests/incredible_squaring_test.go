@@ -8,10 +8,8 @@ import (
 	"time"
 
 	"github.com/Layr-Labs/eigensdk-go/aggregator"
-	taskprocessor "github.com/Layr-Labs/eigensdk-go/aggregator/task-processor"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/challenger"
-	challengerprocessor "github.com/Layr-Labs/eigensdk-go/challenger/challenger-processor"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/operator"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
@@ -140,10 +138,10 @@ func createIncredibleSquaringAggregator(t *testing.T, ethHttpUrl, ethWsUrl strin
 	)
 	require.NoError(t, err, "Failed to create Task Responder")
 
-	taskProcessor, err := taskprocessor.NewIndexingTaskProcessor(logger, taskResponder)
-	require.NoError(t, err, "Failed to create Task Processor")
+	aggregatorProcessor, err := aggregator.NewIndexingProcessor(logger, taskResponder)
+	require.NoError(t, err, "Failed to create Processor")
 
-	aggregator, err := aggregator.NewAggregator(logger, cfg, taskManagerAbi, taskProcessor)
+	aggregator, err := aggregator.NewAggregator(logger, cfg, taskManagerAbi, aggregatorProcessor)
 	require.NoError(t, err, "Failed to create aggregator")
 
 	return aggregator
@@ -167,7 +165,7 @@ func createIncredibleSquaringChallenger(t *testing.T, ethHttpUrl, ethWsUrl strin
 	}
 
 	squareCalculator := operator.NewFunctionResponseCalculator(square)
-	squareValidation := challengerprocessor.ResponseValidationFunctionFromResponseCalculator(squareCalculator, func(a, b *big.Int) bool {
+	squareValidation := challenger.ResponseValidationFunctionFromResponseCalculator(squareCalculator, func(a, b *big.Int) bool {
 		return a.Cmp(b) == 0
 	})
 
@@ -185,14 +183,14 @@ func createIncredibleSquaringChallenger(t *testing.T, ethHttpUrl, ethWsUrl strin
 	)
 	require.NoError(t, err, "Failed to create challenge raiser")
 
-	indexingChallengerProcessor, err := challengerprocessor.NewIndexingChallengerProcessor(logger, squareValidation, challengeRaiser)
-	require.NoError(t, err, "Failed to create indexing challenger processor")
+	challengerProcessor, err := challenger.NewIndexingProcessor(logger, squareValidation, challengeRaiser)
+	require.NoError(t, err, "Failed to create challenger processor")
 
 	challenger, err := challenger.NewChallenger(
 		logger,
 		challengerCfg,
 		taskManagerAbi,
-		indexingChallengerProcessor,
+		challengerProcessor,
 	)
 	require.NoError(t, err, "Failed to create challenger from config")
 
@@ -228,6 +226,10 @@ func createIncredibleSquaringOperator(t *testing.T, ethHttpUrl, ethWsUrl string)
 		AllocatableMagnitudes: []uint64{1000000000000000},
 
 		OperatorSetIds: []uint32{0},
+
+		MetadataUrl:     "",
+		Socket:          "",
+		AllocationDelay: 0,
 	}
 
 	operatorConfig := operator.Config{
@@ -243,7 +245,7 @@ func createIncredibleSquaringOperator(t *testing.T, ethHttpUrl, ethWsUrl string)
 
 	calculator := operator.NewFunctionResponseCalculator(square)
 
-	operator, err := operator.NewOperatorFromConfig(logger, operatorConfig, taskManagerAbi, calculator, nil)
+	operator, err := operator.NewOperator(logger, operatorConfig, taskManagerAbi, calculator, nil)
 	require.NoError(t, err, "Failed to create operator from config")
 
 	return operator

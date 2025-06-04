@@ -83,7 +83,7 @@ The Operator functions through the following flow:
 6. **Run the operator**: Initialize the `Operator` with the configuration and the processing logic. Then start the operator.
 
    ```go
-      operator, err := operator.NewOperatorFromConfig(logger, operatorConfig, taskManagerAbi, logic, nil)
+      operator, err := operator.NewOperator(logger, operatorConfig, taskManagerAbi, logic, nil)
       if err != nil {
          logger.Errorf("Failed to create operator from config: %v", err)
          return

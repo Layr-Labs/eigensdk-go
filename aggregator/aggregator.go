@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/big"
 
-	taskprocessor "github.com/Layr-Labs/eigensdk-go/aggregator/task-processor"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
@@ -27,13 +26,10 @@ import (
 //   - Receiving signed responses from the operators.
 //   - Sending the aggregated responses to the `TaskManager` contract
 //
-// Most of these things are delegated to the `TaskProcessor` interface, that processes
+// Most of these things are delegated to the `Processor` interface, that processes
 // tasks and communicates with the on-chain `TaskManager` contract.
 type Aggregator[Input any, Output any] struct {
 	logger logging.Logger
-
-	// IP address and port where the aggregator will listen to operator task responses
-	serverIpPortAddr string
 
 	// BLS aggregation service
 	blsAggregationService blsagg.BlsAggregationService
@@ -44,15 +40,17 @@ type Aggregator[Input any, Output any] struct {
 	// ABI of the task manager contract
 	taskManagerAbi *abi.ABI
 
-	taskProcessor taskprocessor.TaskProcessor[Input, Output]
+	aggregatorRpcServer *AggregatorRpcServer[Input, Output]
+
+	processor Processor[Input, Output]
 }
 
-// NewAggregator creates a new Aggregator with the provided config, a logger, a task processor and the task manager contract's ABI.
+// NewAggregator creates a new Aggregator with the provided config, a logger, a processor and the task manager contract's ABI.
 func NewAggregator[Input any, Output any](
 	logger logging.Logger,
 	c Config,
 	taskManagerAbi *abi.ABI,
-	taskProcessor taskprocessor.TaskProcessor[Input, Output],
+	processor Processor[Input, Output],
 ) (*Aggregator[Input, Output], error) {
 	avsRegistryConfig := avsregistry.Config{
 		RegistryCoordinatorAddress:    c.RegistryCoordinatorAddress,
@@ -94,7 +92,7 @@ func NewAggregator[Input any, Output any](
 			logger.Error("task Response could not be converted to sdk aggregator's Task Response type")
 		}
 
-		return taskProcessor.ProcessTaskResponse(taskResponse)
+		return processor.ProcessTaskResponse(taskResponse)
 	}
 
 	avsRegistryService := avsregistryservice.NewAvsRegistryServiceChainCaller(avsRegistryReader, operatorPubkeysService, logger)
@@ -112,13 +110,15 @@ func NewAggregator[Input any, Output any](
 		logger.Fatal("error subscribing to newTaskCreated events", "err", err)
 	}
 
+	rpcServer := NewAggregatorRpcServer[Input, Output](logger, c.AggregatorServerIpPortAddr, blsAggregationService)
+
 	return &Aggregator[Input, Output]{
 		logger:                logger,
-		serverIpPortAddr:      c.AggregatorServerIpPortAddr,
 		blsAggregationService: blsAggregationService,
 		newTaskCreatedLogs:    newTaskCreatedLogs,
 		taskManagerAbi:        taskManagerAbi,
-		taskProcessor:         taskProcessor,
+		processor:             processor,
+		aggregatorRpcServer:   rpcServer,
 	}, nil
 }
 
@@ -145,7 +145,7 @@ func (agg *Aggregator[Input, Output]) run(ctx context.Context) error {
 
 	serverErrorChannel := make(chan error)
 	go func() {
-		serverErrorChannel <- agg.startServer(ctx)
+		serverErrorChannel <- agg.aggregatorRpcServer.StartServer()
 	}()
 
 	for {
@@ -174,7 +174,7 @@ func (agg *Aggregator[Input, Output]) run(ctx context.Context) error {
 }
 
 // When processing a new task event, the aggregator unpacks the log data into the new task created event and
-// sends it to the task processor
+// sends it to the processor
 func (agg *Aggregator[Input, Output]) processNewTask(log types.Log) (blsagg.TaskMetadata, error) {
 	var newTaskCreatedLog taskmanager.NewTaskCreatedEvent[Input]
 
@@ -190,7 +190,7 @@ func (agg *Aggregator[Input, Output]) processNewTask(log types.Log) (blsagg.Task
 
 	newTask := newTaskCreatedLog.Task
 
-	metadata, err := agg.taskProcessor.ProcessNewTask(newTaskIndex, newTask)
+	metadata, err := agg.processor.ProcessNewTask(newTaskIndex, newTask)
 	if err != nil {
 		return blsagg.TaskMetadata{}, err
 	}
@@ -198,7 +198,7 @@ func (agg *Aggregator[Input, Output]) processNewTask(log types.Log) (blsagg.Task
 	return metadata, nil
 }
 
-// When processing an aggregated response, the aggregator delegates the processing to the task processor
+// When processing an aggregated response, the aggregator delegates the processing to the processor
 func (agg *Aggregator[Input, Output]) processAggregatedResponse(
 	response blsagg.BlsAggregationServiceResponse,
 ) error {
@@ -230,7 +230,7 @@ func (agg *Aggregator[Input, Output]) processAggregatedResponse(
 		agg.logger.Error("task Response could not be converted to sdk aggregator's Task Response type")
 	}
 
-	err := agg.taskProcessor.ProcessAggregatedResponse(response.TaskIndex, taskResponse, nonSignerStakesAndSignature)
+	err := agg.processor.ProcessAggregatedResponse(response.TaskIndex, taskResponse, nonSignerStakesAndSignature)
 	if err != nil {
 		return utils.WrapError("Aggregator failed to respond to task", err)
 	}

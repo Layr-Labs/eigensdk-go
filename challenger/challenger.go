@@ -15,25 +15,17 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-// The Challenger processor is responsible for processing the challenges
-type ChallengerProcessor[Input any, Output any] interface {
-	// Processes new tasks, returns an error in case of failure
-	ProcessNewTaskCreated(taskIndex uint32, task taskmanager.Task[Input]) error
-	// Processes task responses, returns an error in case of failure
-	ProcessTaskResponded(taskIndex uint32, taskResponse taskmanager.TaskResponse[Output], taskResponseMetadata sdktypes.TaskResponseMetadata, nonSigningOperatorPubKeys []sdktypes.BN254G1Point) error
-}
-
 // The challenger is the entity responsible of validating the task responsed submitted by the BLS aggregation
 // service and emited by the Task Manager on-chain contract in the TaskResponded event. To do that will need
 // To listen to new task created events (to register the new tasks) and task responded events (to validate
 // those task responses).
-// Most of these things are delegated to the Challenger Processor interface, that process challenges and
+// Most of these things are delegated to the Processor interface, that process challenges and
 // communicates with the on-chain task manager contract when raising a challenge.
 type Challenger[Input any, Output any] struct {
 	logger logging.Logger
 
 	// The responsible for processing the challenges
-	challengerProcessor ChallengerProcessor[Input, Output]
+	processor Processor[Input, Output]
 
 	// channel that receives task responded event logs
 	taskResponseChan chan types.Log
@@ -47,12 +39,12 @@ type Challenger[Input any, Output any] struct {
 	ethClient *ethclient.Client
 }
 
-// NewChallenger creates a new Aggregator with the provided config and a challenger processor.
+// NewChallenger creates a new Aggregator with the provided config and a processor.
 func NewChallenger[Input any, Output any](
 	logger logging.Logger,
 	c Config,
 	taskManagerAbi *abi.ABI,
-	challengerProcessor ChallengerProcessor[Input, Output],
+	processor Processor[Input, Output],
 ) (*Challenger[Input, Output], error) {
 	client, err := ethclient.Dial(c.EthWsUrl)
 	if err != nil {
@@ -86,12 +78,12 @@ func NewChallenger[Input any, Output any](
 	}
 
 	return &Challenger[Input, Output]{
-		logger:              logger,
-		challengerProcessor: challengerProcessor,
-		newTaskCreatedChan:  newTaskCreatedLogs,
-		taskResponseChan:    taskRespondedLogs,
-		taskManagerAbi:      taskManagerAbi,
-		ethClient:           ethClient,
+		logger:             logger,
+		processor:          processor,
+		newTaskCreatedChan: newTaskCreatedLogs,
+		taskResponseChan:   taskRespondedLogs,
+		taskManagerAbi:     taskManagerAbi,
+		ethClient:          ethClient,
 	}, nil
 }
 
@@ -137,7 +129,7 @@ func (c *Challenger[Input, Output]) run(ctx context.Context) error {
 }
 
 // When processing a new task created log, the aggregator unpacks the log data into the new task created event and
-// sends it to the challenger processor
+// sends it to the processor
 func (c *Challenger[Input, Output]) processNewTaskCreatedLog(log types.Log) error {
 	var newTaskCreatedLog taskmanager.NewTaskCreatedEvent[Input]
 
@@ -148,7 +140,7 @@ func (c *Challenger[Input, Output]) processNewTaskCreatedLog(log types.Log) erro
 
 	newTaskIndex := uint32(new(big.Int).SetBytes(log.Topics[1].Bytes()).Uint64())
 
-	err = c.challengerProcessor.ProcessNewTaskCreated(newTaskIndex, newTaskCreatedLog.Task)
+	err = c.processor.ProcessNewTaskCreated(newTaskIndex, newTaskCreatedLog.Task)
 	if err != nil {
 		return fmt.Errorf("error processing new task created: %w", err)
 	}
@@ -157,7 +149,7 @@ func (c *Challenger[Input, Output]) processNewTaskCreatedLog(log types.Log) erro
 }
 
 // When processing a task responded log, the challenger unpacks the log data into the task responded event and
-// checks if it has to raise a challenge delegating it to the challenger processor
+// checks if it has to raise a challenge delegating it to the processor
 func (c *Challenger[Input, Output]) processTaskRespondedLog(
 	log types.Log,
 ) error {
@@ -173,7 +165,7 @@ func (c *Challenger[Input, Output]) processTaskRespondedLog(
 	// get the inputs necessary for raising a challenge
 	nonSigningOperatorPubKeys := c.getNonSigningOperatorPubKeys(log.TxHash)
 
-	err = c.challengerProcessor.ProcessTaskResponded(
+	err = c.processor.ProcessTaskResponded(
 		taskIndex,
 		taskRespondedLog.TaskResponse,
 		taskRespondedLog.TaskResponseMetadata,

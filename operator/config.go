@@ -61,4 +61,13 @@ type RegistrationConfig struct {
 
 	// The IDs of the operator sets to be registered
 	OperatorSetIds []uint32 `toml:"operator_set_ids"`
+
+	// The operator metadata url to be set in eigenlayer registration
+	MetadataUrl string `toml:"metadata_url"`
+
+	// The socket used in the operator set registration request
+	Socket string `toml:"socket"`
+
+	// The allocation delay set for the operator, set as zero for immediate allocation
+	AllocationDelay uint32 `toml:"allocation_delay"`
 }
