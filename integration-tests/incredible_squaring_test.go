@@ -83,8 +83,8 @@ func TestIncredibleSquaring(t *testing.T) {
 			t.Fatal("Task Spammer error:", err)
 		}
 	case <-timer.C:
-		// Time passed, so we can stop the test
-		cancel()
+		// If reached this point, there must be a problem with the tasks generation.
+		t.Fatal("Timer expired before the task spammer finished sending tasks")
 	}
 
 	taskIndex, err := taskManager.TaskNumber(&bind.CallOpts{})
