@@ -31,6 +31,9 @@ type Config struct {
 	Registration RegistrationConfig `toml:"registration"`
 }
 
+// For the BLS signing we accept two different options:
+// - If the key pair is provided, we use that pair
+// - If not, we use the specified keystore path and the password.
 // We use the go-ethereum keystore package to encrypt/decrypt the private keys, more specifically the V3 encryption,
 // so to see the supported or unsuported keystore formats refer to the geth keystore package documentation.
 type BlsSignerConfig struct {
