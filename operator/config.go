@@ -37,7 +37,7 @@ type BlsSignerConfig struct {
 	// Path to the BLS keystore on local storage
 	KeystorePath string `toml:"keystore_path"`
 
-	// The password used to get the private key on local storage
+	// Password for the keystore
 	KeystorePassword string `toml:"keystore_password"`
 
 	// The bls Key Pair, if nil will use the store path and password above
