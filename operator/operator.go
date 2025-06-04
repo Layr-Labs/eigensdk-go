@@ -9,7 +9,9 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"golang.org/x/crypto/sha3"
 
@@ -123,6 +125,11 @@ func NewOperator[Input any, Output any](
 	if err != nil {
 		logger.Error("Cannot get operator id", "err", err)
 		return nil, err
+	}
+
+	calculatedOperatorId := operatorIdFromG1Pubkey(blsKeyPair.PubKey)
+	if operatorId != calculatedOperatorId {
+		return nil, fmt.Errorf("the operator Id calculated from BLS public key does not match the on chain operator Id")
 	}
 
 	aggregatorRpcClient, err := NewAggregatorRpcClient[Output](c.AggregatorServerIpPortAddress, logger)
