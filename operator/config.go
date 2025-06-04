@@ -3,6 +3,7 @@ package operator
 import (
 	"math/big"
 
+	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/ethereum/go-ethereum/common"
 )
 
@@ -20,14 +21,31 @@ type Config struct {
 	// Ethereum WebSocket RPC URL to use for subscribing to on-chain events
 	EthWsUrl string `toml:"eth_ws_url"`
 
-	// The path to the location of the bls private key on local storage
-	BlsPrivateKeyStorePath string `toml:"bls_private_key_store_path"`
+	// The config used to create the BLS signer for the operator
+	BlsSignerCfg BlsSignerConfig `toml:"bls_signer"`
 
 	// IP address and port where the aggregator will listen to operator task responses
 	AggregatorServerIpPortAddress string `toml:"aggregator_server_ip_port"`
 
 	// The config used to register an operator
 	Registration RegistrationConfig `toml:"registration"`
+}
+
+// For the BLS signing we accept two different options:
+// - If the key pair is provided, we use that pair
+// - If not, we use the specified keystore path and the password.
+// We use the go-ethereum keystore package to encrypt/decrypt the private keys, more specifically the V3 encryption,
+// so to see the supported or unsuported keystore formats refer to the geth keystore package documentation.
+type BlsSignerConfig struct {
+	// Path to the BLS keystore on local storage
+	KeystorePath string `toml:"keystore_path"`
+
+	// Password for the keystore
+	KeystorePassword string `toml:"keystore_password"`
+
+	// The bls Key Pair, if nil will use the store path and password above
+	// Note: the toml tag is private_key because from the private key we generate the key pair
+	BlsKeyPair *bls.KeyPair `toml:"private_key"`
 }
 
 // This config is used to register an operator on startup.

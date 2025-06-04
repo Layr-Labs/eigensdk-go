@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math/big"
-	"os"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -79,14 +78,14 @@ func NewOperator[Input any, Output any](
 		return nil, err
 	}
 
-	blsKeyPassword, ok := os.LookupEnv("OPERATOR_BLS_KEY_PASSWORD")
-	if !ok {
-		logger.Warnf("OPERATOR_BLS_KEY_PASSWORD env var not set. using empty string")
-	}
-	blsKeyPair, err := bls.ReadPrivateKeyFromFile(c.BlsPrivateKeyStorePath, blsKeyPassword)
-	if err != nil {
-		logger.Errorf("Cannot parse bls private key", "err", err)
-		return nil, err
+	blsKeyPair := c.BlsSignerCfg.BlsKeyPair
+	if blsKeyPair == nil {
+		logger.Info("Bls Key pair was nil, using the private key store path and password params...")
+		blsKeyPair, err = bls.ReadPrivateKeyFromFile(c.BlsSignerCfg.KeystorePath, c.BlsSignerCfg.KeystorePassword)
+		if err != nil {
+			logger.Errorf("Cannot parse bls private key", "err", err)
+			return nil, err
+		}
 	}
 
 	// Check if operator was registered, if its not registered and register on startup flag is not set, then will fail.
