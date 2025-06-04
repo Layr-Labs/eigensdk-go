@@ -59,6 +59,9 @@ type EcdsaSignerConfig struct {
 
 	// Password for the keystore
 	KeystorePassword string `toml:"keystore_password"`
+
+	// The ecdsa Private Key, if empty will use the store path and password above
+	PrivateKey string `toml:"private_key"`
 }
 
 // This config is used to register an operator on startup.
