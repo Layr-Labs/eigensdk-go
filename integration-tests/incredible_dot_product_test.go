@@ -21,15 +21,15 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stretchr/testify/require"
 
-	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/contracts/bindings/IncredibleSquaringTaskManager"
+	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
 )
 
-var taskManagerAddress = common.HexToAddress("0x2bdcc0de6be1f7d2ee689a0342d76f52e8efaba3")
+var dotProductTaskManagerAddress = common.HexToAddress("0x7bc06c482dead17c0e297afbc32f6e63d3846650")
 
-func TestIncredibleSquaring(t *testing.T) {
+func TestIncredibleDotProduct(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 
-	anvilC, err := testutils.StartAnvilContainer("../../examples/incredible-squaring/tests/anvil/incredible-squaring-anvil-state.json")
+	anvilC, err := testutils.StartAnvilContainer("../../examples/incredible-dot-product/tests/anvil/incredible-dot-product-anvil-state.json")
 	require.NoError(t, err)
 	ethHttpUrl, err := anvilC.Endpoint(context.Background(), "http")
 	require.NoError(t, err)
@@ -39,7 +39,7 @@ func TestIncredibleSquaring(t *testing.T) {
 	ethClient, err := ethclient.Dial(ethHttpUrl)
 	require.NoError(t, err, "Failed to create eth client")
 
-	taskManager, err := cstaskmanager.NewContractIncredibleSquaringTaskManager(taskManagerAddress, ethClient)
+	taskManager, err := cstaskmanager.NewContractIncredibleDotProductTaskManager(dotProductTaskManagerAddress, ethClient)
 	require.NoError(t, err, "Failed to create task manager contract")
 
 	initialTaskIndex, err := taskManager.TaskNumber(&bind.CallOpts{})
@@ -47,22 +47,22 @@ func TestIncredibleSquaring(t *testing.T) {
 	require.Equal(t, uint32(0), initialTaskIndex, "Initial task index should be 0")
 
 	// Aggregator
-	aggregator := createIncredibleSquaringAggregator(t, ethHttpUrl, ethWsUrl)
+	aggregator := createIncredibleDotProductAggregator(t, ethHttpUrl, ethWsUrl)
 
 	aggErrC := aggregator.Start(ctx)
 
 	// Challenger
-	challenger := createIncredibleSquaringChallenger(t, ethHttpUrl, ethWsUrl)
+	challenger := createIncredibleDotProductChallenger(t, ethHttpUrl, ethWsUrl)
 
 	chErrC := challenger.Start(ctx)
 
 	// Operator
-	operator := createIncredibleSquaringOperator(t, ethHttpUrl, ethWsUrl)
+	operator := createIncredibleDotProductOperator(t, ethHttpUrl, ethWsUrl)
 
 	opErrC := operator.Start(ctx)
 
 	// Task Spammer
-	taskSpammer := createIncredibleSquaringTaskSpammer(t, ethHttpUrl)
+	taskSpammer := createIncredibleDotProductTaskSpammer(t, ethHttpUrl)
 
 	tsErrC := taskSpammer.Start(ctx)
 
@@ -76,7 +76,6 @@ func TestIncredibleSquaring(t *testing.T) {
 	case err := <-opErrC:
 		t.Fatal("Operator error:", err)
 	case err := <-tsErrC:
-		// Here we handle the input generation termination (in that case returns nil but does not imply an error)
 		if err == nil {
 			cancel()
 		} else {
@@ -98,23 +97,28 @@ func TestIncredibleSquaring(t *testing.T) {
 	}
 }
 
-func square(taskIndex uint32, input *big.Int) (*big.Int, error) {
-	result := new(big.Int).Mul(input, input)
-	return result, nil
+func dotProduct(taskIndex uint32, points DotProductInput) (*big.Int, error) {
+	totalSum := big.NewInt(0)
+	for i := range points.X {
+		currentSum := big.NewInt(0).Mul(points.X[i], points.Y[i])
+		totalSum.Add(totalSum, currentSum)
+	}
+
+	return totalSum, nil
 }
 
-func createIncredibleSquaringAggregator(t *testing.T, ethHttpUrl, ethWsUrl string) *aggregator.Aggregator[*big.Int, *big.Int] {
+func createIncredibleDotProductAggregator(t *testing.T, ethHttpUrl, ethWsUrl string) *aggregator.Aggregator[DotProductInput, *big.Int] {
 	t.Helper()
 
 	logger, err := logging.NewZapLogger(logging.Production)
 	require.NoError(t, err, "Failure creating logger")
 
 	cfg := aggregator.Config{
-		RegistryCoordinatorAddress:    common.HexToAddress("0x7bc06c482dead17c0e297afbc32f6e63d3846650"),
-		OperatorStateRetrieverAddress: common.HexToAddress("0x4c5859f0f772848b2d91f1d83e2fe57935348029"),
+		RegistryCoordinatorAddress:    common.HexToAddress("0xfd471836031dc5108809d173a067e8486b9047a3"),
+		OperatorStateRetrieverAddress: common.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"),
 		EthHttpUrl:                    ethHttpUrl,
 		EthWsUrl:                      ethWsUrl,
-		AggregatorServerIpPortAddr:    "localhost:8090",
+		AggregatorServerIpPortAddr:    "localhost:8091",
 	}
 
 	ethClient, err := ethclient.Dial(ethHttpUrl)
@@ -127,11 +131,11 @@ func createIncredibleSquaringAggregator(t *testing.T, ethHttpUrl, ethWsUrl strin
 	txMgr, err := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethClient, ecdsaPrivateKey)
 	require.NoError(t, err, "Failed to create tx manager from private key")
 
-	taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
+	taskManagerAbi, err := cstaskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
 	require.NoError(t, err, "Failed to get task manager abi")
 
-	taskResponder, err := taskmanager.NewTaskManagerFromAbi[*big.Int, *big.Int](
-		taskManagerAddress,
+	taskResponder, err := taskmanager.NewTaskManagerFromAbi[DotProductInput, *big.Int](
+		dotProductTaskManagerAddress,
 		taskManagerAbi,
 		txMgr,
 		ethClient,
@@ -139,7 +143,7 @@ func createIncredibleSquaringAggregator(t *testing.T, ethHttpUrl, ethWsUrl strin
 	require.NoError(t, err, "Failed to create Task Responder")
 
 	aggregatorProcessor, err := aggregator.NewIndexingProcessor(logger, taskResponder)
-	require.NoError(t, err, "Failed to create Processor")
+	require.NoError(t, err, "Failed to create Aggregator Processor")
 
 	aggregator, err := aggregator.NewAggregator(logger, cfg, taskManagerAbi, aggregatorProcessor)
 	require.NoError(t, err, "Failed to create aggregator")
@@ -147,13 +151,13 @@ func createIncredibleSquaringAggregator(t *testing.T, ethHttpUrl, ethWsUrl strin
 	return aggregator
 }
 
-func createIncredibleSquaringChallenger(t *testing.T, ethHttpUrl, ethWsUrl string) *challenger.Challenger[*big.Int, *big.Int] {
+func createIncredibleDotProductChallenger(t *testing.T, ethHttpUrl, ethWsUrl string) *challenger.Challenger[DotProductInput, *big.Int] {
 	t.Helper()
 
 	logger, err := logging.NewZapLogger(logging.Production)
 	require.NoError(t, err, "Failure creating logger")
 
-	taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
+	taskManagerAbi, err := cstaskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
 	require.NoError(t, err, "Failed to get task manager abi")
 
 	ethHttpClient, err := ethclient.Dial(ethHttpUrl)
@@ -164,8 +168,8 @@ func createIncredibleSquaringChallenger(t *testing.T, ethHttpUrl, ethWsUrl strin
 		EthHttpUrl: ethHttpUrl,
 	}
 
-	squareCalculator := operator.NewFunctionResponseCalculator(square)
-	squareValidation := challenger.ResponseValidationFunctionFromResponseCalculator(squareCalculator, func(a, b *big.Int) bool {
+	dotProductCalculator := operator.NewFunctionResponseCalculator(dotProduct)
+	dotProductValidation := challenger.ResponseValidationFunctionFromResponseCalculator(dotProductCalculator, func(a, b *big.Int) bool {
 		return a.Cmp(b) == 0
 	})
 
@@ -175,15 +179,15 @@ func createIncredibleSquaringChallenger(t *testing.T, ethHttpUrl, ethWsUrl strin
 	txMgr, err := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethHttpClient, ecdsaPrivateKey)
 	require.NoError(t, err, "Failed to create transaction manager")
 
-	challengeRaiser, err := taskmanager.NewTaskManagerFromAbi[*big.Int, *big.Int](
-		taskManagerAddress,
+	challengeRaiser, err := taskmanager.NewTaskManagerFromAbi[DotProductInput, *big.Int](
+		dotProductTaskManagerAddress,
 		taskManagerAbi,
 		txMgr,
 		ethHttpClient,
 	)
 	require.NoError(t, err, "Failed to create challenge raiser")
 
-	challengerProcessor, err := challenger.NewIndexingProcessor(logger, squareValidation, challengeRaiser)
+	challengerProcessor, err := challenger.NewIndexingProcessor(logger, dotProductValidation, challengeRaiser)
 	require.NoError(t, err, "Failed to create challenger processor")
 
 	challenger, err := challenger.NewChallenger(
@@ -197,13 +201,13 @@ func createIncredibleSquaringChallenger(t *testing.T, ethHttpUrl, ethWsUrl strin
 	return challenger
 }
 
-func createIncredibleSquaringOperator(t *testing.T, ethHttpUrl, ethWsUrl string) *operator.Operator[*big.Int, *big.Int] {
+func createIncredibleDotProductOperator(t *testing.T, ethHttpUrl, ethWsUrl string) *operator.Operator[DotProductInput, *big.Int] {
 	t.Helper()
 
 	logger, err := logging.NewZapLogger(logging.Production)
 	require.NoError(t, err, "Failure creating logger")
 
-	taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
+	taskManagerAbi, err := cstaskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
 	require.NoError(t, err, "Failed to get task manager abi")
 
 	amount := new(big.Int)
@@ -212,7 +216,7 @@ func createIncredibleSquaringOperator(t *testing.T, ethHttpUrl, ethWsUrl string)
 		RegisterOnStartup: true,
 
 		AllocationManagerAddr: common.HexToAddress("0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6"),
-		AvsAddress:            common.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"),
+		AvsAddress:            common.HexToAddress("0xcd8a1c3ba11cf5ecfa6267617243239504a98d90"),
 		StrategyAddrs:         []common.Address{common.HexToAddress("0x2b961e3959b79326a8e7f64ef0d2d825707669b5")},
 
 		DelegationManagerAddress:    common.HexToAddress("0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0"),
@@ -220,34 +224,30 @@ func createIncredibleSquaringOperator(t *testing.T, ethHttpUrl, ethWsUrl string)
 		PermissionControllerAddress: common.HexToAddress("0x59b670e9fa9d0a427751af201d676719a970857b"),
 
 		// Current dir is integration-tests
-		EcdsaKeyStorePath: "../examples/incredible-squaring/keys/test.ecdsa.key.json",
+		EcdsaKeyStorePath: "../examples/incredible-dot-product/keys/test.ecdsa.key.json",
 
 		AmountToMint:          amount,
 		AllocatableMagnitudes: []uint64{1000000000000000},
 
 		OperatorSetIds: []uint32{0},
-
-		MetadataUrl:     "",
-		Socket:          "",
-		AllocationDelay: 0,
 	}
 
 	blsSignerConfig := operator.BlsSignerConfig{
+		// Current dir is integration-tests
 		KeystorePath:     "../examples/incredible-squaring/keys/test.bls.key.json",
 		KeystorePassword: "",
 	}
 	operatorConfig := operator.Config{
-		OperatorAddress:            "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-		RegistryCoordinatorAddress: "0x7bc06c482dead17c0e297afbc32f6e63d3846650",
-		EthRpcUrl:                  ethHttpUrl,
-		EthWsUrl:                   ethWsUrl,
-		// Current dir is integration-tests
+		OperatorAddress:               "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+		RegistryCoordinatorAddress:    "0xfd471836031dc5108809d173a067e8486b9047a3",
+		EthRpcUrl:                     ethHttpUrl,
+		EthWsUrl:                      ethWsUrl,
 		BlsSignerCfg:                  blsSignerConfig,
-		AggregatorServerIpPortAddress: "localhost:8090",
+		AggregatorServerIpPortAddress: "localhost:8091",
 		Registration:                  registrationConfig,
 	}
 
-	calculator := operator.NewFunctionResponseCalculator(square)
+	calculator := operator.NewFunctionResponseCalculator(dotProduct)
 
 	operator, err := operator.NewOperator(logger, operatorConfig, taskManagerAbi, calculator, nil)
 	require.NoError(t, err, "Failed to create operator from config")
@@ -255,7 +255,7 @@ func createIncredibleSquaringOperator(t *testing.T, ethHttpUrl, ethWsUrl string)
 	return operator
 }
 
-func createIncredibleSquaringTaskSpammer(t *testing.T, ethHttpUrl string) *taskspammer.TaskSpammer[*big.Int] {
+func createIncredibleDotProductTaskSpammer(t *testing.T, ethHttpUrl string) *taskspammer.TaskSpammer[DotProductInput] {
 	t.Helper()
 
 	logger, err := logging.NewZapLogger(logging.Production)
@@ -264,17 +264,19 @@ func createIncredibleSquaringTaskSpammer(t *testing.T, ethHttpUrl string) *tasks
 	ethHttpClient, err := ethclient.Dial(ethHttpUrl)
 	require.NoError(t, err, "Failed to dial ethclient")
 
-	ecdsaPrivateKey, err := crypto.HexToECDSA("2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6")
+	// This private key must match with the task_generator_addr field in
+	// examples/incredible-dot-product/contracts/config/avs/incredible_dot_product_config.json
+	ecdsaPrivateKey, err := crypto.HexToECDSA("4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356")
 	require.NoError(t, err, "Failed to create ecdsa private key")
 
 	txMgr, err := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethHttpClient, ecdsaPrivateKey)
 	require.NoError(t, err, "Failed to create transaction manager from private key")
 
-	abi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
+	abi, err := cstaskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
 	require.NoError(t, err, "Failed to get task manager abi")
 
-	taskManagerAddress := taskManagerAddress
-	taskCreator, err := taskmanager.NewTaskManagerFromAbi[*big.Int, *big.Int](taskManagerAddress, abi, txMgr, ethHttpClient)
+	dotProductTaskManagerAddress := dotProductTaskManagerAddress
+	taskCreator, err := taskmanager.NewTaskManagerFromAbi[DotProductInput, *big.Int](dotProductTaskManagerAddress, abi, txMgr, ethHttpClient)
 	require.NoError(t, err, "Failed to create Task Creator")
 
 	taskSpammerConfig := taskspammer.Config{
@@ -285,25 +287,37 @@ func createIncredibleSquaringTaskSpammer(t *testing.T, ethHttpUrl string) *tasks
 		QuorumNumbers:             []uint8{0},
 	}
 
-	squaringSequence := newNumberToSquareSequence()
+	dotProductSequence := newVectorsToMultiplySequence()
 
-	taskSpammer, err := taskspammer.NewTaskSpammer(logger, taskSpammerConfig, taskCreator, squaringSequence)
+	taskSpammer, err := taskspammer.NewTaskSpammer(logger, taskSpammerConfig, taskCreator, dotProductSequence)
 	require.NoError(t, err, "Failed to create Task Spammer")
 
 	return taskSpammer
 }
 
+type DotProductInput struct {
+	X []*big.Int
+	Y []*big.Int
+}
+
 // Returns an iterator for the sequence 1, 2, 3, ...
-func newNumberToSquareSequence() iter.Seq[*big.Int] {
-	acc := big.NewInt(1)
-	delta := big.NewInt(1)
+func newVectorsToMultiplySequence() iter.Seq[DotProductInput] {
+	n := big.NewInt(1)
 	count := 0
-	return func(yield func(*big.Int) bool) {
+	return func(yield func(DotProductInput) bool) {
 		for count < 3 {
-			if !yield(acc) {
+			length := int(n.Int64())
+			x := make([]*big.Int, length)
+			y := make([]*big.Int, length)
+			for i := 0; i < length; i++ {
+				v := big.NewInt(int64(i + 1))
+				x[i] = v
+				y[i] = v
+			}
+			if !yield(DotProductInput{X: x, Y: y}) {
 				break
 			}
-			acc.Add(acc, delta)
+			n.Add(n, big.NewInt(1))
 			count++
 		}
 	}

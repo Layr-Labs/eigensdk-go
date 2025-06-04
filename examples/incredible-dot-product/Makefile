@@ -28,6 +28,9 @@ create-quorum:
 
 deploy-all: deploy-eigenlayer deploy-avs uam-permissions create-quorum
 
+dump-state:
+	./tests/anvil/dump-state.sh
+
 bindings: ## generates contract bindings
 	cd contracts && ./generate-go-bindings.sh
 
