@@ -9,9 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"golang.org/x/crypto/sha3"
 
@@ -127,7 +125,7 @@ func NewOperator[Input any, Output any](
 		return nil, err
 	}
 
-	calculatedOperatorId := operatorIdFromG1Pubkey(blsKeyPair.PubKey)
+	calculatedOperatorId := sdktypes.OperatorIdFromKeyPair(blsKeyPair)
 	if operatorId != calculatedOperatorId {
 		return nil, fmt.Errorf("the operator Id calculated from BLS public key does not match the on chain operator Id")
 	}
@@ -320,10 +318,4 @@ func getDefaultHashFunction[Output any](taskResponseType abi.Type) TaskResponseH
 		copy(taskResponseDigest[:], hasher.Sum(nil)[:32])
 		return taskResponseDigest, nil
 	}
-}
-
-func operatorIdFromG1Pubkey(pubkey *bls.G1Point) sdktypes.Bytes32 {
-	x := pubkey.X.BigInt(new(big.Int))
-	y := pubkey.Y.BigInt(new(big.Int))
-	return sdktypes.Bytes32(crypto.Keccak256Hash(append(math.U256Bytes(x), math.U256Bytes(y)...)))
 }
