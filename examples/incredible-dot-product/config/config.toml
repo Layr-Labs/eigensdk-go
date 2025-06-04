@@ -39,7 +39,7 @@ delegation_manager_address = "0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0"
 rewards_coordinator_address = "0xa51c1fc2f0d1a1b8494ed1fe312d7c3a78ed91c0"
 permission_controller_address = "0x59b670e9fa9d0a427751af201d676719a970857b"
 
-ecdsa_signer = {keystore_path = "keys/test.ecdsa.key.json", keystore_password = ""}
+ecdsa_signer = {private_key = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"}
 
 amount_to_mint = 1000000000000000000000
 
