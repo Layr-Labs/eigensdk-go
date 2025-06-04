@@ -125,9 +125,9 @@ func NewOperator[Input any, Output any](
 		return nil, err
 	}
 
-	calculatedOperatorId := sdktypes.OperatorIdFromKeyPair(blsKeyPair)
-	if operatorId != calculatedOperatorId {
-		return nil, fmt.Errorf("the operator Id calculated from BLS public key does not match the on chain operator Id")
+	computedOperatorId := sdktypes.OperatorIdFromKeyPair(blsKeyPair)
+	if operatorId != computedOperatorId {
+		return nil, fmt.Errorf("the operator ID computed from the BLS keypair does not match the on-chain one")
 	}
 
 	aggregatorRpcClient, err := NewAggregatorRpcClient[Output](c.AggregatorServerIpPortAddress, logger)
