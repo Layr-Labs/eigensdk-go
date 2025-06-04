@@ -314,3 +314,9 @@ func getDefaultHashFunction[Output any](taskResponseType abi.Type) TaskResponseH
 		return taskResponseDigest, nil
 	}
 }
+
+func operatorIdFromG1Pubkey(pubkey *bls.G1Point) sdktypes.Bytes32 {
+	x := pubkey.X.BigInt(new(big.Int))
+	y := pubkey.Y.BigInt(new(big.Int))
+	return sdktypes.Bytes32(crypto.Keccak256Hash(append(math.U256Bytes(x), math.U256Bytes(y)...)))
+}
