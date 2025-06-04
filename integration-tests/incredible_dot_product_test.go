@@ -232,13 +232,17 @@ func createIncredibleDotProductOperator(t *testing.T, ethHttpUrl, ethWsUrl strin
 		OperatorSetIds: []uint32{0},
 	}
 
-	operatorConfig := operator.Config{
-		OperatorAddress:            "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-		RegistryCoordinatorAddress: "0xfd471836031dc5108809d173a067e8486b9047a3",
-		EthRpcUrl:                  ethHttpUrl,
-		EthWsUrl:                   ethWsUrl,
+	blsSignerConfig := operator.BlsSignerConfig{
 		// Current dir is integration-tests
-		BlsPrivateKeyStorePath:        "../examples/incredible-dot-product/keys/test.bls.key.json",
+		KeystorePath:     "../examples/incredible-squaring/keys/test.bls.key.json",
+		KeystorePassword: "",
+	}
+	operatorConfig := operator.Config{
+		OperatorAddress:               "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+		RegistryCoordinatorAddress:    "0xfd471836031dc5108809d173a067e8486b9047a3",
+		EthRpcUrl:                     ethHttpUrl,
+		EthWsUrl:                      ethWsUrl,
+		BlsSignerCfg:                  blsSignerConfig,
 		AggregatorServerIpPortAddress: "localhost:8091",
 		Registration:                  registrationConfig,
 	}
