@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"math/big"
-	"os"
 	"time"
 
 	allocationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/AllocationManager"
@@ -55,14 +54,9 @@ func registerOperatorOnStartup(
 		return err
 	}
 
-	ecdsaKeyPassword, ok := os.LookupEnv("OPERATOR_ECDSA_KEY_PASSWORD")
-	if !ok {
-		logger.Warnf("OPERATOR_ECDSA_KEY_PASSWORD env var not set. using empty string")
-	}
-
 	operatorEcdsaPrivateKey, err := ecdsa.ReadKey(
-		c.EcdsaKeyStorePath,
-		ecdsaKeyPassword,
+		c.EcdsaSignerCfg.KeystorePath,
+		c.EcdsaSignerCfg.KeystorePassword,
 	)
 	if err != nil {
 		return err
