@@ -44,7 +44,7 @@ type BlsSignerConfig struct {
 	KeystorePassword string `toml:"keystore_password"`
 
 	// The bls Key Pair, if nil will use the store path and password above
-	BlsKeyPair *bls.KeyPair
+	BlsKeyPair *bls.KeyPair `toml:"key_pair"`
 }
 
 // This config is used to register an operator on startup.
