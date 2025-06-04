@@ -30,8 +30,6 @@ keystore_path = "keys/test.bls.key.json"
 
 keystore_password = ""
 
-private_key = "0x2518600ef40ef39cb4ab8b828ce303b3e02ac01ec6ba6bd0d0cf0663e1252ff0"
-
 [registration]
 
 register_on_startup = true
