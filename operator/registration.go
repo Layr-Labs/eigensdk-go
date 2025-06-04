@@ -2,13 +2,15 @@ package operator
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"errors"
 	"math/big"
+	"strings"
 	"time"
 
 	allocationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/AllocationManager"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
-	"github.com/Layr-Labs/eigensdk-go/crypto/ecdsa"
+	sdkecdsa "github.com/Layr-Labs/eigensdk-go/crypto/ecdsa"
 	"github.com/Layr-Labs/eigensdk-go/signerv2"
 
 	erc20mock "github.com/Layr-Labs/eigensdk-go/contracts/bindings/MockERC20"
@@ -22,6 +24,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/event"
 )
@@ -54,16 +57,28 @@ func registerOperatorOnStartup(
 		return err
 	}
 
-	operatorEcdsaPrivateKey, err := ecdsa.ReadKey(
-		c.EcdsaSignerCfg.KeystorePath,
-		c.EcdsaSignerCfg.KeystorePassword,
-	)
-	if err != nil {
-		return err
+	var ecdsaPk *ecdsa.PrivateKey
+
+	if c.EcdsaSignerCfg.PrivateKey == "" {
+		logger.Info("Ecdsa private key was nil, using the private key store path and password params...")
+		ecdsaPk, err = sdkecdsa.ReadKey(
+			c.EcdsaSignerCfg.KeystorePath,
+			c.EcdsaSignerCfg.KeystorePassword,
+		)
+		if err != nil {
+			return utils.WrapError("Failed to read the private key from keystore", err)
+		}
+	} else {
+		operatorEcdsaPkString := strings.TrimPrefix(c.EcdsaSignerCfg.PrivateKey, "0x")
+
+		ecdsaPk, err = crypto.HexToECDSA(operatorEcdsaPkString)
+		if err != nil {
+			return utils.WrapError("Failed to convert hex key to ecdsa", err)
+		}
 	}
 
 	signerV2, senderAddr, err := signerv2.SignerFromConfig(signerv2.Config{
-		PrivateKey: operatorEcdsaPrivateKey,
+		PrivateKey: ecdsaPk,
 	}, chainid)
 	if err != nil {
 		logger.Fatalf(err.Error())
