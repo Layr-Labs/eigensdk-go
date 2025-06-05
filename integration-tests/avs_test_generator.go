@@ -1,6 +1,7 @@
 package integration_test
 
 import (
+	"context"
 	"iter"
 	"math/big"
 	"testing"
@@ -56,6 +57,42 @@ type AvsConfig[Input any, Output any] struct {
 
 	// Check if really needed
 	AggregatorServerIpPortAddr string
+}
+
+type Avs struct {
+	Aggregator  <-chan error
+	Challenger  <-chan error
+	Operator    <-chan error
+	TaskSpammer <-chan error
+}
+
+func StartAvs[Input any, Output any](t *testing.T, ctx context.Context, config AvsConfig[Input, Output]) Avs {
+	// Aggregator
+	aggregator := createAvsAggregator(t, config)
+
+	aggErrC := aggregator.Start(ctx)
+
+	// Challenger
+	challenger := createAvsChallenger(t, config)
+
+	chErrC := challenger.Start(ctx)
+
+	// Operator
+	operator := createAvsOperator(t, config)
+
+	opErrC := operator.Start(ctx)
+
+	// Task Spammer
+	taskSpammer := createAvsTaskSpammer(t, config)
+
+	tsErrC := taskSpammer.Start(ctx)
+
+	return Avs{
+		Aggregator:  aggErrC,
+		Challenger:  chErrC,
+		Operator:    opErrC,
+		TaskSpammer: tsErrC,
+	}
 }
 
 func createAvsAggregator[Input any, Output any](t *testing.T, config AvsConfig[Input, Output]) *aggregator.Aggregator[Input, Output] {
