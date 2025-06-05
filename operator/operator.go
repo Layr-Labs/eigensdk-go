@@ -143,6 +143,11 @@ func NewOperator[Input any, Output any](
 		return nil, err
 	}
 
+	computedOperatorId := sdktypes.OperatorIdFromKeyPair(blsKeyPair)
+	if operatorId != computedOperatorId {
+		return nil, fmt.Errorf("the operator ID computed from the BLS keypair does not match the on-chain one")
+	}
+
 	aggregatorRpcClient, err := NewAggregatorRpcClient[Output](c.AggregatorServerIpPortAddress, logger)
 	if err != nil {
 		logger.Error("Cannot create AggregatorRpcClient. Is aggregator running?", "err", err)
