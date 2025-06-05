@@ -63,22 +63,25 @@ func registerOperatorOnStartup(
 	if c.EcdsaSignerCfg.PrivateKey == "" {
 		logger.Info("ECDSA private key was nil, using the private key store path and password params...")
 		ecdsaKeystorePassword := ""
-		if c.EcdsaSignerCfg.KeystorePassword == nil {
-			logger.Info("ECDSA keystore password was nil, reading value from env")
-			envPassword, ok := os.LookupEnv("OPERATOR_ECDSA_KEY_PASSWORD")
-			if !ok {
-				logger.Warnf("OPERATOR_ECDSA_KEY_PASSWORD env var not set. using empty string")
+
+		envPassword, ok := os.LookupEnv("OPERATOR_ECDSA_KEY_PASSWORD")
+		if !ok {
+			logger.Info("ECDSA keystore password was not set at env, reading value from config")
+			if c.EcdsaSignerCfg.KeystorePassword != nil {
+				ecdsaKeystorePassword = *c.EcdsaSignerCfg.KeystorePassword
+			} else {
+				logger.Warnf("ECDSA keystore password not found in config, using empty string")
 			}
-			ecdsaKeystorePassword = envPassword
 		} else {
-			ecdsaKeystorePassword = *c.EcdsaSignerCfg.KeystorePassword
+			ecdsaKeystorePassword = envPassword
 		}
+
 		ecdsaPk, err = sdkecdsa.ReadKey(
 			c.EcdsaSignerCfg.KeystorePath,
 			ecdsaKeystorePassword,
 		)
 		if err != nil {
-			return utils.WrapError("Failed to read the private key from keystore", err)
+			return utils.WrapError("Failed to read the ECDSA private key from keystore", err)
 		}
 	} else {
 		operatorEcdsaPkString := strings.TrimPrefix(c.EcdsaSignerCfg.PrivateKey, "0x")
