@@ -65,7 +65,7 @@ func TestAwesomeVaultService(t *testing.T) {
 
 		TaskSpammerPrivateKey: "4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356",
 
-		AggregatorServerIpPortAddr:  "localhost:8091",
+		AggregatorServerIpPortAddr:  "localhost:8092",
 		AggregatorPrivateKey:        "2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6",
 		ChallengerPrivateKey:        testutils.ANVIL_FIRST_PRIVATE_KEY,
 		AmountToMint:                "1000000000000000000000",
@@ -188,13 +188,15 @@ func hashNodes(leftNode [32]byte, rightNode [32]byte) [32]byte {
 func LinearRangeSequence() iter.Seq[TaskInput] {
 	keys := []string{"foo", "bar", "baz"}
 	n := 1
+	count := 0
 	return func(yield func(TaskInput) bool) {
-		for {
+		for count < 3 {
 			input := TaskInput{Key: keys[n%len(keys)], Value: strconv.Itoa(n)}
 			if !yield(input) {
 				break
 			}
 			n++
+			count++
 		}
 	}
 }
