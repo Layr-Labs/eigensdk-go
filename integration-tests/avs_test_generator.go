@@ -40,7 +40,7 @@ type AvsConfig[Input any, Output any] struct {
 	InputSequence iter.Seq[Input]
 
 	// Avs Addresses
-	RegistryCoordinatorAddress    string
+	RegistryCoordinatorAddress    common.Address
 	OperatorStateRetrieverAddress common.Address
 	AvsAddress                    common.Address
 
@@ -116,7 +116,7 @@ func createAvsAggregator[Input any, Output any](t *testing.T, config AvsConfig[I
 	require.NoError(t, err, "Failure creating logger")
 
 	cfg := aggregator.Config{
-		RegistryCoordinatorAddress:    common.HexToAddress(config.RegistryCoordinatorAddress),
+		RegistryCoordinatorAddress:    config.RegistryCoordinatorAddress,
 		OperatorStateRetrieverAddress: config.OperatorStateRetrieverAddress,
 		EthHttpUrl:                    config.EthHttpUrl,
 		EthWsUrl:                      config.EthWsUrl,
