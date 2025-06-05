@@ -61,7 +61,7 @@ func registerOperatorOnStartup(
 	var ecdsaPk *ecdsa.PrivateKey
 
 	if c.EcdsaSignerCfg.PrivateKey == "" {
-		logger.Info("Ecdsa private key was nil, using the private key store path and password params...")
+		logger.Info("ECDSA private key was nil, using the private key store path and password params...")
 		ecdsaKeystorePassword := c.EcdsaSignerCfg.KeystorePassword
 		if ecdsaKeystorePassword == "" {
 			logger.Info("ECDSA keystore password was nil, reading value from env")
@@ -83,7 +83,7 @@ func registerOperatorOnStartup(
 
 		ecdsaPk, err = crypto.HexToECDSA(operatorEcdsaPkString)
 		if err != nil {
-			return utils.WrapError("Failed to convert hex key to ecdsa", err)
+			return utils.WrapError("Failed to convert hex key to ECDSA", err)
 		}
 	}
 

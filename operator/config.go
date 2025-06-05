@@ -54,13 +54,13 @@ type BlsSignerConfig struct {
 // We use the go-ethereum keystore package to encrypt/decrypt the private keys, more specifically the V3 encryption,
 // so to see the supported or unsuported keystore formats refer to the geth keystore package documentation.
 type EcdsaSignerConfig struct {
-	// Path to the ecdsa keystore on local storage
+	// Path to the ECDSA keystore on local storage
 	KeystorePath string `toml:"keystore_path"`
 
 	// Password for the keystore
 	KeystorePassword string `toml:"keystore_password"`
 
-	// The ecdsa Private Key, if empty will use the store path and password above
+	// The ECDSA Private Key, if empty will use the store path and password above
 	PrivateKey string `toml:"private_key"`
 }
 
