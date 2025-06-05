@@ -45,7 +45,7 @@ func TestIncredibleSquaring(t *testing.T) {
 		return a.Cmp(b) == 0
 	}
 
-	testConfig := TestConfig[*big.Int, *big.Int]{
+	testConfig := AvsConfig[*big.Int, *big.Int]{
 		TaskManagerAddr: taskManagerAddress,
 		TaskManagerAbi:  taskManagerAbi,
 		LogicFn:         square,

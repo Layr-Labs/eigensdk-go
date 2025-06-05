@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type TestConfig[Input any, Output any] struct {
+type AvsConfig[Input any, Output any] struct {
 	TaskManagerAddr common.Address
 
 	TaskManagerAbi *abi.ABI
@@ -127,7 +127,7 @@ type TestConfig[Input any, Output any] struct {
 // 	}
 // }
 
-func createAvsAggregator[Input any, Output any](t *testing.T, ethHttpUrl, ethWsUrl string, config TestConfig[Input, Output]) *aggregator.Aggregator[Input, Output] {
+func createAvsAggregator[Input any, Output any](t *testing.T, ethHttpUrl, ethWsUrl string, config AvsConfig[Input, Output]) *aggregator.Aggregator[Input, Output] {
 	t.Helper()
 
 	logger, err := logging.NewZapLogger(logging.Production)
@@ -171,7 +171,7 @@ func createAvsAggregator[Input any, Output any](t *testing.T, ethHttpUrl, ethWsU
 func createAvsChallenger[Input any, Output any](
 	t *testing.T,
 	ethHttpUrl, ethWsUrl string,
-	config TestConfig[Input, Output],
+	config AvsConfig[Input, Output],
 ) *challenger.Challenger[Input, Output] {
 	t.Helper()
 
@@ -220,7 +220,7 @@ func createAvsChallenger[Input any, Output any](
 func createAvsOperator[Input any, Output any](
 	t *testing.T,
 	ethHttpUrl, ethWsUrl string,
-	config TestConfig[Input, Output],
+	config AvsConfig[Input, Output],
 ) *operator.Operator[Input, Output] {
 	t.Helper()
 
@@ -277,7 +277,7 @@ func createAvsOperator[Input any, Output any](
 func createAvsTaskSpammer[Input any, Output any](
 	t *testing.T,
 	ethHttpUrl string,
-	config TestConfig[Input, Output],
+	config AvsConfig[Input, Output],
 ) *taskspammer.TaskSpammer[Input] {
 	t.Helper()
 

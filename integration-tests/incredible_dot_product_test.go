@@ -45,7 +45,7 @@ func TestIncredibleDotProduct(t *testing.T) {
 		return a.Cmp(b) == 0
 	}
 
-	testConfig := TestConfig[DotProductInput, *big.Int]{
+	testConfig := AvsConfig[DotProductInput, *big.Int]{
 		TaskManagerAddr: dotProductTaskManagerAddress,
 		TaskManagerAbi:  taskManagerAbi,
 		LogicFn:         dotProduct,
