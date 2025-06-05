@@ -83,8 +83,6 @@ func TestIncredibleSquaring(t *testing.T) {
 		Socket:          "",
 		AllocationDelay: 0,
 
-		BlsKeystorePassword: "",
-
 		OperatorAddr: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
 
 		TimeBetweenTasks:          10 * time.Second,

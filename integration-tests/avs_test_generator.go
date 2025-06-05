@@ -66,7 +66,6 @@ type AvsConfig[Input any, Output any] struct {
 	MetadataUrl          string
 	Socket               string
 	AllocationDelay      uint32
-	BlsKeystorePassword  string
 
 	TimeBetweenTasks          time.Duration
 	QuorumThresholdPercentage uint32
