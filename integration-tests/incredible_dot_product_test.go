@@ -60,8 +60,8 @@ func TestIncredibleDotProduct(t *testing.T) {
 		OperatorStateRetrieverAddress: common.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"),
 		AvsAddress:                    common.HexToAddress("0xcd8a1c3ba11cf5ecfa6267617243239504a98d90"),
 
-		EcdsaKeyStorePath: "../examples/incredible-dot-product/keys/test.ecdsa.key.json",
-		BlsKeyStorePath:   "../examples/incredible-dot-product/keys/test.bls.key.json",
+		EcdsaPrivateKey: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
+		BlsPrivateKey:   "0x2518600ef40ef39cb4ab8b828ce303b3e02ac01ec6ba6bd0d0cf0663e1252ff0",
 
 		TaskSpammerPrivateKey: "4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356",
 

@@ -10,6 +10,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/aggregator"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/challenger"
+	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/operator"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
@@ -43,8 +44,8 @@ type AvsConfig[Input any, Output any] struct {
 	OperatorStateRetrieverAddress common.Address
 	AvsAddress                    common.Address
 
-	BlsKeyStorePath   string
-	EcdsaKeyStorePath string
+	BlsPrivateKey   string
+	EcdsaPrivateKey string
 
 	AggregatorServerIpPortAddr string
 
@@ -205,6 +206,17 @@ func createAvsOperator[Input any, Output any](
 	logger, err := logging.NewZapLogger(logging.Production)
 	require.NoError(t, err, "Failure creating logger")
 
+	ecdsaCfg := operator.EcdsaSignerConfig{
+		PrivateKey: config.EcdsaPrivateKey,
+	}
+
+	keyPair, err := bls.NewKeyPairFromString(config.BlsPrivateKey)
+	require.NoError(t, err)
+
+	blsCfg := operator.BlsSignerConfig{
+		BlsKeyPair: keyPair,
+	}
+
 	amount := new(big.Int)
 	amount.SetString(config.AmountToMint, 10)
 	registrationConfig := operator.RegistrationConfig{
@@ -218,7 +230,7 @@ func createAvsOperator[Input any, Output any](
 		RewardsCoordinatorAddress:   config.RewardsCoordinatorAddress,
 		PermissionControllerAddress: config.PermissionControllerAddress,
 
-		EcdsaKeyStorePath: config.EcdsaKeyStorePath,
+		EcdsaSignerCfg: ecdsaCfg,
 
 		AmountToMint:          amount,
 		AllocatableMagnitudes: []uint64{config.AllocatableMagnitude},
@@ -230,16 +242,12 @@ func createAvsOperator[Input any, Output any](
 		AllocationDelay: config.AllocationDelay,
 	}
 
-	blsSignerConfig := operator.BlsSignerConfig{
-		KeystorePath:     config.BlsKeyStorePath,
-		KeystorePassword: "",
-	}
 	operatorConfig := operator.Config{
 		OperatorAddress:               config.OperatorAddr,
 		RegistryCoordinatorAddress:    config.RegistryCoordinatorAddress,
 		EthRpcUrl:                     config.EthHttpUrl,
 		EthWsUrl:                      config.EthWsUrl,
-		BlsSignerCfg:                  blsSignerConfig,
+		BlsSignerCfg:                  blsCfg,
 		AggregatorServerIpPortAddress: config.AggregatorServerIpPortAddr,
 		Registration:                  registrationConfig,
 	}
