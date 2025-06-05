@@ -7,17 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Layr-Labs/eigensdk-go/aggregator"
-	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
-	"github.com/Layr-Labs/eigensdk-go/challenger"
-	"github.com/Layr-Labs/eigensdk-go/logging"
-	"github.com/Layr-Labs/eigensdk-go/operator"
-	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
-	taskspammer "github.com/Layr-Labs/eigensdk-go/task-spammer"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stretchr/testify/require"
 
@@ -46,23 +38,49 @@ func TestIncredibleDotProduct(t *testing.T) {
 	require.NoError(t, err, "Failed to get initial task index")
 	require.Equal(t, uint32(0), initialTaskIndex, "Initial task index should be 0")
 
+	taskManagerAbi, err := cstaskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
+	require.NoError(t, err, "Failed to get task manager abi")
+
+	equalFn := func(a, b *big.Int) bool {
+		return a.Cmp(b) == 0
+	}
+
+	testConfig := TestConfig[DotProductInput, *big.Int]{
+		TaskManagerAddr: dotProductTaskManagerAddress,
+		TaskManagerAbi:  taskManagerAbi,
+		LogicFn:         dotProduct,
+		EqualFn:         equalFn,
+		InputSequence:   newVectorsToMultiplySequence(),
+
+		RegistryCoordinatorAddress:    "0xfd471836031dc5108809d173a067e8486b9047a3",
+		OperatorStateRetrieverAddress: common.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"),
+		AvsAddress:                    common.HexToAddress("0xcd8a1c3ba11cf5ecfa6267617243239504a98d90"),
+
+		EcdsaKeyStorePath: "../examples/incredible-dot-product/keys/test.ecdsa.key.json",
+		BlsKeyStorePath:   "../examples/incredible-dot-product/keys/test.bls.key.json",
+
+		TaskSpammerPrivateKey: "4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356",
+
+		AggregatorServerIpPortAddr: "localhost:8091",
+	}
+
 	// Aggregator
-	aggregator := createIncredibleDotProductAggregator(t, ethHttpUrl, ethWsUrl)
+	aggregator := createAvsAggregator(t, ethHttpUrl, ethWsUrl, testConfig)
 
 	aggErrC := aggregator.Start(ctx)
 
 	// Challenger
-	challenger := createIncredibleDotProductChallenger(t, ethHttpUrl, ethWsUrl)
+	challenger := createAvsChallenger(t, ethHttpUrl, ethWsUrl, testConfig)
 
 	chErrC := challenger.Start(ctx)
 
 	// Operator
-	operator := createIncredibleDotProductOperator(t, ethHttpUrl, ethWsUrl)
+	operator := createAvsOperator(t, ethHttpUrl, ethWsUrl, testConfig)
 
 	opErrC := operator.Start(ctx)
 
 	// Task Spammer
-	taskSpammer := createIncredibleDotProductTaskSpammer(t, ethHttpUrl)
+	taskSpammer := createAvsTaskSpammer(t, ethHttpUrl, testConfig)
 
 	tsErrC := taskSpammer.Start(ctx)
 
@@ -105,194 +123,6 @@ func dotProduct(taskIndex uint32, points DotProductInput) (*big.Int, error) {
 	}
 
 	return totalSum, nil
-}
-
-func createIncredibleDotProductAggregator(t *testing.T, ethHttpUrl, ethWsUrl string) *aggregator.Aggregator[DotProductInput, *big.Int] {
-	t.Helper()
-
-	logger, err := logging.NewZapLogger(logging.Production)
-	require.NoError(t, err, "Failure creating logger")
-
-	cfg := aggregator.Config{
-		RegistryCoordinatorAddress:    common.HexToAddress("0xfd471836031dc5108809d173a067e8486b9047a3"),
-		OperatorStateRetrieverAddress: common.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"),
-		EthHttpUrl:                    ethHttpUrl,
-		EthWsUrl:                      ethWsUrl,
-		AggregatorServerIpPortAddr:    "localhost:8091",
-	}
-
-	ethClient, err := ethclient.Dial(ethHttpUrl)
-	require.NoError(t, err, "Failure creating ethclient")
-
-	aggregatorPrivateKey := "2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6"
-	ecdsaPrivateKey, err := crypto.HexToECDSA(aggregatorPrivateKey)
-	require.NoError(t, err, "Failed to create ecdsa private key")
-
-	txMgr, err := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethClient, ecdsaPrivateKey)
-	require.NoError(t, err, "Failed to create tx manager from private key")
-
-	taskManagerAbi, err := cstaskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
-	require.NoError(t, err, "Failed to get task manager abi")
-
-	taskResponder, err := taskmanager.NewTaskManagerFromAbi[DotProductInput, *big.Int](
-		dotProductTaskManagerAddress,
-		taskManagerAbi,
-		txMgr,
-		ethClient,
-	)
-	require.NoError(t, err, "Failed to create Task Responder")
-
-	aggregatorProcessor, err := aggregator.NewIndexingProcessor(logger, taskResponder)
-	require.NoError(t, err, "Failed to create Aggregator Processor")
-
-	aggregator, err := aggregator.NewAggregator(logger, cfg, taskManagerAbi, aggregatorProcessor)
-	require.NoError(t, err, "Failed to create aggregator")
-
-	return aggregator
-}
-
-func createIncredibleDotProductChallenger(t *testing.T, ethHttpUrl, ethWsUrl string) *challenger.Challenger[DotProductInput, *big.Int] {
-	t.Helper()
-
-	logger, err := logging.NewZapLogger(logging.Production)
-	require.NoError(t, err, "Failure creating logger")
-
-	taskManagerAbi, err := cstaskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
-	require.NoError(t, err, "Failed to get task manager abi")
-
-	ethHttpClient, err := ethclient.Dial(ethHttpUrl)
-	require.NoError(t, err, "Failed to create eth client")
-
-	challengerCfg := challenger.Config{
-		EthWsUrl:   ethWsUrl,
-		EthHttpUrl: ethHttpUrl,
-	}
-
-	dotProductCalculator := operator.NewFunctionResponseCalculator(dotProduct)
-	dotProductValidation := challenger.ResponseValidationFunctionFromResponseCalculator(dotProductCalculator, func(a, b *big.Int) bool {
-		return a.Cmp(b) == 0
-	})
-
-	ecdsaPrivateKey, err := crypto.HexToECDSA(testutils.ANVIL_FIRST_PRIVATE_KEY)
-	require.NoError(t, err, "Failed to parse ecdsa private key")
-
-	txMgr, err := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethHttpClient, ecdsaPrivateKey)
-	require.NoError(t, err, "Failed to create transaction manager")
-
-	challengeRaiser, err := taskmanager.NewTaskManagerFromAbi[DotProductInput, *big.Int](
-		dotProductTaskManagerAddress,
-		taskManagerAbi,
-		txMgr,
-		ethHttpClient,
-	)
-	require.NoError(t, err, "Failed to create challenge raiser")
-
-	challengerProcessor, err := challenger.NewIndexingProcessor(logger, dotProductValidation, challengeRaiser)
-	require.NoError(t, err, "Failed to create challenger processor")
-
-	challenger, err := challenger.NewChallenger(
-		logger,
-		challengerCfg,
-		taskManagerAbi,
-		challengerProcessor,
-	)
-	require.NoError(t, err, "Failed to create challenger from config")
-
-	return challenger
-}
-
-func createIncredibleDotProductOperator(t *testing.T, ethHttpUrl, ethWsUrl string) *operator.Operator[DotProductInput, *big.Int] {
-	t.Helper()
-
-	logger, err := logging.NewZapLogger(logging.Production)
-	require.NoError(t, err, "Failure creating logger")
-
-	taskManagerAbi, err := cstaskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
-	require.NoError(t, err, "Failed to get task manager abi")
-
-	amount := new(big.Int)
-	amount.SetString("1000000000000000000000", 10)
-	registrationConfig := operator.RegistrationConfig{
-		RegisterOnStartup: true,
-
-		AllocationManagerAddr: common.HexToAddress("0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6"),
-		AvsAddress:            common.HexToAddress("0xcd8a1c3ba11cf5ecfa6267617243239504a98d90"),
-		StrategyAddrs:         []common.Address{common.HexToAddress("0x2b961e3959b79326a8e7f64ef0d2d825707669b5")},
-
-		DelegationManagerAddress:    common.HexToAddress("0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0"),
-		RewardsCoordinatorAddress:   common.HexToAddress("0xa51c1fc2f0d1a1b8494ed1fe312d7c3a78ed91c0"),
-		PermissionControllerAddress: common.HexToAddress("0x59b670e9fa9d0a427751af201d676719a970857b"),
-
-		// Current dir is integration-tests
-		EcdsaKeyStorePath: "../examples/incredible-dot-product/keys/test.ecdsa.key.json",
-
-		AmountToMint:          amount,
-		AllocatableMagnitudes: []uint64{1000000000000000},
-
-		OperatorSetIds: []uint32{0},
-	}
-
-	blsSignerConfig := operator.BlsSignerConfig{
-		// Current dir is integration-tests
-		KeystorePath:     "../examples/incredible-squaring/keys/test.bls.key.json",
-		KeystorePassword: "",
-	}
-	operatorConfig := operator.Config{
-		OperatorAddress:               "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-		RegistryCoordinatorAddress:    "0xfd471836031dc5108809d173a067e8486b9047a3",
-		EthRpcUrl:                     ethHttpUrl,
-		EthWsUrl:                      ethWsUrl,
-		BlsSignerCfg:                  blsSignerConfig,
-		AggregatorServerIpPortAddress: "localhost:8091",
-		Registration:                  registrationConfig,
-	}
-
-	calculator := operator.NewFunctionResponseCalculator(dotProduct)
-
-	operator, err := operator.NewOperator(logger, operatorConfig, taskManagerAbi, calculator, nil)
-	require.NoError(t, err, "Failed to create operator from config")
-
-	return operator
-}
-
-func createIncredibleDotProductTaskSpammer(t *testing.T, ethHttpUrl string) *taskspammer.TaskSpammer[DotProductInput] {
-	t.Helper()
-
-	logger, err := logging.NewZapLogger(logging.Production)
-	require.NoError(t, err, "Failure creating logger")
-
-	ethHttpClient, err := ethclient.Dial(ethHttpUrl)
-	require.NoError(t, err, "Failed to dial ethclient")
-
-	// This private key must match with the task_generator_addr field in
-	// examples/incredible-dot-product/contracts/config/avs/incredible_dot_product_config.json
-	ecdsaPrivateKey, err := crypto.HexToECDSA("4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356")
-	require.NoError(t, err, "Failed to create ecdsa private key")
-
-	txMgr, err := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethHttpClient, ecdsaPrivateKey)
-	require.NoError(t, err, "Failed to create transaction manager from private key")
-
-	abi, err := cstaskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
-	require.NoError(t, err, "Failed to get task manager abi")
-
-	dotProductTaskManagerAddress := dotProductTaskManagerAddress
-	taskCreator, err := taskmanager.NewTaskManagerFromAbi[DotProductInput, *big.Int](dotProductTaskManagerAddress, abi, txMgr, ethHttpClient)
-	require.NoError(t, err, "Failed to create Task Creator")
-
-	taskSpammerConfig := taskspammer.Config{
-		// This means TaskGenerator will send tasks every 10 seconds
-		TimeBetweenTasks: 10 * time.Second,
-
-		QuorumThresholdPercentage: 100,
-		QuorumNumbers:             []uint8{0},
-	}
-
-	dotProductSequence := newVectorsToMultiplySequence()
-
-	taskSpammer, err := taskspammer.NewTaskSpammer(logger, taskSpammerConfig, taskCreator, dotProductSequence)
-	require.NoError(t, err, "Failed to create Task Spammer")
-
-	return taskSpammer
 }
 
 type DotProductInput struct {
