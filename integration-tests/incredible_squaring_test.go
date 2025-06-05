@@ -46,6 +46,10 @@ func TestIncredibleSquaring(t *testing.T) {
 		return a.Cmp(b) == 0
 	}
 
+	responseCalculationFn := func() operator.ResponseCalculator[*big.Int, *big.Int] {
+		return operator.NewFunctionResponseCalculator(square)
+	}
+
 	testConfig := AvsConfig[*big.Int, *big.Int]{
 		TaskManagerAddr: taskManagerAddress,
 		TaskManagerAbi:  taskManagerAbi,
@@ -53,9 +57,9 @@ func TestIncredibleSquaring(t *testing.T) {
 		EthHttpUrl: ethHttpUrl,
 		EthWsUrl:   ethWsUrl,
 
-		ResponseCalculator: operator.NewFunctionResponseCalculator(square),
-		EqualFn:            equalFn,
-		InputSequence:      newNumberToSquareSequence(),
+		ResponseCalculatorFn: responseCalculationFn,
+		EqualFn:              equalFn,
+		InputSequence:        newNumberToSquareSequence(),
 
 		RegistryCoordinatorAddress:    "0x7bc06c482dead17c0e297afbc32f6e63d3846650",
 		OperatorStateRetrieverAddress: common.HexToAddress("0x4c5859f0f772848b2d91f1d83e2fe57935348029"),

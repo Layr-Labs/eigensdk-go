@@ -10,6 +10,7 @@ import (
 	"time"
 
 	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/awesome-vault-service/contracts/bindings/AwesomeVaultTaskManager"
+	"github.com/Layr-Labs/eigensdk-go/operator"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -52,9 +53,9 @@ func TestAwesomeVaultService(t *testing.T) {
 		EthHttpUrl: ethHttpUrl,
 		EthWsUrl:   ethWsUrl,
 
-		ResponseCalculator: NewVaultServiceResponseCalculator(),
-		EqualFn:            equalFn,
-		InputSequence:      LinearRangeSequence(),
+		ResponseCalculatorFn: NewVaultServiceResponseCalculator,
+		EqualFn:              equalFn,
+		InputSequence:        LinearRangeSequence(),
 
 		RegistryCoordinatorAddress:    "0xfd471836031dc5108809d173a067e8486b9047a3",
 		OperatorStateRetrieverAddress: common.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"),
@@ -133,11 +134,9 @@ type VaultServiceResponseCalculator struct {
 	vaults []TaskInput
 }
 
-func NewVaultServiceResponseCalculator() *VaultServiceResponseCalculator {
-	vaults := make([]TaskInput, 0)
-
+func NewVaultServiceResponseCalculator() operator.ResponseCalculator[TaskInput, [32]byte] {
 	return &VaultServiceResponseCalculator{
-		vaults: vaults,
+		vaults: make([]TaskInput, 0),
 	}
 }
 

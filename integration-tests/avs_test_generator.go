@@ -30,8 +30,8 @@ type AvsConfig[Input any, Output any] struct {
 	EthHttpUrl string
 	EthWsUrl   string
 
-	// The calculator to respond the tasks
-	ResponseCalculator operator.ResponseCalculator[Input, Output]
+	// A function that creates a calculator to respond the tasks
+	ResponseCalculatorFn func() operator.ResponseCalculator[Input, Output]
 
 	// The function to compare the calculated and the received output in the challenger
 	EqualFn func(a, b Output) bool
@@ -166,7 +166,8 @@ func createAvsChallenger[Input any, Output any](
 		EthHttpUrl: config.EthHttpUrl,
 	}
 
-	logicValidation := challenger.ResponseValidationFunctionFromResponseCalculator(config.ResponseCalculator, config.EqualFn)
+	responseCalculator := config.ResponseCalculatorFn()
+	logicValidation := challenger.ResponseValidationFunctionFromResponseCalculator(responseCalculator, config.EqualFn)
 
 	ecdsaPrivateKey, err := crypto.HexToECDSA(config.ChallengerPrivateKey)
 	require.NoError(t, err, "Failed to parse ecdsa private key")
@@ -251,7 +252,8 @@ func createAvsOperator[Input any, Output any](
 		Registration:                  registrationConfig,
 	}
 
-	operator, err := operator.NewOperator(logger, operatorConfig, config.TaskManagerAbi, config.ResponseCalculator, nil)
+	responseCalculator := config.ResponseCalculatorFn()
+	operator, err := operator.NewOperator(logger, operatorConfig, config.TaskManagerAbi, responseCalculator, nil)
 	require.NoError(t, err, "Failed to create operator from config")
 
 	return operator
