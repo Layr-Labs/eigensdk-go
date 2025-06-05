@@ -41,7 +41,7 @@ type BlsSignerConfig struct {
 	KeystorePath string `toml:"keystore_path"`
 
 	// Password for the keystore
-	KeystorePassword string `toml:"keystore_password"`
+	KeystorePassword *string `toml:"keystore_password"`
 
 	// The bls Key Pair, if nil will use the store path and password above
 	// Note: the toml tag is private_key because from the private key we generate the key pair

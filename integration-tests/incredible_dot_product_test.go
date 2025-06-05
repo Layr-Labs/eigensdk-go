@@ -240,7 +240,7 @@ func createIncredibleDotProductOperator(t *testing.T, ethHttpUrl, ethWsUrl strin
 	blsSignerConfig := operator.BlsSignerConfig{
 		// Current dir is integration-tests
 		KeystorePath:     "../examples/incredible-squaring/keys/test.bls.key.json",
-		KeystorePassword: "",
+		KeystorePassword: &emptyString,
 	}
 	operatorConfig := operator.Config{
 		OperatorAddress:               "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",

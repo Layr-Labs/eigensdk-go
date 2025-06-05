@@ -238,7 +238,7 @@ func createIncredibleSquaringOperator(t *testing.T, ethHttpUrl, ethWsUrl string)
 
 	blsSignerConfig := operator.BlsSignerConfig{
 		KeystorePath:     "../examples/incredible-squaring/keys/test.bls.key.json",
-		KeystorePassword: "",
+		KeystorePassword: nil,
 	}
 	operatorConfig := operator.Config{
 		OperatorAddress:            "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",

@@ -82,16 +82,21 @@ func NewOperator[Input any, Output any](
 	blsKeyPair := c.BlsSignerCfg.BlsKeyPair
 	if blsKeyPair == nil {
 		logger.Info("Bls Key pair was nil, using the private key store path and password params...")
-		blsKeystorePassword := c.BlsSignerCfg.KeystorePassword
-		if blsKeystorePassword == "" {
+		blsKeystorePassword := ""
+		if c.BlsSignerCfg.KeystorePassword == nil {
 			logger.Info("bls keystore password was nil, reading value from env")
 			envPassword, ok := os.LookupEnv("OPERATOR_BLS_KEY_PASSWORD")
 			if !ok {
 				logger.Warnf("OPERATOR_BLS_KEY_PASSWORD env var not set. using empty string")
 			}
 			blsKeystorePassword = envPassword
+		} else {
+			blsKeystorePassword = *c.BlsSignerCfg.KeystorePassword
 		}
-		blsKeyPair, err = bls.ReadPrivateKeyFromFile(c.BlsSignerCfg.KeystorePath, blsKeystorePassword)
+		blsKeyPair, err = bls.ReadPrivateKeyFromFile(
+			c.BlsSignerCfg.KeystorePath,
+			blsKeystorePassword,
+		)
 		if err != nil {
 			logger.Errorf("Cannot parse bls private key", "err", err)
 			return nil, err
