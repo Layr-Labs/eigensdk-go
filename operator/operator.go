@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"os"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -81,7 +82,16 @@ func NewOperator[Input any, Output any](
 	blsKeyPair := c.BlsSignerCfg.BlsKeyPair
 	if blsKeyPair == nil {
 		logger.Info("Bls Key pair was nil, using the private key store path and password params...")
-		blsKeyPair, err = bls.ReadPrivateKeyFromFile(c.BlsSignerCfg.KeystorePath, c.BlsSignerCfg.KeystorePassword)
+		blsKeystorePassword := c.BlsSignerCfg.KeystorePassword
+		if blsKeystorePassword == "" {
+			logger.Info("bls keystore password was nil, reading value from env")
+			envPassword, ok := os.LookupEnv("OPERATOR_BLS_KEY_PASSWORD")
+			if !ok {
+				logger.Warnf("OPERATOR_BLS_KEY_PASSWORD env var not set. using empty string")
+			}
+			blsKeystorePassword = envPassword
+		}
+		blsKeyPair, err = bls.ReadPrivateKeyFromFile(c.BlsSignerCfg.KeystorePath, blsKeystorePassword)
 		if err != nil {
 			logger.Errorf("Cannot parse bls private key", "err", err)
 			return nil, err
