@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"errors"
 	"math/big"
+	"os"
 	"strings"
 	"time"
 
@@ -61,9 +62,18 @@ func registerOperatorOnStartup(
 
 	if c.EcdsaSignerCfg.PrivateKey == "" {
 		logger.Info("Ecdsa private key was nil, using the private key store path and password params...")
+		ecdsaKeystorePassword := c.EcdsaSignerCfg.KeystorePassword
+		if ecdsaKeystorePassword == "" {
+			logger.Info("ECDSA keystore password was nil, reading value from env")
+			envPassword, ok := os.LookupEnv("OPERATOR_ECDSA_KEY_PASSWORD")
+			if !ok {
+				logger.Warnf("OPERATOR_ECDSA_KEY_PASSWORD env var not set. using empty string")
+			}
+			ecdsaKeystorePassword = envPassword
+		}
 		ecdsaPk, err = sdkecdsa.ReadKey(
 			c.EcdsaSignerCfg.KeystorePath,
-			c.EcdsaSignerCfg.KeystorePassword,
+			ecdsaKeystorePassword,
 		)
 		if err != nil {
 			return utils.WrapError("Failed to read the private key from keystore", err)
