@@ -52,7 +52,7 @@ type AvsConfig[Input any, Output any] struct {
 	OperatorBlsPrivateKey string
 	OperatorPrivateKey    string
 
-	// Entities provate keys (the only required to communicate with task manager is the task spammer one)
+	// Entities private keys (the only required to communicate with task manager is the task spammer one)
 	AggregatorPrivateKey  string
 	ChallengerPrivateKey  string
 	TaskSpammerPrivateKey string
