@@ -210,6 +210,12 @@ func createIncredibleDotProductOperator(t *testing.T, ethHttpUrl, ethWsUrl strin
 	taskManagerAbi, err := cstaskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
 	require.NoError(t, err, "Failed to get task manager abi")
 
+	emptyString := ""
+	ecdsaSignerCfg := operator.EcdsaSignerConfig{
+		KeystorePath:     "../examples/incredible-squaring/keys/test.ecdsa.key.json",
+		KeystorePassword: &emptyString,
+	}
+
 	amount := new(big.Int)
 	amount.SetString("1000000000000000000000", 10)
 	registrationConfig := operator.RegistrationConfig{
@@ -223,8 +229,7 @@ func createIncredibleDotProductOperator(t *testing.T, ethHttpUrl, ethWsUrl strin
 		RewardsCoordinatorAddress:   common.HexToAddress("0xa51c1fc2f0d1a1b8494ed1fe312d7c3a78ed91c0"),
 		PermissionControllerAddress: common.HexToAddress("0x59b670e9fa9d0a427751af201d676719a970857b"),
 
-		// Current dir is integration-tests
-		EcdsaKeyStorePath: "../examples/incredible-dot-product/keys/test.ecdsa.key.json",
+		EcdsaSignerCfg: ecdsaSignerCfg,
 
 		AmountToMint:          amount,
 		AllocatableMagnitudes: []uint64{1000000000000000},
@@ -235,7 +240,7 @@ func createIncredibleDotProductOperator(t *testing.T, ethHttpUrl, ethWsUrl strin
 	blsSignerConfig := operator.BlsSignerConfig{
 		// Current dir is integration-tests
 		KeystorePath:     "../examples/incredible-squaring/keys/test.bls.key.json",
-		KeystorePassword: "",
+		KeystorePassword: &emptyString,
 	}
 	operatorConfig := operator.Config{
 		OperatorAddress:               "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",

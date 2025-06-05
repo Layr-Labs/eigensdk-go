@@ -2,14 +2,16 @@ package operator
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"errors"
 	"math/big"
 	"os"
+	"strings"
 	"time"
 
 	allocationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/AllocationManager"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
-	"github.com/Layr-Labs/eigensdk-go/crypto/ecdsa"
+	sdkecdsa "github.com/Layr-Labs/eigensdk-go/crypto/ecdsa"
 	"github.com/Layr-Labs/eigensdk-go/signerv2"
 
 	erc20mock "github.com/Layr-Labs/eigensdk-go/contracts/bindings/MockERC20"
@@ -23,6 +25,7 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/event"
 )
@@ -55,21 +58,42 @@ func registerOperatorOnStartup(
 		return err
 	}
 
-	ecdsaKeyPassword, ok := os.LookupEnv("OPERATOR_ECDSA_KEY_PASSWORD")
-	if !ok {
-		logger.Warnf("OPERATOR_ECDSA_KEY_PASSWORD env var not set. using empty string")
-	}
+	var ecdsaPk *ecdsa.PrivateKey
 
-	operatorEcdsaPrivateKey, err := ecdsa.ReadKey(
-		c.EcdsaKeyStorePath,
-		ecdsaKeyPassword,
-	)
-	if err != nil {
-		return err
+	if c.EcdsaSignerCfg.PrivateKey == "" {
+		logger.Info("ECDSA private key was nil, using the private key store path and password params...")
+		ecdsaKeystorePassword := ""
+
+		envPassword, ok := os.LookupEnv("OPERATOR_ECDSA_KEY_PASSWORD")
+		if !ok {
+			logger.Info("ECDSA keystore password was not set at env, reading value from config")
+			if c.EcdsaSignerCfg.KeystorePassword != nil {
+				ecdsaKeystorePassword = *c.EcdsaSignerCfg.KeystorePassword
+			} else {
+				logger.Warnf("ECDSA keystore password not found in config, using empty string")
+			}
+		} else {
+			ecdsaKeystorePassword = envPassword
+		}
+
+		ecdsaPk, err = sdkecdsa.ReadKey(
+			c.EcdsaSignerCfg.KeystorePath,
+			ecdsaKeystorePassword,
+		)
+		if err != nil {
+			return utils.WrapError("Failed to read the ECDSA private key from keystore", err)
+		}
+	} else {
+		operatorEcdsaPkString := strings.TrimPrefix(c.EcdsaSignerCfg.PrivateKey, "0x")
+
+		ecdsaPk, err = crypto.HexToECDSA(operatorEcdsaPkString)
+		if err != nil {
+			return utils.WrapError("Failed to convert hex key to ECDSA", err)
+		}
 	}
 
 	signerV2, senderAddr, err := signerv2.SignerFromConfig(signerv2.Config{
-		PrivateKey: operatorEcdsaPrivateKey,
+		PrivateKey: ecdsaPk,
 	}, chainid)
 	if err != nil {
 		logger.Fatalf(err.Error())
