@@ -68,36 +68,18 @@ func TestIncredibleDotProduct(t *testing.T) {
 		AggregatorServerIpPortAddr: "localhost:8091",
 	}
 
-	// Aggregator
-	aggregator := createAvsAggregator(t, testConfig)
-
-	aggErrC := aggregator.Start(ctx)
-
-	// Challenger
-	challenger := createAvsChallenger(t, testConfig)
-
-	chErrC := challenger.Start(ctx)
-
-	// Operator
-	operator := createAvsOperator(t, testConfig)
-
-	opErrC := operator.Start(ctx)
-
-	// Task Spammer
-	taskSpammer := createAvsTaskSpammer(t, testConfig)
-
-	tsErrC := taskSpammer.Start(ctx)
+	avs := StartAvs(t, ctx, testConfig)
 
 	timer := time.NewTimer(32 * time.Second)
 
 	select {
-	case err := <-aggErrC:
+	case err := <-avs.Aggregator:
 		t.Fatal("Aggregator error:", err)
-	case err := <-chErrC:
+	case err := <-avs.Challenger:
 		t.Fatal("Challenger error:", err)
-	case err := <-opErrC:
+	case err := <-avs.Operator:
 		t.Fatal("Operator error:", err)
-	case err := <-tsErrC:
+	case err := <-avs.TaskSpammer:
 		if err == nil {
 			cancel()
 		} else {
