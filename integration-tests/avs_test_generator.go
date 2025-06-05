@@ -23,10 +23,11 @@ import (
 )
 
 type AvsConfig[Input any, Output any] struct {
+	// Task manager related
 	TaskManagerAddr common.Address
+	TaskManagerAbi  *abi.ABI
 
-	TaskManagerAbi *abi.ABI
-
+	// Eth Urls
 	EthHttpUrl string
 	EthWsUrl   string
 
@@ -39,27 +40,34 @@ type AvsConfig[Input any, Output any] struct {
 	// The sequence to generate the inputs sent to the task manager
 	InputSequence iter.Seq[Input]
 
-	// Avs Addresses
+	// Address from which the Aggregator will listen to signed task responses from operators
+	AggregatorServerIpPortAddr string
+
+	// Avs deployment Addresses
 	RegistryCoordinatorAddress    common.Address
 	OperatorStateRetrieverAddress common.Address
 	AvsAddress                    common.Address
 
+	// Operator private keys
 	BlsPrivateKey   string
 	EcdsaPrivateKey string
 
-	AggregatorServerIpPortAddr string
-
+	// Entities provate keys (the only required to communicate with task manager is the task spammer one)
 	AggregatorPrivateKey  string
 	ChallengerPrivateKey  string
 	TaskSpammerPrivateKey string
 
+	// Core deployment addresses
 	AllocationManagerAddr       common.Address
 	StrategyAddr                common.Address
 	DelegationManagerAddress    common.Address
 	RewardsCoordinatorAddress   common.Address
 	PermissionControllerAddress common.Address
 
-	OperatorAddr         string
+	// Operator config values
+	OperatorAddr string
+
+	// Registration config values
 	AmountToMint         string
 	AllocatableMagnitude uint64
 	OperatorSetId        uint32
@@ -67,6 +75,7 @@ type AvsConfig[Input any, Output any] struct {
 	Socket               string
 	AllocationDelay      uint32
 
+	// Task spammer config values
 	TimeBetweenTasks          time.Duration
 	QuorumThresholdPercentage uint32
 	QuorumNumbers             []uint8
