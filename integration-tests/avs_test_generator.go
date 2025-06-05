@@ -26,6 +26,9 @@ type AvsConfig[Input any, Output any] struct {
 
 	TaskManagerAbi *abi.ABI
 
+	EthHttpUrl string
+	EthWsUrl   string
+
 	// The path to the file with the anvil state
 	//AnvilStateFileName string
 
@@ -55,7 +58,7 @@ type AvsConfig[Input any, Output any] struct {
 	AggregatorServerIpPortAddr string
 }
 
-func createAvsAggregator[Input any, Output any](t *testing.T, ethHttpUrl, ethWsUrl string, config AvsConfig[Input, Output]) *aggregator.Aggregator[Input, Output] {
+func createAvsAggregator[Input any, Output any](t *testing.T, config AvsConfig[Input, Output]) *aggregator.Aggregator[Input, Output] {
 	t.Helper()
 
 	logger, err := logging.NewZapLogger(logging.Production)
@@ -64,12 +67,12 @@ func createAvsAggregator[Input any, Output any](t *testing.T, ethHttpUrl, ethWsU
 	cfg := aggregator.Config{
 		RegistryCoordinatorAddress:    common.HexToAddress(config.RegistryCoordinatorAddress),
 		OperatorStateRetrieverAddress: config.OperatorStateRetrieverAddress,
-		EthHttpUrl:                    ethHttpUrl,
-		EthWsUrl:                      ethWsUrl,
+		EthHttpUrl:                    config.EthHttpUrl,
+		EthWsUrl:                      config.EthWsUrl,
 		AggregatorServerIpPortAddr:    config.AggregatorServerIpPortAddr,
 	}
 
-	ethClient, err := ethclient.Dial(ethHttpUrl)
+	ethClient, err := ethclient.Dial(config.EthHttpUrl)
 	require.NoError(t, err, "Failure creating ethclient")
 
 	aggregatorPrivateKey := "2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6"
@@ -98,7 +101,6 @@ func createAvsAggregator[Input any, Output any](t *testing.T, ethHttpUrl, ethWsU
 
 func createAvsChallenger[Input any, Output any](
 	t *testing.T,
-	ethHttpUrl, ethWsUrl string,
 	config AvsConfig[Input, Output],
 ) *challenger.Challenger[Input, Output] {
 	t.Helper()
@@ -106,12 +108,12 @@ func createAvsChallenger[Input any, Output any](
 	logger, err := logging.NewZapLogger(logging.Production)
 	require.NoError(t, err, "Failure creating logger")
 
-	ethHttpClient, err := ethclient.Dial(ethHttpUrl)
+	ethHttpClient, err := ethclient.Dial(config.EthHttpUrl)
 	require.NoError(t, err, "Failed to create eth client")
 
 	challengerCfg := challenger.Config{
-		EthWsUrl:   ethWsUrl,
-		EthHttpUrl: ethHttpUrl,
+		EthWsUrl:   config.EthWsUrl,
+		EthHttpUrl: config.EthHttpUrl,
 	}
 
 	logicCalculator := operator.NewFunctionResponseCalculator(config.LogicFn)
@@ -147,7 +149,6 @@ func createAvsChallenger[Input any, Output any](
 
 func createAvsOperator[Input any, Output any](
 	t *testing.T,
-	ethHttpUrl, ethWsUrl string,
 	config AvsConfig[Input, Output],
 ) *operator.Operator[Input, Output] {
 	t.Helper()
@@ -187,8 +188,8 @@ func createAvsOperator[Input any, Output any](
 	operatorConfig := operator.Config{
 		OperatorAddress:               "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
 		RegistryCoordinatorAddress:    config.RegistryCoordinatorAddress,
-		EthRpcUrl:                     ethHttpUrl,
-		EthWsUrl:                      ethWsUrl,
+		EthRpcUrl:                     config.EthHttpUrl,
+		EthWsUrl:                      config.EthWsUrl,
 		BlsSignerCfg:                  blsSignerConfig,
 		AggregatorServerIpPortAddress: config.AggregatorServerIpPortAddr,
 		Registration:                  registrationConfig,
@@ -204,7 +205,6 @@ func createAvsOperator[Input any, Output any](
 
 func createAvsTaskSpammer[Input any, Output any](
 	t *testing.T,
-	ethHttpUrl string,
 	config AvsConfig[Input, Output],
 ) *taskspammer.TaskSpammer[Input] {
 	t.Helper()
@@ -212,7 +212,7 @@ func createAvsTaskSpammer[Input any, Output any](
 	logger, err := logging.NewZapLogger(logging.Production)
 	require.NoError(t, err, "Failure creating logger")
 
-	ethHttpClient, err := ethclient.Dial(ethHttpUrl)
+	ethHttpClient, err := ethclient.Dial(config.EthHttpUrl)
 	require.NoError(t, err, "Failed to dial ethclient")
 
 	ecdsaPrivateKey, err := crypto.HexToECDSA(config.TaskSpammerPrivateKey)

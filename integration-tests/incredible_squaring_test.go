@@ -48,9 +48,13 @@ func TestIncredibleSquaring(t *testing.T) {
 	testConfig := AvsConfig[*big.Int, *big.Int]{
 		TaskManagerAddr: taskManagerAddress,
 		TaskManagerAbi:  taskManagerAbi,
-		LogicFn:         square,
-		EqualFn:         equalFn,
-		InputSequence:   newNumberToSquareSequence(),
+
+		EthHttpUrl: ethHttpUrl,
+		EthWsUrl:   ethWsUrl,
+
+		LogicFn:       square,
+		EqualFn:       equalFn,
+		InputSequence: newNumberToSquareSequence(),
 
 		RegistryCoordinatorAddress:    "0x7bc06c482dead17c0e297afbc32f6e63d3846650",
 		OperatorStateRetrieverAddress: common.HexToAddress("0x4c5859f0f772848b2d91f1d83e2fe57935348029"),
@@ -65,22 +69,22 @@ func TestIncredibleSquaring(t *testing.T) {
 	}
 
 	// Aggregator
-	aggregator := createAvsAggregator(t, ethHttpUrl, ethWsUrl, testConfig)
+	aggregator := createAvsAggregator(t, testConfig)
 
 	aggErrC := aggregator.Start(ctx)
 
 	// Challenger
-	challenger := createAvsChallenger(t, ethHttpUrl, ethWsUrl, testConfig)
+	challenger := createAvsChallenger(t, testConfig)
 
 	chErrC := challenger.Start(ctx)
 
 	// Operator
-	operator := createAvsOperator(t, ethHttpUrl, ethWsUrl, testConfig)
+	operator := createAvsOperator(t, testConfig)
 
 	opErrC := operator.Start(ctx)
 
 	// Task Spammer
-	taskSpammer := createAvsTaskSpammer(t, ethHttpUrl, testConfig)
+	taskSpammer := createAvsTaskSpammer(t, testConfig)
 
 	tsErrC := taskSpammer.Start(ctx)
 
