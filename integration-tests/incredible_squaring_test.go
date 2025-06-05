@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Layr-Labs/eigensdk-go/operator"
 	"github.com/Layr-Labs/eigensdk-go/testutils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -52,9 +53,9 @@ func TestIncredibleSquaring(t *testing.T) {
 		EthHttpUrl: ethHttpUrl,
 		EthWsUrl:   ethWsUrl,
 
-		LogicFn:       square,
-		EqualFn:       equalFn,
-		InputSequence: newNumberToSquareSequence(),
+		ResponseCalculator: operator.NewFunctionResponseCalculator(square),
+		EqualFn:            equalFn,
+		InputSequence:      newNumberToSquareSequence(),
 
 		RegistryCoordinatorAddress:    "0x7bc06c482dead17c0e297afbc32f6e63d3846650",
 		OperatorStateRetrieverAddress: common.HexToAddress("0x4c5859f0f772848b2d91f1d83e2fe57935348029"),
