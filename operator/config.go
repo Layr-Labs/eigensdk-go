@@ -41,11 +41,27 @@ type BlsSignerConfig struct {
 	KeystorePath string `toml:"keystore_path"`
 
 	// Password for the keystore
-	KeystorePassword string `toml:"keystore_password"`
+	KeystorePassword *string `toml:"keystore_password"`
 
 	// The bls Key Pair, if nil will use the store path and password above
 	// Note: the toml tag is private_key because from the private key we generate the key pair
 	BlsKeyPair *bls.KeyPair `toml:"private_key"`
+}
+
+// For the ECDSA signing we accept two different options:
+// - If the key pair is provided, we use that pair
+// - If not, we use the specified keystore path and the password.
+// We use the go-ethereum keystore package to encrypt/decrypt the private keys, more specifically the V3 encryption,
+// so to see the supported or unsuported keystore formats refer to the geth keystore package documentation.
+type EcdsaSignerConfig struct {
+	// Path to the ECDSA keystore on local storage
+	KeystorePath string `toml:"keystore_path"`
+
+	// Password for the keystore
+	KeystorePassword *string `toml:"keystore_password"`
+
+	// The ECDSA Private Key, if empty will use the store path and password above
+	PrivateKey string `toml:"private_key"`
 }
 
 // This config is used to register an operator on startup.
@@ -68,8 +84,8 @@ type RegistrationConfig struct {
 	RewardsCoordinatorAddress   common.Address `toml:"rewards_coordinator_address"`
 	PermissionControllerAddress common.Address `toml:"permission_controller_address"`
 
-	// The path to the location of the ecdsa private key on local storage
-	EcdsaKeyStorePath string `toml:"ecdsa_private_key_store_path"`
+	// The config used to create the ecdsa signer for the operator registration
+	EcdsaSignerCfg EcdsaSignerConfig `toml:"ecdsa_signer"`
 
 	// The ammount to mint to the operator
 	AmountToMint *big.Int `toml:"amount_to_mint"`
