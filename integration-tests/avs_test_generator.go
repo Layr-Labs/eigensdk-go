@@ -49,8 +49,8 @@ type AvsConfig[Input any, Output any] struct {
 	AvsAddress                    common.Address
 
 	// Operator private keys
-	BlsPrivateKey   string
-	EcdsaPrivateKey string
+	OperatorBlsPrivateKey string
+	OperatorPrivateKey    string
 
 	// Entities provate keys (the only required to communicate with task manager is the task spammer one)
 	AggregatorPrivateKey  string
@@ -214,10 +214,10 @@ func createAvsOperator[Input any, Output any](
 	require.NoError(t, err, "Failure creating logger")
 
 	ecdsaCfg := operator.EcdsaSignerConfig{
-		PrivateKey: config.EcdsaPrivateKey,
+		PrivateKey: config.OperatorPrivateKey,
 	}
 
-	keyPair, err := bls.NewKeyPairFromString(config.BlsPrivateKey)
+	keyPair, err := bls.NewKeyPairFromString(config.OperatorBlsPrivateKey)
 	require.NoError(t, err)
 
 	blsCfg := operator.BlsSignerConfig{
