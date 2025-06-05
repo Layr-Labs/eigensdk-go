@@ -65,7 +65,30 @@ func TestIncredibleDotProduct(t *testing.T) {
 
 		TaskSpammerPrivateKey: "4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356",
 
-		AggregatorServerIpPortAddr: "localhost:8091",
+		AggregatorServerIpPortAddr:  "localhost:8091",
+		AggregatorPrivateKey:        "2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6",
+		ChallengerPrivateKey:        testutils.ANVIL_FIRST_PRIVATE_KEY,
+		AmountToMint:                "1000000000000000000000",
+		AllocationManagerAddr:       common.HexToAddress("0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6"),
+		StrategyAddr:                common.HexToAddress("0x2b961e3959b79326a8e7f64ef0d2d825707669b5"),
+		DelegationManagerAddress:    common.HexToAddress("0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0"),
+		RewardsCoordinatorAddress:   common.HexToAddress("0xa51c1fc2f0d1a1b8494ed1fe312d7c3a78ed91c0"),
+		PermissionControllerAddress: common.HexToAddress("0x59b670e9fa9d0a427751af201d676719a970857b"),
+
+		AllocatableMagnitude: 1000000000000000,
+		OperatorSetId:        0,
+
+		MetadataUrl:     "",
+		Socket:          "",
+		AllocationDelay: 0,
+
+		BlsKeystorePassword: "",
+
+		OperatorAddr: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+
+		TimeBetweenTasks:          10 * time.Second,
+		QuorumThresholdPercentage: 100,
+		QuorumNumbers:             []uint8{0},
 	}
 
 	avs := StartAvs(t, ctx, testConfig)

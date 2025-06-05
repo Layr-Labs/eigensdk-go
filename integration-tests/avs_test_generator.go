@@ -14,7 +14,6 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/operator"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
 	taskspammer "github.com/Layr-Labs/eigensdk-go/task-spammer"
-	"github.com/Layr-Labs/eigensdk-go/testutils"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -29,12 +28,6 @@ type AvsConfig[Input any, Output any] struct {
 
 	EthHttpUrl string
 	EthWsUrl   string
-
-	// The path to the file with the anvil state
-	//AnvilStateFileName string
-
-	// A type that implements a task manager inteface would be quite much overhead,
-	// maybe a bound contract like with the task manager wrapper
 
 	// The function to calculate the logic
 	LogicFn func(taskIndex uint32, input Input) (Output, error)
@@ -53,10 +46,30 @@ type AvsConfig[Input any, Output any] struct {
 	BlsKeyStorePath   string
 	EcdsaKeyStorePath string
 
+	AggregatorServerIpPortAddr string
+
+	AggregatorPrivateKey  string
+	ChallengerPrivateKey  string
 	TaskSpammerPrivateKey string
 
-	// Check if really needed
-	AggregatorServerIpPortAddr string
+	AllocationManagerAddr       common.Address
+	StrategyAddr                common.Address
+	DelegationManagerAddress    common.Address
+	RewardsCoordinatorAddress   common.Address
+	PermissionControllerAddress common.Address
+
+	OperatorAddr         string
+	AmountToMint         string
+	AllocatableMagnitude uint64
+	OperatorSetId        uint32
+	MetadataUrl          string
+	Socket               string
+	AllocationDelay      uint32
+	BlsKeystorePassword  string
+
+	TimeBetweenTasks          time.Duration
+	QuorumThresholdPercentage uint32
+	QuorumNumbers             []uint8
 }
 
 type Avs struct {
@@ -112,8 +125,7 @@ func createAvsAggregator[Input any, Output any](t *testing.T, config AvsConfig[I
 	ethClient, err := ethclient.Dial(config.EthHttpUrl)
 	require.NoError(t, err, "Failure creating ethclient")
 
-	aggregatorPrivateKey := "2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6"
-	ecdsaPrivateKey, err := crypto.HexToECDSA(aggregatorPrivateKey)
+	ecdsaPrivateKey, err := crypto.HexToECDSA(config.AggregatorPrivateKey)
 	require.NoError(t, err, "Failed to create ecdsa private key")
 
 	txMgr, err := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethClient, ecdsaPrivateKey)
@@ -156,7 +168,7 @@ func createAvsChallenger[Input any, Output any](
 	logicCalculator := operator.NewFunctionResponseCalculator(config.LogicFn)
 	logicValidation := challenger.ResponseValidationFunctionFromResponseCalculator(logicCalculator, config.EqualFn)
 
-	ecdsaPrivateKey, err := crypto.HexToECDSA(testutils.ANVIL_FIRST_PRIVATE_KEY)
+	ecdsaPrivateKey, err := crypto.HexToECDSA(config.ChallengerPrivateKey)
 	require.NoError(t, err, "Failed to parse ecdsa private key")
 
 	txMgr, err := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethHttpClient, ecdsaPrivateKey)
@@ -194,28 +206,28 @@ func createAvsOperator[Input any, Output any](
 	require.NoError(t, err, "Failure creating logger")
 
 	amount := new(big.Int)
-	amount.SetString("1000000000000000000000", 10)
+	amount.SetString(config.AmountToMint, 10)
 	registrationConfig := operator.RegistrationConfig{
 		RegisterOnStartup: true,
 
-		AllocationManagerAddr: common.HexToAddress("0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6"),
+		AllocationManagerAddr: config.AllocationManagerAddr,
 		AvsAddress:            config.AvsAddress,
-		StrategyAddrs:         []common.Address{common.HexToAddress("0x2b961e3959b79326a8e7f64ef0d2d825707669b5")},
+		StrategyAddrs:         []common.Address{config.StrategyAddr},
 
-		DelegationManagerAddress:    common.HexToAddress("0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0"),
-		RewardsCoordinatorAddress:   common.HexToAddress("0xa51c1fc2f0d1a1b8494ed1fe312d7c3a78ed91c0"),
-		PermissionControllerAddress: common.HexToAddress("0x59b670e9fa9d0a427751af201d676719a970857b"),
+		DelegationManagerAddress:    config.DelegationManagerAddress,
+		RewardsCoordinatorAddress:   config.RewardsCoordinatorAddress,
+		PermissionControllerAddress: config.PermissionControllerAddress,
 
 		EcdsaKeyStorePath: config.EcdsaKeyStorePath,
 
 		AmountToMint:          amount,
-		AllocatableMagnitudes: []uint64{1000000000000000},
+		AllocatableMagnitudes: []uint64{config.AllocatableMagnitude},
 
-		OperatorSetIds: []uint32{0},
+		OperatorSetIds: []uint32{config.OperatorSetId},
 
-		MetadataUrl:     "",
-		Socket:          "",
-		AllocationDelay: 0,
+		MetadataUrl:     config.MetadataUrl,
+		Socket:          config.Socket,
+		AllocationDelay: config.AllocationDelay,
 	}
 
 	blsSignerConfig := operator.BlsSignerConfig{
@@ -223,7 +235,7 @@ func createAvsOperator[Input any, Output any](
 		KeystorePassword: "",
 	}
 	operatorConfig := operator.Config{
-		OperatorAddress:               "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+		OperatorAddress:               config.OperatorAddr,
 		RegistryCoordinatorAddress:    config.RegistryCoordinatorAddress,
 		EthRpcUrl:                     config.EthHttpUrl,
 		EthWsUrl:                      config.EthWsUrl,
@@ -263,10 +275,10 @@ func createAvsTaskSpammer[Input any, Output any](
 
 	taskSpammerConfig := taskspammer.Config{
 		// This means TaskGenerator will send tasks every 10 seconds
-		TimeBetweenTasks: 10 * time.Second,
+		TimeBetweenTasks: config.TimeBetweenTasks,
 
-		QuorumThresholdPercentage: 100,
-		QuorumNumbers:             []uint8{0},
+		QuorumThresholdPercentage: config.QuorumThresholdPercentage,
+		QuorumNumbers:             config.QuorumNumbers,
 	}
 
 	taskSpammer, err := taskspammer.NewTaskSpammer(logger, taskSpammerConfig, taskCreator, config.InputSequence)
