@@ -208,7 +208,7 @@ func createIncredibleSquaringOperator(t *testing.T, ethHttpUrl, ethWsUrl string)
 
 	ecdsaSignerCfg := operator.EcdsaSignerConfig{
 		KeystorePath:     "../examples/incredible-squaring/keys/test.ecdsa.key.json",
-		KeystorePassword: "",
+		KeystorePassword: nil,
 	}
 
 	amount := new(big.Int)

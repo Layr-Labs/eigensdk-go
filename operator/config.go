@@ -58,7 +58,7 @@ type EcdsaSignerConfig struct {
 	KeystorePath string `toml:"keystore_path"`
 
 	// Password for the keystore
-	KeystorePassword string `toml:"keystore_password"`
+	KeystorePassword *string `toml:"keystore_password"`
 
 	// The ECDSA Private Key, if empty will use the store path and password above
 	PrivateKey string `toml:"private_key"`

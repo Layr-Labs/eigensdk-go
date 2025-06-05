@@ -210,9 +210,10 @@ func createIncredibleDotProductOperator(t *testing.T, ethHttpUrl, ethWsUrl strin
 	taskManagerAbi, err := cstaskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
 	require.NoError(t, err, "Failed to get task manager abi")
 
+	emptyString := ""
 	ecdsaSignerCfg := operator.EcdsaSignerConfig{
 		KeystorePath:     "../examples/incredible-squaring/keys/test.ecdsa.key.json",
-		KeystorePassword: "",
+		KeystorePassword: &emptyString,
 	}
 
 	amount := new(big.Int)
