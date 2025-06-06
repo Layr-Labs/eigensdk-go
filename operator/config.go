@@ -28,7 +28,7 @@ type Config struct {
 	AggregatorServerIpPortAddress string `toml:"aggregator_server_ip_port"`
 
 	// The config used to register an operator
-	Registration RegistrationConfig `toml:"registration"`
+	Registration *RegistrationConfig `toml:"registration"`
 }
 
 // For the BLS signing we accept two different options:
@@ -67,9 +67,6 @@ type EcdsaSignerConfig struct {
 // This config is used to register an operator on startup.
 // A TODO of this config is to make some values optional to perform some registration operations instead of all
 type RegistrationConfig struct {
-	// If set true, should register the operator on startup
-	RegisterOnStartup bool `toml:"register_on_startup"`
-
 	// Used for setting the allogation delay to zero and initialize allocations
 	AllocationManagerAddr common.Address `toml:"allocation_manager_address"`
 

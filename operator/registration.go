@@ -39,13 +39,21 @@ import (
 //   - Initialize allocations for the operator sets
 func handleRegistration(
 	logger logging.Logger,
-	config RegistrationConfig,
+	config *RegistrationConfig,
 	operatorAddr common.Address,
 	registryCoordinatorAddr common.Address,
 	avsReader *avsregistry.ChainReader, // TODO: Change this for a bool or an addr
 	ethHttpClient *ethclient.Client,
 	blsKeyPair *bls.KeyPair,
 ) error {
+	if config == nil {
+		// We bubble the error all the way up instead of using logger.Fatal because logger.Fatal prints a huge stack
+		// trace that hides the actual error message. This error msg is more explicit and doesn't require showing a
+		// stack trace to the user.
+		return fmt.Errorf(
+			"RegistrationConfig is nil, no startup changes required ",
+		)
+	}
 
 	// Registration set up
 	elcontractsConfig := elcontracts.Config{
@@ -117,16 +125,7 @@ func handleRegistration(
 		logger.Error("Error checking if operator is registered", "err", err)
 		return err
 	}
-	if !config.RegisterOnStartup {
-		// We bubble the error all the way up instead of using logger.Fatal because logger.Fatal prints a huge stack
-		// trace that hides the actual error message. This error msg is more explicit and doesn't require showing a
-		// stack trace to the user.
-		return fmt.Errorf(
-			"Operator is not registered and register on startup flag is false, try registering operator using the operator-cli before starting operator",
-		)
-	}
-
-	if operatorIsRegistered {
+	if !operatorIsRegistered {
 		err = RegisterOperatorWithEigenlayer(
 			operatorAddr,
 			elcontractsConfig,

@@ -214,8 +214,6 @@ func createIncredibleSquaringOperator(t *testing.T, ethHttpUrl, ethWsUrl string)
 	amount := new(big.Int)
 	amount.SetString("1000000000000000000000", 10)
 	registrationConfig := operator.RegistrationConfig{
-		RegisterOnStartup: true,
-
 		AllocationManagerAddr: common.HexToAddress("0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6"),
 		AvsAddress:            common.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"),
 		StrategyAddrs:         []common.Address{common.HexToAddress("0x2b961e3959b79326a8e7f64ef0d2d825707669b5")},
@@ -248,7 +246,7 @@ func createIncredibleSquaringOperator(t *testing.T, ethHttpUrl, ethWsUrl string)
 		// Current dir is integration-tests
 		BlsSignerCfg:                  blsSignerConfig,
 		AggregatorServerIpPortAddress: "localhost:8090",
-		Registration:                  registrationConfig,
+		Registration:                  &registrationConfig,
 	}
 
 	calculator := operator.NewFunctionResponseCalculator(square)

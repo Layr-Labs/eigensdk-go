@@ -219,8 +219,6 @@ func createIncredibleDotProductOperator(t *testing.T, ethHttpUrl, ethWsUrl strin
 	amount := new(big.Int)
 	amount.SetString("1000000000000000000000", 10)
 	registrationConfig := operator.RegistrationConfig{
-		RegisterOnStartup: true,
-
 		AllocationManagerAddr: common.HexToAddress("0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6"),
 		AvsAddress:            common.HexToAddress("0xcd8a1c3ba11cf5ecfa6267617243239504a98d90"),
 		StrategyAddrs:         []common.Address{common.HexToAddress("0x2b961e3959b79326a8e7f64ef0d2d825707669b5")},
@@ -249,7 +247,7 @@ func createIncredibleDotProductOperator(t *testing.T, ethHttpUrl, ethWsUrl strin
 		EthWsUrl:                      ethWsUrl,
 		BlsSignerCfg:                  blsSignerConfig,
 		AggregatorServerIpPortAddress: "localhost:8091",
-		Registration:                  registrationConfig,
+		Registration:                  &registrationConfig,
 	}
 
 	calculator := operator.NewFunctionResponseCalculator(dotProduct)
