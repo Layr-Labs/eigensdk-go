@@ -8,7 +8,6 @@ import (
 	"math/big"
 	"os"
 	"strings"
-	"time"
 
 	allocationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/AllocationManager"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
@@ -32,89 +31,45 @@ import (
 	"github.com/ethereum/go-ethereum/event"
 )
 
-func handleRegistration(
-	logger logging.Logger,
-	config RegistrationConfig,
-	operatorAddr common.Address,
-	registryCoordinatorAddr common.Address,
-	avsReader *avsregistry.ChainReader,
-	ethHttpClient *ethclient.Client,
-	blsKeyPair *bls.KeyPair,
-) error {
-
-	// Check if operator was registered, if its not registered and register on startup flag is not set, then will fail.
-	// If its not registered and should be registered on startup, make the registration.
-	operatorIsRegistered, err := avsReader.IsOperatorRegistered(&bind.CallOpts{}, operatorAddr)
-	if err != nil {
-		logger.Error("Error checking if operator is registered", "err", err)
-		return err
-	}
-	if !operatorIsRegistered {
-		if config.RegisterOnStartup {
-			err = registerOperatorOnStartup(
-				config,
-				logger,
-				registryCoordinatorAddr,
-				operatorAddr,
-				ethHttpClient,
-				blsKeyPair,
-			)
-			if err != nil {
-				logger.Errorf("Failure while registering operator on startup: %w", err)
-				return err
-			}
-		} else {
-			// We bubble the error all the way up instead of using logger.Fatal because logger.Fatal prints a huge stack
-			// trace that hides the actual error message. This error msg is more explicit and doesn't require showing a
-			// stack trace to the user.
-			return fmt.Errorf(
-				"Operator is not registered and register on startup flag is false, try registering operator using the operator-cli before starting operator",
-			)
-		}
-	}
-
-	return nil
-}
-
 // This function performs startup operations for the operator, including:
 //   - Register the operator in Eigenlayer
 //   - Mint tokens for the operator in the received strategy
 //   - Register the operator in the received operator sets
 //   - Set the allocation delay as zero, to performs allocations immediatly
 //   - Initialize allocations for the operator sets
-func registerOperatorOnStartup(
-	c RegistrationConfig,
+func handleRegistration(
 	logger logging.Logger,
+	config RegistrationConfig,
+	operatorAddr common.Address,
 	registryCoordinatorAddr common.Address,
-	operatorAddress common.Address,
-	ethRpcClient *ethclient.Client,
+	avsReader *avsregistry.ChainReader, // TODO: Change this for a bool or an addr
+	ethHttpClient *ethclient.Client,
 	blsKeyPair *bls.KeyPair,
 ) error {
+
+	// Registration set up
 	elcontractsConfig := elcontracts.Config{
-		DelegationManagerAddress:    c.DelegationManagerAddress,
-		RewardsCoordinatorAddress:   c.RewardsCoordinatorAddress,
-		PermissionControllerAddress: c.PermissionControllerAddress,
+		DelegationManagerAddress:    config.DelegationManagerAddress,
+		RewardsCoordinatorAddress:   config.RewardsCoordinatorAddress,
+		PermissionControllerAddress: config.PermissionControllerAddress,
 	}
 
-	rpcCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	chainid, err := ethRpcClient.ChainID(rpcCtx)
+	chainid, err := ethHttpClient.ChainID(context.Background())
 	if err != nil {
 		logger.Error("Cannot get chain id", "err", err)
 		return err
 	}
 
 	var ecdsaPk *ecdsa.PrivateKey
-
-	if c.EcdsaSignerCfg.PrivateKey == "" {
+	if config.EcdsaSignerCfg.PrivateKey == "" {
 		logger.Info("ECDSA private key was nil, using the private key store path and password params...")
 		ecdsaKeystorePassword := ""
 
 		envPassword, ok := os.LookupEnv("OPERATOR_ECDSA_KEY_PASSWORD")
 		if !ok {
 			logger.Info("ECDSA keystore password was not set at env, reading value from config")
-			if c.EcdsaSignerCfg.KeystorePassword != nil {
-				ecdsaKeystorePassword = *c.EcdsaSignerCfg.KeystorePassword
+			if config.EcdsaSignerCfg.KeystorePassword != nil {
+				ecdsaKeystorePassword = *config.EcdsaSignerCfg.KeystorePassword
 			} else {
 				logger.Warnf("ECDSA keystore password not found in config, using empty string")
 			}
@@ -123,14 +78,14 @@ func registerOperatorOnStartup(
 		}
 
 		ecdsaPk, err = sdkecdsa.ReadKey(
-			c.EcdsaSignerCfg.KeystorePath,
+			config.EcdsaSignerCfg.KeystorePath,
 			ecdsaKeystorePassword,
 		)
 		if err != nil {
 			return utils.WrapError("Failed to read the ECDSA private key from keystore", err)
 		}
 	} else {
-		operatorEcdsaPkString := strings.TrimPrefix(c.EcdsaSignerCfg.PrivateKey, "0x")
+		operatorEcdsaPkString := strings.TrimPrefix(config.EcdsaSignerCfg.PrivateKey, "0x")
 
 		ecdsaPk, err = crypto.HexToECDSA(operatorEcdsaPkString)
 		if err != nil {
@@ -145,20 +100,39 @@ func registerOperatorOnStartup(
 		logger.Fatalf(err.Error())
 	}
 
-	pkWallet, err := wallet.NewPrivateKeyWallet(ethRpcClient, signerV2, senderAddr, logger)
+	pkWallet, err := wallet.NewPrivateKeyWallet(ethHttpClient, signerV2, senderAddr, logger)
 	if err != nil {
 		return err
 	}
 
-	txMgr := txmgr.NewSimpleTxManager(pkWallet, ethRpcClient, logger, senderAddr)
+	// TODO: Use NewSimpleTxManagerFromPrivateKey instead, that receives only the priv key
+	txMgr := txmgr.NewSimpleTxManager(pkWallet, ethHttpClient, logger, senderAddr)
+
+	// Register operator in EigenLayer
+
+	// Check if operator was registered, if its not registered and register on startup flag is not set, then will fail.
+	// If its not registered and should be registered on startup, make the registration.
+	operatorIsRegistered, err := avsReader.IsOperatorRegistered(&bind.CallOpts{}, operatorAddr)
+	if err != nil {
+		logger.Error("Error checking if operator is registered", "err", err)
+		return err
+	}
+	if !config.RegisterOnStartup {
+		// We bubble the error all the way up instead of using logger.Fatal because logger.Fatal prints a huge stack
+		// trace that hides the actual error message. This error msg is more explicit and doesn't require showing a
+		// stack trace to the user.
+		return fmt.Errorf(
+			"Operator is not registered and register on startup flag is false, try registering operator using the operator-cli before starting operator",
+		)
+	}
 
 	err = RegisterOperatorWithEigenlayer(
-		operatorAddress,
+		operatorAddr,
 		elcontractsConfig,
-		ethRpcClient,
+		ethHttpClient,
 		logger,
 		txMgr,
-		c.MetadataUrl,
+		config.MetadataUrl,
 	)
 	if err != nil {
 		logger.Fatalf("Failed to register operator with EigenLayer on startup: %v", err.Error())
@@ -167,27 +141,27 @@ func registerOperatorOnStartup(
 	err = DepositIntoStrategyForOperator(
 		logger,
 		elcontractsConfig,
-		ethRpcClient,
-		c.StrategyAddrs,
+		ethHttpClient,
+		config.StrategyAddrs,
 		txMgr,
-		operatorAddress,
-		c.AmountToMint,
+		operatorAddr,
+		config.AmountToMint,
 	)
 	if err != nil {
 		logger.Fatalf("Failed to deposit into strategy for operator on startup: %v", err.Error())
 	}
 
 	err = RegisterForOperatorSets(
-		operatorAddress,
+		operatorAddr,
 		logger,
 		elcontractsConfig,
-		ethRpcClient,
+		ethHttpClient,
 		txMgr,
 		registryCoordinatorAddr,
-		c.AvsAddress,
-		c.OperatorSetIds,
+		config.AvsAddress,
+		config.OperatorSetIds,
 		*blsKeyPair,
-		c.Socket,
+		config.Socket,
 	)
 	if err != nil {
 		logger.Fatalf("Failed to register operator for operator sets on startup: %v", err.Error())
@@ -195,25 +169,25 @@ func registerOperatorOnStartup(
 
 	err = SetAllocationDelay(
 		logger,
-		operatorAddress,
-		ethRpcClient,
-		c.AllocationManagerAddr,
+		operatorAddr,
+		ethHttpClient,
+		config.AllocationManagerAddr,
 		txMgr,
-		c.AllocationDelay,
+		config.AllocationDelay,
 	)
 	if err != nil {
 		logger.Fatalf("Failed to set allocation delay: %v", err.Error())
 	}
 
 	err = modifyAllocations(
-		operatorAddress,
-		c.AllocationManagerAddr,
-		c.AvsAddress,
-		c.StrategyAddrs,
-		c.AllocatableMagnitudes,
-		ethRpcClient,
+		operatorAddr,
+		config.AllocationManagerAddr,
+		config.AvsAddress,
+		config.StrategyAddrs,
+		config.AllocatableMagnitudes,
+		ethHttpClient,
 		txMgr,
-		c.OperatorSetIds,
+		config.OperatorSetIds,
 		logger,
 	)
 	if err != nil {
@@ -408,7 +382,7 @@ func modifyAllocations(
 	avsAddress common.Address,
 	strategies []common.Address,
 	newMagnitudes []uint64,
-	ethRpcClient *ethclient.Client,
+	ethHttpClient *ethclient.Client,
 	txMgr txmgr.TxManager,
 	operatorSetsIds []uint32,
 	logger logging.Logger,
@@ -416,7 +390,7 @@ func modifyAllocations(
 	txOpts, _ := txMgr.GetNoSendTxOpts()
 
 	waitForReceipt := true
-	allocationManagerContract, _ := allocationmanager.NewContractAllocationManager(allocationManagerAddr, ethRpcClient)
+	allocationManagerContract, _ := allocationmanager.NewContractAllocationManager(allocationManagerAddr, ethHttpClient)
 
 	allocations := []allocationmanager.IAllocationManagerTypesAllocateParams{}
 	for _, setId := range operatorSetsIds {
