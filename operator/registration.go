@@ -115,7 +115,10 @@ func handleRegistration(
 
 	// Check if operator was registered, if its not registered and register on startup flag is not set, then will fail.
 	// If its not registered and should be registered on startup, make the registration.
-	operatorIsRegistered, err := elReader.IsOperatorRegistered(context.Background(), types.Operator{Address: operatorAddr.Hex()})
+	operatorIsRegistered, err := elReader.IsOperatorRegistered(
+		context.Background(),
+		types.Operator{Address: operatorAddr.Hex()}, // TODO: We are turning this into string to
+	)
 	if err != nil {
 		logger.Error("Error checking if operator is registered", "err", err)
 		return err
