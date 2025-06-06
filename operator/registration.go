@@ -15,7 +15,6 @@ import (
 
 	erc20mock "github.com/Layr-Labs/eigensdk-go/contracts/bindings/MockERC20"
 
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/logging"
@@ -52,21 +51,17 @@ func handleRegistration(
 		)
 	}
 
-	avsConfig := avsregistry.Config{
-		RegistryCoordinatorAddress:    registryCoordinatorAddr,
-		OperatorStateRetrieverAddress: config.OperatorStateRetriever, // TODO: Remove since its unused
-	}
-	avsReader, err := avsregistry.NewReaderFromConfig(avsConfig, ethHttpClient, logger)
-	if err != nil {
-		logger.Error("Cannot create AvsReader", "err", err)
-		return err
-	}
-
 	// Registration set up
 	elcontractsConfig := elcontracts.Config{
 		DelegationManagerAddress:    config.DelegationManagerAddress,
 		RewardsCoordinatorAddress:   config.RewardsCoordinatorAddress,
 		PermissionControllerAddress: config.PermissionControllerAddress,
+	}
+
+	elReader, err := elcontracts.NewReaderFromConfig(elcontractsConfig, ethHttpClient, logger)
+	if err != nil {
+		logger.Error("Error creating eigenlayer chain writer", "err", err)
+		return err
 	}
 
 	var ecdsaPk *ecdsa.PrivateKey
@@ -112,7 +107,7 @@ func handleRegistration(
 
 	// Check if operator was registered, if its not registered and register on startup flag is not set, then will fail.
 	// If its not registered and should be registered on startup, make the registration.
-	operatorIsRegistered, err := avsReader.IsOperatorRegistered(&bind.CallOpts{}, operatorAddr)
+	operatorIsRegistered, err := elReader.IsOperatorRegistered(context.Background(), types.Operator{Address: operatorAddr.Hex()})
 	if err != nil {
 		logger.Error("Error checking if operator is registered", "err", err)
 		return err
@@ -131,12 +126,6 @@ func handleRegistration(
 		}
 	} else {
 		logger.Info("Operator already registered to EigenLayer, skipped EL regisration")
-	}
-
-	elReader, err := elcontracts.NewReaderFromConfig(elcontractsConfig, ethHttpClient, logger)
-	if err != nil {
-		logger.Error("Error creating eigenlayer chain writer", "err", err)
-		return err
 	}
 
 	operatorSet := allocationmanager.OperatorSet{
