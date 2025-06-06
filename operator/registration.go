@@ -138,19 +138,31 @@ func handleRegistration(
 		if err != nil {
 			logger.Fatalf("Failed to register operator with EigenLayer on startup: %v", err.Error())
 		}
+	} else {
+		logger.Info("Operator already registered to EigenLayer, skipped EL regisration")
 	}
 
-	err = DepositIntoStrategyForOperator(
-		logger,
-		elcontractsConfig,
-		ethHttpClient,
-		config.StrategyAddrs,
-		txMgr,
-		operatorAddr,
-		config.AmountToMint,
-	)
+	operatorsStatusInQuorums, err := avsReader.GetOperatorsStakeInQuorumsAtCurrentBlock(&bind.CallOpts{}, types.QuorumNums{0})
 	if err != nil {
-		logger.Fatalf("Failed to deposit into strategy for operator on startup: %v", err.Error())
+		logger.Fatalf("Failed to get operator stake at registration: %v", err.Error())
+	}
+	operatorStatus := operatorsStatusInQuorums[0][0]
+
+	if operatorStatus.Stake.Cmp(config.AmountToMint) < 0 {
+		err = DepositIntoStrategyForOperator(
+			logger,
+			elcontractsConfig,
+			ethHttpClient,
+			config.StrategyAddrs,
+			txMgr,
+			operatorAddr,
+			config.AmountToMint,
+		)
+		if err != nil {
+			logger.Fatalf("Failed to deposit into strategy for operator on startup: %v", err.Error())
+		}
+	} else {
+		logger.Info("Operator already have the required amount to min, skipped depositing into strategy for operator")
 	}
 
 	err = RegisterForOperatorSets(
