@@ -126,16 +126,18 @@ func handleRegistration(
 		)
 	}
 
-	err = RegisterOperatorWithEigenlayer(
-		operatorAddr,
-		elcontractsConfig,
-		ethHttpClient,
-		logger,
-		txMgr,
-		config.MetadataUrl,
-	)
-	if err != nil {
-		logger.Fatalf("Failed to register operator with EigenLayer on startup: %v", err.Error())
+	if operatorIsRegistered {
+		err = RegisterOperatorWithEigenlayer(
+			operatorAddr,
+			elcontractsConfig,
+			ethHttpClient,
+			logger,
+			txMgr,
+			config.MetadataUrl,
+		)
+		if err != nil {
+			logger.Fatalf("Failed to register operator with EigenLayer on startup: %v", err.Error())
+		}
 	}
 
 	err = DepositIntoStrategyForOperator(
