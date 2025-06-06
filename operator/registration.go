@@ -141,14 +141,24 @@ func handleRegistration(
 		logger.Info("Operator already registered to EigenLayer, skipped EL regisration")
 	}
 
-	operatorsStatusInQuorums, err := avsReader.GetOperatorsStakeInQuorumsAtCurrentBlock(&bind.CallOpts{}, types.QuorumNums{0})
+	elReader, err := elcontracts.NewReaderFromConfig(elcontractsConfig, ethHttpClient, logger)
+	if err != nil {
+		logger.Error("Error creating eigenlayer chain writer", "err", err)
+		return err
+	}
+
+	operatorSet := allocationmanager.OperatorSet{
+		Avs: config.AvsAddress,
+		Id:  config.OperatorSetIds[0],
+	}
+	allocatedStakes, err := elReader.GetAllocatedStake(context.Background(), operatorSet, []common.Address{operatorAddr}, config.StrategyAddrs)
 	if err != nil {
 		logger.Fatalf("Failed to get operator stake at registration: %v", err.Error())
 	}
-	operatorStatus := operatorsStatusInQuorums[0][0]
+	allocatedStake := allocatedStakes[0][0]
 
-	var differenceToMint *big.Int
-	differenceToMint = differenceToMint.Sub(operatorStatus.Stake, config.AmountToMint)
+	differenceToMint := big.NewInt(0)
+	differenceToMint = differenceToMint.Sub(config.AmountToMint, allocatedStake)
 	if differenceToMint.Int64() > 0 {
 		err = DepositIntoStrategyForOperator(
 			logger,
@@ -164,12 +174,6 @@ func handleRegistration(
 		}
 	} else {
 		logger.Info("Operator already have the required amount to min, skipped depositing into strategy for operator")
-	}
-
-	elReader, err := elcontracts.NewReaderFromConfig(elcontractsConfig, ethHttpClient, logger)
-	if err != nil {
-		logger.Error("Error creating eigenlayer chain writer", "err", err)
-		return err
 	}
 
 	isOperatorRegisteredToQuorum, err := elReader.IsOperatorRegisteredWithOperatorSet(

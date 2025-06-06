@@ -214,9 +214,10 @@ func createIncredibleSquaringOperator(t *testing.T, ethHttpUrl, ethWsUrl string)
 	amount := new(big.Int)
 	amount.SetString("1000000000000000000000", 10)
 	registrationConfig := operator.RegistrationConfig{
-		AllocationManagerAddr: common.HexToAddress("0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6"),
-		AvsAddress:            common.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"),
-		StrategyAddrs:         []common.Address{common.HexToAddress("0x2b961e3959b79326a8e7f64ef0d2d825707669b5")},
+		AllocationManagerAddr:  common.HexToAddress("0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6"),
+		AvsAddress:             common.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"),
+		OperatorStateRetriever: common.HexToAddress("0x4c5859f0f772848b2d91f1d83e2fe57935348029"),
+		StrategyAddrs:          []common.Address{common.HexToAddress("0x2b961e3959b79326a8e7f64ef0d2d825707669b5")},
 
 		DelegationManagerAddress:    common.HexToAddress("0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0"),
 		RewardsCoordinatorAddress:   common.HexToAddress("0xa51c1fc2f0d1a1b8494ed1fe312d7c3a78ed91c0"),

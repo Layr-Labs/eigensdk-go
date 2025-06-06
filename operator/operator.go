@@ -65,7 +65,8 @@ func NewOperator[Input any, Output any](
 	// when we use the AVS registry reader. If you want to do more things with avs registry reader,
 	// you should add those addresses to the operator config and assign them here.
 	avsConfig := avsregistry.Config{
-		RegistryCoordinatorAddress: common.HexToAddress(c.RegistryCoordinatorAddress),
+		RegistryCoordinatorAddress:    common.HexToAddress(c.RegistryCoordinatorAddress),
+		OperatorStateRetrieverAddress: c.Registration.OperatorStateRetriever,
 	}
 
 	ethHttpClient, err := ethclient.Dial(c.EthRpcUrl)

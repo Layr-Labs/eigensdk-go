@@ -71,7 +71,8 @@ type RegistrationConfig struct {
 	AllocationManagerAddr common.Address `toml:"allocation_manager_address"`
 
 	// Used to register operator in operator sets and initialize allocations
-	AvsAddress common.Address `toml:"service_manager_address"`
+	AvsAddress             common.Address `toml:"service_manager_address"`
+	OperatorStateRetriever common.Address `toml:"operator_state_retriever_address"`
 
 	// Used to deposit into these strategies for operator and initialize allocations on these strategies
 	StrategyAddrs []common.Address `toml:"strategy_addresses"`
