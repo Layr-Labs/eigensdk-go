@@ -148,7 +148,9 @@ func handleRegistration(
 	}
 	operatorStatus := operatorsStatusInQuorums[0][0]
 
-	if operatorStatus.Stake.Cmp(config.AmountToMint) < 0 {
+	var differenceToMint *big.Int
+	differenceToMint = differenceToMint.Sub(operatorStatus.Stake, config.AmountToMint)
+	if differenceToMint.Int64() > 0 {
 		err = DepositIntoStrategyForOperator(
 			logger,
 			elcontractsConfig,
@@ -156,7 +158,7 @@ func handleRegistration(
 			config.StrategyAddrs,
 			txMgr,
 			operatorAddr,
-			config.AmountToMint,
+			differenceToMint,
 		)
 		if err != nil {
 			logger.Fatalf("Failed to deposit into strategy for operator on startup: %v", err.Error())
