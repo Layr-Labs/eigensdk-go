@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"errors"
+	"fmt"
 	"math/big"
 	"os"
 	"strings"
@@ -16,6 +17,7 @@ import (
 
 	erc20mock "github.com/Layr-Labs/eigensdk-go/contracts/bindings/MockERC20"
 
+	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
@@ -29,6 +31,50 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/event"
 )
+
+func handleRegistration(
+	logger logging.Logger,
+	config RegistrationConfig,
+	operatorAddr common.Address,
+	registryCoordinatorAddr common.Address,
+	avsReader *avsregistry.ChainReader,
+	ethHttpClient *ethclient.Client,
+	blsKeyPair *bls.KeyPair,
+) error {
+
+	// Check if operator was registered, if its not registered and register on startup flag is not set, then will fail.
+	// If its not registered and should be registered on startup, make the registration.
+	operatorIsRegistered, err := avsReader.IsOperatorRegistered(&bind.CallOpts{}, operatorAddr)
+	if err != nil {
+		logger.Error("Error checking if operator is registered", "err", err)
+		return err
+	}
+	if !operatorIsRegistered {
+		if config.RegisterOnStartup {
+			err = registerOperatorOnStartup(
+				config,
+				logger,
+				registryCoordinatorAddr,
+				operatorAddr,
+				ethHttpClient,
+				blsKeyPair,
+			)
+			if err != nil {
+				logger.Errorf("Failure while registering operator on startup: %w", err)
+				return err
+			}
+		} else {
+			// We bubble the error all the way up instead of using logger.Fatal because logger.Fatal prints a huge stack
+			// trace that hides the actual error message. This error msg is more explicit and doesn't require showing a
+			// stack trace to the user.
+			return fmt.Errorf(
+				"Operator is not registered and register on startup flag is false, try registering operator using the operator-cli before starting operator",
+			)
+		}
+	}
+
+	return nil
+}
 
 // This function performs startup operations for the operator, including:
 //   - Register the operator in Eigenlayer
