@@ -30,11 +30,11 @@ import (
 )
 
 // This function performs startup operations for the operator, including:
-//   - Register the operator in Eigenlayer
-//   - Mint tokens for the operator in the received strategy
-//   - Register the operator in the received operator sets
-//   - Set the allocation delay as zero, to performs allocations immediatly
-//   - Initialize allocations for the operator sets
+//   - Register the operator in Eigenlayer (if it's not already registered)
+//   - Mint tokens for the operator in the received strategy (if it has not the required ammount)
+//   - Register the operator in the received operator sets (if it's not already registered to those operator sets)
+//   - Set the allocation delay as to the value received in config (if the allocation delay value is set)
+//   - Initialize allocations for the operator sets (if the registration config has defined the pameters needed)
 func handleRegistration(
 	logger logging.Logger,
 	config *RegistrationConfig,
