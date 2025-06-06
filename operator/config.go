@@ -13,7 +13,7 @@ type Config struct {
 	OperatorAddress string `toml:"operator_address"`
 
 	// The registry coordinator address is used to create the AVS reader
-	RegistryCoordinatorAddress string `toml:"registry_coordinator_address"`
+	RegistryCoordinatorAddress common.Address `toml:"registry_coordinator_address"`
 
 	// Ethereum HTTP RPC URL to use for interacting with on-chain contracts
 	EthRpcUrl string `toml:"eth_http_url"`

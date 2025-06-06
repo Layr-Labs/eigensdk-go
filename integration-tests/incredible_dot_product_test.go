@@ -46,10 +46,6 @@ func TestIncredibleDotProduct(t *testing.T) {
 		return a.Cmp(b) == 0
 	}
 
-	responseCalculationFn := func() operator.ResponseCalculator[DotProductInput, *big.Int] {
-		return operator.NewFunctionResponseCalculator(dotProduct)
-	}
-
 	testConfig := AvsConfig[DotProductInput, *big.Int]{
 		TaskManagerAddr: dotProductTaskManagerAddress,
 		TaskManagerAbi:  taskManagerAbi,
@@ -57,16 +53,16 @@ func TestIncredibleDotProduct(t *testing.T) {
 		EthHttpUrl: ethHttpUrl,
 		EthWsUrl:   ethWsUrl,
 
-		ResponseCalculatorFn: responseCalculationFn,
-		EqualFn:              equalFn,
-		InputSequence:        newVectorsToMultiplySequence(),
+		ResponseCalculator: operator.NewFunctionResponseCalculator(dotProduct),
+		EqualFn:            equalFn,
+		InputSequence:      newVectorsToMultiplySequence(),
 
-		RegistryCoordinatorAddress:    "0xfd471836031dc5108809d173a067e8486b9047a3",
+		RegistryCoordinatorAddress:    common.HexToAddress("0xfd471836031dc5108809d173a067e8486b9047a3"),
 		OperatorStateRetrieverAddress: common.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"),
 		AvsAddress:                    common.HexToAddress("0xcd8a1c3ba11cf5ecfa6267617243239504a98d90"),
 
-		EcdsaPrivateKey: "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
-		BlsPrivateKey:   "0x2518600ef40ef39cb4ab8b828ce303b3e02ac01ec6ba6bd0d0cf0663e1252ff0",
+		OperatorPrivateKey:    "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
+		OperatorBlsPrivateKey: "0x2518600ef40ef39cb4ab8b828ce303b3e02ac01ec6ba6bd0d0cf0663e1252ff0",
 
 		TaskSpammerPrivateKey: "4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356",
 
@@ -82,12 +78,6 @@ func TestIncredibleDotProduct(t *testing.T) {
 
 		AllocatableMagnitude: 1000000000000000,
 		OperatorSetId:        0,
-
-		MetadataUrl:     "",
-		Socket:          "",
-		AllocationDelay: 0,
-
-		BlsKeystorePassword: "",
 
 		OperatorAddr: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
 

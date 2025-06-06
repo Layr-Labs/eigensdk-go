@@ -23,15 +23,16 @@ import (
 )
 
 type AvsConfig[Input any, Output any] struct {
+	// Task manager related
 	TaskManagerAddr common.Address
+	TaskManagerAbi  *abi.ABI
 
-	TaskManagerAbi *abi.ABI
-
+	// Eth Urls
 	EthHttpUrl string
 	EthWsUrl   string
 
-	// A function that creates a calculator to respond the tasks
-	ResponseCalculatorFn func() operator.ResponseCalculator[Input, Output]
+	// The calculator to respond the tasks
+	ResponseCalculator operator.ResponseCalculator[Input, Output]
 
 	// The function to compare the calculated and the received output in the challenger
 	EqualFn func(a, b Output) bool
@@ -39,35 +40,43 @@ type AvsConfig[Input any, Output any] struct {
 	// The sequence to generate the inputs sent to the task manager
 	InputSequence iter.Seq[Input]
 
-	// Avs Addresses
-	RegistryCoordinatorAddress    string
+	// Address from which the Aggregator will listen to signed task responses from operators
+	AggregatorServerIpPortAddr string
+
+	// Avs deployment Addresses
+	RegistryCoordinatorAddress    common.Address
 	OperatorStateRetrieverAddress common.Address
 	AvsAddress                    common.Address
 
-	BlsPrivateKey   string
-	EcdsaPrivateKey string
+	// Operator private keys
+	OperatorBlsPrivateKey string
+	OperatorPrivateKey    string
 
-	AggregatorServerIpPortAddr string
-
-	AggregatorPrivateKey  string
-	ChallengerPrivateKey  string
+	// Entities private keys
+	AggregatorPrivateKey string
+	ChallengerPrivateKey string
+	// This one must match the task_generator_addr passed to the Task manager in deployment
 	TaskSpammerPrivateKey string
 
+	// Core deployment addresses
 	AllocationManagerAddr       common.Address
 	StrategyAddr                common.Address
 	DelegationManagerAddress    common.Address
 	RewardsCoordinatorAddress   common.Address
 	PermissionControllerAddress common.Address
 
-	OperatorAddr         string
+	// Operator config values
+	OperatorAddr string
+
+	// Registration config values
 	AmountToMint         string
 	AllocatableMagnitude uint64
 	OperatorSetId        uint32
 	MetadataUrl          string
 	Socket               string
 	AllocationDelay      uint32
-	BlsKeystorePassword  string
 
+	// Task spammer config values
 	TimeBetweenTasks          time.Duration
 	QuorumThresholdPercentage uint32
 	QuorumNumbers             []uint8
@@ -116,7 +125,7 @@ func createAvsAggregator[Input any, Output any](t *testing.T, config AvsConfig[I
 	require.NoError(t, err, "Failure creating logger")
 
 	cfg := aggregator.Config{
-		RegistryCoordinatorAddress:    common.HexToAddress(config.RegistryCoordinatorAddress),
+		RegistryCoordinatorAddress:    config.RegistryCoordinatorAddress,
 		OperatorStateRetrieverAddress: config.OperatorStateRetrieverAddress,
 		EthHttpUrl:                    config.EthHttpUrl,
 		EthWsUrl:                      config.EthWsUrl,
@@ -166,8 +175,7 @@ func createAvsChallenger[Input any, Output any](
 		EthHttpUrl: config.EthHttpUrl,
 	}
 
-	responseCalculator := config.ResponseCalculatorFn()
-	logicValidation := challenger.ResponseValidationFunctionFromResponseCalculator(responseCalculator, config.EqualFn)
+	logicValidation := challenger.ResponseValidationFunctionFromResponseCalculator(config.ResponseCalculator, config.EqualFn)
 
 	ecdsaPrivateKey, err := crypto.HexToECDSA(config.ChallengerPrivateKey)
 	require.NoError(t, err, "Failed to parse ecdsa private key")
@@ -207,10 +215,10 @@ func createAvsOperator[Input any, Output any](
 	require.NoError(t, err, "Failure creating logger")
 
 	ecdsaCfg := operator.EcdsaSignerConfig{
-		PrivateKey: config.EcdsaPrivateKey,
+		PrivateKey: config.OperatorPrivateKey,
 	}
 
-	keyPair, err := bls.NewKeyPairFromString(config.BlsPrivateKey)
+	keyPair, err := bls.NewKeyPairFromString(config.OperatorBlsPrivateKey)
 	require.NoError(t, err)
 
 	blsCfg := operator.BlsSignerConfig{
@@ -252,8 +260,7 @@ func createAvsOperator[Input any, Output any](
 		Registration:                  registrationConfig,
 	}
 
-	responseCalculator := config.ResponseCalculatorFn()
-	operator, err := operator.NewOperator(logger, operatorConfig, config.TaskManagerAbi, responseCalculator, nil)
+	operator, err := operator.NewOperator(logger, operatorConfig, config.TaskManagerAbi, config.ResponseCalculator, nil)
 	require.NoError(t, err, "Failed to create operator from config")
 
 	return operator
@@ -281,7 +288,7 @@ func createAvsTaskSpammer[Input any, Output any](
 	require.NoError(t, err, "Failed to create Task Creator")
 
 	taskSpammerConfig := taskspammer.Config{
-		// This means TaskGenerator will send tasks every 10 seconds
+		// This means TaskSpammer will send tasks every 10 seconds
 		TimeBetweenTasks: config.TimeBetweenTasks,
 
 		QuorumThresholdPercentage: config.QuorumThresholdPercentage,
