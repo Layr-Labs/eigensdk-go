@@ -46,6 +46,10 @@ func TestIncredibleDotProduct(t *testing.T) {
 		return a.Cmp(b) == 0
 	}
 
+	responseCalculationFn := func() operator.ResponseCalculator[DotProductInput, *big.Int] {
+		return operator.NewFunctionResponseCalculator(dotProduct)
+	}
+
 	testConfig := AvsConfig[DotProductInput, *big.Int]{
 		TaskManagerAddr: dotProductTaskManagerAddress,
 		TaskManagerAbi:  taskManagerAbi,
@@ -53,9 +57,9 @@ func TestIncredibleDotProduct(t *testing.T) {
 		EthHttpUrl: ethHttpUrl,
 		EthWsUrl:   ethWsUrl,
 
-		ResponseCalculator: operator.NewFunctionResponseCalculator(dotProduct),
-		EqualFn:            equalFn,
-		InputSequence:      newVectorsToMultiplySequence(),
+		ResponseCalculatorFn: responseCalculationFn,
+		EqualFn:              equalFn,
+		InputSequence:        newVectorsToMultiplySequence(),
 
 		RegistryCoordinatorAddress:    common.HexToAddress("0xfd471836031dc5108809d173a067e8486b9047a3"),
 		OperatorStateRetrieverAddress: common.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"),

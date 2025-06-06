@@ -46,6 +46,10 @@ func TestAwesomeVaultService(t *testing.T) {
 
 	equalFn := func(a, b [32]byte) bool { return a == b }
 
+	responseCalculationFn := func() operator.ResponseCalculator[TaskInput, [32]byte] {
+		return NewVaultServiceResponseCalculator()
+	}
+
 	testConfig := AvsConfig[TaskInput, [32]byte]{
 		TaskManagerAddr: taskManagerAddress,
 		TaskManagerAbi:  taskManagerAbi,
@@ -53,9 +57,9 @@ func TestAwesomeVaultService(t *testing.T) {
 		EthHttpUrl: ethHttpUrl,
 		EthWsUrl:   ethWsUrl,
 
-		ResponseCalculator: NewVaultServiceResponseCalculator(),
-		EqualFn:            equalFn,
-		InputSequence:      LinearRangeSequence(),
+		ResponseCalculatorFn: responseCalculationFn,
+		EqualFn:              equalFn,
+		InputSequence:        LinearRangeSequence(),
 
 		RegistryCoordinatorAddress:    common.HexToAddress("0xfd471836031dc5108809d173a067e8486b9047a3"),
 		OperatorStateRetrieverAddress: common.HexToAddress("0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154"),
