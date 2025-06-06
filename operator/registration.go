@@ -165,20 +165,42 @@ func handleRegistration(
 		logger.Info("Operator already have the required amount to min, skipped depositing into strategy for operator")
 	}
 
-	err = RegisterForOperatorSets(
+	elReader, err := elcontracts.NewReaderFromConfig(elcontractsConfig, ethHttpClient, logger)
+	if err != nil {
+		logger.Error("Error creating eigenlayer chain writer", "err", err)
+		return err
+	}
+
+	isOperatorRegisteredToQuorum, err := elReader.IsOperatorRegisteredWithOperatorSet(
+		context.Background(),
 		operatorAddr,
-		logger,
-		elcontractsConfig,
-		ethHttpClient,
-		txMgr,
-		registryCoordinatorAddr,
-		config.AvsAddress,
-		config.OperatorSetIds,
-		*blsKeyPair,
-		config.Socket,
+		allocationmanager.OperatorSet{
+			Avs: config.AvsAddress,
+			Id:  config.OperatorSetIds[0],
+		},
 	)
 	if err != nil {
-		logger.Fatalf("Failed to register operator for operator sets on startup: %v", err.Error())
+		logger.Fatalf("Failed to check if operator is registered to quorum at registration: %v", err.Error())
+	}
+
+	if !isOperatorRegisteredToQuorum {
+		err = RegisterForOperatorSets(
+			operatorAddr,
+			logger,
+			elcontractsConfig,
+			ethHttpClient,
+			txMgr,
+			registryCoordinatorAddr,
+			config.AvsAddress,
+			config.OperatorSetIds,
+			*blsKeyPair,
+			config.Socket,
+		)
+		if err != nil {
+			logger.Fatalf("Failed to register operator for operator sets on startup: %v", err.Error())
+		}
+	} else {
+		logger.Info("Operator is already registered to the required operator sets, skipped quorum registration")
 	}
 
 	err = SetAllocationDelay(
