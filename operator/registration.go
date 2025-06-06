@@ -42,6 +42,10 @@ func handleRegistration(
 	ethHttpClient *ethclient.Client,
 	blsKeyPair *bls.KeyPair,
 ) error {
+	// Required:
+	// - DelegationManager (to check if operator is registered to EigenLayer)
+	// - AllocationManager (to get the allocated stake for an operator and check if the operator is registered to an operator set)
+
 	if config == nil {
 		// We bubble the error all the way up instead of using logger.Fatal because logger.Fatal prints a huge stack
 		// trace that hides the actual error message. This error msg is more explicit and doesn't require showing a
@@ -53,14 +57,12 @@ func handleRegistration(
 
 	// Registration set up
 	elcontractsConfig := elcontracts.Config{
-		DelegationManagerAddress:    config.DelegationManagerAddress,
-		RewardsCoordinatorAddress:   config.RewardsCoordinatorAddress,
-		PermissionControllerAddress: config.PermissionControllerAddress,
+		DelegationManagerAddress: config.DelegationManagerAddress,
 	}
 
 	elReader, err := elcontracts.NewReaderFromConfig(elcontractsConfig, ethHttpClient, logger)
 	if err != nil {
-		logger.Error("Error creating eigenlayer chain writer", "err", err)
+		logger.Error("Error creating eigenlayer chain reader", "err", err)
 		return err
 	}
 

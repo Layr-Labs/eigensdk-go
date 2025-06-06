@@ -67,20 +67,14 @@ type EcdsaSignerConfig struct {
 // This config is used to register an operator on startup.
 // A TODO of this config is to make some values optional to perform some registration operations instead of all
 type RegistrationConfig struct {
-	// Used for setting the allogation delay to zero and initialize allocations
-	AllocationManagerAddr common.Address `toml:"allocation_manager_address"`
-
 	// Used to register operator in operator sets and initialize allocations
-	AvsAddress             common.Address `toml:"service_manager_address"`
-	OperatorStateRetriever common.Address `toml:"operator_state_retriever_address"`
+	AvsAddress common.Address `toml:"service_manager_address"`
 
 	// Used to deposit into these strategies for operator and initialize allocations on these strategies
 	StrategyAddrs []common.Address `toml:"strategy_addresses"`
 
 	// Used to create eigenlayer chain reader and writer
-	DelegationManagerAddress    common.Address `toml:"delegation_manager_address"`
-	RewardsCoordinatorAddress   common.Address `toml:"rewards_coordinator_address"`
-	PermissionControllerAddress common.Address `toml:"permission_controller_address"`
+	DelegationManagerAddress common.Address `toml:"delegation_manager_address"`
 
 	// The config used to create the ecdsa signer for the operator registration
 	EcdsaSignerCfg EcdsaSignerConfig `toml:"ecdsa_signer"`
