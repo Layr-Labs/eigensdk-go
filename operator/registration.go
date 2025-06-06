@@ -12,13 +12,11 @@ import (
 	allocationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/AllocationManager"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
 	sdkecdsa "github.com/Layr-Labs/eigensdk-go/crypto/ecdsa"
-	"github.com/Layr-Labs/eigensdk-go/signerv2"
 
 	erc20mock "github.com/Layr-Labs/eigensdk-go/contracts/bindings/MockERC20"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/avsregistry"
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/metrics"
@@ -71,12 +69,6 @@ func handleRegistration(
 		PermissionControllerAddress: config.PermissionControllerAddress,
 	}
 
-	chainid, err := ethHttpClient.ChainID(context.Background())
-	if err != nil {
-		logger.Error("Cannot get chain id", "err", err)
-		return err
-	}
-
 	var ecdsaPk *ecdsa.PrivateKey
 	if config.EcdsaSignerCfg.PrivateKey == "" {
 		logger.Info("ECDSA private key was nil, using the private key store path and password params...")
@@ -110,20 +102,11 @@ func handleRegistration(
 		}
 	}
 
-	signerV2, senderAddr, err := signerv2.SignerFromConfig(signerv2.Config{
-		PrivateKey: ecdsaPk,
-	}, chainid)
+	txMgr, err := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethHttpClient, ecdsaPk)
 	if err != nil {
-		logger.Fatalf(err.Error())
-	}
-
-	pkWallet, err := wallet.NewPrivateKeyWallet(ethHttpClient, signerV2, senderAddr, logger)
-	if err != nil {
+		logger.Errorf("Error creating tx managerfor registration: %v", err)
 		return err
 	}
-
-	// TODO: Use NewSimpleTxManagerFromPrivateKey instead, that receives only the priv key
-	txMgr := txmgr.NewSimpleTxManager(pkWallet, ethHttpClient, logger, senderAddr)
 
 	// Register operator in EigenLayer
 
