@@ -42,7 +42,6 @@ func handleRegistration(
 	config *RegistrationConfig,
 	operatorAddr common.Address,
 	registryCoordinatorAddr common.Address,
-	avsReader *avsregistry.ChainReader, // TODO: Change this for a bool or an addr
 	ethHttpClient *ethclient.Client,
 	blsKeyPair *bls.KeyPair,
 ) error {
@@ -53,6 +52,16 @@ func handleRegistration(
 		return fmt.Errorf(
 			"RegistrationConfig is nil, no startup changes required ",
 		)
+	}
+
+	avsConfig := avsregistry.Config{
+		RegistryCoordinatorAddress:    registryCoordinatorAddr,
+		OperatorStateRetrieverAddress: config.OperatorStateRetriever, // TODO: Remove since its unused
+	}
+	avsReader, err := avsregistry.NewReaderFromConfig(avsConfig, ethHttpClient, logger)
+	if err != nil {
+		logger.Error("Cannot create AvsReader", "err", err)
+		return err
 	}
 
 	// Registration set up
