@@ -118,7 +118,7 @@ func handleRegistration(
 		return err
 	}
 	if !operatorIsRegistered {
-		err = RegisterOperatorWithEigenlayer(
+		err = registerOperatorWithEigenlayer(
 			operatorAddr,
 			elcontractsConfig,
 			ethHttpClient,
@@ -152,7 +152,7 @@ func handleRegistration(
 	differenceToMint := big.NewInt(0)
 	differenceToMint = differenceToMint.Sub(config.AmountToMint, allocatedStake)
 	if differenceToMint.Int64() > 0 {
-		err = DepositIntoStrategyForOperator(
+		err = depositIntoStrategyForOperator(
 			logger,
 			elcontractsConfig,
 			ethHttpClient,
@@ -181,7 +181,7 @@ func handleRegistration(
 	}
 
 	if !isOperatorRegisteredToQuorum {
-		err = RegisterForOperatorSets(
+		err = registerForOperatorSets(
 			operatorAddr,
 			logger,
 			elcontractsConfig,
@@ -200,7 +200,7 @@ func handleRegistration(
 		logger.Info("Operator is already registered to the required operator sets, skipped quorum registration")
 	}
 
-	err = SetAllocationDelay(
+	err = setAllocationDelay(
 		logger,
 		operatorAddr,
 		ethHttpClient,
@@ -232,7 +232,7 @@ func handleRegistration(
 
 // This function registers the operator with Eigenlayer. To do this needs the delegationManager
 // address in the elcontracts config
-func RegisterOperatorWithEigenlayer(
+func registerOperatorWithEigenlayer(
 	operatorAddr common.Address,
 	elcontractsConfig elcontracts.Config,
 	ethClient *ethclient.Client,
@@ -263,7 +263,7 @@ func RegisterOperatorWithEigenlayer(
 
 // This function registers the operator in the operator sets received as parameter. To do this needs the
 // allocationManager address in the elcontracts config and the registryCoordinator address.
-func RegisterForOperatorSets(
+func registerForOperatorSets(
 	operatorAddr common.Address,
 	logger logging.Logger,
 	elcontractsConfig elcontracts.Config,
@@ -307,7 +307,7 @@ func RegisterForOperatorSets(
 
 // This function sets the allocation delay for the operator to a value received as parameter (currently zero).
 // To do this needs the allocationManager address.
-func SetAllocationDelay(
+func setAllocationDelay(
 	logger logging.Logger,
 	operatorAddr common.Address,
 	ethClient *ethclient.Client,
@@ -340,7 +340,7 @@ func SetAllocationDelay(
 // This function deposits into the token of the received strategies in an amount received as parameter.
 // To do this needs the strategyManager address and the addresses of the strategies for the operator
 // to be deposited.
-func DepositIntoStrategyForOperator(
+func depositIntoStrategyForOperator(
 	logger logging.Logger,
 	elcontractsConfig elcontracts.Config,
 	ethClient *ethclient.Client,
