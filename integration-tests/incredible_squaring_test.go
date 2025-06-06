@@ -57,9 +57,9 @@ func TestIncredibleSquaring(t *testing.T) {
 		EthHttpUrl: ethHttpUrl,
 		EthWsUrl:   ethWsUrl,
 
-		ResponseCalculatorFn: responseCalculationFn,
-		EqualFn:              equalFn,
-		InputSequence:        newNumberToSquareSequence(),
+		NewResponseCalculatorFn: responseCalculationFn,
+		EqualFn:                 equalFn,
+		InputSequence:           newNumberToSquareSequence(),
 
 		RegistryCoordinatorAddress:    common.HexToAddress("0x7bc06c482dead17c0e297afbc32f6e63d3846650"),
 		OperatorStateRetrieverAddress: common.HexToAddress("0x4c5859f0f772848b2d91f1d83e2fe57935348029"),
