@@ -52,9 +52,10 @@ type AvsConfig[Input any, Output any] struct {
 	OperatorBlsPrivateKey string
 	OperatorPrivateKey    string
 
-	// Entities private keys (the only required to communicate with task manager is the task spammer one)
-	AggregatorPrivateKey  string
-	ChallengerPrivateKey  string
+	// Entities private keys
+	AggregatorPrivateKey string
+	ChallengerPrivateKey string
+	// This one must match the task_generator_addr passed to the Task manager in deployment
 	TaskSpammerPrivateKey string
 
 	// Core deployment addresses
@@ -287,7 +288,7 @@ func createAvsTaskSpammer[Input any, Output any](
 	require.NoError(t, err, "Failed to create Task Creator")
 
 	taskSpammerConfig := taskspammer.Config{
-		// This means TaskGenerator will send tasks every 10 seconds
+		// This means TaskSpammer will send tasks every 10 seconds
 		TimeBetweenTasks: config.TimeBetweenTasks,
 
 		QuorumThresholdPercentage: config.QuorumThresholdPercentage,
