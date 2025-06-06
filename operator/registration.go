@@ -103,6 +103,12 @@ func handleRegistration(
 		return err
 	}
 
+	elWriter, err := elcontracts.NewWriterFromConfig(elcontractsConfig, ethHttpClient, logger, &metrics.EigenMetrics{}, txMgr)
+	if err != nil {
+		logger.Error("Error creating eigenlayer chain writer", "err", err)
+		return err
+	}
+
 	// Register operator in EigenLayer
 
 	// Check if operator was registered, if its not registered and register on startup flag is not set, then will fail.
@@ -114,11 +120,9 @@ func handleRegistration(
 	}
 	if !operatorIsRegistered {
 		err = registerOperatorWithEigenlayer(
-			operatorAddr,
-			elcontractsConfig,
-			ethHttpClient,
 			logger,
-			txMgr,
+			elWriter,
+			operatorAddr,
 			config.MetadataUrl,
 		)
 		if err != nil {
@@ -143,7 +147,8 @@ func handleRegistration(
 	if differenceToMint.Int64() > 0 {
 		err = depositIntoStrategyForOperator(
 			logger,
-			elcontractsConfig,
+			elReader,
+			elWriter,
 			ethHttpClient,
 			config.StrategyAddrs,
 			txMgr,
@@ -171,11 +176,9 @@ func handleRegistration(
 
 	if !isOperatorRegisteredToQuorum {
 		err = registerForOperatorSets(
-			operatorAddr,
 			logger,
-			elcontractsConfig,
-			ethHttpClient,
-			txMgr,
+			operatorAddr,
+			elWriter,
 			registryCoordinatorAddr,
 			config.AvsAddress,
 			config.OperatorSetIds,
@@ -191,10 +194,8 @@ func handleRegistration(
 
 	err = setAllocationDelay(
 		logger,
+		elWriter,
 		operatorAddr,
-		ethHttpClient,
-		config.AllocationManagerAddr,
-		txMgr,
 		config.AllocationDelay,
 	)
 	if err != nil {
@@ -202,15 +203,13 @@ func handleRegistration(
 	}
 
 	err = modifyAllocations(
+		logger,
+		elWriter,
 		operatorAddr,
-		config.AllocationManagerAddr,
 		config.AvsAddress,
 		config.StrategyAddrs,
 		config.AllocatableMagnitudes,
-		ethHttpClient,
-		txMgr,
 		config.OperatorSetIds,
-		logger,
 	)
 	if err != nil {
 		logger.Fatalf("Failed to set modify allocations: %v", err.Error())
@@ -222,11 +221,9 @@ func handleRegistration(
 // This function registers the operator with Eigenlayer. To do this needs the delegationManager
 // address in the elcontracts config
 func registerOperatorWithEigenlayer(
-	operatorAddr common.Address,
-	elcontractsConfig elcontracts.Config,
-	ethClient *ethclient.Client,
 	logger logging.Logger,
-	txMgr txmgr.TxManager,
+	elWriter *elcontracts.ChainWriter,
+	operatorAddr common.Address,
 	metadataUrl string,
 ) error {
 	op := types.Operator{
@@ -235,13 +232,7 @@ func registerOperatorWithEigenlayer(
 		MetadataUrl:               metadataUrl,
 	}
 
-	elWriter, err := elcontracts.NewWriterFromConfig(elcontractsConfig, ethClient, logger, &metrics.EigenMetrics{}, txMgr)
-	if err != nil {
-		logger.Error("Error creating eigenlayer chain writer", "err", err)
-		return err
-	}
-
-	_, err = elWriter.RegisterAsOperator(context.Background(), op, true)
+	_, err := elWriter.RegisterAsOperator(context.Background(), op, true)
 	if err != nil {
 		logger.Error("Error registering operator with eigenlayer", "err", err)
 		return err
@@ -253,22 +244,15 @@ func registerOperatorWithEigenlayer(
 // This function registers the operator in the operator sets received as parameter. To do this needs the
 // allocationManager address in the elcontracts config and the registryCoordinator address.
 func registerForOperatorSets(
-	operatorAddr common.Address,
 	logger logging.Logger,
-	elcontractsConfig elcontracts.Config,
-	ethClient *ethclient.Client,
-	txMgr txmgr.TxManager,
+	operatorAddr common.Address,
+	elWriter *elcontracts.ChainWriter,
 	registryCoordinatorAddr common.Address,
 	avsAddress common.Address,
 	operatorSetsIds []uint32,
 	blsKeyPair bls.KeyPair,
 	socket string,
 ) error {
-	elWriter, err := elcontracts.NewWriterFromConfig(elcontractsConfig, ethClient, logger, &metrics.EigenMetrics{}, txMgr)
-	if err != nil {
-		logger.Error("Error creating eigenlayer chain writer", "err", err)
-		return err
-	}
 	// Register operator for operator sets
 	registrationRequest := elcontracts.RegistrationRequest{
 		OperatorAddress: operatorAddr,
@@ -279,7 +263,7 @@ func registerForOperatorSets(
 		Socket:          socket,
 	}
 
-	_, err = elWriter.RegisterForOperatorSets(
+	_, err := elWriter.RegisterForOperatorSets(
 		context.Background(),
 		registryCoordinatorAddr,
 		registrationRequest,
@@ -298,25 +282,15 @@ func registerForOperatorSets(
 // To do this needs the allocationManager address.
 func setAllocationDelay(
 	logger logging.Logger,
+	elWriter *elcontracts.ChainWriter,
 	operatorAddr common.Address,
-	ethClient *ethclient.Client,
-	allocationManagerAddr common.Address,
-	txMgr txmgr.TxManager,
 	delay uint32,
 ) error {
-	txOpts, _ := txMgr.GetNoSendTxOpts()
-
-	waitForReceipt := true
-	allocationManagerContract, _ := allocationmanager.NewContractAllocationManager(allocationManagerAddr, ethClient)
-
-	tx, err := allocationManagerContract.SetAllocationDelay(txOpts, operatorAddr, delay)
-	if err != nil {
-		return err
-	}
-	receipt, err := txMgr.Send(context.Background(), tx, waitForReceipt)
+	receipt, err := elWriter.SetAllocationDelay(context.Background(), operatorAddr, delay, true)
 	if err != nil {
 		return utils.WrapError("failed to send setAllocationDelay tx with err", err)
 	}
+
 	logger.Info(
 		"tx successfully included for SetAllocationDelay  ",
 		"txHash",
@@ -331,31 +305,14 @@ func setAllocationDelay(
 // to be deposited.
 func depositIntoStrategyForOperator(
 	logger logging.Logger,
-	elcontractsConfig elcontracts.Config,
+	elReader *elcontracts.ChainReader,
+	elWriter *elcontracts.ChainWriter,
 	ethClient *ethclient.Client,
 	strategyAddrs []common.Address,
 	txMgr txmgr.TxManager,
 	operatorAddr common.Address,
 	amount *big.Int,
 ) error {
-	elReader, err := elcontracts.NewReaderFromConfig(elcontractsConfig, ethClient, logger)
-	if err != nil {
-		logger.Error("Error creating eigenlayer chain writer", "err", err)
-		return err
-	}
-
-	elWriter, err := elcontracts.NewWriterFromConfig(
-		elcontractsConfig,
-		ethClient,
-		logger,
-		&metrics.EigenMetrics{},
-		txMgr,
-	)
-	if err != nil {
-		logger.Error("Error creating eigenlayer chain writer", "err", err)
-		return err
-	}
-
 	for _, strategyAddr := range strategyAddrs {
 		_, tokenAddr, err := elReader.GetStrategyAndUnderlyingToken(context.Background(), strategyAddr)
 		if err != nil {
@@ -399,21 +356,14 @@ func depositIntoStrategyForOperator(
 // This function initializes the allocations for the operator, setting the allocatable magnitude (the available to slash).
 // To do this needs the allocationManager address.
 func modifyAllocations(
+	logger logging.Logger,
+	elWriter *elcontracts.ChainWriter,
 	operatorAddr common.Address,
-	allocationManagerAddr common.Address,
 	avsAddress common.Address,
 	strategies []common.Address,
 	newMagnitudes []uint64,
-	ethHttpClient *ethclient.Client,
-	txMgr txmgr.TxManager,
 	operatorSetsIds []uint32,
-	logger logging.Logger,
 ) error {
-	txOpts, _ := txMgr.GetNoSendTxOpts()
-
-	waitForReceipt := true
-	allocationManagerContract, _ := allocationmanager.NewContractAllocationManager(allocationManagerAddr, ethHttpClient)
-
 	allocations := []allocationmanager.IAllocationManagerTypesAllocateParams{}
 	for _, setId := range operatorSetsIds {
 		operatorSet := allocationmanager.OperatorSet{Avs: avsAddress, Id: setId}
@@ -425,11 +375,7 @@ func modifyAllocations(
 		allocations = append(allocations, newAllocation)
 	}
 
-	tx, err := allocationManagerContract.ModifyAllocations(txOpts, operatorAddr, allocations)
-	if err != nil {
-		return err
-	}
-	receipt, err := txMgr.Send(context.Background(), tx, waitForReceipt)
+	receipt, err := elWriter.ModifyAllocations(context.Background(), operatorAddr, allocations, true)
 	if err != nil {
 		return utils.WrapError("failed to send modifyAllocations tx with err", err)
 	}
