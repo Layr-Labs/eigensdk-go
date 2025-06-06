@@ -228,13 +228,10 @@ func createAvsOperator[Input any, Output any](
 	amount := new(big.Int)
 	amount.SetString(config.AmountToMint, 10)
 	registrationConfig := operator.RegistrationConfig{
-		AllocationManagerAddr: config.AllocationManagerAddr,
-		AvsAddress:            config.AvsAddress,
-		StrategyAddrs:         []common.Address{config.StrategyAddr},
+		AvsAddress:    config.AvsAddress,
+		StrategyAddrs: []common.Address{config.StrategyAddr},
 
-		DelegationManagerAddress:    config.DelegationManagerAddress,
-		RewardsCoordinatorAddress:   config.RewardsCoordinatorAddress,
-		PermissionControllerAddress: config.PermissionControllerAddress,
+		DelegationManagerAddress: config.DelegationManagerAddress,
 
 		EcdsaSignerCfg: ecdsaCfg,
 
