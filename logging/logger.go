@@ -1,5 +1,7 @@
 package logging
 
+import grpclogging "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/logging"
+
 type Logger interface {
 	Debug(msg string, tags ...any)
 
@@ -22,4 +24,6 @@ type Logger interface {
 	Fatalf(template string, args ...interface{})
 
 	With(tags ...any) Logger
+
+	InterceptorLogger() grpclogging.Logger
 }
