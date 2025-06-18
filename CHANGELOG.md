@@ -40,7 +40,7 @@ Each version will have a separate `Breaking Changes` section as well. To describ
   * `signer/go.mod`
     * go from `1.21.13` to `1.23.0`
     * toolchain from `go1.22.5` to `go1.23.4`
-    * github.com/consensys/gnark-crypto from `v0.12.1` to `v0.16.0`
+    * github.com/consensys/gnark-crypto from `v0.12.1` to `v0.18.0`
     * github.com/stretchr/testify from `v1.9.0` to `v1.10.0`
 
 * added rewards utilities integration test by @maximopalopoli in [#608](https://github.com/Layr-Labs/eigensdk-go/pull/608)
