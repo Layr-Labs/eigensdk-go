@@ -227,16 +227,21 @@ func createAvsOperator[Input any, Output any](
 
 	amount := new(big.Int)
 	amount.SetString(config.AmountToMint, 10)
+
+	depositConfig := operator.DepositConfig{
+		StrategyAddrs:         config.StrategyAddr,
+		AmountToMint:          amount,
+		AllocatableMagnitudes: config.AllocatableMagnitude,
+	}
+
 	registrationConfig := operator.RegistrationConfig{
-		AvsAddress:    config.AvsAddress,
-		StrategyAddrs: []common.Address{config.StrategyAddr},
+		AvsAddress: config.AvsAddress,
 
 		DelegationManagerAddress: config.DelegationManagerAddress,
 
 		EcdsaSignerCfg: ecdsaCfg,
 
-		AmountToMint:          amount,
-		AllocatableMagnitudes: []uint64{config.AllocatableMagnitude},
+		DepositConfig: []operator.DepositConfig{depositConfig},
 
 		OperatorSetIds: []uint32{config.OperatorSetId},
 
