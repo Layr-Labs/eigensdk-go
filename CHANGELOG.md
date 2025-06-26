@@ -27,6 +27,8 @@ Each version will have a separate `Breaking Changes` section as well. To describ
 
 ### Other Changes
 
+* Bump middleware contracts version up to [v1.3.1](https://github.com/Layr-Labs/eigenlayer-middleware/releases/tag/v1.3.1) in [#744](https://github.com/Layr-Labs/eigensdk-go/pull/744).
+
 * chore: bump dependencies in [#739](https://github.com/Layr-Labs/eigensdk-go/pull/739)
   * `go.mod`
     * github.com/consensys/gnark-crypto from `v0.16.0` to `v0.18.0`
