@@ -259,6 +259,10 @@ func registerOperatorWithEigenlayer(
 	return nil
 }
 
+// Handles token deposits into EigenLayer strategies.
+// This function ensures that the operator has deposited the required amounts of tokens
+// into each specified strategy. If the operator has already deposited the required amount,
+// skip the deposit. If not, deposit the difference between the required amount and the deposited amount.
 func handleDepositTokenAmount(
 	txMgr txmgr.TxManager,
 	logger logging.Logger,
@@ -271,23 +275,26 @@ func handleDepositTokenAmount(
 	for _, deposit := range depositConfig {
 		depositAmount, err := elReader.GetOperatorSharesInStrategy(context.Background(), operatorAddr, deposit.StrategyAddrs)
 		if err != nil {
-			logger.Errorf("Error getting operator shares in strategy: %s. Error: %v", deposit.StrategyAddrs.String(), err)
+			logger.Errorf("Error getting operator shares in strategy: %x. Error: %v", deposit.StrategyAddrs, err)
 			return err
 		}
-		logger.Infof("Operator has %v shares in strategy %x", depositAmount, deposit.StrategyAddrs.String())
+		logger.Infof("Operator has %v shares in strategy %x", depositAmount, deposit.StrategyAddrs)
 
+		// If the operator has less shares than the amount to mint, we need to deposit the difference
 		if depositAmount.Cmp(deposit.AmountToMint) == -1 {
 			amountToDeposit := big.NewInt(0).Sub(deposit.AmountToMint, depositAmount)
 			logger.Infof("Expected deposit amount: %v. Difference between expected and deposited amount: %v", deposit.AmountToMint, amountToDeposit)
-			logger.Infof("Depositing %v tokens into strategy %x", amountToDeposit, deposit.StrategyAddrs.String())
+			logger.Infof("Depositing %v tokens into strategy %x", amountToDeposit, deposit.StrategyAddrs)
 
+			// TODO: Should we use GetStrategyAndUnderlyingToken or GetStrategyAndUnderlyingERC20Token?
 			_, tokenAddr, err := elReader.GetStrategyAndUnderlyingToken(context.Background(), deposit.StrategyAddrs)
 			if err != nil {
 				logger.Error("Failed to fetch strategy contract", "err", err)
 				return err
 			}
-			logger.Info(tokenAddr.String())
+			logger.Info("Token address: %x", tokenAddr)
 
+			// TODO: This is a mock contract, we need to use the real contract
 			contractErc20Mock, err := erc20mock.NewContractMockERC20(tokenAddr, ethClient)
 			if err != nil {
 				logger.Error("Failed to fetch ERC20Mock contract", "err", err)
@@ -317,7 +324,7 @@ func handleDepositTokenAmount(
 			}
 
 		} else {
-			logger.Infof("Operator has enough shares in strategy %x, skipping deposit", deposit.StrategyAddrs.String())
+			logger.Infof("Operator has enough shares in strategy %x, skipping deposit", deposit.StrategyAddrs)
 		}
 	}
 
