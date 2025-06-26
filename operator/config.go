@@ -70,20 +70,11 @@ type RegistrationConfig struct {
 	// Used to register operator in operator sets and initialize allocations
 	AvsAddress common.Address `toml:"service_manager_address"`
 
-	// Used to deposit into these strategies for operator and initialize allocations on these strategies
-	StrategyAddrs []common.Address `toml:"strategy_addresses"`
-
 	// Used to create eigenlayer chain reader and writer
 	DelegationManagerAddress common.Address `toml:"delegation_manager_address"`
 
 	// The config used to create the ecdsa signer for the operator registration
 	EcdsaSignerCfg EcdsaSignerConfig `toml:"ecdsa_signer"`
-
-	// The ammount to mint to the operator
-	AmountToMint *big.Int `toml:"amount_to_mint"`
-
-	// The magnitudes to be allocatable (slashable) in the strategies for the operator
-	AllocatableMagnitudes []uint64 `toml:"allocatable_magnitudes"`
 
 	// The IDs of the operator sets to be registered
 	OperatorSetIds []uint32 `toml:"operator_set_ids"`
@@ -96,4 +87,17 @@ type RegistrationConfig struct {
 
 	// The allocation delay set for the operator, set as zero for immediate allocation
 	AllocationDelay uint32 `toml:"allocation_delay"`
+
+	// Deposit information for the operator
+	DepositConfig []DepositConfig `toml:"deposit_config"`
+}
+
+// TODO: Add docs
+type DepositConfig struct {
+	// Used to deposit into these strategies for operator and initialize allocations on these strategies
+	StrategyAddrs common.Address `toml:"strategy_addresses"`
+	// The ammount to mint to the operator
+	AmountToMint *big.Int `toml:"amount_to_mint"`
+	// The magnitudes to be allocatable (slashable) in the strategies for the operator
+	AllocatableMagnitudes uint64 `toml:"allocatable_magnitudes"`
 }
