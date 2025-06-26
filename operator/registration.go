@@ -150,6 +150,28 @@ func handleRegistration(
 		logger.Fatalf("Failed to deposit tokens into strategies for operator on startup: %v", err.Error())
 	}
 
+	// Handle allocated stake for operator
+	operatorSets := []allocationmanager.OperatorSet{}
+	for _, operatorSetId := range config.OperatorSetIds {
+		operatorSets = append(operatorSets, allocationmanager.OperatorSet{
+			Avs: config.AvsAddress,
+			Id:  operatorSetId,
+		})
+
+		err = handleAllocatedStake(
+			logger,
+			elReader,
+			elWriter,
+			operatorAddr,
+			operatorSets,
+			config.DepositConfig,
+		)
+		if err != nil {
+			logger.Fatalf("Failed to allocate stake for operator on startup: %v", err.Error())
+		}
+
+	}
+
 	// operatorSet := allocationmanager.OperatorSet{
 	// 	Avs: config.AvsAddress,
 	// 	Id:  config.OperatorSetIds[0],
@@ -326,6 +348,55 @@ func handleDepositTokenAmount(
 		} else {
 			logger.Infof("Operator has enough shares in strategy %x, skipping deposit", deposit.StrategyAddrs)
 		}
+	}
+
+	return nil
+}
+
+func handleAllocatedStake(
+	logger logging.Logger,
+	elReader *elcontracts.ChainReader,
+	elWriter *elcontracts.ChainWriter,
+	operatorAddr common.Address,
+	operatorSets []allocationmanager.OperatorSet,
+	depositConfig []DepositConfig,
+) error {
+	allocateParams := []allocationmanager.IAllocationManagerTypesAllocateParams{}
+
+	for _, operatorSet := range operatorSets {
+		// TODO: Send the vec of StrategyAddrs
+		for _, deposit := range depositConfig {
+			allocated, _ := elReader.GetAllocatedStake(context.Background(), operatorSet, []common.Address{operatorAddr}, []common.Address{deposit.StrategyAddrs})
+			// We are passing
+			currentAllocatedStake := allocated[0][0]
+
+			allocateMagnitude := big.NewInt(int64(deposit.AllocatableMagnitudes))
+
+			logger.Infof(
+				"Current allocated stake: %v, desired: %v for strategy %x",
+				currentAllocatedStake, allocateMagnitude, deposit.StrategyAddrs,
+			)
+
+			if currentAllocatedStake.Cmp(allocateMagnitude) == -1 {
+
+				allocateParams = append(allocateParams, allocationmanager.IAllocationManagerTypesAllocateParams{
+					OperatorSet:   operatorSet,
+					Strategies:    []common.Address{deposit.StrategyAddrs},
+					NewMagnitudes: []uint64{deposit.AllocatableMagnitudes},
+				})
+			}
+		}
+	}
+
+	if len(allocateParams) == 0 {
+		logger.Infof("Modifying %v allocations", len(allocateParams))
+		_, err := elWriter.ModifyAllocations(context.Background(), operatorAddr, allocateParams, true)
+		if err != nil {
+			logger.Errorf("Error modifying the allocations")
+			return err
+		}
+	} else {
+		logger.Info("All allocations are correct")
 	}
 
 	return nil
