@@ -55,14 +55,27 @@ func TestIntegrationRewards(t *testing.T) {
 			Multiplier: big.NewInt(1_000_000),
 		},
 	}
+
+	calculationInterval, err := clients.EigenlayerContractBindings.RewardsCoordinator.CALCULATIONINTERVALSECONDS(nil)
+	require.NoError(t, err)
+
+	header, err := clients.EthHttpClient.HeaderByNumber(context.TODO(), nil)
+	require.NoError(t, err)
+
+	// These values are set to align with the contract's requirements for the `OperatorDirectedRewardsSubmission`.
+	// https://github.com/Layr-Labs/eigenlayer-contracts/blob/ecaff6304de6cb0f43b42024ad55d0e8a0430790/src/contracts/core/RewardsCoordinator.sol#L414
+	// https://github.com/Layr-Labs/eigenlayer-contracts/blob/ecaff6304de6cb0f43b42024ad55d0e8a0430790/src/contracts/core/RewardsCoordinator.sol#L482
+	var duration uint32 = calculationInterval
+	var startTimestamp uint32 = ((uint32(header.Time) / calculationInterval) + 1) * calculationInterval
+
 	// These values were taken from Go Incredible Squaring AVS's rewards scripts
 	rewardsSubmission := []servicemanager.IRewardsCoordinatorTypesRewardsSubmission{
 		{
 			StrategiesAndMultipliers: stratAndMul,
 			Token:                    tokenAddr,
 			Amount:                   big.NewInt(amountPerPayment),
-			StartTimestamp:           1743033600,
-			Duration:                 6048000,
+			StartTimestamp:           startTimestamp,
+			Duration:                 duration,
 		},
 	}
 
