@@ -246,7 +246,7 @@ func handleDepositTokenAmount(
 				logger.Error("Failed to fetch strategy contract", "err", err)
 				return err
 			}
-			logger.Info("Token address: %x", tokenAddr)
+			logger.Infof("Token address: %x", tokenAddr)
 
 			// TODO: This is a mock contract, we need to use the real contract
 			contractErc20Mock, err := erc20mock.NewContractMockERC20(tokenAddr, ethClient)
@@ -320,7 +320,7 @@ func handleAllocatedStake(
 		}
 	}
 
-	if len(allocateParams) == 0 {
+	if len(allocateParams) > 0 {
 		logger.Infof("Modifying %v allocations", len(allocateParams))
 		_, err := elWriter.ModifyAllocations(context.Background(), operatorAddr, allocateParams, true)
 		if err != nil {
@@ -398,10 +398,10 @@ func handleRegistrationToOperatorSets(
 		}
 
 		if !isOperatorRegisteredToQuorum {
-			logger.Info("Operator set %x: %v requires registration", operatorSet.Avs, operatorSet.Id)
+			logger.Infof("Operator set %x: %v ID requires registration", operatorSet.Avs, operatorSet.Id)
 			operatorSetsByAvs[operatorSet.Avs] = append(operatorSetsByAvs[operatorSet.Avs], operatorSet.Id)
 		} else {
-			logger.Info("Operator set %x: %v already registered", operatorSet.Avs, operatorSet.Id)
+			logger.Infof("Operator set %x: %v already registered", operatorSet.Avs, operatorSet.Id)
 		}
 	}
 
