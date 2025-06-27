@@ -283,7 +283,6 @@ func handleDepositTokenAmount(
 			logger.Infof("Expected deposit amount: %v. Difference between expected and deposited amount: %v", deposit.AmountToMint, amountToDeposit)
 			logger.Infof("Depositing %v tokens into strategy %x", amountToDeposit, deposit.StrategyAddrs)
 
-			// TODO: Should we use GetStrategyAndUnderlyingToken or GetStrategyAndUnderlyingERC20Token?
 			_, tokenAddr, err := elReader.GetStrategyAndUnderlyingToken(context.Background(), deposit.StrategyAddrs)
 			if err != nil {
 				logger.Error("Failed to fetch strategy contract", "err", err)
@@ -291,7 +290,6 @@ func handleDepositTokenAmount(
 			}
 			logger.Infof("Token address: %x", tokenAddr)
 
-			// TODO: This is a mock contract, we need to use the real contract
 			contractErc20Mock, err := erc20mock.NewContractMockERC20(tokenAddr, ethClient)
 			if err != nil {
 				logger.Error("Failed to fetch ERC20Mock contract", "err", err)
