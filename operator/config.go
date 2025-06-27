@@ -88,17 +88,23 @@ type RegistrationConfig struct {
 	AllocationDelay uint32 `toml:"allocation_delay"`
 }
 
+// Operator set configuration for an AVS
 type OperatorSetConfig struct {
-	ID       uint32          `toml:"id"`
+	// The ID of the operator set
+	ID uint32 `toml:"id"`
+
+	// The deposits configuration for the operator set
 	Deposits []DepositConfig `toml:"deposits"`
 }
 
-// TODO: Add docs
+// Deposit configuration for an operator set
 type DepositConfig struct {
-	// Used to deposit into these strategies for operator and initialize allocations on these strategies
+	// The strategies to deposit into
 	StrategyAddrs common.Address `toml:"strategy_addresses"`
-	// The ammount to mint to the operator
+
+	// The amount to mint to the operator
 	AmountToMint *big.Int `toml:"amount_to_mint"`
-	// The magnitudes to be allocatable (slashable) in the strategies for the operator
+
+	// The magnitudes to be allocatable (slashable) in the strategies
 	AllocatableMagnitudes uint64 `toml:"allocatable_magnitudes"`
 }
