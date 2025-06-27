@@ -112,28 +112,15 @@ func handleRegistration(
 	}
 
 	// Register operator in EigenLayer
-	// Check if operator was registered, if its not registered and register on startup flag is not set, then will fail.
-	// If its not registered and should be registered on startup, make the registration.
-	operatorIsRegistered, err := elReader.IsOperatorRegistered(
-		context.Background(),
-		types.Operator{Address: operatorAddr.Hex()}, // TODO: We are turning this into string to
+	err = handleRegistrationWithEigenlayer(
+		logger,
+		elReader,
+		elWriter,
+		operatorAddr,
+		config.MetadataUrl,
 	)
 	if err != nil {
-		logger.Error("Error checking if operator is registered", "err", err)
-		return err
-	}
-	if !operatorIsRegistered {
-		err = registerOperatorWithEigenlayer(
-			logger,
-			elWriter,
-			operatorAddr,
-			config.MetadataUrl,
-		)
-		if err != nil {
-			logger.Fatalf("Failed to register operator with EigenLayer on startup: %v", err.Error())
-		}
-	} else {
-		logger.Info("Operator already registered to EigenLayer, skipped EL regisration")
+		logger.Fatalf("Failed to register operator with EigenLayer on startup: %v", err.Error())
 	}
 
 	// Deposit tokens into strategies for the operator
@@ -171,7 +158,15 @@ func handleRegistration(
 		logger.Fatalf("Failed to allocate stake on startup: %v", err.Error())
 	}
 
-	// TODO: Check if is necessary to modify the allocationDelay
+	err = handleAllocationDelay(
+		logger,
+		elReader,
+		elWriter,
+		operatorAddr,
+	)
+	if err != nil {
+		logger.Fatalf("Failed to set allocation delay on startup: %v", err.Error())
+	}
 
 	err = handleRegistrationToOperatorSets(
 		logger,
@@ -185,6 +180,41 @@ func handleRegistration(
 	)
 	if err != nil {
 		logger.Fatalf("Failed to register to operetorSets on startup: %v", err.Error())
+	}
+
+	return nil
+}
+
+// Register operator in EigenLayer
+// Check if operator was registered, if its not registered and register on startup flag is not set, then will fail.
+// If its not registered and should be registered on startup, make the registration.
+func handleRegistrationWithEigenlayer(
+	logger logging.Logger,
+	elReader *elcontracts.ChainReader,
+	elWriter *elcontracts.ChainWriter,
+	operatorAddr common.Address,
+	metadataUrl string,
+) error {
+	operatorIsRegistered, err := elReader.IsOperatorRegistered(
+		context.Background(),
+		types.Operator{Address: operatorAddr.Hex()}, // TODO: We are turning this into string to
+	)
+	if err != nil {
+		logger.Error("Error checking if operator is registered", "err", err)
+		return err
+	}
+	if !operatorIsRegistered {
+		err = registerOperatorWithEigenlayer(
+			logger,
+			elWriter,
+			operatorAddr,
+			metadataUrl,
+		)
+		if err != nil {
+			logger.Fatalf("Failed to register operator with EigenLayer on startup: %v", err.Error())
+		}
+	} else {
+		logger.Info("Operator already registered to EigenLayer, skipped EL regisration")
 	}
 
 	return nil
@@ -329,6 +359,32 @@ func handleAllocatedStake(
 		}
 	} else {
 		logger.Info("All allocations are correct")
+	}
+
+	return nil
+}
+
+func handleAllocationDelay(
+	logger logging.Logger,
+	elReader *elcontracts.ChainReader,
+	elWriter *elcontracts.ChainWriter,
+	operatorAddr common.Address,
+) error {
+	allocationDelay, err := elReader.GetAllocationDelay(context.Background(), operatorAddr)
+	if err != nil {
+		logger.Errorf("Error getting allocation delay")
+		return err
+	}
+
+	if allocationDelay != 0 {
+		logger.Infof("Allocation delay is %v, skipping allocation delay modification", allocationDelay)
+		return nil
+	}
+
+	_, err = elWriter.SetAllocationDelay(context.Background(), operatorAddr, allocationDelay, true)
+	if err != nil {
+		logger.Errorf("Error setting allocation delay")
+		return err
 	}
 
 	return nil
