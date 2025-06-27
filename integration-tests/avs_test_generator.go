@@ -228,23 +228,26 @@ func createAvsOperator[Input any, Output any](
 
 	amount := new(big.Int)
 	amount.SetString(config.AmountToMint, 10)
+
+	depositConfig := operator.DepositConfig{
+		StrategyAddrs:         config.StrategyAddr,
+		AmountToMint:          amount,
+		AllocatableMagnitudes: config.AllocatableMagnitude,
+	}
+
 	registrationConfig := operator.RegistrationConfig{
-		RegisterOnStartup: true,
+		AvsAddress: config.AvsAddress,
 
-		AllocationManagerAddr: config.AllocationManagerAddr,
-		AvsAddress:            config.AvsAddress,
-		StrategyAddrs:         []common.Address{config.StrategyAddr},
-
-		DelegationManagerAddress:    config.DelegationManagerAddress,
-		RewardsCoordinatorAddress:   config.RewardsCoordinatorAddress,
-		PermissionControllerAddress: config.PermissionControllerAddress,
+		DelegationManagerAddress: config.DelegationManagerAddress,
 
 		EcdsaSignerCfg: ecdsaCfg,
 
-		AmountToMint:          amount,
-		AllocatableMagnitudes: []uint64{config.AllocatableMagnitude},
-
-		OperatorSetIds: []uint32{config.OperatorSetId},
+		OperatorSetConfigs: []operator.OperatorSetConfig{
+			{
+				ID:       config.OperatorSetId,
+				Deposits: []operator.DepositConfig{depositConfig},
+			},
+		},
 
 		MetadataUrl:     config.MetadataUrl,
 		Socket:          config.Socket,
@@ -258,7 +261,7 @@ func createAvsOperator[Input any, Output any](
 		EthWsUrl:                      config.EthWsUrl,
 		BlsSignerCfg:                  blsCfg,
 		AggregatorServerIpPortAddress: config.AggregatorServerIpPortAddr,
-		Registration:                  registrationConfig,
+		Registration:                  &registrationConfig,
 	}
 
 	responseCalculator := config.ResponseCalculatorBuilder()

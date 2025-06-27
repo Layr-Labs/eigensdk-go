@@ -106,35 +106,16 @@ func NewOperator[Input any, Output any](
 		}
 	}
 
-	// Check if operator was registered, if its not registered and register on startup flag is not set, then will fail.
-	// If its not registered and should be registered on startup, make the registration.
-	operatorIsRegistered, err := avsReader.IsOperatorRegistered(&bind.CallOpts{}, common.HexToAddress(c.OperatorAddress))
+	err = handleRegistration(
+		logger,
+		c.Registration,
+		common.HexToAddress(c.OperatorAddress),
+		avsConfig.RegistryCoordinatorAddress,
+		ethHttpClient,
+		blsKeyPair,
+	)
 	if err != nil {
-		logger.Error("Error checking if operator is registered", "err", err)
-		return nil, err
-	}
-	if !operatorIsRegistered {
-		if c.Registration.RegisterOnStartup {
-			err = registerOperatorOnStartup(
-				c.Registration,
-				logger,
-				avsConfig.RegistryCoordinatorAddress,
-				common.HexToAddress(c.OperatorAddress),
-				ethHttpClient,
-				blsKeyPair,
-			)
-			if err != nil {
-				logger.Errorf("Failure while registering operator on startup: %w", err)
-				return nil, err
-			}
-		} else {
-			// We bubble the error all the way up instead of using logger.Fatal because logger.Fatal prints a huge stack
-			// trace that hides the actual error message. This error msg is more explicit and doesn't require showing a
-			// stack trace to the user.
-			return nil, fmt.Errorf(
-				"Operator is not registered and register on startup flag is false, try registering operator using the operator-cli before starting operator",
-			)
-		}
+		return nil, utils.WrapError("Failure while handling registration", err)
 	}
 
 	operatorId, err := avsReader.GetOperatorId(&bind.CallOpts{}, common.HexToAddress(c.OperatorAddress))
