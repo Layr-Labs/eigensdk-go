@@ -6,88 +6,67 @@ import (
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/operator"
-	"github.com/ethereum/go-ethereum/common"
 
 	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/common"
 	taskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-dot-product/contracts/bindings/IncredibleDotProductTaskManager"
 )
 
+type Config struct {
+	operator.Config
+
+	TaskManagerAddress string `toml:"task_manager_address"`
+}
+
+// This is the main function for the operator in the incredible dot product example. The steps followed are
+// also explained in the operator module readme, which can be found at operator/README.md
 func main() {
+	// 0. Create the logger where all the logs will appear
 	logger, err := logging.NewZapLogger(logging.Production)
 	if err != nil {
 		println("Failure creating logger")
 		return
 	}
 
+	// 1. Get the ABI of the task manager contract's binding
 	taskManagerAbi, err := taskmanager.ContractIncredibleDotProductTaskManagerMetaData.GetAbi()
 	if err != nil {
 		logger.Errorf("Failed to get task manager abi: %w", err)
 		return
 	}
 
-	ethHttpUrl := "http://localhost:8545"
+	// 2. Create the operator config, including the registration config. If you don't want to
+	// register your operator, you can leave the RegistrationCfg field of operator config empty
 
-	operatorAddr := "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
-
-	amount := new(big.Int)
-	amount.SetString("1000000000000000000000", 10)
-	registrationConfig := operator.RegistrationConfig{
-		RegisterOnStartup: true,
-
-		OperatorAddr:            common.HexToAddress("0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"),
-		AllocationManagerAddr:   common.HexToAddress("0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6"),
-		AvsAddress:              common.HexToAddress("0xcd8a1c3ba11cf5ecfa6267617243239504a98d90"),
-		RegistryCoordinatorAddr: common.HexToAddress("0xfd471836031dc5108809d173a067e8486b9047a3"),
-		StrategyAddrs:           []common.Address{common.HexToAddress("0x2b961e3959b79326a8e7f64ef0d2d825707669b5")},
-
-		DelegationManagerAddress:    common.HexToAddress("0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0"),
-		RewardsCoordinatorAddress:   common.HexToAddress("0xa51c1fc2f0d1a1b8494ed1fe312d7c3a78ed91c0"),
-		PermissionControllerAddress: common.HexToAddress("0x59b670e9fa9d0a427751af201d676719a970857b"),
-
-		EthRpcUrl: "http://localhost:8545",
-
-		EcdsaKeyStorePath: "keys/test.ecdsa.key.json",
-		BlsKeyStorePath:   "keys/test.bls.key.json",
-
-		AmountToMint:          amount,
-		AllocatableMagnitudes: []uint64{1000000000000000},
-
-		OperatorSetIds: []uint32{0},
+	opConfig := &Config{}
+	err = examplecommon.ReadTomlConfig("config/config.toml", opConfig)
+	if err != nil {
+		logger.Fatalf(err.Error())
 	}
 
-	operatorConfig := operator.Config{
-		Logger:         logger,
-		TaskManagerAbi: taskManagerAbi,
+	operatorConfig := opConfig.Config
 
-		OperatorAddress: operatorAddr,
+	// 3. Implement the computation function that processes task inputs and produces outputs
+	// (we do this in examples/incredible-dot-product/common/common.go)
 
-		AVSRegistryCoordinatorAddress: "0xfd471836031dc5108809d173a067e8486b9047a3",
-		OperatorStateRetrieverAddress: "0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154",
-		ServiceManagerAddress:         "0xcd8a1c3ba11cf5ecfa6267617243239504a98d90",
-
-		EthWsUrl:                      "ws://localhost:8545",
-		EthRpcUrl:                     ethHttpUrl,
-		AggregatorServerIpPortAddress: "localhost:8090",
-
-		BlsPrivateKeyStorePath: "keys/test.bls.key.json",
-
-		RegistrationCfg: registrationConfig,
-	}
-
+	// 4. Create the response calculator with the AVS calculation logic. Note that here we create a
+	// Response calculator with the NewFunctionResponseCalculator from the operator package
 	responseCalculator := operator.NewFunctionResponseCalculator(examplecommon.DotProduct)
 
+	// 5. We convert the calculator to a failing one, to test that challenges work as expected.
 	possibleFailureCalculator, err := operator.NewFailingResponseCalculator(responseCalculator, 50, big.NewInt(31234213443))
 	if err != nil {
 		logger.Fatalf("Failed to create the possible failure function: %v", err.Error())
 	}
 
-	// Setting the TaskResponseHashFn parameter in nil because I'm using the abi default encoding function
-	operator, err := operator.NewOperatorFromConfig(operatorConfig, possibleFailureCalculator, nil)
+	// 6. Build the operator, providing operator config, the response calculator and a task response hashing
+	// function, and then start it.
+	// We leave this last parameter as nil because we are using the default hashing function provided by the SDK
+	operator, err := operator.NewOperator(logger, operatorConfig, taskManagerAbi, possibleFailureCalculator, nil)
 	if err != nil {
 		logger.Fatalf("Failed to create operator: %w", err)
 	}
 
-	err = operator.Start(context.Background())
+	err = <-operator.Start(context.Background())
 	if err != nil {
 		logger.Fatalf("Failure while running operator: %w", err)
 	}

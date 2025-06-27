@@ -2,12 +2,14 @@ package bls
 
 import (
 	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
 	"os"
 	"path/filepath"
+	"strings"
 
 	bn254utils "github.com/Layr-Labs/eigensdk-go/crypto/bn254"
 
@@ -157,6 +159,25 @@ func NewPrivateKey(sk string) (*PrivateKey, error) {
 type KeyPair struct {
 	PrivKey *PrivateKey
 	PubKey  *G1Point
+}
+
+func (k *KeyPair) UnmarshalText(text []byte) error {
+	var priv PrivateKey
+
+	privHex := strings.TrimPrefix(string(text), "0x")
+
+	privBytes, err := hex.DecodeString(privHex)
+	if err != nil {
+		return fmt.Errorf("invalid private key hex: %w", err)
+	}
+
+	privateKey := priv.SetBytes(privBytes)
+
+	keyPair := NewKeyPair(privateKey)
+
+	*k = *keyPair
+
+	return nil
 }
 
 func NewKeyPair(sk *PrivateKey) *KeyPair {

@@ -6,6 +6,10 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/types"
 )
 
+// The TaskManager interface can be used to communicate with the TaskManager on-chain contract. It implements the
+// methods of the individual generic interfaces used to communicate with the contract.
+// To see a default implementation for this interface, you can see the taskManagerContractWrapper implementation
+// in  task-manager/task_manager_wrapper.go
 type TaskManager[Input any, Output any] interface {
 	TaskCreator[Input]
 
@@ -30,7 +34,7 @@ type TaskResponder[Input any, Output any] interface {
 	// Saves the task response for a given task.
 	// Implementations usually submits to the on chain task manager contract the response to a task.
 	RespondToTask(task Task[Input], taskResponse TaskResponse[Output], nonSignersStakesAndSig types.NonSignerStakesAndSignature) error
-	// Hashes a generic task response, first encoding it on the task manager abi and then hashing the encoded response.
+	// Hashes a generic task response, first encoding it on the task manager ABI and then hashing the encoded response.
 	// Returns the 32 byte digest or an error in case the hashing process fails
 	HashTaskResponse(taskResponse TaskResponse[Output]) (types.TaskResponseDigest, error)
 }

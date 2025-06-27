@@ -5,56 +5,69 @@ import (
 	"math/big"
 
 	"github.com/Layr-Labs/eigensdk-go/logging"
-	sdkoperator "github.com/Layr-Labs/eigensdk-go/operator"
+	"github.com/Layr-Labs/eigensdk-go/operator"
 
-	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/bindings/taskManager"
 	examplecommon "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/common"
+	cstaskmanager "github.com/Layr-Labs/eigensdk-go/examples/incredible-squaring/contracts/bindings/IncredibleSquaringTaskManager"
 )
 
-// The idea of this example is to show how to create a custom operator using the SDK generic implementation
+type Config struct {
+	operator.Config
+
+	TaskManagerAddress string `toml:"task_manager_address"`
+}
+
+// This is the main function for the operator in the incredible squaring example. The steps followed are
+// also explained in the operator module readme, which can be found at operator/README.md
 func main() {
-	logger, err := logging.NewZapLogger(logging.Production) // Change here if want to change logging level
+	// 0. Create the logger where all the logs will appear
+	logger, err := logging.NewZapLogger(logging.Production)
 	if err != nil {
 		println("Failure creating logger")
 		return
 	}
 
+	// 1. Get the ABI of the task manager contract's binding
 	taskManagerAbi, err := cstaskmanager.ContractIncredibleSquaringTaskManagerMetaData.GetAbi()
 	if err != nil {
-		logger.Fatalf(err.Error())
+		logger.Errorf("Failed to get task manager abi: %w", err)
+		return
 	}
 
-	// The values from this config are extracted from an incredible squaring config file:
-	// https://github.com/Layr-Labs/incredible-squaring-avs/blob/dev/config-files/operator.anvil.yaml
-	operatorConfig := sdkoperator.Config{
-		OperatorAddress:               "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
-		OperatorStateRetrieverAddress: "0x4c5859f0f772848b2d91f1d83e2fe57935348029",
-		ServiceManagerAddress:         "0x5f3f1dbd7b74c6b46e8c44f98792a1daf8d69154",
-		AVSRegistryCoordinatorAddress: "0x7bc06c482dead17c0e297afbc32f6e63d3846650",
-		EthRpcUrl:                     "http://localhost:8545",
-		EthWsUrl:                      "ws://localhost:8545",
-		BlsPrivateKeyStorePath:        "tests/keys/test.bls.key.json",
-		AggregatorServerIpPortAddress: "localhost:8090",
-		Logger:                        logger,
-		TaskManagerAbi:                taskManagerAbi,
-	}
+	// 2. Create the operator config, including the registration config. If you don't want to
+	// register your operator, you can leave the RegistrationCfg field of operator config empty
 
-	calculator := sdkoperator.NewFunctionResponseCalculator(examplecommon.Square)
-
-	logic, err := sdkoperator.NewFailingResponseCalculator(calculator, 50, big.NewInt(0))
+	opConfig := &Config{}
+	err = examplecommon.ReadTomlConfig("config/config.toml", opConfig)
 	if err != nil {
 		logger.Fatalf(err.Error())
 	}
 
-	operator, err := sdkoperator.NewOperatorFromConfig(operatorConfig, logic, nil)
+	operatorConfig := opConfig.Config
+
+	// 3. Implement the computation function that processes task inputs and produces outputs
+	// (we do this in examples/incredible-squaring/common/common.go)
+
+	// 4. Create the response calculator with the AVS calculation logic. Note that here we create a
+	// Response calculator with the NewFunctionResponseCalculator from the operator package
+	calculator := operator.NewFunctionResponseCalculator(examplecommon.Square)
+
+	// 5. We convert the calculator to a failing one, to test that challenges work as expected.
+	possibleFailureCalculator, err := operator.NewFailingResponseCalculator(calculator, 50, big.NewInt(0))
 	if err != nil {
-		logger.Errorf("Failed to create operator from config: %v", err)
-		return
+		logger.Fatalf("Failed to create the possible failure function: %v", err.Error())
 	}
 
-	err = operator.Start(context.Background())
+	// 6. Build the operator, providing operator config, the response calculator and a task response hashing
+	// function, and then start it.
+	// We leave this last parameter as nil because we are using the default hashing function provided by the SDK
+	operator, err := operator.NewOperator(logger, operatorConfig, taskManagerAbi, possibleFailureCalculator, nil)
 	if err != nil {
-		logger.Errorf("Error while running operator: %v", err)
-		return
+		logger.Fatalf("Failed to create operator: %w", err)
+	}
+
+	err = <-operator.Start(context.Background())
+	if err != nil {
+		logger.Fatalf("Failure while running operator: %w", err)
 	}
 }

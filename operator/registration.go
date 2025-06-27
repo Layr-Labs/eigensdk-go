@@ -2,20 +2,20 @@ package operator
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"errors"
+	"fmt"
 	"math/big"
 	"os"
-	"time"
+	"strings"
 
 	allocationmanager "github.com/Layr-Labs/eigensdk-go/contracts/bindings/AllocationManager"
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
-	"github.com/Layr-Labs/eigensdk-go/crypto/ecdsa"
-	"github.com/Layr-Labs/eigensdk-go/signerv2"
+	sdkecdsa "github.com/Layr-Labs/eigensdk-go/crypto/ecdsa"
 
 	erc20mock "github.com/Layr-Labs/eigensdk-go/contracts/bindings/MockERC20"
 
 	"github.com/Layr-Labs/eigensdk-go/chainio/clients/elcontracts"
-	"github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
 	"github.com/Layr-Labs/eigensdk-go/chainio/txmgr"
 	"github.com/Layr-Labs/eigensdk-go/logging"
 	"github.com/Layr-Labs/eigensdk-go/metrics"
@@ -23,160 +23,224 @@ import (
 	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/event"
 )
 
-func RegisterOperatorOnStartup(c RegistrationConfig, logger logging.Logger) error {
-	ethRpcClient, err := ethclient.Dial(c.EthRpcUrl)
-	if err != nil {
-		logger.Errorf("Cannot create http ethclient", "err", err)
-		return err
-	}
-
-	elcontractsConfig := elcontracts.Config{
-		DelegationManagerAddress:    c.DelegationManagerAddress,
-		RewardsCoordinatorAddress:   c.RewardsCoordinatorAddress,
-		PermissionControllerAddress: c.PermissionControllerAddress,
-	}
-
-	rpcCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	chainid, err := ethRpcClient.ChainID(rpcCtx)
-	if err != nil {
-		logger.Error("Cannot get chain id", "err", err)
-		return err
-	}
-
-	ecdsaKeyPassword, ok := os.LookupEnv("OPERATOR_ECDSA_KEY_PASSWORD")
-	if !ok {
-		logger.Warnf("OPERATOR_ECDSA_KEY_PASSWORD env var not set. using empty string")
-	}
-
-	operatorEcdsaPrivateKey, err := ecdsa.ReadKey(
-		c.EcdsaKeyStorePath,
-		ecdsaKeyPassword,
-	)
-	if err != nil {
-		return err
-	}
-
-	signerV2, senderAddr, err := signerv2.SignerFromConfig(signerv2.Config{
-		PrivateKey: operatorEcdsaPrivateKey,
-	}, chainid)
-	if err != nil {
-		logger.Fatalf(err.Error())
-	}
-
-	pkWallet, err := wallet.NewPrivateKeyWallet(ethRpcClient, signerV2, senderAddr, logger)
-	if err != nil {
-		return err
-	}
-
-	txMgr := txmgr.NewSimpleTxManager(pkWallet, ethRpcClient, logger, senderAddr)
-
-	err = RegisterOperatorWithEigenlayer(
-		c.OperatorAddr,
-		elcontractsConfig,
-		ethRpcClient,
-		logger,
-		txMgr,
-	)
-	if err != nil {
-		logger.Fatalf("Failed to register operator with EigenLayer on startup: %v", err.Error())
-	}
-
-	err = DepositIntoStrategyForOperator(
-		logger,
-		elcontractsConfig,
-		ethRpcClient,
-		c.StrategyAddrs,
-		txMgr,
-		c.OperatorAddr,
-		c.AmountToMint,
-	)
-	if err != nil {
-		logger.Fatalf("Failed to deposit into strategy for operator on startup: %v", err.Error())
-	}
-
-	blsKeyPassword, ok := os.LookupEnv("OPERATOR_BLS_KEY_PASSWORD")
-	if !ok {
-		logger.Warnf("OPERATOR_BLS_KEY_PASSWORD env var not set. using empty string")
-	}
-	blsKeyPair, err := bls.ReadPrivateKeyFromFile(c.BlsKeyStorePath, blsKeyPassword)
-	if err != nil {
-		logger.Errorf("Cannot parse bls private key", "err", err)
-		return err
-	}
-
-	err = RegisterForOperatorSets(
-		c.OperatorAddr,
-		logger,
-		elcontractsConfig,
-		ethRpcClient,
-		txMgr,
-		c.RegistryCoordinatorAddr,
-		c.AvsAddress,
-		c.OperatorSetIds,
-		*blsKeyPair,
-		"",
-	)
-	if err != nil {
-		logger.Fatalf("Failed to register operator for operator sets on startup: %v", err.Error())
-	}
-
-	err = SetAllocationDelay(
-		logger,
-		c.OperatorAddr,
-		ethRpcClient,
-		c.AllocationManagerAddr,
-		txMgr,
-		0,
-	)
-	if err != nil {
-		logger.Fatalf("Failed to set allocation delay: %v", err.Error())
-	}
-
-	err = modifyAllocations(
-		c.OperatorAddr,
-		c.AllocationManagerAddr,
-		c.AvsAddress,
-		c.StrategyAddrs,
-		c.AllocatableMagnitudes,
-		c.EthRpcUrl,
-		txMgr,
-		c.OperatorSetIds,
-		logger,
-	)
-	if err != nil {
-		logger.Fatalf("Failed to set modify allocations: %v", err.Error())
-	}
-
-	return nil
-}
-
-// The idea is to have a util function that just registers an operator for an operator set if the avs needs it
-func RegisterOperatorWithEigenlayer(
-	operatorAddr common.Address,
-	elcontractsConfig elcontracts.Config,
-	ethClient *ethclient.Client,
+// This function performs startup operations for the operator, including:
+//   - Register the operator in Eigenlayer (if it's not already registered)
+//   - Mint tokens for the operator in the received strategy (if it has not the required ammount)
+//   - Initialize allocations for the operator sets (if the registration config has defined the pameters needed)
+//   - Set the allocation delay as to the value received in config (if the allocation delay value is set)
+//   - Register the operator in the received operator sets (if it's not already registered to those operator sets)
+func handleRegistration(
 	logger logging.Logger,
-	txMgr txmgr.TxManager,
+	config *RegistrationConfig,
+	operatorAddr common.Address,
+	registryCoordinatorAddr common.Address,
+	ethHttpClient *ethclient.Client,
+	blsKeyPair *bls.KeyPair,
 ) error {
+	// Required:
+	// - DelegationManager (to check if operator is registered to EigenLayer)
+	// - AllocationManager (to get the allocated stake for an operator and check if the operator is registered to an operator set)
 
-	// Register operator with EigenLayer
-	op := types.Operator{
-		Address:                   operatorAddr.String(),
-		DelegationApproverAddress: operatorAddr.String(),
+	if config == nil {
+		// We bubble the error all the way up instead of using logger.Fatal because logger.Fatal prints a huge stack
+		// trace that hides the actual error message. This error msg is more explicit and doesn't require showing a
+		// stack trace to the user.
+		return fmt.Errorf(
+			"RegistrationConfig is nil, no startup changes required ",
+		)
 	}
 
-	elWriter, err := elcontracts.NewWriterFromConfig(elcontractsConfig, ethClient, logger, &metrics.EigenMetrics{}, txMgr)
+	// Registration set up
+	elcontractsConfig := elcontracts.Config{
+		DelegationManagerAddress: config.DelegationManagerAddress,
+	}
+
+	elReader, err := elcontracts.NewReaderFromConfig(elcontractsConfig, ethHttpClient, logger)
+	if err != nil {
+		logger.Error("Error creating EigenLayer chain reader", "err", err)
+		return err
+	}
+
+	var ecdsaPk *ecdsa.PrivateKey
+	if config.EcdsaSignerCfg.PrivateKey == "" {
+		logger.Info("ECDSA private key was nil, using the private key store path and password params...")
+		ecdsaKeystorePassword := ""
+
+		envPassword, ok := os.LookupEnv("OPERATOR_ECDSA_KEY_PASSWORD")
+		if !ok {
+			logger.Info("ECDSA keystore password was not set at env, reading value from config")
+			if config.EcdsaSignerCfg.KeystorePassword != nil {
+				ecdsaKeystorePassword = *config.EcdsaSignerCfg.KeystorePassword
+			} else {
+				logger.Warnf("ECDSA keystore password not found in config, using empty string")
+			}
+		} else {
+			ecdsaKeystorePassword = envPassword
+		}
+
+		ecdsaPk, err = sdkecdsa.ReadKey(
+			config.EcdsaSignerCfg.KeystorePath,
+			ecdsaKeystorePassword,
+		)
+		if err != nil {
+			return utils.WrapError("Failed to read the ECDSA private key from keystore", err)
+		}
+	} else {
+		operatorEcdsaPkString := strings.TrimPrefix(config.EcdsaSignerCfg.PrivateKey, "0x")
+
+		ecdsaPk, err = crypto.HexToECDSA(operatorEcdsaPkString)
+		if err != nil {
+			return utils.WrapError("Failed to convert hex key to ECDSA", err)
+		}
+	}
+
+	txMgr, err := txmgr.NewSimpleTxManagerFromPrivateKey(logger, ethHttpClient, ecdsaPk)
+	if err != nil {
+		logger.Errorf("Error creating tx managerfor registration: %v", err)
+		return err
+	}
+
+	elWriter, err := elcontracts.NewWriterFromConfig(elcontractsConfig, ethHttpClient, logger, &metrics.EigenMetrics{}, txMgr)
 	if err != nil {
 		logger.Error("Error creating eigenlayer chain writer", "err", err)
 		return err
 	}
 
-	_, err = elWriter.RegisterAsOperator(context.Background(), op, true)
+	// Register operator in EigenLayer
+	err = handleRegistrationWithEigenlayer(
+		logger,
+		elReader,
+		elWriter,
+		operatorAddr,
+		config.MetadataUrl,
+		config.AllocationDelay,
+	)
+	if err != nil {
+		logger.Fatalf("Failed to register operator with EigenLayer on startup: %v", err.Error())
+	}
+
+	// Extract operator sets and deposits from config
+	operatorSets := []allocationmanager.OperatorSet{}
+	allDeposits := []DepositConfig{}
+	for _, opSetConfig := range config.OperatorSetConfigs {
+		operatorSets = append(operatorSets, allocationmanager.OperatorSet{
+			Avs: config.AvsAddress,
+			Id:  opSetConfig.ID,
+		})
+		allDeposits = append(allDeposits, opSetConfig.Deposits...)
+	}
+
+	// Deposit tokens into strategies for the operator
+	err = handleDepositTokenAmount(
+		txMgr,
+		logger,
+		ethHttpClient,
+		elReader,
+		elWriter,
+		operatorAddr,
+		allDeposits,
+	)
+	if err != nil {
+		logger.Fatalf("Failed to deposit tokens into strategies on startup: %v", err.Error())
+	}
+
+	// Handle allocated stake for operator
+	err = handleAllocatedStake(
+		logger,
+		elReader,
+		elWriter,
+		operatorAddr,
+		config,
+	)
+	if err != nil {
+		logger.Fatalf("Failed to allocate stake on startup: %v", err.Error())
+	}
+
+	err = handleAllocationDelay(
+		logger,
+		elReader,
+		elWriter,
+		operatorAddr,
+	)
+	if err != nil {
+		logger.Fatalf("Failed to set allocation delay on startup: %v", err.Error())
+	}
+
+	err = handleRegistrationToOperatorSets(
+		logger,
+		elWriter,
+		elReader,
+		operatorAddr,
+		registryCoordinatorAddr,
+		*blsKeyPair,
+		operatorSets,
+		config.Socket,
+	)
+	if err != nil {
+		logger.Fatalf("Failed to register to operetorSets on startup: %v", err.Error())
+	}
+
+	return nil
+}
+
+// Register operator in EigenLayer
+// Check if operator was registered, if its not registered, try to register it
+// If the operator is registered, skip the registration
+func handleRegistrationWithEigenlayer(
+	logger logging.Logger,
+	elReader *elcontracts.ChainReader,
+	elWriter *elcontracts.ChainWriter,
+	operatorAddr common.Address,
+	metadataUrl string,
+	allocationDelay uint32,
+) error {
+	operatorIsRegistered, err := elReader.IsOperatorRegistered(
+		context.Background(),
+		types.Operator{Address: operatorAddr.Hex()},
+	)
+	if err != nil {
+		logger.Error("Error checking if operator is registered", "err", err)
+		return err
+	}
+	if !operatorIsRegistered {
+		err = registerOperatorWithEigenlayer(
+			logger,
+			elWriter,
+			operatorAddr,
+			metadataUrl,
+			allocationDelay,
+		)
+		if err != nil {
+			logger.Fatalf("Failed to register operator with EigenLayer on startup: %v", err.Error())
+		}
+	} else {
+		logger.Info("Operator already registered to EigenLayer, skipped EL regisration")
+	}
+
+	return nil
+}
+
+// This function registers the operator with Eigenlayer.
+func registerOperatorWithEigenlayer(
+	logger logging.Logger,
+	elWriter *elcontracts.ChainWriter,
+	operatorAddr common.Address,
+	metadataUrl string,
+	allocationDelay uint32,
+) error {
+	op := types.Operator{
+		Address:                   operatorAddr.String(),
+		DelegationApproverAddress: operatorAddr.String(),
+		MetadataUrl:               metadataUrl,
+		AllocationDelay:           allocationDelay,
+	}
+
+	_, err := elWriter.RegisterAsOperator(context.Background(), op, true)
 	if err != nil {
 		logger.Error("Error registering operator with eigenlayer", "err", err)
 		return err
@@ -185,23 +249,207 @@ func RegisterOperatorWithEigenlayer(
 	return nil
 }
 
-func RegisterForOperatorSets(
-	operatorAddr common.Address,
-	logger logging.Logger,
-	elcontractsConfig elcontracts.Config,
-	ethClient *ethclient.Client,
+// Handles token deposits into EigenLayer strategies.
+// This function ensures that the operator has deposited the required amounts of tokens
+// into each specified strategy. If the operator has already deposited the required amount,
+// skip the deposit. If not, deposit the difference between the required amount and the deposited amount.
+func handleDepositTokenAmount(
 	txMgr txmgr.TxManager,
+	logger logging.Logger,
+	ethClient *ethclient.Client,
+	elReader *elcontracts.ChainReader,
+	elWriter *elcontracts.ChainWriter,
+	operatorAddr common.Address,
+	depositConfig []DepositConfig,
+) error {
+
+	if len(depositConfig) == 0 {
+		logger.Info("No deposits to make, skipping deposit token amount")
+		return nil
+	}
+
+	// For each deposit, we get the operator shares in the strategy and check if the operator has deposited the required amount
+	for _, deposit := range depositConfig {
+		depositAmount, err := elReader.GetOperatorSharesInStrategy(context.Background(), operatorAddr, deposit.StrategyAddrs)
+		if err != nil {
+			logger.Errorf("Error getting operator shares in strategy: %x. Error: %v", deposit.StrategyAddrs, err)
+			return err
+		}
+		logger.Infof("Operator has %v shares in strategy %x", depositAmount, deposit.StrategyAddrs)
+
+		// If the operator has less shares than the amount to mint, we need to deposit the difference
+		if depositAmount.Cmp(deposit.AmountToMint) == -1 {
+			amountToDeposit := big.NewInt(0).Sub(deposit.AmountToMint, depositAmount)
+			logger.Infof("Expected deposit amount: %v. Difference between expected and deposited amount: %v", deposit.AmountToMint, amountToDeposit)
+			logger.Infof("Depositing %v tokens into strategy %x", amountToDeposit, deposit.StrategyAddrs)
+
+			_, tokenAddr, err := elReader.GetStrategyAndUnderlyingToken(context.Background(), deposit.StrategyAddrs)
+			if err != nil {
+				logger.Error("Failed to fetch strategy contract", "err", err)
+				return err
+			}
+			logger.Infof("Token address: %x", tokenAddr)
+
+			contractErc20Mock, err := erc20mock.NewContractMockERC20(tokenAddr, ethClient)
+			if err != nil {
+				logger.Error("Failed to fetch ERC20Mock contract", "err", err)
+				return err
+			}
+			txOpts, err := txMgr.GetNoSendTxOpts()
+			if err != nil {
+				logger.Errorf("Error in GetNoSendTxOpts")
+				return err
+			}
+
+			tx, err := contractErc20Mock.Mint(txOpts, operatorAddr, deposit.AmountToMint)
+			if err != nil {
+				logger.Errorf("Error assembling Mint tx")
+				return err
+			}
+			_, err = txMgr.Send(context.Background(), tx, true)
+			if err != nil {
+				logger.Errorf("Error submitting Mint tx")
+				return err
+			}
+
+			// Deposit the tokens into the strategy
+			_, err = elWriter.DepositERC20IntoStrategy(context.Background(), deposit.StrategyAddrs, deposit.AmountToMint, true)
+			if err != nil {
+				logger.Errorf("Error depositing into strategy: %s. Error: %v", deposit.StrategyAddrs.String(), err)
+				return err
+			}
+
+		} else {
+			logger.Infof("Operator has enough shares in strategy %x, skipping deposit", deposit.StrategyAddrs)
+		}
+	}
+
+	return nil
+}
+
+// Handles the allocated stake for the operator.
+// This function ensures that the operator has the desired allocation in each strategy.
+// If the operator has less allocation than the desired allocation, it will modify the allocations.
+// In other case, it will skip the allocation modification.
+func handleAllocatedStake(
+	logger logging.Logger,
+	elReader *elcontracts.ChainReader,
+	elWriter *elcontracts.ChainWriter,
+	operatorAddr common.Address,
+	config *RegistrationConfig,
+) error {
+
+	if len(config.OperatorSetConfigs) == 0 {
+		logger.Info("No operator set configs to handle, skipping allocated stake")
+		return nil
+	}
+
+	allocateParams := []allocationmanager.IAllocationManagerTypesAllocateParams{}
+
+	// For each operator set config, we get the allocated stake for the operator and the desired allocation
+	for _, opSetConfig := range config.OperatorSetConfigs {
+		operatorSet := allocationmanager.OperatorSet{
+			Avs: config.AvsAddress,
+			Id:  opSetConfig.ID,
+		}
+
+		// Strategies and expected magnitudes to batch the calls to the chain
+		strategies := make([]common.Address, len(opSetConfig.Deposits))
+
+		for i, deposit := range opSetConfig.Deposits {
+			strategies[i] = deposit.StrategyAddrs
+		}
+
+		// Get the allocated stake for the strategies in the operator set
+		allocated, err := elReader.GetAllocatedStake(context.Background(), operatorSet, []common.Address{operatorAddr}, strategies)
+		if err != nil {
+			logger.Errorf("Error getting allocated stake for operator set %v: %v", operatorSet.Id, err)
+			return err
+		}
+
+		// Collect strategies and magnitudes that need updates
+		strategiesToAllocate := []common.Address{}
+		magnitudesToAllocate := []uint64{}
+
+		// Check if the allocated stake is less than the desired allocation for each strategy
+		// If it is, we add the strategy and magnitude to the allocateParams
+		for i, deposit := range opSetConfig.Deposits {
+			currentAllocatedStake := allocated[0][i]
+			allocateMagnitude := big.NewInt(int64(deposit.AllocatableMagnitudes))
+
+			logger.Infof(
+				"Current allocated stake: %v, desired: %v for strategy %x in operator set %v",
+				currentAllocatedStake, allocateMagnitude, deposit.StrategyAddrs, operatorSet.Id,
+			)
+
+			if currentAllocatedStake.Cmp(allocateMagnitude) == -1 {
+				strategiesToAllocate = append(strategiesToAllocate, deposit.StrategyAddrs)
+				magnitudesToAllocate = append(magnitudesToAllocate, deposit.AllocatableMagnitudes)
+			}
+		}
+
+		if len(strategiesToAllocate) > 0 {
+			allocateParams = append(allocateParams, allocationmanager.IAllocationManagerTypesAllocateParams{
+				OperatorSet:   operatorSet,
+				Strategies:    strategiesToAllocate,
+				NewMagnitudes: magnitudesToAllocate,
+			})
+		}
+	}
+
+	// Execute batch allocation changes if any are needed
+	if len(allocateParams) > 0 {
+		logger.Infof("Modifying %v allocations", len(allocateParams))
+		_, err := elWriter.ModifyAllocations(context.Background(), operatorAddr, allocateParams, true)
+		if err != nil {
+			logger.Errorf("Error modifying the allocations")
+			return err
+		}
+	} else {
+		logger.Info("All allocations are correct")
+	}
+
+	return nil
+}
+
+func handleAllocationDelay(
+	logger logging.Logger,
+	elReader *elcontracts.ChainReader,
+	elWriter *elcontracts.ChainWriter,
+	operatorAddr common.Address,
+) error {
+	allocationDelay, err := elReader.GetAllocationDelay(context.Background(), operatorAddr)
+	if err != nil {
+		logger.Errorf("Error getting allocation delay: %v", err)
+		return err
+	}
+
+	if allocationDelay != 0 {
+		logger.Infof("Allocation delay is %v, skipping allocation delay modification", allocationDelay)
+		return nil
+	}
+
+	_, err = elWriter.SetAllocationDelay(context.Background(), operatorAddr, allocationDelay, true)
+	if err != nil {
+		logger.Errorf("Error setting allocation delay: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+// This function registers the operator in the operator sets received as parameter. To do this needs the
+// allocationManager address in the elcontracts config and the registryCoordinator address.
+func registerForOperatorSets(
+	logger logging.Logger,
+	operatorAddr common.Address,
+	elWriter *elcontracts.ChainWriter,
 	registryCoordinatorAddr common.Address,
 	avsAddress common.Address,
 	operatorSetsIds []uint32,
 	blsKeyPair bls.KeyPair,
 	socket string,
 ) error {
-	elWriter, err := elcontracts.NewWriterFromConfig(elcontractsConfig, ethClient, logger, &metrics.EigenMetrics{}, txMgr)
-	if err != nil {
-		logger.Error("Error creating eigenlayer chain writer", "err", err)
-		return err
-	}
 	// Register operator for operator sets
 	registrationRequest := elcontracts.RegistrationRequest{
 		OperatorAddress: operatorAddr,
@@ -212,7 +460,7 @@ func RegisterForOperatorSets(
 		Socket:          socket,
 	}
 
-	_, err = elWriter.RegisterForOperatorSets(
+	_, err := elWriter.RegisterForOperatorSets(
 		context.Background(),
 		registryCoordinatorAddr,
 		registrationRequest,
@@ -227,141 +475,59 @@ func RegisterForOperatorSets(
 	return nil
 }
 
-func SetAllocationDelay(
+func handleRegistrationToOperatorSets(
 	logger logging.Logger,
+	elWriter *elcontracts.ChainWriter,
+	elReader *elcontracts.ChainReader,
 	operatorAddr common.Address,
-	ethClient *ethclient.Client,
-	allocationManagerAddr common.Address,
-	txMgr txmgr.TxManager,
-	delay uint32,
+	registryCoordinatorAddr common.Address,
+	blsKeyPair bls.KeyPair,
+	operatorSets []allocationmanager.OperatorSet,
+	socket string,
 ) error {
-	txOpts, _ := txMgr.GetNoSendTxOpts()
-
-	waitForReceipt := true
-	allocationManagerContract, _ := allocationmanager.NewContractAllocationManager(allocationManagerAddr, ethClient)
-
-	tx, err := allocationManagerContract.SetAllocationDelay(txOpts, operatorAddr, delay)
-	if err != nil {
-		return err
-	}
-	receipt, err := txMgr.Send(context.Background(), tx, waitForReceipt)
-	if err != nil {
-		return utils.WrapError("failed to send setAllocationDelay tx with err", err)
-	}
-	logger.Info(
-		"tx successfully included for SetAllocationDelay  ",
-		"txHash",
-		receipt.TxHash.String(),
-	)
-
-	return nil
-}
-
-func DepositIntoStrategyForOperator(
-	logger logging.Logger,
-	elcontractsConfig elcontracts.Config,
-	ethClient *ethclient.Client,
-	strategyAddrs []common.Address,
-	txMgr txmgr.TxManager,
-	operatorAddr common.Address,
-	amount *big.Int,
-) error {
-	elReader, err := elcontracts.NewReaderFromConfig(elcontractsConfig, ethClient, logger)
-	if err != nil {
-		logger.Error("Error creating eigenlayer chain writer", "err", err)
-		return err
+	if len(operatorSets) == 0 {
+		logger.Info("No operator sets to register, skipping registration to operator sets")
+		return nil
 	}
 
-	elWriter, err := elcontracts.NewWriterFromConfig(
-		elcontractsConfig,
-		ethClient,
-		logger,
-		&metrics.EigenMetrics{},
-		txMgr,
-	)
-	if err != nil {
-		logger.Error("Error creating eigenlayer chain writer", "err", err)
-		return err
-	}
+	operatorSetsByAvs := map[common.Address][]uint32{}
 
-	for _, strategyAddr := range strategyAddrs {
-		_, tokenAddr, err := elReader.GetStrategyAndUnderlyingToken(context.Background(), strategyAddr)
+	for _, operatorSet := range operatorSets {
+		isOperatorRegisteredToQuorum, err := elReader.IsOperatorRegisteredWithOperatorSet(
+			context.Background(),
+			operatorAddr,
+			allocationmanager.OperatorSet{
+				Avs: operatorSet.Avs,
+				Id:  operatorSet.Id,
+			},
+		)
 		if err != nil {
-			logger.Error("Failed to fetch strategy contract", "err", err)
-			return err
-		}
-		logger.Info(tokenAddr.String())
-
-		contractErc20Mock, err := erc20mock.NewContractMockERC20(tokenAddr, ethClient)
-		if err != nil {
-			logger.Error("Failed to fetch ERC20Mock contract", "err", err)
-			return err
-		}
-		txOpts, err := txMgr.GetNoSendTxOpts()
-		if err != nil {
-			logger.Errorf("Error in GetNoSendTxOpts")
-			return err
+			logger.Fatalf("Failed to check if operator is registered to quorum at registration: %v", err.Error())
 		}
 
-		tx, err := contractErc20Mock.Mint(txOpts, operatorAddr, amount)
-		if err != nil {
-			logger.Errorf("Error assembling Mint tx")
-			return err
-		}
-		_, err = txMgr.Send(context.Background(), tx, true)
-		if err != nil {
-			logger.Errorf("Error submitting Mint tx")
-			return err
-		}
-
-		_, err = elWriter.DepositERC20IntoStrategy(context.Background(), strategyAddr, amount, true)
-		if err != nil {
-			logger.Errorf("Error depositing into strategy", "err", err)
-			return err
+		if !isOperatorRegisteredToQuorum {
+			logger.Infof("Operator set %x: %v ID requires registration", operatorSet.Avs, operatorSet.Id)
+			operatorSetsByAvs[operatorSet.Avs] = append(operatorSetsByAvs[operatorSet.Avs], operatorSet.Id)
+		} else {
+			logger.Infof("Operator set %x: %v already registered", operatorSet.Avs, operatorSet.Id)
 		}
 	}
 
-	return nil
-}
-
-func modifyAllocations(
-	operatorAddr common.Address,
-	allocationManagerAddr common.Address,
-	avsAddress common.Address,
-	strategies []common.Address,
-	newMagnitudes []uint64,
-	httpUrl string,
-	txMgr txmgr.TxManager,
-	operatorSetsIds []uint32,
-	logger logging.Logger,
-) error {
-	txOpts, _ := txMgr.GetNoSendTxOpts()
-
-	ethRpcClient, _ := ethclient.Dial(httpUrl)
-	waitForReceipt := true
-	allocationManagerContract, _ := allocationmanager.NewContractAllocationManager(allocationManagerAddr, ethRpcClient)
-
-	allocations := []allocationmanager.IAllocationManagerTypesAllocateParams{}
-	for _, setId := range operatorSetsIds {
-		operatorSet := allocationmanager.OperatorSet{Avs: avsAddress, Id: setId}
-		newAllocation := allocationmanager.IAllocationManagerTypesAllocateParams{
-			OperatorSet:   operatorSet,
-			Strategies:    strategies,
-			NewMagnitudes: newMagnitudes,
+	for avsAddress, operatorSetIds := range operatorSetsByAvs {
+		err := registerForOperatorSets(
+			logger,
+			operatorAddr,
+			elWriter,
+			registryCoordinatorAddr,
+			avsAddress,
+			operatorSetIds,
+			blsKeyPair,
+			socket,
+		)
+		if err != nil {
+			logger.Fatalf("Failed to register operator for operator sets on startup: %v", err.Error())
 		}
-		allocations = append(allocations, newAllocation)
 	}
-
-	tx, err := allocationManagerContract.ModifyAllocations(txOpts, operatorAddr, allocations)
-	if err != nil {
-		return err
-	}
-	receipt, err := txMgr.Send(context.Background(), tx, waitForReceipt)
-	if err != nil {
-		return utils.WrapError("failed to send modifyAllocations tx with err", err)
-	}
-	logger.Infof("tx successfully included for modifyAllocations. txHash: %v", receipt.TxHash.String())
-
 	return nil
 }
 
