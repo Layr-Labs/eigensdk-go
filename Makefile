@@ -14,7 +14,7 @@ help:
 
 .PHONY: mocks
 mocks: ## generates mocks
-	go install go.uber.org/mock/mockgen@v0.4.0
+	go install go.uber.org/mock/mockgen@v0.5.2
 	go generate ./...
 
 .PHONY: tests

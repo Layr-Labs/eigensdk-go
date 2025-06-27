@@ -59,7 +59,7 @@ func TestIntegrationRewards(t *testing.T) {
 	calculationInterval, err := clients.EigenlayerContractBindings.RewardsCoordinator.CALCULATIONINTERVALSECONDS(nil)
 	require.NoError(t, err)
 
-	header, err := clients.EthHttpClient.HeaderByNumber(context.TODO(), nil)
+	header, err := clients.EthHttpClient.HeaderByNumber(context.Background(), nil)
 	require.NoError(t, err)
 
 	// These values are set to align with the contract's requirements for the `OperatorDirectedRewardsSubmission`.
