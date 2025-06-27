@@ -2,13 +2,12 @@ package aggregator
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math/big"
-	"sync"
-	"time"
 
+	taskprocessor "github.com/Layr-Labs/eigensdk-go/aggregator/task-processor"
 	"github.com/Layr-Labs/eigensdk-go/logging"
+	taskmanager "github.com/Layr-Labs/eigensdk-go/task-manager"
 	sdktypes "github.com/Layr-Labs/eigensdk-go/types"
 	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum"
@@ -23,36 +22,26 @@ import (
 	oprsinfoserv "github.com/Layr-Labs/eigensdk-go/services/operatorsinfo"
 )
 
-const (
-	// number of blocks after which a task is considered expired this hardcoded here because it's also
-	//  hardcoded in the contracts, but should ideally be fetched from the contracts
-	taskChallengeWindowBlock = 100
-	blockTimeSeconds         = 12 * time.Second
-)
-
-type TaskProcessor[Input any] interface {
-	ProcessAggregatedResponse(ctx context.Context, response blsagg.BlsAggregationServiceResponse, task sdktypes.GenericInputTask[Input]) error
-}
-
 type Aggregator[Input any, Output any] struct {
 	logger           logging.Logger
 	serverIpPortAddr string
 
 	// aggregation related fields
 	blsAggregationService blsagg.BlsAggregationService
-	taskProcessor         TaskProcessor[Input]
-	newTaskCreatedLogs    chan types.Log
-
-	tasks   map[sdktypes.TaskIndex]sdktypes.GenericInputTask[Input]
-	tasksMu sync.RWMutex
+	//taskProcessor         TaskProcessor[Input]
+	newTaskCreatedLogs chan types.Log
 
 	taskManagerAbi *abi.ABI
+
+	taskProcessor taskprocessor.TaskProcessor[Input, Output]
 }
 
 // NewAggregator creates a new Aggregator with the provided config.
 func NewAggregator[Input any, Output any](
-	c AggregatorConfig,
-	taskProcessor TaskProcessor[Input],
+	c Config,
+	logger logging.Logger,
+	taskProcessor taskprocessor.TaskProcessor[Input, Output],
+	taskManagerAbi *abi.ABI,
 ) (*Aggregator[Input, Output], error) {
 	chainioConfig := sdkclients.BuildAllConfig{
 		EthHttpUrl:                 c.EthHttpUrl,
@@ -64,9 +53,9 @@ func NewAggregator[Input any, Output any](
 		DontUseAllocationManager:   true,
 	}
 
-	clients, err := sdkclients.BuildAll(chainioConfig, c.EcdsaPrivateKey, c.Logger)
+	clients, err := sdkclients.BuildAll(chainioConfig, c.EcdsaPrivateKey, logger)
 	if err != nil {
-		c.Logger.Errorf("Cannot create sdk clients", "err", err)
+		logger.Errorf("Cannot create sdk clients. Err: %w", err)
 		return nil, err
 	}
 
@@ -76,22 +65,27 @@ func NewAggregator[Input any, Output any](
 		clients.AvsRegistryChainReader,
 		nil,
 		oprsinfoserv.Opts{},
-		c.Logger,
+		logger,
 	)
 
-	if c.TaskResponseHashFn == nil {
-		return nil, errors.New("task response hash function not provided in aggregator config")
+	taskResponseHashFn := func(response any) (sdktypes.TaskResponseDigest, error) {
+		taskResponse, ok := response.(taskmanager.TaskResponse[Output])
+		if !ok {
+			logger.Error("task Response could not be converted to sdk aggregator's Task Response type")
+		}
+
+		return taskProcessor.ProcessTaskResponse(taskResponse)
 	}
 
-	avsRegistryService := avsregistryservice.NewAvsRegistryServiceChainCaller(clients.AvsRegistryChainReader, operatorPubkeysService, c.Logger)
-	blsAggregationService := blsagg.NewBlsAggregatorService(avsRegistryService, c.TaskResponseHashFn, c.Logger)
+	avsRegistryService := avsregistryservice.NewAvsRegistryServiceChainCaller(clients.AvsRegistryChainReader, operatorPubkeysService, logger)
+	blsAggregationService := blsagg.NewBlsAggregatorService(avsRegistryService, taskResponseHashFn, logger)
 
 	client, err := ethclient.Dial(c.EthWsUrl)
 	if err != nil {
-		c.Logger.Fatal("error connecting to web socket", "err", err)
+		logger.Fatal("error connecting to web socket", "err", err)
 	}
 
-	newTaskCreatedEventHash := c.TaskManagerAbi.Events["NewTaskCreated"].ID
+	newTaskCreatedEventHash := taskManagerAbi.Events["NewTaskCreated"].ID
 	query := ethereum.FilterQuery{
 		Addresses: []common.Address{},
 		Topics:    [][]common.Hash{{newTaskCreatedEventHash}},
@@ -100,17 +94,16 @@ func NewAggregator[Input any, Output any](
 	newTaskCreatedLogs := make(chan types.Log)
 	_, err = client.SubscribeFilterLogs(context.Background(), query, newTaskCreatedLogs)
 	if err != nil {
-		c.Logger.Fatal("error subscribing to newTaskCreated events", "err", err)
+		logger.Fatal("error subscribing to newTaskCreated events", "err", err)
 	}
 
 	return &Aggregator[Input, Output]{
-		logger:                c.Logger,
+		logger:                logger,
 		serverIpPortAddr:      c.AggregatorServerIpPortAddr,
 		blsAggregationService: blsAggregationService,
-		taskProcessor:         taskProcessor,
 		newTaskCreatedLogs:    newTaskCreatedLogs,
-		tasks:                 make(map[sdktypes.TaskIndex]sdktypes.GenericInputTask[Input]),
-		taskManagerAbi:        c.TaskManagerAbi,
+		taskManagerAbi:        taskManagerAbi,
+		taskProcessor:         taskProcessor,
 	}, nil
 }
 
@@ -125,12 +118,13 @@ func (agg *Aggregator[Input, Output]) Start(ctx context.Context) error {
 			return nil
 		case blsAggServiceResp := <-agg.blsAggregationService.GetResponseChannel():
 			agg.logger.Info("Received response from blsAggregationService", "blsAggServiceResp", blsAggServiceResp)
-			err := agg.processAggregatedResponse(context.Background(), blsAggServiceResp)
+			err := agg.processAggregatedResponse(blsAggServiceResp)
 			if err != nil {
+				agg.logger.Errorf("Failed to process aggregated response: %w", err)
 				continue
 			}
 		case log := <-agg.newTaskCreatedLogs:
-			metadata, err := agg.processNewTask(context.Background(), log)
+			metadata, err := agg.processNewTask(log)
 			if err != nil {
 				agg.logger.Fatal("Error processing the task", "err", err)
 			}
@@ -141,8 +135,8 @@ func (agg *Aggregator[Input, Output]) Start(ctx context.Context) error {
 	}
 }
 
-func (agg *Aggregator[Input, Output]) processNewTask(ctx context.Context, log types.Log) (blsagg.TaskMetadata, error) {
-	var newTaskCreatedLog sdktypes.NewTaskCreatedEvent[Input]
+func (agg *Aggregator[Input, Output]) processNewTask(log types.Log) (blsagg.TaskMetadata, error) {
+	var newTaskCreatedLog taskmanager.NewTaskCreatedEvent[Input]
 
 	err := agg.taskManagerAbi.UnpackIntoInterface(&newTaskCreatedLog, "NewTaskCreated", log.Data)
 	if err != nil {
@@ -155,46 +149,23 @@ func (agg *Aggregator[Input, Output]) processNewTask(ctx context.Context, log ty
 	agg.logger.Infof("Aggregator received new task: %v: ", newTaskCreatedLog)
 
 	newTask := newTaskCreatedLog.Task
-	agg.tasksMu.Lock()
-	agg.tasks[newTaskIndex] = newTask
-	agg.tasksMu.Unlock()
 
-	quorumThresholdPercentages := make(sdktypes.QuorumThresholdPercentages, len(newTask.QuorumNumbers))
-	for i := range newTask.QuorumNumbers {
-		quorumThresholdPercentages[i] = sdktypes.QuorumThresholdPercentage(newTask.QuorumThresholdPercentage)
+	metadata, err := agg.taskProcessor.ProcessNewTask(newTaskIndex, newTask)
+	if err != nil {
+		return blsagg.TaskMetadata{}, err
 	}
-	// TODO(samlaf): we use seconds for now, but we should ideally pass a blocknumber to the blsAggregationService
-	// and it should monitor the chain and only expire the task aggregation once the chain has reached that block
-	// number.
-	taskTimeToExpiry := taskChallengeWindowBlock * blockTimeSeconds
-	var quorumNums sdktypes.QuorumNums
-	for _, quorumNum := range newTask.QuorumNumbers {
-		quorumNums = append(quorumNums, sdktypes.QuorumNum(quorumNum))
-	}
-	metadata := blsagg.NewTaskMetadata(
-		newTaskIndex,
-		newTask.TaskCreatedBlock,
-		quorumNums,
-		quorumThresholdPercentages,
-		taskTimeToExpiry,
-	)
 
 	return metadata, nil
 }
 
 func (agg *Aggregator[Input, Output]) processAggregatedResponse(
-	ctx context.Context,
 	response blsagg.BlsAggregationServiceResponse,
 ) error {
 	if response.Err != nil {
 		return utils.WrapError("BlsAggregationServiceResponse contains an error", response.Err)
 	}
 
-	agg.tasksMu.RLock()
-	task := agg.tasks[response.TaskIndex]
-	agg.tasksMu.RUnlock()
-
-	err := agg.taskProcessor.ProcessAggregatedResponse(ctx, response, task)
+	err := agg.taskProcessor.ProcessAggregatedResponse(response)
 	if err != nil {
 		return utils.WrapError("Aggregator failed to respond to task", err)
 	}
