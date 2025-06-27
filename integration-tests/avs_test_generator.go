@@ -241,9 +241,12 @@ func createAvsOperator[Input any, Output any](
 
 		EcdsaSignerCfg: ecdsaCfg,
 
-		DepositConfig: []operator.DepositConfig{depositConfig},
-
-		OperatorSetIds: []uint32{config.OperatorSetId},
+		OperatorSetConfigs: []operator.OperatorSetConfig{
+			{
+				ID:       config.OperatorSetId,
+				Deposits: []operator.DepositConfig{depositConfig},
+			},
+		},
 
 		MetadataUrl:     config.MetadataUrl,
 		Socket:          config.Socket,
