@@ -13,6 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	wallet "github.com/Layr-Labs/eigensdk-go/chainio/clients/wallet"
 	common "github.com/ethereum/go-ethereum/common"
 	types "github.com/ethereum/go-ethereum/core/types"
 	gomock "go.uber.org/mock/gomock"
@@ -22,6 +23,7 @@ import (
 type MockWallet struct {
 	ctrl     *gomock.Controller
 	recorder *MockWalletMockRecorder
+	isgomock struct{}
 }
 
 // MockWalletMockRecorder is the mock recorder for MockWallet.
@@ -42,46 +44,46 @@ func (m *MockWallet) EXPECT() *MockWalletMockRecorder {
 }
 
 // GetTransactionReceipt mocks base method.
-func (m *MockWallet) GetTransactionReceipt(arg0 context.Context, arg1 string) (*types.Receipt, error) {
+func (m *MockWallet) GetTransactionReceipt(ctx context.Context, txID wallet.TxID) (*types.Receipt, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetTransactionReceipt", arg0, arg1)
+	ret := m.ctrl.Call(m, "GetTransactionReceipt", ctx, txID)
 	ret0, _ := ret[0].(*types.Receipt)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetTransactionReceipt indicates an expected call of GetTransactionReceipt.
-func (mr *MockWalletMockRecorder) GetTransactionReceipt(arg0, arg1 any) *gomock.Call {
+func (mr *MockWalletMockRecorder) GetTransactionReceipt(ctx, txID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransactionReceipt", reflect.TypeOf((*MockWallet)(nil).GetTransactionReceipt), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransactionReceipt", reflect.TypeOf((*MockWallet)(nil).GetTransactionReceipt), ctx, txID)
 }
 
 // SendTransaction mocks base method.
-func (m *MockWallet) SendTransaction(arg0 context.Context, arg1 *types.Transaction) (string, error) {
+func (m *MockWallet) SendTransaction(ctx context.Context, tx *types.Transaction) (wallet.TxID, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SendTransaction", arg0, arg1)
-	ret0, _ := ret[0].(string)
+	ret := m.ctrl.Call(m, "SendTransaction", ctx, tx)
+	ret0, _ := ret[0].(wallet.TxID)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // SendTransaction indicates an expected call of SendTransaction.
-func (mr *MockWalletMockRecorder) SendTransaction(arg0, arg1 any) *gomock.Call {
+func (mr *MockWalletMockRecorder) SendTransaction(ctx, tx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendTransaction", reflect.TypeOf((*MockWallet)(nil).SendTransaction), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendTransaction", reflect.TypeOf((*MockWallet)(nil).SendTransaction), ctx, tx)
 }
 
 // SenderAddress mocks base method.
-func (m *MockWallet) SenderAddress(arg0 context.Context) (common.Address, error) {
+func (m *MockWallet) SenderAddress(ctx context.Context) (common.Address, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SenderAddress", arg0)
+	ret := m.ctrl.Call(m, "SenderAddress", ctx)
 	ret0, _ := ret[0].(common.Address)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // SenderAddress indicates an expected call of SenderAddress.
-func (mr *MockWalletMockRecorder) SenderAddress(arg0 any) *gomock.Call {
+func (mr *MockWalletMockRecorder) SenderAddress(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SenderAddress", reflect.TypeOf((*MockWallet)(nil).SenderAddress), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SenderAddress", reflect.TypeOf((*MockWallet)(nil).SenderAddress), ctx)
 }
