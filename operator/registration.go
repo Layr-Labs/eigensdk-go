@@ -410,7 +410,7 @@ func handleAllocationDelay(
 ) error {
 	allocationDelay, err := elReader.GetAllocationDelay(context.Background(), operatorAddr)
 	if err != nil {
-		logger.Errorf("Error getting allocation delay")
+		logger.Errorf("Error getting allocation delay: %v", err)
 		return err
 	}
 
@@ -421,7 +421,7 @@ func handleAllocationDelay(
 
 	_, err = elWriter.SetAllocationDelay(context.Background(), operatorAddr, allocationDelay, true)
 	if err != nil {
-		logger.Errorf("Error setting allocation delay")
+		logger.Errorf("Error setting allocation delay: %v", err)
 		return err
 	}
 
