@@ -31,9 +31,9 @@ import (
 // This function performs startup operations for the operator, including:
 //   - Register the operator in Eigenlayer (if it's not already registered)
 //   - Mint tokens for the operator in the received strategy (if it has not the required ammount)
-//   - Register the operator in the received operator sets (if it's not already registered to those operator sets)
-//   - Set the allocation delay as to the value received in config (if the allocation delay value is set)
 //   - Initialize allocations for the operator sets (if the registration config has defined the pameters needed)
+//   - Set the allocation delay as to the value received in config (if the allocation delay value is set)
+//   - Register the operator in the received operator sets (if it's not already registered to those operator sets)
 func handleRegistration(
 	logger logging.Logger,
 	config *RegistrationConfig,
@@ -189,8 +189,8 @@ func handleRegistration(
 }
 
 // Register operator in EigenLayer
-// Check if operator was registered, if its not registered and register on startup flag is not set, then will fail.
-// If its not registered and should be registered on startup, make the registration.
+// Check if operator was registered, if its not registered, try to register it
+// If the operator is registered, skip the registration
 func handleRegistrationWithEigenlayer(
 	logger logging.Logger,
 	elReader *elcontracts.ChainReader,
@@ -201,7 +201,7 @@ func handleRegistrationWithEigenlayer(
 ) error {
 	operatorIsRegistered, err := elReader.IsOperatorRegistered(
 		context.Background(),
-		types.Operator{Address: operatorAddr.Hex()}, // TODO: We are turning this into string to
+		types.Operator{Address: operatorAddr.Hex()},
 	)
 	if err != nil {
 		logger.Error("Error checking if operator is registered", "err", err)
@@ -225,8 +225,7 @@ func handleRegistrationWithEigenlayer(
 	return nil
 }
 
-// This function registers the operator with Eigenlayer. To do this needs the delegationManager
-// address in the elcontracts config
+// This function registers the operator with Eigenlayer.
 func registerOperatorWithEigenlayer(
 	logger logging.Logger,
 	elWriter *elcontracts.ChainWriter,
@@ -263,6 +262,7 @@ func handleDepositTokenAmount(
 	operatorAddr common.Address,
 	depositConfig []DepositConfig,
 ) error {
+	// For each deposit, we get the operator shares in the strategy and check if the operator has deposited the required amount
 	for _, deposit := range depositConfig {
 		depositAmount, err := elReader.GetOperatorSharesInStrategy(context.Background(), operatorAddr, deposit.StrategyAddrs)
 		if err != nil {
@@ -308,6 +308,7 @@ func handleDepositTokenAmount(
 				return err
 			}
 
+			// Deposit the tokens into the strategy
 			_, err = elWriter.DepositERC20IntoStrategy(context.Background(), deposit.StrategyAddrs, deposit.AmountToMint, true)
 			if err != nil {
 				logger.Errorf("Error depositing into strategy: %s. Error: %v", deposit.StrategyAddrs.String(), err)
@@ -322,6 +323,10 @@ func handleDepositTokenAmount(
 	return nil
 }
 
+// Handles the allocated stake for the operator.
+// This function ensures that the operator has the desired allocation in each strategy.
+// If the operator has less allocation than the desired allocation, it will modify the allocations.
+// In other case, it will skip the allocation modification.
 func handleAllocatedStake(
 	logger logging.Logger,
 	elReader *elcontracts.ChainReader,
@@ -331,33 +336,58 @@ func handleAllocatedStake(
 ) error {
 	allocateParams := []allocationmanager.IAllocationManagerTypesAllocateParams{}
 
+	// For each operator set config, we get the allocated stake for the operator and the desired allocation
 	for _, opSetConfig := range config.OperatorSetConfigs {
 		operatorSet := allocationmanager.OperatorSet{
 			Avs: config.AvsAddress,
 			Id:  opSetConfig.ID,
 		}
 
-		for _, deposit := range opSetConfig.Deposits {
-			allocated, _ := elReader.GetAllocatedStake(context.Background(), operatorSet, []common.Address{operatorAddr}, []common.Address{deposit.StrategyAddrs})
-			currentAllocatedStake := allocated[0][0]
+		// Strategies and expected magnitudes to batch the calls to the chain
+		strategies := make([]common.Address, len(opSetConfig.Deposits))
 
+		for i, deposit := range opSetConfig.Deposits {
+			strategies[i] = deposit.StrategyAddrs
+		}
+
+		// Get the allocated stake for the strategies in the operator set
+		allocated, err := elReader.GetAllocatedStake(context.Background(), operatorSet, []common.Address{operatorAddr}, strategies)
+		if err != nil {
+			logger.Errorf("Error getting allocated stake for operator set %v: %v", operatorSet.Id, err)
+			return err
+		}
+
+		// Collect strategies and magnitudes that need updates
+		strategiesToAllocate := []common.Address{}
+		magnitudesToAllocate := []uint64{}
+
+		// Check if the allocated stake is less than the desired allocation for each strategy
+		// If it is, we add the strategy and magnitude to the allocateParams
+		for i, deposit := range opSetConfig.Deposits {
+			currentAllocatedStake := allocated[0][i]
 			allocateMagnitude := big.NewInt(int64(deposit.AllocatableMagnitudes))
 
 			logger.Infof(
-				"Current allocated stake: %v, desired: %v for strategy %x",
-				currentAllocatedStake, allocateMagnitude, deposit.StrategyAddrs,
+				"Current allocated stake: %v, desired: %v for strategy %x in operator set %v",
+				currentAllocatedStake, allocateMagnitude, deposit.StrategyAddrs, operatorSet.Id,
 			)
 
 			if currentAllocatedStake.Cmp(allocateMagnitude) == -1 {
-				allocateParams = append(allocateParams, allocationmanager.IAllocationManagerTypesAllocateParams{
-					OperatorSet:   operatorSet,
-					Strategies:    []common.Address{deposit.StrategyAddrs},
-					NewMagnitudes: []uint64{deposit.AllocatableMagnitudes},
-				})
+				strategiesToAllocate = append(strategiesToAllocate, deposit.StrategyAddrs)
+				magnitudesToAllocate = append(magnitudesToAllocate, deposit.AllocatableMagnitudes)
 			}
+		}
+
+		if len(strategiesToAllocate) > 0 {
+			allocateParams = append(allocateParams, allocationmanager.IAllocationManagerTypesAllocateParams{
+				OperatorSet:   operatorSet,
+				Strategies:    strategiesToAllocate,
+				NewMagnitudes: magnitudesToAllocate,
+			})
 		}
 	}
 
+	// Execute batch allocation changes if any are needed
 	if len(allocateParams) > 0 {
 		logger.Infof("Modifying %v allocations", len(allocateParams))
 		_, err := elWriter.ModifyAllocations(context.Background(), operatorAddr, allocateParams, true)
