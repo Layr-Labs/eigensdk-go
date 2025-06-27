@@ -124,6 +124,17 @@ func handleRegistration(
 		logger.Fatalf("Failed to register operator with EigenLayer on startup: %v", err.Error())
 	}
 
+	// Extract operator sets and deposits from config
+	operatorSets := []allocationmanager.OperatorSet{}
+	allDeposits := []DepositConfig{}
+	for _, opSetConfig := range config.OperatorSetConfigs {
+		operatorSets = append(operatorSets, allocationmanager.OperatorSet{
+			Avs: config.AvsAddress,
+			Id:  opSetConfig.ID,
+		})
+		allDeposits = append(allDeposits, opSetConfig.Deposits...)
+	}
+
 	// Deposit tokens into strategies for the operator
 	err = handleDepositTokenAmount(
 		txMgr,
@@ -132,28 +143,19 @@ func handleRegistration(
 		elReader,
 		elWriter,
 		operatorAddr,
-		config.DepositConfig,
+		allDeposits,
 	)
 	if err != nil {
 		logger.Fatalf("Failed to deposit tokens into strategies on startup: %v", err.Error())
 	}
 
 	// Handle allocated stake for operator
-	operatorSets := []allocationmanager.OperatorSet{}
-	for _, operatorSetId := range config.OperatorSetIds {
-		operatorSets = append(operatorSets, allocationmanager.OperatorSet{
-			Avs: config.AvsAddress,
-			Id:  operatorSetId,
-		})
-	}
-
 	err = handleAllocatedStake(
 		logger,
 		elReader,
 		elWriter,
 		operatorAddr,
-		operatorSets,
-		config.DepositConfig,
+		config,
 	)
 	if err != nil {
 		logger.Fatalf("Failed to allocate stake on startup: %v", err.Error())
@@ -325,16 +327,18 @@ func handleAllocatedStake(
 	elReader *elcontracts.ChainReader,
 	elWriter *elcontracts.ChainWriter,
 	operatorAddr common.Address,
-	operatorSets []allocationmanager.OperatorSet,
-	depositConfig []DepositConfig,
+	config *RegistrationConfig,
 ) error {
 	allocateParams := []allocationmanager.IAllocationManagerTypesAllocateParams{}
 
-	for _, operatorSet := range operatorSets {
-		// TODO: Send the vec of StrategyAddrs
-		for _, deposit := range depositConfig {
+	for _, opSetConfig := range config.OperatorSetConfigs {
+		operatorSet := allocationmanager.OperatorSet{
+			Avs: config.AvsAddress,
+			Id:  opSetConfig.ID,
+		}
+
+		for _, deposit := range opSetConfig.Deposits {
 			allocated, _ := elReader.GetAllocatedStake(context.Background(), operatorSet, []common.Address{operatorAddr}, []common.Address{deposit.StrategyAddrs})
-			// We are passing only one operator address and one strategy
 			currentAllocatedStake := allocated[0][0]
 
 			allocateMagnitude := big.NewInt(int64(deposit.AllocatableMagnitudes))
@@ -345,7 +349,6 @@ func handleAllocatedStake(
 			)
 
 			if currentAllocatedStake.Cmp(allocateMagnitude) == -1 {
-
 				allocateParams = append(allocateParams, allocationmanager.IAllocationManagerTypesAllocateParams{
 					OperatorSet:   operatorSet,
 					Strategies:    []common.Address{deposit.StrategyAddrs},
@@ -442,7 +445,6 @@ func handleRegistrationToOperatorSets(
 	operatorSets []allocationmanager.OperatorSet,
 	socket string,
 ) error {
-
 	operatorSetsByAvs := map[common.Address][]uint32{}
 
 	for _, operatorSet := range operatorSets {

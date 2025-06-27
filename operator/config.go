@@ -76,8 +76,7 @@ type RegistrationConfig struct {
 	// The config used to create the ecdsa signer for the operator registration
 	EcdsaSignerCfg EcdsaSignerConfig `toml:"ecdsa_signer"`
 
-	// The IDs of the operator sets to be registered
-	OperatorSetIds []uint32 `toml:"operator_set_ids"`
+	OperatorSetConfigs []OperatorSetConfig `toml:"operator_set_configs"`
 
 	// The operator metadata url to be set in eigenlayer registration
 	MetadataUrl string `toml:"metadata_url"`
@@ -87,9 +86,11 @@ type RegistrationConfig struct {
 
 	// The allocation delay set for the operator, set as zero for immediate allocation
 	AllocationDelay uint32 `toml:"allocation_delay"`
+}
 
-	// Deposit information for the operator
-	DepositConfig []DepositConfig `toml:"deposit_config"`
+type OperatorSetConfig struct {
+	ID       uint32          `toml:"id"`
+	Deposits []DepositConfig `toml:"deposits"`
 }
 
 // TODO: Add docs
