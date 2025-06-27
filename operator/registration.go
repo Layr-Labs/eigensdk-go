@@ -118,6 +118,7 @@ func handleRegistration(
 		elWriter,
 		operatorAddr,
 		config.MetadataUrl,
+		config.AllocationDelay,
 	)
 	if err != nil {
 		logger.Fatalf("Failed to register operator with EigenLayer on startup: %v", err.Error())
@@ -194,6 +195,7 @@ func handleRegistrationWithEigenlayer(
 	elWriter *elcontracts.ChainWriter,
 	operatorAddr common.Address,
 	metadataUrl string,
+	allocationDelay uint32,
 ) error {
 	operatorIsRegistered, err := elReader.IsOperatorRegistered(
 		context.Background(),
@@ -209,6 +211,7 @@ func handleRegistrationWithEigenlayer(
 			elWriter,
 			operatorAddr,
 			metadataUrl,
+			allocationDelay,
 		)
 		if err != nil {
 			logger.Fatalf("Failed to register operator with EigenLayer on startup: %v", err.Error())
@@ -227,11 +230,13 @@ func registerOperatorWithEigenlayer(
 	elWriter *elcontracts.ChainWriter,
 	operatorAddr common.Address,
 	metadataUrl string,
+	allocationDelay uint32,
 ) error {
 	op := types.Operator{
 		Address:                   operatorAddr.String(),
 		DelegationApproverAddress: operatorAddr.String(),
 		MetadataUrl:               metadataUrl,
+		AllocationDelay:           allocationDelay,
 	}
 
 	_, err := elWriter.RegisterAsOperator(context.Background(), op, true)
