@@ -62,6 +62,11 @@ func EcdsaPrivateKeyToAddress(privateKey *ecdsa.PrivateKey) (gethcommon.Address,
 	return crypto.PubkeyToAddress(*publicKeyECDSA), nil
 }
 
+// RoundUpDivideBig divides two positive big.Int numbers and rounds up the result.
+// Panics if `b` is zero.
+// Result is undefined for negative numbers.
+//
+// Deprecated: this function is deprecated and will be removed in the future.
 func RoundUpDivideBig(a, b *big.Int) *big.Int {
 	one := new(big.Int).SetUint64(1)
 	res := new(big.Int)
@@ -76,13 +81,14 @@ func IsValidEthereumAddress(address string) bool {
 }
 
 func ReadPublicURL(url string) ([]byte, error) {
-	// allow no redirects
+	// Allow no redirects
 	httpClient := http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
 		Timeout: 3 * time.Second,
 	}
+
 	resp, err := httpClient.Get(url)
 	if err != nil {
 		return []byte{}, err

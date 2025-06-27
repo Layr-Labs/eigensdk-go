@@ -17,6 +17,8 @@ Each version will have a separate `Breaking Changes` section as well. To describ
 
 ### Deprecated ⚠️
 
+* Deprecated `RoundUpDivideBig` from the `utils` module in [#340](https://github.com/Layr-Labs/eigensdk-go/pull/340)
+
 ### Removed 🗑
 
 ### Documentation 📚
@@ -25,8 +27,28 @@ Each version will have a separate `Breaking Changes` section as well. To describ
 
 ### Other Changes
 
+* Bump middleware contracts version up to [v1.3.1](https://github.com/Layr-Labs/eigenlayer-middleware/releases/tag/v1.3.1) in [#744](https://github.com/Layr-Labs/eigensdk-go/pull/744).
+
+* chore: bump dependencies in [#739](https://github.com/Layr-Labs/eigensdk-go/pull/739)
+  * `go.mod`
+    * github.com/consensys/gnark-crypto from `v0.16.0` to `v0.18.0`
+    * github.com/lmittmann/tint from `v1.0.4` to `v1.1.2`
+    * github.com/testcontainers/testcontainers-go from `v0.35.0` to `v0.37.0`
+    * github.com/urfave/cli/v2 from `v2.27.5` to `v2.27.7`
+    * go.uber.org/mock from `v0.4.0` to `v0.5.2`
+    * golang.org/x/crypto from `v0.35.0` to `v0.39.0`
+    * golang.org/x/sync from `v0.11.0` to `v0.15.0`
+
+  * `signer/go.mod`
+    * go from `1.21.13` to `1.23.0`
+    * toolchain from `go1.22.5` to `go1.23.4`
+    * github.com/consensys/gnark-crypto from `v0.12.1` to `v0.18.0`
+    * github.com/stretchr/testify from `v1.9.0` to `v1.10.0`
+
 * added rewards utilities integration test by @maximopalopoli in [#608](https://github.com/Layr-Labs/eigensdk-go/pull/608)
 * fixed expired timer handling in bls aggregation service in [#616](https://github.com/Layr-Labs/eigensdk-go/pull/616)
+* use the eigenlayer contracts repository bindings instead of creating them by @maximopalopoli in [#668](https://github.com/Layr-Labs/eigensdk-go/pull/668)
+* Added unit tests to the `utils` module by @estensen in [#340](https://github.com/Layr-Labs/eigensdk-go/pull/340)
 
 ## [0.3.0] - 2025-03-19
 
