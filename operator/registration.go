@@ -62,7 +62,7 @@ func handleRegistration(
 
 	elReader, err := elcontracts.NewReaderFromConfig(elcontractsConfig, ethHttpClient, logger)
 	if err != nil {
-		logger.Error("Error creating eigenlayer chain reader", "err", err)
+		logger.Error("Error creating EigenLayer chain reader", "err", err)
 		return err
 	}
 
