@@ -117,7 +117,9 @@ contract DeployTokensStrategiesCreateQuorums is Script, EigenlayerContractsParse
 
         // Update the metadata so does not fail with error InvalidAVSWithNoMetadataRegistered()
         AllocationManager allocationManager = AllocationManager(0x8A791620dd6260079BF849Dc5567aDC3F2FdC318);
-        allocationManager.updateAVSMetadataURI(address(0xa82fF9aFd8f496c3d6ac40E2a0F282E47488CFc9), "metadataURI");
+        // 0x851356ae760d987E095750cCeb3bC6014560891C is the mockAvsServiceManager address
+        // Took from mockAvs_deployment_output.json
+        allocationManager.updateAVSMetadataURI(address(0x851356ae760d987E095750cCeb3bC6014560891C), "metadataURI");
 
         SlashingRegistryCoordinator(address(mockAvsRegCoord)).createTotalDelegatedStakeQuorum(
             quorumOperatorSetParams, quorumMinimumStake, quorumStrategyParams
