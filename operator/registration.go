@@ -262,6 +262,12 @@ func handleDepositTokenAmount(
 	operatorAddr common.Address,
 	depositConfig []DepositConfig,
 ) error {
+
+	if len(depositConfig) == 0 {
+		logger.Info("No deposits to make, skipping deposit token amount")
+		return nil
+	}
+
 	// For each deposit, we get the operator shares in the strategy and check if the operator has deposited the required amount
 	for _, deposit := range depositConfig {
 		depositAmount, err := elReader.GetOperatorSharesInStrategy(context.Background(), operatorAddr, deposit.StrategyAddrs)
@@ -334,6 +340,12 @@ func handleAllocatedStake(
 	operatorAddr common.Address,
 	config *RegistrationConfig,
 ) error {
+
+	if len(config.OperatorSetConfigs) == 0 {
+		logger.Info("No operator set configs to handle, skipping allocated stake")
+		return nil
+	}
+
 	allocateParams := []allocationmanager.IAllocationManagerTypesAllocateParams{}
 
 	// For each operator set config, we get the allocated stake for the operator and the desired allocation
@@ -475,6 +487,11 @@ func handleRegistrationToOperatorSets(
 	operatorSets []allocationmanager.OperatorSet,
 	socket string,
 ) error {
+	if len(operatorSets) == 0 {
+		logger.Info("No operator sets to register, skipping registration to operator sets")
+		return nil
+	}
+
 	operatorSetsByAvs := map[common.Address][]uint32{}
 
 	for _, operatorSet := range operatorSets {
