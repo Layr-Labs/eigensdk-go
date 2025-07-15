@@ -36,6 +36,10 @@ git submodule update --init
 
 Follow the [contribution guidelines](CONTRIBUTING.md) to contribute to eigensdk-go
 
+## Testing
+See the [Anvil README](https://github.com/Layr-Labs/eigensdk-go/blob/dev/contracts/anvil/README.md) for details on how 
+Anvil is used to provision reproducible network state. This is very useful for local testing and CI/CD infrastructure.
+
 ## Branches
 
 For consistency with [eigenlayer-middleware](https://github.com/Layr-Labs/eigenlayer-middleware) and [eigenlayer-contracts](https://github.com/Layr-Labs/eigenlayer-contracts) repos, we no longer use the `master` branch and instead use `dev` as the default branch, which will track as closely as possible the `dev` branch of eigenlayer-middleware (which in turn tracks the `dev` branch of eigenlayer-contracts). This convention will also be followed for other important branches. For eg, the m2-mainnet branch of this repo will track the m2-mainnet branch of eigenlayer-middleware (which tracks the unfortunately named mainnet branch of eigenlayer-contracts), and same with the testnet-holesky branch.
