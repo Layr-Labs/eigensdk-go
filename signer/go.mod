@@ -9,7 +9,7 @@ replace github.com/Layr-Labs/eigensdk-go => ../../eigensdk-go
 require (
 	github.com/Layr-Labs/cerberus-api v0.0.2-0.20250117193600-e69c5e8b08fd
 	github.com/Layr-Labs/eigensdk-go v0.1.13
-	github.com/consensys/gnark-crypto v0.18.0
+	github.com/consensys/gnark-crypto v0.18.1
 	github.com/stretchr/testify v1.10.0
 	google.golang.org/grpc v1.64.1
 )
