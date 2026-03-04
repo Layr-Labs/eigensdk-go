@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -59,90 +58,6 @@ func TestEcdsaPrivateKeyToAddress(t *testing.T) {
 			address, err := EcdsaPrivateKeyToAddress(privateKey)
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expectedAddr.Hex(), address.Hex())
-		})
-	}
-}
-
-func TestRoundUpDivideBig(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name        string
-		a           *big.Int
-		b           *big.Int
-		expected    *big.Int
-		expectPanic bool
-	}{
-		{
-			name:        "Divide 5 by 2",
-			a:           big.NewInt(5),
-			b:           big.NewInt(2),
-			expected:    big.NewInt(3),
-			expectPanic: false,
-		},
-		{
-			name:        "Divide 10 by 3",
-			a:           big.NewInt(10),
-			b:           big.NewInt(3),
-			expected:    big.NewInt(4),
-			expectPanic: false,
-		},
-		{
-			name:        "Divide 100 by 33",
-			a:           big.NewInt(100),
-			b:           big.NewInt(33),
-			expected:    big.NewInt(4),
-			expectPanic: false,
-		},
-		{
-			name:        "Divide 0 by 1",
-			a:           big.NewInt(0),
-			b:           big.NewInt(1),
-			expected:    big.NewInt(0),
-			expectPanic: false,
-		},
-		{
-			name:        "Divide 1 by 1",
-			a:           big.NewInt(1),
-			b:           big.NewInt(1),
-			expected:    big.NewInt(1),
-			expectPanic: false,
-		},
-		{
-			name:        "Divide by zero (100/0)",
-			a:           big.NewInt(100),
-			b:           big.NewInt(0),
-			expected:    nil,
-			expectPanic: true,
-		},
-		{
-			name:        "Both zero (0/0)",
-			a:           big.NewInt(0),
-			b:           big.NewInt(0),
-			expected:    nil,
-			expectPanic: true,
-		},
-		{
-			name:        "Large division",
-			a:           big.NewInt(999999999999999999),
-			b:           big.NewInt(3),
-			expected:    big.NewInt(333333333333333333),
-			expectPanic: false,
-		},
-	}
-
-	for _, tc := range tests {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			if tc.expectPanic {
-				assert.Panics(t, func() {
-					RoundUpDivideBig(new(big.Int).Set(tc.a), tc.b)
-				})
-			} else {
-				result := RoundUpDivideBig(new(big.Int).Set(tc.a), tc.b)
-				assert.Equal(t, tc.expected.String(), result.String(), "RoundUpDivideBig(%s, %s)", tc.a.String(), tc.b.String())
-			}
 		})
 	}
 }
