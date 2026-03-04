@@ -7,7 +7,6 @@ import (
 	"math/big"
 
 	"github.com/Layr-Labs/eigensdk-go/crypto/bls"
-	"github.com/Layr-Labs/eigensdk-go/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/math"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -53,22 +52,22 @@ type M2Operator struct {
 }
 
 func (o Operator) Validate() error {
-	if !utils.IsValidEthereumAddress(o.Address) {
+	if !IsValidEthereumAddress(o.Address) {
 		return ErrInvalidOperatorAddress
 	}
 
-	if o.DelegationApproverAddress != ZeroAddress && !utils.IsValidEthereumAddress(o.DelegationApproverAddress) {
+	if o.DelegationApproverAddress != ZeroAddress && !IsValidEthereumAddress(o.DelegationApproverAddress) {
 		return ErrInvalidDelegationApproverAddress
 	}
 
-	err := utils.CheckIfUrlIsValid(o.MetadataUrl)
+	err := CheckIfUrlIsValid(o.MetadataUrl)
 	if err != nil {
-		return utils.WrapError(ErrInvalidMetadataUrl, err)
+		return WrapError(ErrInvalidMetadataUrl, err)
 	}
 
-	body, err := utils.ReadPublicURL(o.MetadataUrl)
+	body, err := ReadPublicURL(o.MetadataUrl)
 	if err != nil {
-		return utils.WrapError(ErrReadingMetadataUrlResponse, err)
+		return WrapError(ErrReadingMetadataUrlResponse, err)
 	}
 
 	operatorMetadata := OperatorMetadata{}

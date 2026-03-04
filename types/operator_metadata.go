@@ -1,9 +1,5 @@
 package types
 
-import (
-	"github.com/Layr-Labs/eigensdk-go/utils"
-)
-
 // OperatorMetadata is the metadata operator uploads while registering
 // itself to EigenLayer
 type OperatorMetadata struct {
@@ -31,35 +27,35 @@ type OperatorMetadata struct {
 }
 
 func (om *OperatorMetadata) Validate() error {
-	err := utils.ValidateText(om.Name)
+	err := ValidateText(om.Name)
 	if err != nil {
-		return utils.WrapError(ErrInvalidName, err)
+		return WrapError(ErrInvalidName, err)
 	}
 
-	err = utils.ValidateText(om.Description)
+	err = ValidateText(om.Description)
 	if err != nil {
-		return utils.WrapError(ErrInvalidDescription, err)
+		return WrapError(ErrInvalidDescription, err)
 	}
 
 	if len(om.Logo) == 0 {
 		return ErrLogoRequired
 	}
 
-	if err = utils.IsImageURL(om.Logo); err != nil {
+	if err = IsImageURL(om.Logo); err != nil {
 		return err
 	}
 
 	if len(om.Website) != 0 {
-		err = utils.CheckIfUrlIsValid(om.Website)
+		err = CheckIfUrlIsValid(om.Website)
 		if err != nil {
-			return utils.WrapError(ErrInvalidWebsiteUrl, err)
+			return WrapError(ErrInvalidWebsiteUrl, err)
 		}
 	}
 
 	if len(om.Twitter) != 0 {
-		err := utils.CheckIfValidTwitterURL(om.Twitter)
+		err := CheckIfValidTwitterURL(om.Twitter)
 		if err != nil {
-			return utils.WrapError(ErrInvalidTwitterUrl, err)
+			return WrapError(ErrInvalidTwitterUrl, err)
 		}
 	}
 
